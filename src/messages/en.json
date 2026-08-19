@@ -1,0 +1,14 @@
+{
+  "common": {
+    "signIn": "Sign In",
+    "signInToYourAccount": "Sign in to your account",
+    "username": "Username",
+    "password": "Password",
+    "forgotPassword": "Forgot Password?",
+    "clickHere": "Click here"
+  },
+  "welcome": {
+    "welcomeBack": "Welcome Back",
+    "tagline": "Manage and view all activities in your school"
+  }
+}

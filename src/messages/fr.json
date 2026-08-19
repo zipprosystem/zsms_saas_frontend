@@ -1,0 +1,14 @@
+{
+  "common": {
+    "signIn": "Se connecter",
+    "signInToYourAccount": "Connectez-vous à votre compte",
+    "username": "Nom d'utilisateur",
+    "password": "Mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "clickHere": "Cliquez ici"
+  },
+  "welcome": {
+    "welcomeBack": "Bon retour",
+    "tagline": "Gérez et consultez toutes les activités de votre école"
+  }
+}
