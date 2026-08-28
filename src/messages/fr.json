@@ -60,5 +60,8 @@
     "userMenu": "Ouvrir le menu utilisateur",
     "defaultUserName": "Admin User",
     "defaultUserRole": "Administrateur"
+  },
+  "tenant": {
+    "label": "Établissement"
   }
 }

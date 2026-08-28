@@ -60,5 +60,8 @@
     "userMenu": "Open user menu",
     "defaultUserName": "Admin User",
     "defaultUserRole": "Administrator"
+  },
+  "tenant": {
+    "label": "Tenant"
   }
 }
