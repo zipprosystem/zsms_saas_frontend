@@ -63,5 +63,81 @@
   },
   "tenant": {
     "label": "Tenant"
+  },
+  "setup": {
+    "header": {
+      "title": "Complete Your School Setup",
+      "subtitle": "Configure each module below to unlock your full dashboard."
+    },
+    "overallProgress": {
+      "title": "Overall Setup Progress",
+      "itemsConfigured": "{configured} of {total} items configured",
+      "goToOverview": "Go to Overview"
+    },
+    "categories": {
+      "schoolSettings": { "name": "School Settings" },
+      "academicStructure": { "name": "Academic Structure" },
+      "assessmentConfiguration": { "name": "Assessment Configuration" },
+      "physicalSpace": { "name": "Physical Space" },
+      "scheduling": { "name": "Scheduling" }
+    },
+    "items": {
+      "schoolIdentity": { "name": "School Identity" },
+      "brandingAssets": { "name": "Branding & Assets" },
+      "generalBehaviour": { "name": "General Behaviour" },
+      "integrationsAlerts": { "name": "Integrations & Alerts" },
+      "academicYears": {
+        "name": "Academic Years",
+        "description": "Define your school year and date range"
+      },
+      "schoolTypes": {
+        "name": "School Types",
+        "description": "Your school divisions — Primary, JSS, SSS"
+      },
+      "awardBodies": {
+        "name": "Award Bodies",
+        "description": "Examining bodies — WAEC, NECO, Cambridge"
+      },
+      "terms": {
+        "name": "Terms",
+        "description": "Academic terms with start and end dates"
+      },
+      "departments": {
+        "name": "Departments",
+        "description": "Academic departments for subjects and staff"
+      },
+      "subjectsMaster": {
+        "name": "Subjects Master",
+        "description": "Global registry of all subjects offered"
+      },
+      "courses": {
+        "name": "Courses",
+        "description": "Study programmes — Science, Arts, Commercial"
+      },
+      "courseSubjectGroups": {
+        "name": "Course Subject Groups",
+        "description": "Group subjects within courses"
+      },
+      "courseSubjects": {
+        "name": "Course Subjects",
+        "description": "Map subjects to courses with grade units"
+      },
+      "gradingSchemes": { "name": "Grading Schemes" },
+      "gradeScales": { "name": "Grade Scales" },
+      "assessmentTypes": { "name": "Assessment Types" },
+      "resultTemplates": { "name": "Result Templates" },
+      "commentBanks": { "name": "Comment Banks" },
+      "rankingRules": { "name": "Ranking Rules" },
+      "promotionCriteria": { "name": "Promotion Criteria" },
+      "campuses": { "name": "Campuses" },
+      "buildings": { "name": "Buildings" },
+      "floors": { "name": "Floors" },
+      "classrooms": { "name": "Classrooms" },
+      "facilities": { "name": "Facilities" },
+      "hostels": { "name": "Hostels" },
+      "timetableStructure": { "name": "Timetable Structure" },
+      "periodsAndBells": { "name": "Periods & Bells" },
+      "calendarAndEvents": { "name": "Calendar & Events" }
+    }
   }
 }
