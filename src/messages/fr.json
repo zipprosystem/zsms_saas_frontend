@@ -63,5 +63,81 @@
   },
   "tenant": {
     "label": "Établissement"
+  },
+  "setup": {
+    "header": {
+      "title": "Terminez la configuration de votre école",
+      "subtitle": "Configurez chaque module ci-dessous pour débloquer votre tableau de bord complet."
+    },
+    "overallProgress": {
+      "title": "Progression globale de la configuration",
+      "itemsConfigured": "{configured} sur {total} éléments configurés",
+      "goToOverview": "Aller à la vue d'ensemble"
+    },
+    "categories": {
+      "schoolSettings": { "name": "Paramètres de l'école" },
+      "academicStructure": { "name": "Structure académique" },
+      "assessmentConfiguration": { "name": "Configuration des évaluations" },
+      "physicalSpace": { "name": "Espace physique" },
+      "scheduling": { "name": "Planification" }
+    },
+    "items": {
+      "schoolIdentity": { "name": "Identité de l'école" },
+      "brandingAssets": { "name": "Image de marque et ressources" },
+      "generalBehaviour": { "name": "Comportement général" },
+      "integrationsAlerts": { "name": "Intégrations et alertes" },
+      "academicYears": {
+        "name": "Années académiques",
+        "description": "Définissez votre année scolaire et sa plage de dates"
+      },
+      "schoolTypes": {
+        "name": "Types d'école",
+        "description": "Vos divisions scolaires — Primaire, JSS, SSS"
+      },
+      "awardBodies": {
+        "name": "Organismes d'examen",
+        "description": "Organismes examinateurs — WAEC, NECO, Cambridge"
+      },
+      "terms": {
+        "name": "Trimestres",
+        "description": "Trimestres académiques avec dates de début et de fin"
+      },
+      "departments": {
+        "name": "Départements",
+        "description": "Départements académiques pour les matières et le personnel"
+      },
+      "subjectsMaster": {
+        "name": "Registre des matières",
+        "description": "Registre global de toutes les matières proposées"
+      },
+      "courses": {
+        "name": "Filières",
+        "description": "Programmes d'études — Sciences, Arts, Commercial"
+      },
+      "courseSubjectGroups": {
+        "name": "Groupes de matières par filière",
+        "description": "Regrouper les matières au sein des filières"
+      },
+      "courseSubjects": {
+        "name": "Matières par filière",
+        "description": "Associer les matières aux filières avec unités de notation"
+      },
+      "gradingSchemes": { "name": "Barèmes de notation" },
+      "gradeScales": { "name": "Échelles de notes" },
+      "assessmentTypes": { "name": "Types d'évaluation" },
+      "resultTemplates": { "name": "Modèles de résultats" },
+      "commentBanks": { "name": "Banques de commentaires" },
+      "rankingRules": { "name": "Règles de classement" },
+      "promotionCriteria": { "name": "Critères de promotion" },
+      "campuses": { "name": "Campus" },
+      "buildings": { "name": "Bâtiments" },
+      "floors": { "name": "Étages" },
+      "classrooms": { "name": "Salles de classe" },
+      "facilities": { "name": "Installations" },
+      "hostels": { "name": "Internats" },
+      "timetableStructure": { "name": "Structure de l'emploi du temps" },
+      "periodsAndBells": { "name": "Périodes et sonneries" },
+      "calendarAndEvents": { "name": "Calendrier et événements" }
+    }
   }
 }
