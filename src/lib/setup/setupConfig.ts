@@ -7,6 +7,13 @@ export type SetupItem = {
   done: boolean;
 };
 
+export type SetupCategoryIconKey =
+  | "gear"
+  | "academicCap"
+  | "clipboardChart"
+  | "locationPin"
+  | "clock";
+
 export type SetupCategory = {
   key: string;
   /** i18n key resolving to the category's display name */
@@ -14,6 +21,8 @@ export type SetupCategory = {
   weightPercent: number;
   /** Tailwind color token suffix, e.g. "category-purple" */
   colorToken: string;
+  /** Looked up against the icon map in CategoryCard — keeps this file free of component imports. */
+  iconKey: SetupCategoryIconKey;
   items: SetupItem[];
 };
 
@@ -25,6 +34,7 @@ export const setupCategories: SetupConfig = [
     name: "setup.categories.schoolSettings.name",
     weightPercent: 15,
     colorToken: "category-purple",
+    iconKey: "gear",
     // TODO: Custom Domain will be added here later as a School Settings sub-item.
     items: [
       {
@@ -54,6 +64,7 @@ export const setupCategories: SetupConfig = [
     name: "setup.categories.academicStructure.name",
     weightPercent: 35,
     colorToken: "category-blue",
+    iconKey: "academicCap",
     items: [
       {
         key: "academicYears",
@@ -116,6 +127,7 @@ export const setupCategories: SetupConfig = [
     name: "setup.categories.assessmentConfiguration.name",
     weightPercent: 20,
     colorToken: "category-cyan",
+    iconKey: "clipboardChart",
     // INFERRED item names — reconcile against the Assessment config Figma screens when built.
     items: [
       {
@@ -160,6 +172,7 @@ export const setupCategories: SetupConfig = [
     name: "setup.categories.physicalSpace.name",
     weightPercent: 20,
     colorToken: "category-green",
+    iconKey: "locationPin",
     // INFERRED item names — reconcile when built.
     items: [
       { key: "campuses", name: "setup.items.campuses.name", done: false },
@@ -183,6 +196,7 @@ export const setupCategories: SetupConfig = [
     name: "setup.categories.scheduling.name",
     weightPercent: 10,
     colorToken: "category-amber",
+    iconKey: "clock",
     // INFERRED item names — reconcile when built.
     items: [
       {
@@ -228,6 +242,11 @@ export function getCategoryProgress(category: SetupCategory): {
     totalCount,
     categoryComplete: totalCount > 0 && configuredCount === totalCount,
   };
+}
+
+export function getCategoryPercent(category: SetupCategory): number {
+  const { configuredCount, totalCount } = getCategoryProgress(category);
+  return totalCount > 0 ? Math.round((configuredCount / totalCount) * 100) : 0;
 }
 
 /**

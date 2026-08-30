@@ -12,7 +12,7 @@ export function AppShell({ children }: AppShellProps) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-dvh overflow-hidden bg-background">
       <Sidebar isOpen={isMobileNavOpen} onClose={() => setIsMobileNavOpen(false)} />
 
       {isMobileNavOpen && (
@@ -23,10 +23,12 @@ export function AppShell({ children }: AppShellProps) {
         />
       )}
 
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+      <div className="flex h-dvh min-w-0 flex-1 flex-col">
         <Header onOpenMobileNav={() => setIsMobileNavOpen(true)} />
-        <main className="flex min-w-0 flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8">
-          {children}
+        <main className="min-w-0 flex-1 overflow-y-auto">
+          <div className="mx-auto flex w-full max-w-[1440px] flex-col px-4 py-6 sm:px-6 lg:px-8">
+            {children}
+          </div>
         </main>
       </div>
     </div>

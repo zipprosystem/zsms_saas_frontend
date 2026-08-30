@@ -74,6 +74,13 @@
       "itemsConfigured": "{configured} of {total} items configured",
       "goToOverview": "Go to Overview"
     },
+    "categoryCard": {
+      "percentOfSetup": "{percent}% of setup",
+      "itemsConfigured": "{configured} of {total} configured",
+      "complete": "Complete",
+      "done": "Done",
+      "toggleSection": "Toggle {category} section"
+    },
     "categories": {
       "schoolSettings": { "name": "School Settings" },
       "academicStructure": { "name": "Academic Structure" },

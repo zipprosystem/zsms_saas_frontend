@@ -38,6 +38,10 @@ const config: Config = {
         "category-amber": "var(--category-amber)",
         "category-amber-tint": "var(--category-amber-tint)",
         "subtle-track": "var(--subtle-track)",
+
+        "status-done": "var(--status-done)",
+        "status-done-text": "var(--status-done-text)",
+        "status-empty-border": "var(--status-empty-border)",
       },
       borderRadius: {
         sm: "4px",
