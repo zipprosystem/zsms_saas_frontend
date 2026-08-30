@@ -34,6 +34,12 @@
   /* Fixed brand accent surface (e.g. the setup banner) — like the sidebar,
      stays the same color in both themes rather than flipping. */
   --accent-2: #51a351;
+
+  /* Setup "done" status green (SetupItemRow / CategoryCard badges) — a
+     distinct status color, not the same as --success or --category-green. */
+  --status-done: #00bc7d;
+  --status-done-text: #009966;
+  --status-empty-border: #d1d5db;
 }
 
 .dark {
@@ -60,6 +66,20 @@
      theme token. Flagging: if this reads too flat against the dark
      background in practice, a slightly deeper green may read better. */
   --accent-2: #51a351;
+
+  /* APPROXIMATED — not pulled from Figma dark-mode specs. Desaturated
+     dark-surface tints for the category pill/badge backgrounds. Swap for
+     exact values if/when the dark-mode design is provided. */
+  --category-blue-tint: #16233d;
+  --category-cyan-tint: #0e2b33;
+  --category-green-tint: #052e21;
+  --category-amber-tint: #2c2109;
+
+  /* Fixed status color — same in both themes — but the border for the
+     "not done" empty circle needs more contrast against the dark surface. */
+  --status-done: #00bc7d;
+  --status-done-text: #009966;
+  --status-empty-border: #4b5563;
 }
 
 body {

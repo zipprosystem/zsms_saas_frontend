@@ -74,6 +74,13 @@
       "itemsConfigured": "{configured} sur {total} éléments configurés",
       "goToOverview": "Aller à la vue d'ensemble"
     },
+    "categoryCard": {
+      "percentOfSetup": "{percent} % de la configuration",
+      "itemsConfigured": "{configured} sur {total} configurés",
+      "complete": "Terminé",
+      "done": "Terminé",
+      "toggleSection": "Afficher/masquer la section {category}"
+    },
     "categories": {
       "schoolSettings": { "name": "Paramètres de l'école" },
       "academicStructure": { "name": "Structure académique" },
