@@ -5,6 +5,8 @@ export type SetupItem = {
   /** i18n key resolving to the item's description, if any */
   description?: string;
   done: boolean;
+  /** Kebab-case slug under /setup/[slug]. Explicit (not derived from `key`) so the route is stable across key renames. */
+  slug: string;
 };
 
 export type SetupCategoryIconKey =
@@ -41,21 +43,25 @@ export const setupCategories: SetupConfig = [
         key: "schoolIdentity",
         name: "setup.items.schoolIdentity.name",
         done: true,
+        slug: "school-identity",
       },
       {
         key: "brandingAssets",
         name: "setup.items.brandingAssets.name",
         done: true,
+        slug: "branding-assets",
       },
       {
         key: "generalBehaviour",
         name: "setup.items.generalBehaviour.name",
         done: true,
+        slug: "general-behaviour",
       },
       {
         key: "integrationsAlerts",
         name: "setup.items.integrationsAlerts.name",
         done: true,
+        slug: "integrations-alerts",
       },
     ],
   },
@@ -71,54 +77,63 @@ export const setupCategories: SetupConfig = [
         name: "setup.items.academicYears.name",
         description: "setup.items.academicYears.description",
         done: false,
+        slug: "academic-years",
       },
       {
         key: "schoolTypes",
         name: "setup.items.schoolTypes.name",
         description: "setup.items.schoolTypes.description",
         done: false,
+        slug: "school-types",
       },
       {
         key: "awardBodies",
         name: "setup.items.awardBodies.name",
         description: "setup.items.awardBodies.description",
         done: false,
+        slug: "award-bodies",
       },
       {
         key: "terms",
         name: "setup.items.terms.name",
         description: "setup.items.terms.description",
         done: false,
+        slug: "terms",
       },
       {
         key: "departments",
         name: "setup.items.departments.name",
         description: "setup.items.departments.description",
         done: false,
+        slug: "departments",
       },
       {
         key: "subjectsMaster",
         name: "setup.items.subjectsMaster.name",
         description: "setup.items.subjectsMaster.description",
         done: false,
+        slug: "subjects-master",
       },
       {
         key: "courses",
         name: "setup.items.courses.name",
         description: "setup.items.courses.description",
         done: false,
+        slug: "courses",
       },
       {
         key: "courseSubjectGroups",
         name: "setup.items.courseSubjectGroups.name",
         description: "setup.items.courseSubjectGroups.description",
         done: false,
+        slug: "course-subject-groups",
       },
       {
         key: "courseSubjects",
         name: "setup.items.courseSubjects.name",
         description: "setup.items.courseSubjects.description",
         done: false,
+        slug: "course-subjects",
       },
     ],
   },
@@ -134,36 +149,43 @@ export const setupCategories: SetupConfig = [
         key: "gradingSchemes",
         name: "setup.items.gradingSchemes.name",
         done: false,
+        slug: "grading-schemes",
       },
       {
         key: "gradeScales",
         name: "setup.items.gradeScales.name",
         done: false,
+        slug: "grade-scales",
       },
       {
         key: "assessmentTypes",
         name: "setup.items.assessmentTypes.name",
         done: false,
+        slug: "assessment-types",
       },
       {
         key: "resultTemplates",
         name: "setup.items.resultTemplates.name",
         done: false,
+        slug: "result-templates",
       },
       {
         key: "commentBanks",
         name: "setup.items.commentBanks.name",
         done: false,
+        slug: "comment-banks",
       },
       {
         key: "rankingRules",
         name: "setup.items.rankingRules.name",
         done: false,
+        slug: "ranking-rules",
       },
       {
         key: "promotionCriteria",
         name: "setup.items.promotionCriteria.name",
         done: false,
+        slug: "promotion-criteria",
       },
     ],
   },
@@ -175,20 +197,42 @@ export const setupCategories: SetupConfig = [
     iconKey: "locationPin",
     // INFERRED item names — reconcile when built.
     items: [
-      { key: "campuses", name: "setup.items.campuses.name", done: false },
-      { key: "buildings", name: "setup.items.buildings.name", done: false },
-      { key: "floors", name: "setup.items.floors.name", done: false },
+      {
+        key: "campuses",
+        name: "setup.items.campuses.name",
+        done: false,
+        slug: "campuses",
+      },
+      {
+        key: "buildings",
+        name: "setup.items.buildings.name",
+        done: false,
+        slug: "buildings",
+      },
+      {
+        key: "floors",
+        name: "setup.items.floors.name",
+        done: false,
+        slug: "floors",
+      },
       {
         key: "classrooms",
         name: "setup.items.classrooms.name",
         done: false,
+        slug: "classrooms",
       },
       {
         key: "facilities",
         name: "setup.items.facilities.name",
         done: false,
+        slug: "facilities",
       },
-      { key: "hostels", name: "setup.items.hostels.name", done: false },
+      {
+        key: "hostels",
+        name: "setup.items.hostels.name",
+        done: false,
+        slug: "hostels",
+      },
     ],
   },
   {
@@ -203,16 +247,19 @@ export const setupCategories: SetupConfig = [
         key: "timetableStructure",
         name: "setup.items.timetableStructure.name",
         done: false,
+        slug: "timetable-structure",
       },
       {
         key: "periodsAndBells",
         name: "setup.items.periodsAndBells.name",
         done: false,
+        slug: "periods-and-bells",
       },
       {
         key: "calendarAndEvents",
         name: "setup.items.calendarAndEvents.name",
         done: false,
+        slug: "calendar-and-events",
       },
     ],
   },
@@ -259,4 +306,17 @@ export function getOverallPercent(config: SetupConfig): number {
     const { categoryComplete } = getCategoryProgress(category);
     return categoryComplete ? sum + category.weightPercent : sum;
   }, 0);
+}
+
+export function findSetupItemBySlug(
+  config: SetupConfig,
+  slug: string,
+): { item: SetupItem; category: SetupCategory } | undefined {
+  for (const category of config) {
+    const item = category.items.find((candidate) => candidate.slug === slug);
+    if (item) {
+      return { item, category };
+    }
+  }
+  return undefined;
 }

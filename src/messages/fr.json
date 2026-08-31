@@ -64,10 +64,22 @@
   "tenant": {
     "label": "Établissement"
   },
+  "panels": {
+    "student": { "title": "Espace élève" },
+    "parent": { "title": "Espace parent" }
+  },
   "setup": {
     "header": {
       "title": "Terminez la configuration de votre école",
       "subtitle": "Configurez chaque module ci-dessous pour débloquer votre tableau de bord complet."
+    },
+    "stub": {
+      "backToOverview": "Retour à la configuration",
+      "comingSoon": "Cet écran de configuration arrive bientôt."
+    },
+    "notFound": {
+      "title": "Élément de configuration introuvable",
+      "message": "Nous n'avons pas trouvé cet élément de configuration. Il a peut-être changé d'emplacement — retournez à l'aperçu pour continuer."
     },
     "overallProgress": {
       "title": "Progression globale de la configuration",

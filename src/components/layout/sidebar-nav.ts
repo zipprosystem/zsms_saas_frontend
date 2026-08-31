@@ -28,27 +28,27 @@ export type SidebarNavItem = {
 };
 
 export const sidebarNavItems: SidebarNavItem[] = [
-  { key: "overview", labelKey: "nav.overview", href: "/overview", icon: ChartIcon },
-  { key: "academics", labelKey: "nav.academics", href: "/academics", icon: BookSavedIcon, hasSubmenu: true },
-  { key: "attendance", labelKey: "nav.attendance", href: "/attendance", icon: CalendarIcon, hasSubmenu: true },
-  { key: "conducts", labelKey: "nav.conducts", href: "/conducts", icon: Warning2Icon, hasSubmenu: true },
-  { key: "communications", labelKey: "nav.communications", href: "/communications", icon: MessageTextIcon, hasSubmenu: true },
-  { key: "library", labelKey: "nav.library", href: "/library", icon: BookIcon, hasSubmenu: true },
-  { key: "financeAdmin", labelKey: "nav.financeAdmin", href: "/finance-admin", icon: FinanceAdminIcon, hasSubmenu: true },
-  { key: "inventory", labelKey: "nav.inventory", href: "/inventory", icon: ShoppingCartIcon },
-  { key: "reports", labelKey: "nav.reports", href: "/reports", icon: DocumentTextIcon },
-  { key: "pastoral", labelKey: "nav.pastoral", href: "/pastoral", icon: Profile2UserIcon, hasSubmenu: true },
-  { key: "hr", labelKey: "nav.hr", href: "/hr", icon: HospitalIcon, hasSubmenu: true },
-  { key: "clinic", labelKey: "nav.clinic", href: "/clinic", icon: HospitalIcon },
-  { key: "adminPanel", labelKey: "nav.adminPanel", href: "/admin-panel", icon: BoxIcon },
-  { key: "students", labelKey: "nav.students", href: "/students", icon: PeopleIcon },
-  { key: "messages", labelKey: "nav.messages", href: "/messages", icon: Messages2Icon },
-  { key: "websiteCms", labelKey: "nav.websiteCms", href: "/website-cms", icon: DevicesIcon, hasSubmenu: true },
-  { key: "media", labelKey: "nav.media", href: "/media", icon: HospitalAltIcon },
-  { key: "facilities", labelKey: "nav.facilities", href: "/facilities", icon: CarIcon, hasSubmenu: true },
+  { key: "overview", labelKey: "nav.overview", href: "/admin/overview", icon: ChartIcon },
+  { key: "academics", labelKey: "nav.academics", href: "/admin/academics", icon: BookSavedIcon, hasSubmenu: true },
+  { key: "attendance", labelKey: "nav.attendance", href: "/admin/attendance", icon: CalendarIcon, hasSubmenu: true },
+  { key: "conducts", labelKey: "nav.conducts", href: "/admin/conducts", icon: Warning2Icon, hasSubmenu: true },
+  { key: "communications", labelKey: "nav.communications", href: "/admin/communications", icon: MessageTextIcon, hasSubmenu: true },
+  { key: "library", labelKey: "nav.library", href: "/admin/library", icon: BookIcon, hasSubmenu: true },
+  { key: "financeAdmin", labelKey: "nav.financeAdmin", href: "/admin/finance-admin", icon: FinanceAdminIcon, hasSubmenu: true },
+  { key: "inventory", labelKey: "nav.inventory", href: "/admin/inventory", icon: ShoppingCartIcon },
+  { key: "reports", labelKey: "nav.reports", href: "/admin/reports", icon: DocumentTextIcon },
+  { key: "pastoral", labelKey: "nav.pastoral", href: "/admin/pastoral", icon: Profile2UserIcon, hasSubmenu: true },
+  { key: "hr", labelKey: "nav.hr", href: "/admin/hr", icon: HospitalIcon, hasSubmenu: true },
+  { key: "clinic", labelKey: "nav.clinic", href: "/admin/clinic", icon: HospitalIcon },
+  { key: "adminPanel", labelKey: "nav.adminPanel", href: "/admin/admin-panel", icon: BoxIcon },
+  { key: "students", labelKey: "nav.students", href: "/admin/students", icon: PeopleIcon },
+  { key: "messages", labelKey: "nav.messages", href: "/admin/messages", icon: Messages2Icon },
+  { key: "websiteCms", labelKey: "nav.websiteCms", href: "/admin/website-cms", icon: DevicesIcon, hasSubmenu: true },
+  { key: "media", labelKey: "nav.media", href: "/admin/media", icon: HospitalAltIcon },
+  { key: "facilities", labelKey: "nav.facilities", href: "/admin/facilities", icon: CarIcon, hasSubmenu: true },
 ];
 
-const settingsTitleItem = { href: "/settings", labelKey: "nav.schoolSettings" };
+const settingsTitleItem = { href: "/admin/settings", labelKey: "nav.schoolSettings" };
 
 export function getPageTitleKey(pathname: string): string {
   const match = [...sidebarNavItems, settingsTitleItem].find(

@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { CheckIcon } from "@/components/icons/CheckIcon";
 
 type SetupItemRowProps = {
+  slug: string;
   name: string;
   description?: string;
   done: boolean;
@@ -9,6 +11,7 @@ type SetupItemRowProps = {
 };
 
 export function SetupItemRow({
+  slug,
   name,
   description,
   done,
@@ -16,8 +19,9 @@ export function SetupItemRow({
   isLast,
 }: SetupItemRowProps) {
   return (
-    <div
-      className={`flex items-center justify-between gap-4 px-6 py-3.5 ${
+    <Link
+      href={`/admin/setup/${slug}`}
+      className={`flex items-center justify-between gap-4 px-6 py-3.5 outline-none transition-colors hover:bg-background focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset ${
         isLast ? "" : "border-b border-border"
       }`}
     >
@@ -49,6 +53,6 @@ export function SetupItemRow({
           {doneLabel}
         </span>
       )}
-    </div>
+    </Link>
   );
 }

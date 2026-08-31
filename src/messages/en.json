@@ -64,10 +64,22 @@
   "tenant": {
     "label": "Tenant"
   },
+  "panels": {
+    "student": { "title": "Student Panel" },
+    "parent": { "title": "Parent Panel" }
+  },
   "setup": {
     "header": {
       "title": "Complete Your School Setup",
       "subtitle": "Configure each module below to unlock your full dashboard."
+    },
+    "stub": {
+      "backToOverview": "Back to Setup",
+      "comingSoon": "This configuration screen is coming soon."
+    },
+    "notFound": {
+      "title": "Setup item not found",
+      "message": "We couldn't find that setup item. It may have moved — head back to the overview to keep going."
     },
     "overallProgress": {
       "title": "Overall Setup Progress",

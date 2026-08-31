@@ -116,6 +116,7 @@ export function CategoryCard({
             {category.items.map((item, index) => (
               <SetupItemRow
                 key={item.key}
+                slug={item.slug}
                 name={t(item.name)}
                 description={item.description ? t(item.description) : undefined}
                 done={item.done}
