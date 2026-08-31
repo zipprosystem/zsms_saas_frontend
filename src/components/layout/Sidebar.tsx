@@ -100,7 +100,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       </nav>
 
       <Link
-        href="/settings"
+        href="/admin/settings"
         onClick={onClose}
         className="flex shrink-0 items-center gap-2.5 rounded-xl border border-white/[0.12] px-4 py-3.5 text-white transition-colors hover:bg-white/5"
       >
