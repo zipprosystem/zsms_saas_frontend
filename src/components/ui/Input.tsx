@@ -27,7 +27,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
           ref={ref}
           aria-invalid={hasError || undefined}
           aria-describedby={hasError && error ? `${id}-error` : undefined}
-          className={`h-12 w-full rounded-md border bg-surface px-4 text-text-primary placeholder:text-text-muted transition-colors focus:outline-none focus:ring-2 focus:ring-accent ${
+          className={`h-12 w-full rounded-md border bg-surface px-4 text-text-primary placeholder:text-text-muted transition-colors focus:outline-none focus:ring-2 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50 ${
             hasError ? "border-error" : "border-border"
           } ${className ?? ""}`}
           {...inputProps}

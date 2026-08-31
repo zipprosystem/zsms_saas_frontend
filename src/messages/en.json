@@ -158,5 +158,171 @@
       "periodsAndBells": { "name": "Periods & Bells" },
       "calendarAndEvents": { "name": "Calendar & Events" }
     }
+  },
+  "onboarding": {
+    "common": {
+      "loading": "Loading…",
+      "noResults": "No results"
+    },
+    "stepIndicator": {
+      "welcomeTitle": "Welcome to ZSMS",
+      "welcomeSubtitle": "Let's get your school set up in a few steps.",
+      "step1Title": "School & Identity",
+      "step1Caption": "Your school, admin & location",
+      "step2Title": "Academic Basics",
+      "step2Caption": "Academic year & structure",
+      "step3Title": "Review",
+      "step3Caption": "Confirm & create your school"
+    },
+    "nav": {
+      "previous": "Previous",
+      "saveAndContinue": "Save & Continue",
+      "confirmAndCreate": "Confirm & Create School",
+      "creating": "Creating your school…"
+    },
+    "step1": {
+      "heading": "School & Identity",
+      "subheading": "Tell us about your school, its administrator, and where it's based.",
+      "schoolName": { "label": "School Name", "placeholder": "e.g. Springfield High School" },
+      "subdomain": {
+        "label": "Portal Subdomain",
+        "suffix": ".zsmsapp.com",
+        "helper": "This becomes your school's portal address: yourslug.zsmsapp.com. It can't be changed once provisioned.",
+        "checking": "Checking…",
+        "available": "Available",
+        "taken": "Taken"
+      },
+      "customDomain": {
+        "label": "Use your own domain (optional)",
+        "placeholder": "portal.yourschool.edu.ng",
+        "helper": "You can verify and configure this after your school is created."
+      },
+      "administrator": {
+        "sectionTitle": "Administrator",
+        "firstName": { "label": "First Name", "placeholder": "e.g. Ada" },
+        "lastName": { "label": "Last Name", "placeholder": "e.g. Obi" },
+        "email": { "label": "Email", "placeholder": "admin@yourschool.edu.ng" },
+        "emailHelper": "A secure link to set your password will be emailed to this address."
+      },
+      "schoolEmail": { "label": "School Email", "placeholder": "info@yourschool.edu.ng" },
+      "schoolPhone": { "label": "School Phone", "placeholder": "801 234 5678" },
+      "location": {
+        "sectionTitle": "Location",
+        "autoFillHelper": "Selecting a country auto-fills timezone, currency, and phone code. States and cities load offline as you go.",
+        "country": { "label": "Country", "placeholder": "Search country…" },
+        "region": {
+          "label": "Region / State",
+          "placeholder": "e.g. Lagos",
+          "searchPlaceholder": "Search state or region…"
+        },
+        "city": {
+          "label": "City",
+          "placeholder": "e.g. Ikeja",
+          "searchPlaceholder": "Search city…"
+        },
+        "street": { "label": "Street Address", "placeholder": "e.g. 12 Allen Avenue" },
+        "postalCode": { "label": "Postal Code", "placeholder": "e.g. 100281" },
+        "timezone": { "label": "Timezone" },
+        "currency": { "label": "Currency" },
+        "selectCountryFirst": "Select a country first",
+        "selectStateFirst": "Select a state first"
+      },
+      "language": {
+        "sectionTitle": "Language",
+        "default": { "label": "Default Language" },
+        "additional": { "label": "Additional Languages" }
+      },
+      "logo": {
+        "label": "School Logo",
+        "helper": "Optional. PNG or JPG, up to 2MB.",
+        "upload": "Upload logo",
+        "change": "Change",
+        "remove": "Remove"
+      },
+      "workingDays": { "label": "Working Days" },
+      "showWebsite": {
+        "label": "Show school website to visitors",
+        "helper": "You can turn this on later once your site is ready."
+      }
+    },
+    "step2": {
+      "heading": "Academic Basics",
+      "subheading": "Set up your first academic year and school structure.",
+      "academicYear": {
+        "sectionTitle": "Academic Year",
+        "name": { "label": "Year Name", "placeholder": "e.g. 2025/2026" },
+        "startDate": { "label": "Session Start Date" },
+        "endDate": { "label": "Session End Date" }
+      },
+      "schoolMode": { "label": "School Mode" },
+      "schoolType": { "label": "School Type", "customPlaceholder": "Type a school type…" },
+      "awardBody": {
+        "label": "Award Body (optional)",
+        "customPlaceholder": "Type an award body…"
+      },
+      "addCustom": "Add custom"
+    },
+    "options": {
+      "schoolMode": { "day": "Day", "boarding": "Boarding", "both": "Both" },
+      "schoolType": {
+        "creche": "Creche",
+        "playgroup": "Playgroup",
+        "preNursery": "Pre-Nursery",
+        "nursery": "Nursery",
+        "primary": "Primary",
+        "grade": "Grade",
+        "secondary": "Secondary",
+        "juniorSecondary": "Junior Secondary",
+        "seniorSecondary": "Senior Secondary",
+        "college": "College",
+        "keystage3": "Keystage 3",
+        "keystage4": "Keystage 4"
+      },
+      "awardBody": {
+        "waec": "WAEC",
+        "neco": "NECO",
+        "cambridge": "Cambridge",
+        "ib": "IB",
+        "edexcel": "Edexcel"
+      },
+      "workingDays": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      },
+      "language": { "en": "English", "fr": "French" }
+    },
+    "review": {
+      "heading": "Review",
+      "subheading": "Check everything looks right before we create your school.",
+      "sections": {
+        "schoolIdentity": "School & Identity",
+        "location": "Location",
+        "language": "Language",
+        "administrator": "Administrator",
+        "academicBasics": "Academic Basics"
+      },
+      "notSet": "Not set",
+      "none": "None",
+      "notice": "Your school environment will be created and a set-password link emailed to the administrator."
+    },
+    "success": {
+      "heading": "Your school has been created!",
+      "message": "Check {email} for a link to set your password and log in.",
+      "portalLabel": "Your portal"
+    },
+    "errors": {
+      "required": "This field is required",
+      "invalidEmail": "Enter a valid email address",
+      "invalidSlug": "Use lowercase letters, numbers, and hyphens only",
+      "slugTaken": "This subdomain is already taken",
+      "slugChecking": "Still checking availability — please wait",
+      "endBeforeStart": "Session end date must be after the start date",
+      "selectAtLeastOne": "Select at least one"
+    }
   }
 }
