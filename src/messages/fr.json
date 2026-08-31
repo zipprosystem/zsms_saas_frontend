@@ -158,5 +158,171 @@
       "periodsAndBells": { "name": "Périodes et sonneries" },
       "calendarAndEvents": { "name": "Calendrier et événements" }
     }
+  },
+  "onboarding": {
+    "common": {
+      "loading": "Chargement…",
+      "noResults": "Aucun résultat"
+    },
+    "stepIndicator": {
+      "welcomeTitle": "Bienvenue sur ZSMS",
+      "welcomeSubtitle": "Configurons votre école en quelques étapes.",
+      "step1Title": "École & Identité",
+      "step1Caption": "École, administrateur et localisation",
+      "step2Title": "Bases académiques",
+      "step2Caption": "Année académique et structure",
+      "step3Title": "Vérification",
+      "step3Caption": "Confirmez et créez votre école"
+    },
+    "nav": {
+      "previous": "Précédent",
+      "saveAndContinue": "Enregistrer et continuer",
+      "confirmAndCreate": "Confirmer et créer l'école",
+      "creating": "Création de votre école…"
+    },
+    "step1": {
+      "heading": "École & Identité",
+      "subheading": "Parlez-nous de votre école, de son administrateur et de sa localisation.",
+      "schoolName": { "label": "Nom de l'école", "placeholder": "ex. Lycée Springfield" },
+      "subdomain": {
+        "label": "Sous-domaine du portail",
+        "suffix": ".zsmsapp.com",
+        "helper": "Ceci devient l'adresse du portail de votre école : votresigle.zsmsapp.com. Elle ne pourra plus être modifiée une fois l'école provisionnée.",
+        "checking": "Vérification…",
+        "available": "Disponible",
+        "taken": "Déjà pris"
+      },
+      "customDomain": {
+        "label": "Utiliser votre propre domaine (optionnel)",
+        "placeholder": "portail.votreecole.edu.ng",
+        "helper": "Vous pourrez le vérifier et le configurer après la création de votre école."
+      },
+      "administrator": {
+        "sectionTitle": "Administrateur",
+        "firstName": { "label": "Prénom", "placeholder": "ex. Ada" },
+        "lastName": { "label": "Nom", "placeholder": "ex. Obi" },
+        "email": { "label": "E-mail", "placeholder": "admin@votreecole.edu.ng" },
+        "emailHelper": "Un lien sécurisé pour définir votre mot de passe sera envoyé à cette adresse."
+      },
+      "schoolEmail": { "label": "E-mail de l'école", "placeholder": "info@votreecole.edu.ng" },
+      "schoolPhone": { "label": "Téléphone de l'école", "placeholder": "801 234 5678" },
+      "location": {
+        "sectionTitle": "Localisation",
+        "autoFillHelper": "La sélection d'un pays remplit automatiquement le fuseau horaire, la devise et l'indicatif téléphonique. Les régions et villes se chargent hors ligne au fur et à mesure.",
+        "country": { "label": "Pays", "placeholder": "Rechercher un pays…" },
+        "region": {
+          "label": "Région / État",
+          "placeholder": "ex. Lagos",
+          "searchPlaceholder": "Rechercher une région ou un état…"
+        },
+        "city": {
+          "label": "Ville",
+          "placeholder": "ex. Ikeja",
+          "searchPlaceholder": "Rechercher une ville…"
+        },
+        "street": { "label": "Adresse", "placeholder": "ex. 12 Allen Avenue" },
+        "postalCode": { "label": "Code postal", "placeholder": "ex. 100281" },
+        "timezone": { "label": "Fuseau horaire" },
+        "currency": { "label": "Devise" },
+        "selectCountryFirst": "Sélectionnez d'abord un pays",
+        "selectStateFirst": "Sélectionnez d'abord un état"
+      },
+      "language": {
+        "sectionTitle": "Langue",
+        "default": { "label": "Langue par défaut" },
+        "additional": { "label": "Langues supplémentaires" }
+      },
+      "logo": {
+        "label": "Logo de l'école",
+        "helper": "Optionnel. PNG ou JPG, jusqu'à 2 Mo.",
+        "upload": "Téléverser un logo",
+        "change": "Changer",
+        "remove": "Retirer"
+      },
+      "workingDays": { "label": "Jours ouvrés" },
+      "showWebsite": {
+        "label": "Afficher le site de l'école aux visiteurs",
+        "helper": "Vous pourrez activer cette option plus tard une fois votre site prêt."
+      }
+    },
+    "step2": {
+      "heading": "Bases académiques",
+      "subheading": "Configurez votre première année académique et la structure de l'école.",
+      "academicYear": {
+        "sectionTitle": "Année académique",
+        "name": { "label": "Nom de l'année", "placeholder": "ex. 2025/2026" },
+        "startDate": { "label": "Date de début de session" },
+        "endDate": { "label": "Date de fin de session" }
+      },
+      "schoolMode": { "label": "Mode de l'école" },
+      "schoolType": { "label": "Type d'école", "customPlaceholder": "Saisir un type d'école…" },
+      "awardBody": {
+        "label": "Organisme d'examen (optionnel)",
+        "customPlaceholder": "Saisir un organisme d'examen…"
+      },
+      "addCustom": "Ajouter"
+    },
+    "options": {
+      "schoolMode": { "day": "Externat", "boarding": "Internat", "both": "Les deux" },
+      "schoolType": {
+        "creche": "Crèche",
+        "playgroup": "Halte-garderie",
+        "preNursery": "Pré-maternelle",
+        "nursery": "Maternelle",
+        "primary": "Primaire",
+        "grade": "Classe",
+        "secondary": "Secondaire",
+        "juniorSecondary": "Premier cycle secondaire",
+        "seniorSecondary": "Second cycle secondaire",
+        "college": "Collège",
+        "keystage3": "Keystage 3",
+        "keystage4": "Keystage 4"
+      },
+      "awardBody": {
+        "waec": "WAEC",
+        "neco": "NECO",
+        "cambridge": "Cambridge",
+        "ib": "IB",
+        "edexcel": "Edexcel"
+      },
+      "workingDays": {
+        "mon": "Lun",
+        "tue": "Mar",
+        "wed": "Mer",
+        "thu": "Jeu",
+        "fri": "Ven",
+        "sat": "Sam",
+        "sun": "Dim"
+      },
+      "language": { "en": "Anglais", "fr": "Français" }
+    },
+    "review": {
+      "heading": "Vérification",
+      "subheading": "Vérifiez que tout est correct avant de créer votre école.",
+      "sections": {
+        "schoolIdentity": "École & Identité",
+        "location": "Localisation",
+        "language": "Langue",
+        "administrator": "Administrateur",
+        "academicBasics": "Bases académiques"
+      },
+      "notSet": "Non renseigné",
+      "none": "Aucun",
+      "notice": "L'environnement de votre école va être créé et un lien de définition de mot de passe sera envoyé à l'administrateur."
+    },
+    "success": {
+      "heading": "Votre école a été créée !",
+      "message": "Consultez {email} pour recevoir un lien de définition de mot de passe et vous connecter.",
+      "portalLabel": "Votre portail"
+    },
+    "errors": {
+      "required": "Ce champ est obligatoire",
+      "invalidEmail": "Saisissez une adresse e-mail valide",
+      "invalidSlug": "Utilisez uniquement des minuscules, des chiffres et des tirets",
+      "slugTaken": "Ce sous-domaine est déjà pris",
+      "slugChecking": "Vérification en cours — veuillez patienter",
+      "endBeforeStart": "La date de fin de session doit être postérieure à la date de début",
+      "selectAtLeastOne": "Sélectionnez au moins une option"
+    }
   }
 }

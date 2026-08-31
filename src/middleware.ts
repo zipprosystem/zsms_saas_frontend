@@ -23,11 +23,19 @@ function extractSlugFromProdHost(hostname: string): string | null {
 
 export async function middleware(request: NextRequest) {
   const hostname = (request.headers.get("host") ?? "").split(":")[0];
+  const pathname = request.nextUrl.pathname;
+
+  // Public self-onboarding: no tenant exists yet (the school is being
+  // created), so skip tenant resolution entirely — don't let the local-dev
+  // fallback chain below attach a demo tenant here.
+  const isPublicOnboarding = pathname === "/onboarding" || pathname.startsWith("/onboarding/");
 
   // LOCAL DEV fallback chain (Option 3): ?tenant= param -> DEV_TENANT_SLUG -> hardcoded default.
-  const slug = isLocalHost(hostname)
-    ? request.nextUrl.searchParams.get("tenant") || process.env.DEV_TENANT_SLUG || "demo-school"
-    : extractSlugFromProdHost(hostname);
+  const slug = isPublicOnboarding
+    ? null
+    : isLocalHost(hostname)
+      ? request.nextUrl.searchParams.get("tenant") || process.env.DEV_TENANT_SLUG || "demo-school"
+      : extractSlugFromProdHost(hostname);
 
   const requestHeaders = new Headers(request.headers);
 

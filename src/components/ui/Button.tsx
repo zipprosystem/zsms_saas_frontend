@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "accent";
+  variant?: "accent" | "secondary";
   icon?: ReactNode;
 }
 
@@ -15,7 +15,7 @@ export function Button({
   const variantClass =
     variant === "accent"
       ? "bg-accent text-on-accent hover:bg-accent-hover"
-      : "";
+      : "border border-border bg-surface text-text-primary hover:bg-background";
 
   return (
     <button
