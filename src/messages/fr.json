@@ -18,7 +18,38 @@
     "newPassword": "Nouveau mot de passe",
     "confirmPassword": "Confirmer le mot de passe",
     "comingSoon": "Bientôt disponible",
-    "searchPlaceholder": "Rechercher n'importe quoi"
+    "searchPlaceholder": "Rechercher n'importe quoi",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe"
+  },
+  "setPassword": {
+    "title": "Définissez votre mot de passe",
+    "submit": "Définir le mot de passe",
+    "submitting": "Définition du mot de passe…",
+    "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
+    "requirements": {
+      "title": "Le mot de passe doit contenir :",
+      "length": "8 à 128 caractères",
+      "uppercase": "Au moins une lettre majuscule",
+      "lowercase": "Au moins une lettre minuscule",
+      "number": "Au moins un chiffre",
+      "specialNote": "Un caractère spécial n'est pas requis."
+    },
+    "success": {
+      "title": "Mot de passe défini !",
+      "message": "Redirection vers la connexion…"
+    },
+    "errors": {
+      "invalidToken": "Ce lien d'invitation est invalide, expiré ou a déjà été utilisé. Veuillez en demander un nouveau.",
+      "validation": "Votre mot de passe ne respecte pas les exigences. Veuillez vérifier et réessayer.",
+      "network": "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.",
+      "unknown": "Une erreur s'est produite. Veuillez réessayer."
+    },
+    "invalidLink": {
+      "title": "Ce lien est invalide ou manquant",
+      "message": "Le lien est peut-être rompu ou incomplet. Vérifiez votre e-mail pour obtenir le lien d'invitation correct, ou contactez l'administrateur de votre école.",
+      "backToLogin": "Retour à la connexion"
+    }
   },
   "welcome": {
     "welcomeBack": "Bon retour",

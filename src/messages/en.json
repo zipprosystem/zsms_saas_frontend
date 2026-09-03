@@ -18,7 +18,38 @@
     "newPassword": "New Password",
     "confirmPassword": "Confirm Password",
     "comingSoon": "Coming soon",
-    "searchPlaceholder": "Search anything"
+    "searchPlaceholder": "Search anything",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
+  },
+  "setPassword": {
+    "title": "Set Your Password",
+    "submit": "Set Password",
+    "submitting": "Setting Password…",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "requirements": {
+      "title": "Password must contain:",
+      "length": "8–128 characters",
+      "uppercase": "At least one uppercase letter",
+      "lowercase": "At least one lowercase letter",
+      "number": "At least one number",
+      "specialNote": "A special character is not required."
+    },
+    "success": {
+      "title": "Password Set!",
+      "message": "Redirecting to login…"
+    },
+    "errors": {
+      "invalidToken": "This invite link is invalid, expired, or has already been used. Please request a new one.",
+      "validation": "Your password doesn't meet the requirements. Please check and try again.",
+      "network": "We couldn't reach the server. Check your connection and try again.",
+      "unknown": "Something went wrong. Please try again."
+    },
+    "invalidLink": {
+      "title": "This link is invalid or missing",
+      "message": "The link may be broken or incomplete. Please check your email for the correct invite link, or contact your school administrator.",
+      "backToLogin": "Back to Login"
+    }
   },
   "welcome": {
     "welcomeBack": "Welcome Back",
