@@ -16,7 +16,6 @@ export default function LoginPage() {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log("sign in (no-op)", { username, password });
   };
 
   return (

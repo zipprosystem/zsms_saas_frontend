@@ -15,7 +15,6 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log("forgot password (no-op)", { email });
   };
 
   return (
