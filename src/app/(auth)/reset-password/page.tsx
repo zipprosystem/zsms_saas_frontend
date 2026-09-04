@@ -16,7 +16,6 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log("reset password (no-op)", { newPassword, confirmPassword });
   };
 
   return (
