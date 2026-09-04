@@ -22,6 +22,17 @@
     "showPassword": "Show password",
     "hidePassword": "Hide password"
   },
+  "login": {
+    "submitting": "Signing in…",
+    "errors": {
+      "invalidCredentials": "Invalid email or password",
+      "validation": "Please check your details and try again",
+      "tooManyAttempts": "Too many attempts. Please try again shortly.",
+      "tooManyAttemptsWithSeconds": "Too many attempts, try again in {seconds}s",
+      "network": "We couldn't reach the server. Check your connection and try again.",
+      "unknown": "Something went wrong. Please try again."
+    }
+  },
   "setPassword": {
     "title": "Set Your Password",
     "submit": "Set Password",
