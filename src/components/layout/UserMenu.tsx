@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { setLocale } from "@/actions/set-locale";
 import { useTheme } from "@/hooks/useTheme";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { UserIcon } from "@/components/icons/header/UserIcon";
 import type { Locale } from "@/i18n/request";
 
@@ -12,6 +13,7 @@ export function UserMenu() {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const { theme, setTheme } = useTheme();
+  const { logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -151,13 +153,16 @@ export function UserMenu() {
             >
               {t("header.profile")} / {t("header.settings")}
             </Link>
-            <Link
-              href="/login"
-              onClick={() => setIsOpen(false)}
-              className="rounded-md px-3 py-2 text-sm text-error transition-colors hover:bg-background"
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                void logout();
+              }}
+              className="rounded-md px-3 py-2 text-left text-sm text-error transition-colors hover:bg-background"
             >
               {t("header.logout")}
-            </Link>
+            </button>
           </div>
         </div>
       )}

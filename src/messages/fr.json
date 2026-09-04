@@ -22,6 +22,17 @@
     "showPassword": "Afficher le mot de passe",
     "hidePassword": "Masquer le mot de passe"
   },
+  "login": {
+    "submitting": "Connexion en cours…",
+    "errors": {
+      "invalidCredentials": "E-mail ou mot de passe invalide",
+      "validation": "Veuillez vérifier vos informations et réessayer",
+      "tooManyAttempts": "Trop de tentatives. Veuillez réessayer bientôt.",
+      "tooManyAttemptsWithSeconds": "Trop de tentatives, réessayez dans {seconds}s",
+      "network": "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.",
+      "unknown": "Une erreur s'est produite. Veuillez réessayer."
+    }
+  },
   "setPassword": {
     "title": "Définissez votre mot de passe",
     "submit": "Définir le mot de passe",
