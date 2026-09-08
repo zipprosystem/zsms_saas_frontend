@@ -62,6 +62,51 @@
       "backToLogin": "Retour à la connexion"
     }
   },
+  "forgotPassword": {
+    "submit": "Envoyer le lien de réinitialisation",
+    "submitting": "Envoi en cours…",
+    "invalidEmail": "Saisissez une adresse e-mail valide",
+    "success": {
+      "title": "Consultez votre e-mail",
+      "message": "Si un compte existe pour cette adresse, nous avons envoyé un lien de réinitialisation du mot de passe. Vérifiez votre boîte de réception."
+    },
+    "errors": {
+      "rateLimited": "Trop de tentatives. Veuillez réessayer bientôt.",
+      "rateLimitedWithSeconds": "Trop de tentatives, réessayez dans {seconds}s",
+      "network": "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.",
+      "unknown": "Une erreur s'est produite. Veuillez réessayer."
+    }
+  },
+  "resetPassword": {
+    "title": "Réinitialisez votre mot de passe",
+    "submit": "Réinitialiser le mot de passe",
+    "submitting": "Réinitialisation du mot de passe…",
+    "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
+    "requirements": {
+      "title": "Le mot de passe doit contenir :",
+      "length": "8 à 128 caractères",
+      "uppercase": "Au moins une lettre majuscule",
+      "lowercase": "Au moins une lettre minuscule",
+      "number": "Au moins un chiffre",
+      "specialNote": "Un caractère spécial n'est pas requis."
+    },
+    "success": {
+      "title": "Mot de passe réinitialisé !",
+      "message": "Votre mot de passe a été réinitialisé. Redirection vers la connexion…"
+    },
+    "errors": {
+      "invalidToken": "Ce lien de réinitialisation est invalide ou a expiré. Veuillez en demander un nouveau.",
+      "requestNewLink": "Demander un nouveau lien de réinitialisation",
+      "validation": "Votre mot de passe ne respecte pas les exigences. Veuillez vérifier et réessayer.",
+      "network": "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.",
+      "unknown": "Une erreur s'est produite. Veuillez réessayer."
+    },
+    "invalidLink": {
+      "title": "Ce lien est invalide ou manquant",
+      "message": "Le lien est peut-être rompu ou incomplet. Veuillez demander un nouveau lien de réinitialisation du mot de passe.",
+      "requestNewLink": "Demander un nouveau lien de réinitialisation"
+    }
+  },
   "welcome": {
     "welcomeBack": "Bon retour",
     "schoolName": "Nom de l'école",

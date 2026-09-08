@@ -62,6 +62,51 @@
       "backToLogin": "Back to Login"
     }
   },
+  "forgotPassword": {
+    "submit": "Send reset link",
+    "submitting": "Sending…",
+    "invalidEmail": "Enter a valid email address",
+    "success": {
+      "title": "Check your email",
+      "message": "If an account exists for that email, we've sent a password reset link. Check your inbox."
+    },
+    "errors": {
+      "rateLimited": "Too many attempts. Please try again shortly.",
+      "rateLimitedWithSeconds": "Too many attempts, try again in {seconds}s",
+      "network": "We couldn't reach the server. Check your connection and try again.",
+      "unknown": "Something went wrong. Please try again."
+    }
+  },
+  "resetPassword": {
+    "title": "Reset Your Password",
+    "submit": "Reset Password",
+    "submitting": "Resetting Password…",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "requirements": {
+      "title": "Password must contain:",
+      "length": "8–128 characters",
+      "uppercase": "At least one uppercase letter",
+      "lowercase": "At least one lowercase letter",
+      "number": "At least one number",
+      "specialNote": "A special character is not required."
+    },
+    "success": {
+      "title": "Password Reset!",
+      "message": "Your password has been reset. Redirecting to login…"
+    },
+    "errors": {
+      "invalidToken": "This reset link is invalid or has expired. Please request a new one.",
+      "requestNewLink": "Request a new reset link",
+      "validation": "Your password doesn't meet the requirements. Please check and try again.",
+      "network": "We couldn't reach the server. Check your connection and try again.",
+      "unknown": "Something went wrong. Please try again."
+    },
+    "invalidLink": {
+      "title": "This link is invalid or missing",
+      "message": "The link may be broken or incomplete. Please request a new password reset link.",
+      "requestNewLink": "Request a new reset link"
+    }
+  },
   "welcome": {
     "welcomeBack": "Welcome Back",
     "schoolName": "School Name",
