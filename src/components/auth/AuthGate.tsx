@@ -9,6 +9,13 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 // in-memory only, so a reload always starts from status "idle" — this is
 // what silently calls /auth/refresh (using the httpOnly cookie) to restore
 // the session before rendering anything protected.
+//
+// DEV-ONLY: when AuthProvider's double-gated DEV_AUTH_BYPASS is active
+// (NODE_ENV==="development" AND NEXT_PUBLIC_DEV_AUTH_BYPASS==="true"),
+// restoreSession() below seeds a mock session and returns "authenticated"
+// without ever calling the real /auth/refresh — so this component's logic
+// is untouched, it just never takes the network/redirect path in that mode.
+// See src/lib/auth/AuthProvider.tsx. MUST NEVER activate in production.
 export function AuthGate({ children }: { children: ReactNode }) {
   const { status, restoreSession } = useAuth();
   const router = useRouter();

@@ -20,7 +20,12 @@
     "comingSoon": "Coming soon",
     "searchPlaceholder": "Search anything",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "dismiss": "Dismiss",
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save changes",
+    "saving": "Saving…"
   },
   "login": {
     "submitting": "Signing in…",
@@ -410,6 +415,122 @@
       "slugChecking": "Still checking availability — please wait",
       "endBeforeStart": "Session end date must be after the start date",
       "selectAtLeastOne": "Select at least one"
+    }
+  },
+  "settings": {
+    "tabs": {
+      "general": "General Settings",
+      "schoolSetup": "School Setup"
+    },
+    "schoolSetupComingSoon": "School Setup configuration is coming soon.",
+    "editProfile": "Edit profile",
+    "edit": "Edit",
+    "notSet": "Not set",
+    "toast": {
+      "identityUpdated": "School identity updated"
+    },
+    "comingSoonPanel": {
+      "subtitle": "Editing for this section isn't available yet.",
+      "body": "We're still building this editor. Check back soon."
+    },
+    "status": {
+      "active": "Active",
+      "suspended": "Suspended",
+      "pending": "Pending"
+    },
+    "sections": {
+      "identity": {
+        "title": "School Identity"
+      },
+      "branding": {
+        "title": "Branding",
+        "schoolLogo": "School Logo",
+        "mobileLogo": "Mobile",
+        "principalSignature": "Principal Signature",
+        "portalLoader": "Portal Loader"
+      },
+      "generalBehaviour": {
+        "title": "General Behaviour",
+        "workingDays": "Working Days",
+        "recordsPerPage": "Records per page",
+        "dateFormat": "Date format",
+        "timeFormat": "Time format",
+        "absenceEndDelay": "Absence end delay",
+        "absenceEndDelayValue": "{days} days",
+        "notificationChannel": "Notification channel",
+        "studentIdPrefix": "Student ID prefix",
+        "staffIdPrefix": "Staff ID prefix"
+      },
+      "regional": {
+        "title": "Regional Settings",
+        "address": "Address",
+        "country": "Country",
+        "timezone": "Timezone",
+        "currency": "Currency",
+        "pax": "PAX"
+      },
+      "banking": {
+        "title": "Banking Information",
+        "bankName": "Bank name",
+        "accountNumber": "Account number",
+        "accountName": "Account name",
+        "branch": "Branch"
+      },
+      "questionBank": {
+        "title": "Question Bank Defaults",
+        "questionsPerPage": "Questions per page",
+        "defaultExamDuration": "Default exam duration",
+        "minutesValue": "{minutes} minutes"
+      },
+      "socialMedia": {
+        "title": "Social Media",
+        "facebook": "Facebook",
+        "instagram": "Instagram",
+        "youtube": "YouTube",
+        "twitter": "Twitter / X"
+      },
+      "apiIntegrations": {
+        "title": "API & Integrations",
+        "apiKey": "API Key",
+        "smsSenderName": "SMS Sender Name",
+        "clientId": "Client ID",
+        "clientSecret": "Client Secret"
+      },
+      "notificationRouting": {
+        "title": "Notification Routing",
+        "financeAlerts": "Finance alerts",
+        "disciplinaryAlerts": "Disciplinary alerts"
+      },
+      "helpFeedback": {
+        "title": "Help & Feedback",
+        "helpCentre": "Help Centre",
+        "submitFeedback": "Submit Feedback",
+        "opensInNewTab": "Opens in a new tab"
+      }
+    },
+    "identityPanel": {
+      "title": "Edit School Identity",
+      "subtitle": "Update your school's core information",
+      "schoolName": { "label": "School Name", "placeholder": "e.g. Zenith Secondary School" },
+      "subdomain": {
+        "label": "Portal Subdomain",
+        "helper": "This is your school's portal address. It can't be changed after provisioning."
+      },
+      "customDomain": {
+        "label": "Custom Domain (optional)",
+        "placeholder": "portal.yourschool.edu.ng",
+        "helper": "Use your own domain. You can verify and configure this after saving."
+      },
+      "email": { "label": "Email Address", "placeholder": "info@yourschool.edu.ng" },
+      "phone": { "label": "Phone Number", "placeholder": "801 234 5678" },
+      "showWebsite": {
+        "label": "Show school website to visitors",
+        "helper": "Visitors can view your public school website when this is on."
+      },
+      "errors": {
+        "required": "This field is required",
+        "invalidEmail": "Enter a valid email address"
+      }
     }
   }
 }

@@ -20,7 +20,12 @@
     "comingSoon": "Bientôt disponible",
     "searchPlaceholder": "Rechercher n'importe quoi",
     "showPassword": "Afficher le mot de passe",
-    "hidePassword": "Masquer le mot de passe"
+    "hidePassword": "Masquer le mot de passe",
+    "dismiss": "Fermer",
+    "close": "Fermer",
+    "cancel": "Annuler",
+    "save": "Enregistrer les modifications",
+    "saving": "Enregistrement…"
   },
   "login": {
     "submitting": "Connexion en cours…",
@@ -410,6 +415,122 @@
       "slugChecking": "Vérification en cours — veuillez patienter",
       "endBeforeStart": "La date de fin de session doit être postérieure à la date de début",
       "selectAtLeastOne": "Sélectionnez au moins une option"
+    }
+  },
+  "settings": {
+    "tabs": {
+      "general": "Paramètres généraux",
+      "schoolSetup": "Configuration de l'école"
+    },
+    "schoolSetupComingSoon": "La configuration de l'école arrive bientôt.",
+    "editProfile": "Modifier le profil",
+    "edit": "Modifier",
+    "notSet": "Non renseigné",
+    "toast": {
+      "identityUpdated": "Identité de l'école mise à jour"
+    },
+    "comingSoonPanel": {
+      "subtitle": "La modification de cette section n'est pas encore disponible.",
+      "body": "Cet éditeur est encore en cours de développement. Revenez bientôt."
+    },
+    "status": {
+      "active": "Actif",
+      "suspended": "Suspendu",
+      "pending": "En attente"
+    },
+    "sections": {
+      "identity": {
+        "title": "Identité de l'école"
+      },
+      "branding": {
+        "title": "Image de marque",
+        "schoolLogo": "Logo de l'école",
+        "mobileLogo": "Mobile",
+        "principalSignature": "Signature du directeur",
+        "portalLoader": "Chargement du portail"
+      },
+      "generalBehaviour": {
+        "title": "Comportement général",
+        "workingDays": "Jours ouvrés",
+        "recordsPerPage": "Enregistrements par page",
+        "dateFormat": "Format de date",
+        "timeFormat": "Format d'heure",
+        "absenceEndDelay": "Délai de fin d'absence",
+        "absenceEndDelayValue": "{days} jours",
+        "notificationChannel": "Canal de notification",
+        "studentIdPrefix": "Préfixe ID élève",
+        "staffIdPrefix": "Préfixe ID personnel"
+      },
+      "regional": {
+        "title": "Paramètres régionaux",
+        "address": "Adresse",
+        "country": "Pays",
+        "timezone": "Fuseau horaire",
+        "currency": "Devise",
+        "pax": "PAX"
+      },
+      "banking": {
+        "title": "Informations bancaires",
+        "bankName": "Nom de la banque",
+        "accountNumber": "Numéro de compte",
+        "accountName": "Nom du compte",
+        "branch": "Agence"
+      },
+      "questionBank": {
+        "title": "Paramètres par défaut de la banque de questions",
+        "questionsPerPage": "Questions par page",
+        "defaultExamDuration": "Durée d'examen par défaut",
+        "minutesValue": "{minutes} minutes"
+      },
+      "socialMedia": {
+        "title": "Réseaux sociaux",
+        "facebook": "Facebook",
+        "instagram": "Instagram",
+        "youtube": "YouTube",
+        "twitter": "Twitter / X"
+      },
+      "apiIntegrations": {
+        "title": "API et intégrations",
+        "apiKey": "Clé API",
+        "smsSenderName": "Nom d'expéditeur SMS",
+        "clientId": "ID client",
+        "clientSecret": "Clé secrète client"
+      },
+      "notificationRouting": {
+        "title": "Acheminement des notifications",
+        "financeAlerts": "Alertes financières",
+        "disciplinaryAlerts": "Alertes disciplinaires"
+      },
+      "helpFeedback": {
+        "title": "Aide et retours",
+        "helpCentre": "Centre d'aide",
+        "submitFeedback": "Envoyer un retour",
+        "opensInNewTab": "S'ouvre dans un nouvel onglet"
+      }
+    },
+    "identityPanel": {
+      "title": "Modifier l'identité de l'école",
+      "subtitle": "Mettez à jour les informations essentielles de votre école",
+      "schoolName": { "label": "Nom de l'école", "placeholder": "ex. Lycée Zenith" },
+      "subdomain": {
+        "label": "Sous-domaine du portail",
+        "helper": "Ceci est l'adresse du portail de votre école. Elle ne peut pas être modifiée après le provisionnement."
+      },
+      "customDomain": {
+        "label": "Domaine personnalisé (optionnel)",
+        "placeholder": "portail.votreecole.edu.ng",
+        "helper": "Utilisez votre propre domaine. Vous pourrez le vérifier et le configurer après l'enregistrement."
+      },
+      "email": { "label": "Adresse e-mail", "placeholder": "info@votreecole.edu.ng" },
+      "phone": { "label": "Numéro de téléphone", "placeholder": "801 234 5678" },
+      "showWebsite": {
+        "label": "Afficher le site de l'école aux visiteurs",
+        "helper": "Les visiteurs pourront voir le site public de votre école lorsque cette option est activée."
+      },
+      "errors": {
+        "required": "Ce champ est obligatoire",
+        "invalidEmail": "Saisissez une adresse e-mail valide"
+      }
     }
   }
 }
