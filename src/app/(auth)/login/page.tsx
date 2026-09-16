@@ -1,11 +1,15 @@
-import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { getCurrentTenant } from "@/lib/tenant/getCurrentTenant";
 import { LoginForm } from "@/components/auth/LoginForm";
 
 export default function LoginPage() {
-  // Raw header value (not getCurrentTenant()) — login only needs the slug
-  // string to send to the backend, regardless of whether the tenant
-  // resolved locally; the backend is the source of truth on validity.
-  const schoolSlug = headers().get("x-tenant-slug") ?? "";
+  // Middleware already blocks unresolved tenants before this page is
+  // reached; this is defense in depth so LoginForm can never render for a
+  // tenant that didn't pass validation.
+  const tenant = getCurrentTenant();
+  if (!tenant) {
+    redirect("/tenant-invalid");
+  }
 
-  return <LoginForm schoolSlug={schoolSlug} />;
+  return <LoginForm schoolSlug={tenant.slug} />;
 }

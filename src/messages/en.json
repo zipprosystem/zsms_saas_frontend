@@ -154,7 +154,11 @@
     "defaultUserRole": "Administrator"
   },
   "tenant": {
-    "label": "Tenant"
+    "label": "Tenant",
+    "invalid": {
+      "title": "School not found",
+      "message": "This school portal doesn't exist or is unavailable. Check the URL or contact your school administrator."
+    }
   },
   "panels": {
     "student": { "title": "Student Panel" },

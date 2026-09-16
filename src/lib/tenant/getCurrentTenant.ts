@@ -2,19 +2,20 @@ import { headers } from "next/headers";
 import type { Tenant } from "@/types/tenant";
 
 /**
- * Reads the tenant headers attached by src/middleware.ts. Server components /
- * server actions only (relies on next/headers).
+ * Reads the tenant headers attached by src/middleware.ts after successful
+ * backend validation. Server components / server actions only (relies on
+ * next/headers). Returns null for anything unresolved — there is no
+ * unvalidated fallback.
  */
 export function getCurrentTenant(): Tenant | null {
   const h = headers();
-  const id = h.get("x-tenant-id");
   const slug = h.get("x-tenant-slug");
   const name = h.get("x-tenant-name");
   const status = h.get("x-tenant-status");
 
-  if (!id || !slug || !name || !status || status === "unresolved") {
+  if (!slug || !name || status !== "active") {
     return null;
   }
 
-  return { id, slug, name, status: status as Tenant["status"] };
+  return { slug, name, status };
 }
