@@ -154,7 +154,11 @@
     "defaultUserRole": "Administrateur"
   },
   "tenant": {
-    "label": "Établissement"
+    "label": "Établissement",
+    "invalid": {
+      "title": "École introuvable",
+      "message": "Ce portail scolaire n'existe pas ou n'est pas disponible. Vérifiez l'URL ou contactez l'administrateur de votre école."
+    }
   },
   "panels": {
     "student": { "title": "Espace élève" },

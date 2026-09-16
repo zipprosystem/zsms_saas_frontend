@@ -1,11 +1,14 @@
-import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { getCurrentTenant } from "@/lib/tenant/getCurrentTenant";
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 
 export default function ForgotPasswordPage() {
-  // Raw header value (not getCurrentTenant()) — same reasoning as
-  // login/page.tsx: we only need the slug string to send to the backend,
-  // regardless of whether the tenant resolved locally.
-  const schoolSlug = headers().get("x-tenant-slug") ?? "";
+  // Middleware already blocks unresolved tenants before this page is
+  // reached; this is defense in depth, same reasoning as login/page.tsx.
+  const tenant = getCurrentTenant();
+  if (!tenant) {
+    redirect("/tenant-invalid");
+  }
 
-  return <ForgotPasswordForm schoolSlug={schoolSlug} />;
+  return <ForgotPasswordForm schoolSlug={tenant.slug} />;
 }
