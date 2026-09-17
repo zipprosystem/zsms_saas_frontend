@@ -7,7 +7,7 @@ export default function ForgotPasswordPage() {
   // reached; this is defense in depth, same reasoning as login/page.tsx.
   const tenant = getCurrentTenant();
   if (!tenant) {
-    redirect("/tenant-invalid");
+    redirect("https://zsmsapp.com");
   }
 
   return <ForgotPasswordForm schoolSlug={tenant.slug} />;

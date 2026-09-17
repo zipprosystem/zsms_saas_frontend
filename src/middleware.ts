@@ -16,6 +16,14 @@ const PUBLIC_PLATFORM_HOSTS = new Set([ROOT_DOMAIN, `www.${ROOT_DOMAIN}`]);
 
 const TENANT_HEADERS = ["x-tenant-slug", "x-tenant-name", "x-tenant-status"];
 
+// Per Muntajir: on any tenant-validation failure, send the visitor to the
+// public marketing site instead of rendering a "School not found" page.
+// This is a FIXED constant, never derived from the incoming host/query/any
+// header — reflecting attacker-controlled input into a redirect target is
+// an open-redirect vector. zsmsapp.com is in PUBLIC_PLATFORM_HOSTS, so this
+// redirect lands on a host this middleware never tenant-validates — no loop.
+const INVALID_TENANT_REDIRECT_URL = "https://zsmsapp.com";
+
 function isLocalHost(hostname: string): boolean {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname.endsWith(".localhost");
 }
@@ -47,8 +55,8 @@ function stripInboundTenantHeaders(request: NextRequest): Headers {
   return headers;
 }
 
-function rewriteToInvalidTenant(request: NextRequest, headers: Headers) {
-  return NextResponse.rewrite(new URL("/tenant-invalid", request.url), { request: { headers } });
+function redirectToPublicPlatform() {
+  return NextResponse.redirect(INVALID_TENANT_REDIRECT_URL);
 }
 
 export async function middleware(request: NextRequest) {
@@ -85,12 +93,12 @@ export async function middleware(request: NextRequest) {
     : extractCandidateSlug(hostname);
 
   if (!slug) {
-    return rewriteToInvalidTenant(request, requestHeaders);
+    return redirectToPublicPlatform();
   }
 
   const result = await validateTenantBySlug(slug);
   if (!result.ok) {
-    return rewriteToInvalidTenant(request, requestHeaders);
+    return redirectToPublicPlatform();
   }
 
   requestHeaders.set("x-tenant-slug", result.tenant.slug);
