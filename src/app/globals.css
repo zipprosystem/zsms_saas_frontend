@@ -40,6 +40,10 @@
   --status-done: #00bc7d;
   --status-done-text: #009966;
   --status-empty-border: #d1d5db;
+
+  /* Marketing hero brand surface — fixed across themes, same convention
+     as --accent-2: the one deliberately bold, non-flipping color. */
+  --navy: #252d63;
 }
 
 .dark {
@@ -80,12 +84,20 @@
   --status-done: #00bc7d;
   --status-done-text: #009966;
   --status-empty-border: #4b5563;
+
+  /* Same navy as light mode — fixed brand surface, not a flipping theme
+     token (it's already dark, so it reads fine unchanged in dark mode). */
+  --navy: #252d63;
 }
 
+/* No overflow:hidden here — AppShell (the dashboard) is fully
+   self-contained for scrolling via its own h-dvh + overflow-hidden
+   wrapper and overflow-y-auto <main>, independent of body. A global
+   overflow:hidden did nothing for AppShell but clipped every page
+   outside it (marketing, onboarding, auth, tenant-invalid). */
 html,
 body {
   height: 100%;
-  overflow: hidden;
 }
 
 body {

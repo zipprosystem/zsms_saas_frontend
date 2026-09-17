@@ -536,5 +536,88 @@
         "invalidEmail": "Enter a valid email address"
       }
     }
+  },
+  "marketing": {
+    "nav": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "signUp": "Sign up"
+    },
+    "hero": {
+      "headline": "Run your entire school from one place.",
+      "subhead": "Zippro School Management System brings academics, attendance, exams, finance, admissions, and more into a single platform built for how schools actually work.",
+      "primaryCta": "Sign up today",
+      "secondaryCta": "See everything included",
+      "manifestLabel": "What's included"
+    },
+    "modules": {
+      "academics": "Academics",
+      "attendance": "Attendance",
+      "examinations": "Examinations",
+      "students": "Students",
+      "admissions": "Admissions",
+      "financeAdmin": "Finance & Admin",
+      "hr": "HR",
+      "library": "Library",
+      "inventory": "Inventory",
+      "communications": "Communications",
+      "messages": "Messages",
+      "reports": "Reports",
+      "conducts": "Conducts",
+      "clinic": "Clinic",
+      "facilities": "Facilities",
+      "websiteCms": "Website & CMS",
+      "adminPanel": "Admin Panel",
+      "parentPortal": "Parent Portal",
+      "aiAssistant": "AI Assistant"
+    },
+    "features": {
+      "heading": "Everything your school runs on",
+      "subheading": "Four areas. One platform. Nothing bolted on.",
+      "groups": {
+        "academicsLearning": {
+          "title": "Academics & Learning",
+          "description": "Plan the curriculum, run exams and generate report cards, manage the library, and let an AI assistant help staff with the everyday admin work."
+        },
+        "studentsPeople": {
+          "title": "Students & People",
+          "description": "Handle admissions from first enquiry to enrolment, track attendance daily, keep every student record in one place, give parents visibility, and manage your staff."
+        },
+        "operationsFinance": {
+          "title": "Operations & Finance",
+          "description": "Collect fees, track spending, manage school supplies and assets, run the school clinic, and keep classrooms and campus facilities organised."
+        },
+        "communicationOversight": {
+          "title": "Communication & Oversight",
+          "description": "Send announcements, message parents and staff directly, track student conduct, generate the reports your school needs, and manage your public website — all from one admin panel."
+        }
+      }
+    },
+    "pricing": {
+      "heading": "Simple, per-student pricing",
+      "subheading": "Pay per student, billed yearly or by term. Every plan includes the modules listed.",
+      "perYear": "/student/year",
+      "perTerm": "/student/term",
+      "minimumStudents": "Minimum {count} students",
+      "moreModules": "+{count} more",
+      "recommended": "Recommended",
+      "globalNote": "For schools outside Nigeria",
+      "cta": "Get started",
+      "plans": {
+        "starter": { "name": "Starter" },
+        "professional": { "name": "Professional" },
+        "enterprise": { "name": "Enterprise" },
+        "basicGlobal": { "name": "Basic – Global" }
+      }
+    },
+    "footer": {
+      "wordmark": "Zippro School Management System",
+      "features": "Features",
+      "pricing": "Pricing",
+      "signUp": "Sign up",
+      "contact": "Contact",
+      "builtBy": "Built by {company} — <link>zipprosystem.com</link>",
+      "rights": "© {year} {company}. All rights reserved."
+    }
   }
 }
