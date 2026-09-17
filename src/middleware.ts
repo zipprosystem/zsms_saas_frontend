@@ -8,6 +8,12 @@ const ROOT_DOMAIN = "zsmsapp.com";
 // against the registry, never assumed.
 const RESERVED_HOSTS = new Set([ROOT_DOMAIN, `www.${ROOT_DOMAIN}`, `api.${ROOT_DOMAIN}`]);
 
+// The public platform host — apex and www, per Muntajir. Gets marketing at
+// "/" and the public self-onboarding form at "/onboarding", with no tenant
+// validation ever. A strict subset of RESERVED_HOSTS (api.* is reserved but
+// NOT public-routed — it stays a bare pass-through, unchanged).
+const PUBLIC_PLATFORM_HOSTS = new Set([ROOT_DOMAIN, `www.${ROOT_DOMAIN}`]);
+
 const TENANT_HEADERS = ["x-tenant-slug", "x-tenant-name", "x-tenant-status"];
 
 function isLocalHost(hostname: string): boolean {
@@ -50,16 +56,33 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const requestHeaders = stripInboundTenantHeaders(request);
 
-  // Public self-onboarding: no tenant exists yet (the school is being
-  // created), so skip tenant resolution entirely.
-  if (pathname === "/onboarding" || pathname.startsWith("/onboarding/")) {
+  // Apex/www: the public platform host, never a tenant. Marketing at "/",
+  // public self-onboarding at "/onboarding" — no tenant validation ever
+  // happens on this host, for any path.
+  if (PUBLIC_PLATFORM_HOSTS.has(hostname)) {
+    if (pathname === "/") {
+      return NextResponse.rewrite(new URL("/landing", request.url), { request: { headers: requestHeaders } });
+    }
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
-  // Reserved hosts (apex, www, api) are never tenants.
+  // The marketing page is always reachable directly regardless of host
+  // (e.g. local dev, or reviewing it on any host) — it's static public
+  // content with no tenant data, so bypassing validation here carries no
+  // fail-closed risk.
+  if (pathname === "/landing" || pathname.startsWith("/landing/")) {
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
+
+  // Any other reserved host (api) is never a tenant — bare pass-through,
+  // exactly as before this change.
   if (RESERVED_HOSTS.has(hostname)) {
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
+
+  // Everything below is unchanged tenant-validation logic. Note
+  // "/onboarding" is NOT special-cased here — on a tenant host it's just a
+  // normal path and goes through the same validation as everything else.
 
   const slug = isLocalDevAllowed(hostname)
     ? request.nextUrl.searchParams.get("tenant") || process.env.DEV_TENANT_SLUG || "demo-school"

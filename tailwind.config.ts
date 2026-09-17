@@ -42,6 +42,8 @@ const config: Config = {
         "status-done": "var(--status-done)",
         "status-done-text": "var(--status-done-text)",
         "status-empty-border": "var(--status-empty-border)",
+
+        navy: "var(--navy)",
       },
       borderRadius: {
         sm: "4px",
@@ -53,6 +55,15 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-geist)", ...defaultTheme.fontFamily.sans],
         display: ["var(--font-inter)", ...defaultTheme.fontFamily.sans],
+      },
+      keyframes: {
+        "hero-in": {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+      },
+      animation: {
+        "hero-in": "hero-in 0.5s ease-out both",
       },
     },
   },

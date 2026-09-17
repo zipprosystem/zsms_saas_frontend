@@ -536,5 +536,88 @@
         "invalidEmail": "Saisissez une adresse e-mail valide"
       }
     }
+  },
+  "marketing": {
+    "nav": {
+      "features": "Fonctionnalités",
+      "pricing": "Tarifs",
+      "signUp": "S'inscrire"
+    },
+    "hero": {
+      "headline": "Gérez toute votre école depuis un seul endroit.",
+      "subhead": "Zippro School Management System réunit académique, présence, examens, finances, admissions et bien plus dans une seule plateforme conçue pour le fonctionnement réel des écoles.",
+      "primaryCta": "S'inscrire aujourd'hui",
+      "secondaryCta": "Voir tout ce qui est inclus",
+      "manifestLabel": "Ce qui est inclus"
+    },
+    "modules": {
+      "academics": "Académique",
+      "attendance": "Présence",
+      "examinations": "Examens",
+      "students": "Élèves",
+      "admissions": "Admissions",
+      "financeAdmin": "Finances & Admin",
+      "hr": "RH",
+      "library": "Bibliothèque",
+      "inventory": "Inventaire",
+      "communications": "Communications",
+      "messages": "Messages",
+      "reports": "Rapports",
+      "conducts": "Conduite",
+      "clinic": "Infirmerie",
+      "facilities": "Installations",
+      "websiteCms": "Site web & CMS",
+      "adminPanel": "Panneau d'administration",
+      "parentPortal": "Portail parents",
+      "aiAssistant": "Assistant IA"
+    },
+    "features": {
+      "heading": "Tout ce dont votre école a besoin",
+      "subheading": "Quatre domaines. Une seule plateforme. Rien de rajouté après coup.",
+      "groups": {
+        "academicsLearning": {
+          "title": "Académique & Apprentissage",
+          "description": "Planifiez le programme, organisez les examens et générez les bulletins, gérez la bibliothèque, et laissez un assistant IA aider le personnel dans les tâches administratives du quotidien."
+        },
+        "studentsPeople": {
+          "title": "Élèves & Personnel",
+          "description": "Gérez les admissions depuis la première demande jusqu'à l'inscription, suivez la présence au quotidien, centralisez chaque dossier élève, donnez de la visibilité aux parents, et gérez votre personnel."
+        },
+        "operationsFinance": {
+          "title": "Opérations & Finances",
+          "description": "Collectez les frais de scolarité, suivez les dépenses, gérez les fournitures et les biens de l'école, faites fonctionner l'infirmerie, et organisez les salles de classe et les installations du campus."
+        },
+        "communicationOversight": {
+          "title": "Communication & Supervision",
+          "description": "Envoyez des annonces, échangez directement avec les parents et le personnel, suivez la conduite des élèves, générez les rapports dont votre école a besoin, et gérez votre site web public — tout depuis un seul panneau d'administration."
+        }
+      }
+    },
+    "pricing": {
+      "heading": "Une tarification simple, par élève",
+      "subheading": "Payez par élève, à l'année ou au trimestre. Chaque forfait inclut les modules listés.",
+      "perYear": "/élève/an",
+      "perTerm": "/élève/trimestre",
+      "minimumStudents": "Minimum {count} élèves",
+      "moreModules": "+{count} de plus",
+      "recommended": "Recommandé",
+      "globalNote": "Pour les écoles hors du Nigéria",
+      "cta": "Commencer",
+      "plans": {
+        "starter": { "name": "Starter" },
+        "professional": { "name": "Professional" },
+        "enterprise": { "name": "Enterprise" },
+        "basicGlobal": { "name": "Basic – Global" }
+      }
+    },
+    "footer": {
+      "wordmark": "Zippro School Management System",
+      "features": "Fonctionnalités",
+      "pricing": "Tarifs",
+      "signUp": "S'inscrire",
+      "contact": "Contact",
+      "builtBy": "Développé par {company} — <link>zipprosystem.com</link>",
+      "rights": "© {year} {company}. Tous droits réservés."
+    }
   }
 }
