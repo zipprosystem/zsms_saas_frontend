@@ -91,6 +91,8 @@ export function ReviewStep({ data, submitError }: ReviewStepProps) {
               : none
           }
         />
+        <ReviewRow label={t("onboarding.step1.website.label")} value={data.school.website || none} />
+        <ReviewRow label={t("onboarding.step1.uin.label")} value={data.school.uin || none} />
         <ReviewRow
           label={t("onboarding.step1.workingDays.label")}
           value={labelList(WORKING_DAYS, data.school.workingDays)}
@@ -130,15 +132,19 @@ export function ReviewStep({ data, submitError }: ReviewStepProps) {
       <ReviewSection title={t("onboarding.review.sections.administrator")}>
         <ReviewRow
           label={t("onboarding.step1.administrator.firstName.label")}
-          value={data.administrator.firstName || notSet}
+          value={data.owner.firstName || notSet}
         />
         <ReviewRow
           label={t("onboarding.step1.administrator.lastName.label")}
-          value={data.administrator.lastName || notSet}
+          value={data.owner.lastName || notSet}
         />
         <ReviewRow
           label={t("onboarding.step1.administrator.email.label")}
-          value={data.administrator.email || notSet}
+          value={data.owner.email || notSet}
+        />
+        <ReviewRow
+          label={t("onboarding.step1.administrator.phone.label")}
+          value={data.owner.phoneNumber ? `+${data.owner.phoneDialCode} ${data.owner.phoneNumber}` : none}
         />
       </ReviewSection>
 

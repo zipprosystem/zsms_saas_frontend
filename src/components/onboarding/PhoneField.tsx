@@ -12,6 +12,8 @@ type PhoneFieldProps = {
   countries: LocationCountry[];
   onDialCodeChange: (value: string) => void;
   onNumberChange: (value: string) => void;
+  hasError?: boolean;
+  error?: string;
 };
 
 export function PhoneField({
@@ -23,6 +25,8 @@ export function PhoneField({
   countries,
   onDialCodeChange,
   onNumberChange,
+  hasError,
+  error,
 }: PhoneFieldProps) {
   const dialCodes = Array.from(new Set(countries.map((country) => country.phone))).filter(
     Boolean,
@@ -57,8 +61,10 @@ export function PhoneField({
           placeholder={placeholder}
           onChange={(event) => onNumberChange(event.target.value)}
           className="flex-1"
+          hasError={hasError}
         />
       </div>
+      {hasError && error ? <p className="text-sm text-error">{error}</p> : null}
     </div>
   );
 }

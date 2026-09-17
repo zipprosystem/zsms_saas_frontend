@@ -11,15 +11,24 @@ export type OnboardingData = {
     email: string;
     phoneDialCode: string;
     phoneNumber: string;
+    website: string;
+    uin: string;
+    /**
+     * Collected for later use — the Public Onboarding API has no asset
+     * upload endpoint (both its endpoints are JSON-only), so there's
+     * nowhere to send this yet. Kept in the UI, never included in the
+     * submission payload. See toContractPayload().
+     */
     logo: File | null;
     logoPreviewUrl: string | null;
     workingDays: WorkingDay[];
-    showWebsiteToVisitors: boolean;
   };
-  administrator: {
+  owner: {
     firstName: string;
     lastName: string;
     email: string;
+    phoneDialCode: string;
+    phoneNumber: string;
   };
   location: {
     countryCode: string;
@@ -48,68 +57,110 @@ export type OnboardingData = {
 };
 
 /**
- * The shape the future provisioning API needs. Deliberately excludes
- * subscription data and any password field — password is set later via
- * an emailed invite link, not collected on this form.
+ * Exact shape of Muntajir's Public Onboarding API Contract
+ * (POST {API_BASE}/public/onboarding). Field paths here are load-bearing —
+ * do not rename/invent. `tenant` is intentionally omitted (optional, and
+ * this form has no concept distinct from `school`). `additional_data` is
+ * the only place for the academic-step fields the contract doesn't have a
+ * first-class home for (session dates, school mode/types, award bodies) —
+ * everything except `academic_year` (from yearName).
  */
-export type OnboardingSubmissionPayload = {
+export type OnboardingContractPayload = {
   school: {
     name: string;
     slug: string;
-    customDomain: string | null;
     email: string | null;
     phone: string | null;
-    logoFileName: string | null;
-    workingDays: WorkingDay[];
-    showWebsiteToVisitors: boolean;
+    website: string | null;
+    uin: string | null;
+    address: string | null;
+    city: string | null;
+    postal_code: string | null;
+    country_code: string;
+    region_code: string | null;
+    region_name: string | null;
+    timezone: string;
+    currency: string;
+    language: LanguageCode;
+    additional_languages: LanguageCode[];
   };
-  administrator: {
-    firstName: string;
-    lastName: string;
+  owner: {
+    first_name: string;
+    last_name: string;
     email: string;
+    phone: string | null;
   };
-  location: OnboardingData["location"];
-  language: OnboardingData["language"];
-  academic: {
-    yearName: string;
-    sessionStartDate: string;
-    sessionEndDate: string;
-    schoolMode: SchoolMode;
-    schoolTypes: string[];
-    awardBodies: string[];
+  custom_domain?: string;
+  working_days: WorkingDay[];
+  academic_year?: string;
+  additional_data?: {
+    academic: {
+      session_start_date: string;
+      session_end_date: string;
+      school_mode: SchoolMode;
+      school_types: string[];
+      award_bodies: string[];
+    };
   };
 };
 
-export function toSubmissionPayload(
-  data: OnboardingData,
-): OnboardingSubmissionPayload {
-  return {
+function combinedPhone(dialCode: string, number: string): string | null {
+  const trimmed = number.trim();
+  return trimmed ? `+${dialCode} ${trimmed}` : null;
+}
+
+export function toContractPayload(data: OnboardingData): OnboardingContractPayload {
+  const payload: OnboardingContractPayload = {
     school: {
       name: data.school.name.trim(),
       slug: data.school.slug.trim().toLowerCase(),
-      customDomain: data.school.customDomain.trim() || null,
       email: data.school.email.trim() || null,
-      phone: data.school.phoneNumber.trim()
-        ? `+${data.school.phoneDialCode} ${data.school.phoneNumber.trim()}`
-        : null,
-      logoFileName: data.school.logo?.name ?? null,
-      workingDays: data.school.workingDays,
-      showWebsiteToVisitors: data.school.showWebsiteToVisitors,
+      phone: combinedPhone(data.school.phoneDialCode, data.school.phoneNumber),
+      website: data.school.website.trim() || null,
+      uin: data.school.uin.trim() || null,
+      address: data.location.street.trim() || null,
+      city: data.location.city.trim() || null,
+      postal_code: data.location.postalCode.trim() || null,
+      country_code: data.location.countryCode,
+      region_code: data.location.stateCode || null,
+      region_name: data.location.region.trim() || null,
+      timezone: data.location.timezone,
+      currency: data.location.currency,
+      language: data.language.default,
+      additional_languages: data.language.additional,
     },
-    administrator: {
-      firstName: data.administrator.firstName.trim(),
-      lastName: data.administrator.lastName.trim(),
-      email: data.administrator.email.trim(),
+    owner: {
+      first_name: data.owner.firstName.trim(),
+      last_name: data.owner.lastName.trim(),
+      email: data.owner.email.trim(),
+      phone: combinedPhone(data.owner.phoneDialCode, data.owner.phoneNumber),
     },
-    location: data.location,
-    language: data.language,
-    academic: {
-      yearName: data.academic.yearName.trim(),
-      sessionStartDate: data.academic.sessionStartDate,
-      sessionEndDate: data.academic.sessionEndDate,
-      schoolMode: data.academic.schoolMode || "day",
-      schoolTypes: data.academic.schoolTypes,
-      awardBodies: data.academic.awardBodies,
-    },
+    working_days: data.school.workingDays,
   };
+
+  const customDomain = data.school.customDomain.trim();
+  if (customDomain) payload.custom_domain = customDomain;
+
+  const academicYear = data.academic.yearName.trim();
+  if (academicYear) payload.academic_year = academicYear;
+
+  if (
+    data.academic.sessionStartDate ||
+    data.academic.sessionEndDate ||
+    data.academic.schoolMode ||
+    data.academic.schoolTypes.length ||
+    data.academic.awardBodies.length
+  ) {
+    payload.additional_data = {
+      academic: {
+        session_start_date: data.academic.sessionStartDate,
+        session_end_date: data.academic.sessionEndDate,
+        school_mode: data.academic.schoolMode || "day",
+        school_types: data.academic.schoolTypes,
+        award_bodies: data.academic.awardBodies,
+      },
+    };
+  }
+
+  return payload;
 }
