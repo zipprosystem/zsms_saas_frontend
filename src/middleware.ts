@@ -56,21 +56,16 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const requestHeaders = stripInboundTenantHeaders(request);
 
-  // Apex/www: the public platform host, never a tenant. Marketing at "/",
-  // public self-onboarding at "/onboarding" — no tenant validation ever
-  // happens on this host, for any path.
+  // Apex/www: the public platform host, never a tenant. Marketing at "/"
+  // (rewritten to /landing), public self-onboarding at "/onboarding", and
+  // /landing itself if hit directly — all covered by the "any other path"
+  // fallthrough below. No tenant validation ever happens on this host, for
+  // any path. This host check is what scopes both public pages — neither
+  // is bypassed by a bare pathname check outside of it.
   if (PUBLIC_PLATFORM_HOSTS.has(hostname)) {
     if (pathname === "/") {
       return NextResponse.rewrite(new URL("/landing", request.url), { request: { headers: requestHeaders } });
     }
-    return NextResponse.next({ request: { headers: requestHeaders } });
-  }
-
-  // The marketing page is always reachable directly regardless of host
-  // (e.g. local dev, or reviewing it on any host) — it's static public
-  // content with no tenant data, so bypassing validation here carries no
-  // fail-closed risk.
-  if (pathname === "/landing" || pathname.startsWith("/landing/")) {
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
@@ -80,9 +75,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
-  // Everything below is unchanged tenant-validation logic. Note
-  // "/onboarding" is NOT special-cased here — on a tenant host it's just a
-  // normal path and goes through the same validation as everything else.
+  // Everything below is unchanged tenant-validation logic. Note neither
+  // "/onboarding" nor "/landing" is special-cased here — on a tenant host
+  // they're just normal paths and go through the same validation as
+  // everything else.
 
   const slug = isLocalDevAllowed(hostname)
     ? request.nextUrl.searchParams.get("tenant") || process.env.DEV_TENANT_SLUG || "demo-school"
