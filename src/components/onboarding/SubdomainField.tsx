@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { InputField } from "@/components/ui/Input";
 import { CheckIcon } from "@/components/icons/CheckIcon";
 import { CloseIcon } from "@/components/icons/CloseIcon";
-import { checkSlugAvailable } from "@/lib/onboarding/checkSlugAvailable";
-import { SLUG_PATTERN } from "@/lib/onboarding/validation";
+import { checkSlugAvailability } from "@/lib/onboarding/onboardingApi";
+import { SLUG_MAX_LENGTH, SLUG_MIN_LENGTH, SLUG_PATTERN } from "@/lib/onboarding/validation";
 import type { SlugStatus } from "@/lib/onboarding/types";
 
 type SubdomainFieldProps = {
@@ -36,29 +36,47 @@ export function SubdomainField({
   error,
 }: SubdomainFieldProps) {
   const [status, setStatus] = useState<SlugStatus>("idle");
+  const [reason, setReason] = useState<string | null>(null);
   const requestId = useRef(0);
 
   useEffect(() => {
     const slug = value.trim().toLowerCase();
 
-    if (!slug || !SLUG_PATTERN.test(slug)) {
+    if (
+      !slug ||
+      slug.length < SLUG_MIN_LENGTH ||
+      slug.length > SLUG_MAX_LENGTH ||
+      !SLUG_PATTERN.test(slug)
+    ) {
       requestId.current += 1;
       setStatus("idle");
+      setReason(null);
       onStatusChange("idle");
       return;
     }
 
     const currentRequest = ++requestId.current;
     setStatus("checking");
+    setReason(null);
     onStatusChange("checking");
 
     const timeout = setTimeout(() => {
-      checkSlugAvailable(slug).then(({ available }) => {
-        if (requestId.current !== currentRequest) return; // stale response
-        const next: SlugStatus = available ? "available" : "taken";
-        setStatus(next);
-        onStatusChange(next);
-      });
+      checkSlugAvailability(slug)
+        .then(({ available, reason: availabilityReason }) => {
+          if (requestId.current !== currentRequest) return; // stale response
+          const next: SlugStatus = available ? "available" : "taken";
+          setStatus(next);
+          setReason(available ? null : availabilityReason);
+          onStatusChange(next);
+        })
+        .catch(() => {
+          if (requestId.current !== currentRequest) return;
+          // Soft UX check only — a failed lookup shouldn't claim the slug
+          // is taken. Real enforcement happens on submit (409).
+          setStatus("idle");
+          setReason(null);
+          onStatusChange("idle");
+        });
     }, 500);
 
     return () => clearTimeout(timeout);
@@ -92,7 +110,7 @@ export function SubdomainField({
             {status === "taken" && (
               <span className="flex items-center gap-1 rounded-full bg-error/10 px-2 py-0.5 text-xs font-semibold text-error">
                 <CloseIcon className="h-3 w-3" />
-                {takenLabel}
+                {reason || takenLabel}
               </span>
             )}
           </div>

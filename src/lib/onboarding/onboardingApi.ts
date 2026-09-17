@@ -1,0 +1,82 @@
+import { API_BASE } from "@/lib/api/config";
+import type { OnboardingContractPayload } from "./types";
+
+/**
+ * Muntajir's Public Onboarding API Contract — the ONLY two endpoints the
+ * public onboarding form may call. No auth, application/json. Never call
+ * provisioning, manager approve/decline, or any S2S endpoint from here.
+ */
+
+export type SlugAvailability = {
+  available: boolean;
+  valid: boolean;
+  reason: string | null;
+};
+
+// GET {API_BASE}/public/onboarding/slug-availability?slug=... — soft UX
+// check only. Real enforcement is on submit (409). Throws on network/
+// non-2xx failure so the caller (SubdomainField) can fall back to "idle"
+// rather than showing a wrong available/taken state.
+export async function checkSlugAvailability(slug: string): Promise<SlugAvailability> {
+  const response = await fetch(
+    `${API_BASE}/public/onboarding/slug-availability?slug=${encodeURIComponent(slug)}`,
+    { headers: { "Content-Type": "application/json" }, cache: "no-store" },
+  );
+
+  if (!response.ok) {
+    throw new Error(`slug-availability check failed: ${response.status}`);
+  }
+
+  const body = await response.json();
+  return {
+    available: !!body.available,
+    valid: body.valid !== false,
+    reason: typeof body.reason === "string" ? body.reason : null,
+  };
+}
+
+export type OnboardingSubmitResult =
+  | { ok: true; requestReference: string }
+  | { ok: false; kind: "field"; errors: Array<{ field: string; message?: string }> }
+  | { ok: false; kind: "slugTaken" }
+  | { ok: false; kind: "badRequest" }
+  | { ok: false; kind: "rateLimited" }
+  | { ok: false; kind: "server" };
+
+// POST {API_BASE}/public/onboarding — 201 on success with
+// { request_reference, status: "pending" }. This is a pending review
+// enquiry, not a live tenant: never derive a login/portal URL from the
+// result.
+export async function submitOnboarding(
+  payload: OnboardingContractPayload,
+): Promise<OnboardingSubmitResult> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}/public/onboarding`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    return { ok: false, kind: "server" };
+  }
+
+  if (response.status === 201) {
+    const body = await response.json().catch(() => null);
+    if (typeof body?.request_reference === "string") {
+      return { ok: true, requestReference: body.request_reference };
+    }
+    return { ok: false, kind: "server" };
+  }
+
+  if (response.status === 422) {
+    const body = await response.json().catch(() => null);
+    const errors = Array.isArray(body?.errors) ? body.errors : [];
+    return { ok: false, kind: "field", errors };
+  }
+
+  if (response.status === 409) return { ok: false, kind: "slugTaken" };
+  if (response.status === 400) return { ok: false, kind: "badRequest" };
+  if (response.status === 429) return { ok: false, kind: "rateLimited" };
+  return { ok: false, kind: "server" };
+}

@@ -4,11 +4,11 @@ import { useTranslations } from "next-intl";
 import { CheckIcon } from "@/components/icons/CheckIcon";
 
 type SuccessScreenProps = {
-  adminEmail: string;
-  portalUrl: string;
+  ownerEmail: string;
+  requestReference: string;
 };
 
-export function SuccessScreen({ adminEmail, portalUrl }: SuccessScreenProps) {
+export function SuccessScreen({ ownerEmail, requestReference }: SuccessScreenProps) {
   const t = useTranslations();
 
   return (
@@ -20,11 +20,11 @@ export function SuccessScreen({ adminEmail, portalUrl }: SuccessScreenProps) {
         {t("onboarding.success.heading")}
       </h1>
       <p className="mt-3 max-w-md text-sm text-text-secondary">
-        {t("onboarding.success.message", { email: adminEmail })}
+        {t("onboarding.success.message", { email: ownerEmail })}
       </p>
       <div className="mt-6 flex flex-col items-center gap-1.5 rounded-md border border-border bg-surface px-5 py-3">
-        <span className="block text-xs text-text-muted">{t("onboarding.success.portalLabel")}</span>
-        <span className="block text-sm font-semibold text-accent">{portalUrl}</span>
+        <span className="block text-xs text-text-muted">{t("onboarding.success.referenceLabel")}</span>
+        <span className="block text-sm font-semibold text-accent">{requestReference}</span>
       </div>
     </div>
   );

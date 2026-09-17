@@ -5,7 +5,6 @@ import { InputField } from "@/components/ui/Input";
 import { SelectField } from "@/components/ui/Select";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { ChipGroup } from "@/components/ui/ChipGroup";
-import { Toggle } from "@/components/ui/Toggle";
 import { SubdomainField } from "@/components/onboarding/SubdomainField";
 import { PhoneField } from "@/components/onboarding/PhoneField";
 import { LogoUpload } from "@/components/onboarding/LogoUpload";
@@ -23,7 +22,7 @@ type SchoolIdentityStepProps = {
   data: OnboardingData;
   errors: FieldErrors;
   onSchoolChange: (patch: Partial<OnboardingData["school"]>) => void;
-  onAdministratorChange: (patch: Partial<OnboardingData["administrator"]>) => void;
+  onOwnerChange: (patch: Partial<OnboardingData["owner"]>) => void;
   onLocationChange: (patch: Partial<OnboardingData["location"]>) => void;
   onLanguageChange: (patch: Partial<OnboardingData["language"]>) => void;
   onSlugStatusChange: (status: SlugStatus) => void;
@@ -33,7 +32,7 @@ export function SchoolIdentityStep({
   data,
   errors,
   onSchoolChange,
-  onAdministratorChange,
+  onOwnerChange,
   onLocationChange,
   onLanguageChange,
   onSlugStatusChange,
@@ -48,6 +47,7 @@ export function SchoolIdentityStep({
 
   const errorText = (key: string) => (errors[key] ? t(errors[key]) : undefined);
 
+  const selectedCountry = countries.find((country) => country.code === data.location.countryCode);
   const countrySelected = !!data.location.countryCode;
   const usingStateSelect = countrySelected && !statesLoading && states.length > 0;
   const stateReady = usingStateSelect
@@ -130,19 +130,19 @@ export function SchoolIdentityStep({
             id="admin-first-name"
             label={t("onboarding.step1.administrator.firstName.label")}
             placeholder={t("onboarding.step1.administrator.firstName.placeholder")}
-            value={data.administrator.firstName}
-            onChange={(event) => onAdministratorChange({ firstName: event.target.value })}
-            hasError={!!errors["administrator.firstName"]}
-            error={errorText("administrator.firstName")}
+            value={data.owner.firstName}
+            onChange={(event) => onOwnerChange({ firstName: event.target.value })}
+            hasError={!!errors["owner.firstName"]}
+            error={errorText("owner.firstName")}
           />
           <InputField
             id="admin-last-name"
             label={t("onboarding.step1.administrator.lastName.label")}
             placeholder={t("onboarding.step1.administrator.lastName.placeholder")}
-            value={data.administrator.lastName}
-            onChange={(event) => onAdministratorChange({ lastName: event.target.value })}
-            hasError={!!errors["administrator.lastName"]}
-            error={errorText("administrator.lastName")}
+            value={data.owner.lastName}
+            onChange={(event) => onOwnerChange({ lastName: event.target.value })}
+            hasError={!!errors["owner.lastName"]}
+            error={errorText("owner.lastName")}
           />
         </div>
         <div className="flex flex-col gap-1.5">
@@ -151,15 +151,27 @@ export function SchoolIdentityStep({
             type="email"
             label={t("onboarding.step1.administrator.email.label")}
             placeholder={t("onboarding.step1.administrator.email.placeholder")}
-            value={data.administrator.email}
-            onChange={(event) => onAdministratorChange({ email: event.target.value })}
-            hasError={!!errors["administrator.email"]}
-            error={errorText("administrator.email")}
+            value={data.owner.email}
+            onChange={(event) => onOwnerChange({ email: event.target.value })}
+            hasError={!!errors["owner.email"]}
+            error={errorText("owner.email")}
           />
           <p className="text-xs text-text-muted">
             {t("onboarding.step1.administrator.emailHelper")}
           </p>
         </div>
+        <PhoneField
+          id="admin-phone"
+          label={t("onboarding.step1.administrator.phone.label")}
+          placeholder={t("onboarding.step1.administrator.phone.placeholder")}
+          dialCode={data.owner.phoneDialCode}
+          number={data.owner.phoneNumber}
+          countries={countries}
+          onDialCodeChange={(value) => onOwnerChange({ phoneDialCode: value })}
+          onNumberChange={(value) => onOwnerChange({ phoneNumber: value })}
+          hasError={!!errors["owner.phone"]}
+          error={errorText("owner.phone")}
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -170,6 +182,8 @@ export function SchoolIdentityStep({
           placeholder={t("onboarding.step1.schoolEmail.placeholder")}
           value={data.school.email}
           onChange={(event) => onSchoolChange({ email: event.target.value })}
+          hasError={!!errors["school.email"]}
+          error={errorText("school.email")}
         />
         <PhoneField
           id="school-phone"
@@ -180,6 +194,27 @@ export function SchoolIdentityStep({
           countries={countries}
           onDialCodeChange={(value) => onSchoolChange({ phoneDialCode: value })}
           onNumberChange={(value) => onSchoolChange({ phoneNumber: value })}
+          hasError={!!errors["school.phone"]}
+          error={errorText("school.phone")}
+        />
+        <InputField
+          id="school-website"
+          type="url"
+          label={t("onboarding.step1.website.label")}
+          placeholder={t("onboarding.step1.website.placeholder")}
+          value={data.school.website}
+          onChange={(event) => onSchoolChange({ website: event.target.value })}
+          hasError={!!errors["school.website"]}
+          error={errorText("school.website")}
+        />
+        <InputField
+          id="school-uin"
+          label={t("onboarding.step1.uin.label")}
+          placeholder={t("onboarding.step1.uin.placeholder")}
+          value={data.school.uin}
+          onChange={(event) => onSchoolChange({ uin: event.target.value })}
+          hasError={!!errors["school.uin"]}
+          error={errorText("school.uin")}
         />
       </div>
 
@@ -220,6 +255,8 @@ export function SchoolIdentityStep({
               loading={statesLoading}
               loadingLabel={t("onboarding.common.loading")}
               noOptionsLabel={t("onboarding.common.noResults")}
+              hasError={!!errors["location.region"]}
+              error={errorText("location.region")}
             />
           ) : (
             <div className="flex flex-col gap-1.5">
@@ -230,6 +267,8 @@ export function SchoolIdentityStep({
                 value={data.location.region}
                 disabled={!countrySelected || statesLoading}
                 onChange={(event) => onLocationChange({ region: event.target.value })}
+                hasError={!!errors["location.region"]}
+                error={errorText("location.region")}
               />
               {!countrySelected && (
                 <p className="text-xs text-text-muted">
@@ -287,19 +326,43 @@ export function SchoolIdentityStep({
             value={data.location.postalCode}
             onChange={(event) => onLocationChange({ postalCode: event.target.value })}
           />
-          <InputField
-            id="location-timezone"
-            label={t("onboarding.step1.location.timezone.label")}
-            placeholder="—"
-            value={data.location.timezone}
-            onChange={(event) => onLocationChange({ timezone: event.target.value })}
-          />
+          {selectedCountry && selectedCountry.timezones.length > 1 ? (
+            <SelectField
+              id="location-timezone"
+              label={t("onboarding.step1.location.timezone.label")}
+              value={data.location.timezone}
+              onChange={(event) => onLocationChange({ timezone: event.target.value })}
+              hasError={!!errors["location.timezone"]}
+              error={errorText("location.timezone")}
+            >
+              {selectedCountry.timezones.map((timezone) => (
+                <option key={timezone} value={timezone}>
+                  {timezone}
+                </option>
+              ))}
+            </SelectField>
+          ) : (
+            // A single-timezone country (the common case) has nothing to
+            // choose between — lock the field so it can never drift from
+            // the exact IANA string the backend requires.
+            <InputField
+              id="location-timezone"
+              label={t("onboarding.step1.location.timezone.label")}
+              placeholder="—"
+              value={data.location.timezone}
+              disabled
+              hasError={!!errors["location.timezone"]}
+              error={errorText("location.timezone")}
+            />
+          )}
           <InputField
             id="location-currency"
             label={t("onboarding.step1.location.currency.label")}
             placeholder="—"
             value={data.location.currency}
-            onChange={(event) => onLocationChange({ currency: event.target.value })}
+            disabled
+            hasError={!!errors["location.currency"]}
+            error={errorText("location.currency")}
           />
         </div>
       </div>
@@ -352,14 +415,8 @@ export function SchoolIdentityStep({
         options={WORKING_DAYS.map((day) => ({ value: day.value, label: t(day.labelKey) }))}
         value={data.school.workingDays}
         onChange={(values) => onSchoolChange({ workingDays: values as WorkingDay[] })}
-      />
-
-      <Toggle
-        id="show-website"
-        label={t("onboarding.step1.showWebsite.label")}
-        helper={t("onboarding.step1.showWebsite.helper")}
-        checked={data.school.showWebsiteToVisitors}
-        onChange={(showWebsiteToVisitors) => onSchoolChange({ showWebsiteToVisitors })}
+        hasError={!!errors["school.workingDays"]}
+        error={errorText("school.workingDays")}
       />
     </div>
   );

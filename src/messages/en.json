@@ -298,10 +298,13 @@
         "firstName": { "label": "First Name", "placeholder": "e.g. Ada" },
         "lastName": { "label": "Last Name", "placeholder": "e.g. Obi" },
         "email": { "label": "Email", "placeholder": "admin@yourschool.edu.ng" },
-        "emailHelper": "A secure link to set your password will be emailed to this address."
+        "emailHelper": "A secure link to set your password will be emailed to this address.",
+        "phone": { "label": "Administrator Phone", "placeholder": "801 234 5678" }
       },
       "schoolEmail": { "label": "School Email", "placeholder": "info@yourschool.edu.ng" },
       "schoolPhone": { "label": "School Phone", "placeholder": "801 234 5678" },
+      "website": { "label": "School Website (optional)", "placeholder": "https://yourschool.edu.ng" },
+      "uin": { "label": "Unique Institution Number (optional)", "placeholder": "e.g. UIN-000123" },
       "location": {
         "sectionTitle": "Location",
         "autoFillHelper": "Selecting a country auto-fills timezone, currency, and phone code. States and cities load offline as you go.",
@@ -335,11 +338,7 @@
         "change": "Change",
         "remove": "Remove"
       },
-      "workingDays": { "label": "Working Days" },
-      "showWebsite": {
-        "label": "Show school website to visitors",
-        "helper": "You can turn this on later once your site is ready."
-      }
+      "workingDays": { "label": "Working Days" }
     },
     "step2": {
       "heading": "Academic Basics",
@@ -407,18 +406,25 @@
       "notice": "Your school environment will be created and a set-password link emailed to the administrator."
     },
     "success": {
-      "heading": "Your school has been created!",
-      "message": "Check {email} for a link to set your password and log in.",
-      "portalLabel": "Your portal"
+      "heading": "Your onboarding request has been submitted",
+      "message": "Your request is under review. We'll email {email} once your school has been approved.",
+      "referenceLabel": "Reference"
     },
     "errors": {
       "required": "This field is required",
       "invalidEmail": "Enter a valid email address",
       "invalidSlug": "Use lowercase letters, numbers, and hyphens only",
+      "nameLength": "Must be between 2 and 255 characters",
+      "slugLength": "Must be between 2 and 100 characters",
       "slugTaken": "This subdomain is already taken",
       "slugChecking": "Still checking availability — please wait",
       "endBeforeStart": "Session end date must be after the start date",
-      "selectAtLeastOne": "Select at least one"
+      "selectAtLeastOne": "Select at least one",
+      "fieldInvalid": "This field is invalid",
+      "submitField": "Please fix the highlighted fields and try again.",
+      "submitBadRequest": "There was a problem with your submission. Please check your details and try again.",
+      "submitRateLimited": "Too many attempts. Please try again in a few minutes.",
+      "submitServer": "Something went wrong submitting your request. Please try again."
     }
   },
   "settings": {

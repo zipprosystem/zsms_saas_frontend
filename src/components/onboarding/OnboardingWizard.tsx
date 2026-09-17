@@ -8,10 +8,15 @@ import { SchoolIdentityStep } from "./steps/SchoolIdentityStep";
 import { AcademicBasicsStep } from "./steps/AcademicBasicsStep";
 import { ReviewStep } from "./steps/ReviewStep";
 import { SuccessScreen } from "./SuccessScreen";
-import { toSubmissionPayload, type OnboardingData, type SlugStatus } from "@/lib/onboarding/types";
-import { submitOnboarding } from "@/lib/onboarding/submitOnboarding";
-import { buildPortalUrl } from "@/lib/onboarding/portalUrl";
-import { validateStep1, validateStep2, type FieldErrors } from "@/lib/onboarding/validation";
+import { toContractPayload, type OnboardingData, type SlugStatus } from "@/lib/onboarding/types";
+import { submitOnboarding } from "@/lib/onboarding/onboardingApi";
+import {
+  mapContractFieldErrors,
+  stepForFormField,
+  validateStep1,
+  validateStep2,
+  type FieldErrors,
+} from "@/lib/onboarding/validation";
 
 const INITIAL_DATA: OnboardingData = {
   school: {
@@ -21,12 +26,13 @@ const INITIAL_DATA: OnboardingData = {
     email: "",
     phoneDialCode: "234",
     phoneNumber: "",
+    website: "",
+    uin: "",
     logo: null,
     logoPreviewUrl: null,
     workingDays: ["mon", "tue", "wed", "thu", "fri"],
-    showWebsiteToVisitors: false,
   },
-  administrator: { firstName: "", lastName: "", email: "" },
+  owner: { firstName: "", lastName: "", email: "", phoneDialCode: "234", phoneNumber: "" },
   location: {
     countryCode: "",
     stateCode: "",
@@ -58,12 +64,12 @@ export function OnboardingWizard() {
   const [slugStatus, setSlugStatus] = useState<SlugStatus>("idle");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [portalUrl, setPortalUrl] = useState<string | null>(null);
+  const [requestReference, setRequestReference] = useState<string | null>(null);
 
   const updateSchool = (patch: Partial<OnboardingData["school"]>) =>
     setData((current) => ({ ...current, school: { ...current.school, ...patch } }));
-  const updateAdministrator = (patch: Partial<OnboardingData["administrator"]>) =>
-    setData((current) => ({ ...current, administrator: { ...current.administrator, ...patch } }));
+  const updateOwner = (patch: Partial<OnboardingData["owner"]>) =>
+    setData((current) => ({ ...current, owner: { ...current.owner, ...patch } }));
   const updateLocation = (patch: Partial<OnboardingData["location"]>) =>
     setData((current) => ({ ...current, location: { ...current.location, ...patch } }));
   const updateLanguage = (patch: Partial<OnboardingData["language"]>) =>
@@ -86,34 +92,49 @@ export function OnboardingWizard() {
   const handleSubmit = async () => {
     setSubmitting(true);
     setSubmitError(null);
-    const result = await submitOnboarding(toSubmissionPayload(data));
+    const result = await submitOnboarding(toContractPayload(data));
     setSubmitting(false);
 
     if (result.ok) {
-      setPortalUrl(result.portalUrl);
+      setRequestReference(result.requestReference);
       setStep("success");
       return;
     }
 
-    setSubmitError(t(result.error.messageKey));
-    // Our mock only ever fails on the slug — route the error back to the
-    // field that owns it, on step 1, so the user can fix it in place.
-    if (result.error.field) {
-      setErrors({ [result.error.field]: result.error.messageKey });
-      setStep(1);
+    switch (result.kind) {
+      case "field": {
+        const { fieldErrors, unmapped } = mapContractFieldErrors(result.errors);
+        setErrors(fieldErrors);
+        const firstField = Object.keys(fieldErrors)[0];
+        if (firstField) setStep(stepForFormField(firstField));
+        if (unmapped.length > 0) {
+          setSubmitError(unmapped.join(" "));
+        } else if (firstField) {
+          setSubmitError(t("onboarding.errors.submitField"));
+        }
+        break;
+      }
+      case "slugTaken":
+        setErrors({ "school.slug": "onboarding.errors.slugTaken" });
+        setStep(1);
+        break;
+      case "badRequest":
+        setSubmitError(t("onboarding.errors.submitBadRequest"));
+        break;
+      case "rateLimited":
+        setSubmitError(t("onboarding.errors.submitRateLimited"));
+        break;
+      case "server":
+        setSubmitError(t("onboarding.errors.submitServer"));
+        break;
     }
   };
 
-  if (step === "success") {
-    return (
-      <SuccessScreen
-        adminEmail={data.administrator.email}
-        portalUrl={portalUrl ?? buildPortalUrl(data.school.slug)}
-      />
-    );
+  if (step === "success" && requestReference) {
+    return <SuccessScreen ownerEmail={data.owner.email} requestReference={requestReference} />;
   }
 
-  const activeStepNumber = step === "review" ? 3 : step;
+  const activeStepNumber = step === "review" ? 3 : (step as 1 | 2);
 
   return (
     <div className="mx-auto flex w-full max-w-[1100px] flex-col lg:flex-row">
@@ -125,7 +146,7 @@ export function OnboardingWizard() {
             data={data}
             errors={errors}
             onSchoolChange={updateSchool}
-            onAdministratorChange={updateAdministrator}
+            onOwnerChange={updateOwner}
             onLocationChange={updateLocation}
             onLanguageChange={updateLanguage}
             onSlugStatusChange={setSlugStatus}
