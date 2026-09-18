@@ -45,11 +45,15 @@ export async function checkSlugAvailability(slug: string): Promise<SlugAvailabil
     throw new Error(`slug-availability check failed: ${response.status}`);
   }
 
+  // Real response shape (confirmed against the live endpoint):
+  // { success, message, data: { slug, available, valid } } — the fields we
+  // need are nested under `data`, not top-level. success/message/slug are
+  // unused here.
   const body = await response.json();
   return {
-    available: !!body.available,
-    valid: body.valid !== false,
-    reason: typeof body.reason === "string" ? body.reason : null,
+    available: !!body.data?.available,
+    valid: body.data?.valid !== false,
+    reason: typeof body.data?.reason === "string" ? body.data.reason : null,
   };
 }
 
@@ -81,15 +85,24 @@ export async function submitOnboarding(
 
   if (response.status === 201) {
     const body = await response.json().catch(() => null);
-    if (typeof body?.request_reference === "string") {
-      return { ok: true, requestReference: body.request_reference };
+    // NOT confirmed against a real 201 — the slug-availability endpoint
+    // turned out to wrap its payload in `data` (see checkSlugAvailability
+    // above) despite this file's original comment assuming top-level
+    // fields, so the same is plausible here. Accept both shapes until this
+    // is verified against an actual submit response.
+    const requestReference = body?.data?.request_reference ?? body?.request_reference;
+    if (typeof requestReference === "string") {
+      return { ok: true, requestReference };
     }
     return { ok: false, kind: "server" };
   }
 
   if (response.status === 422) {
     const body = await response.json().catch(() => null);
-    const errors = Array.isArray(body?.errors) ? body.errors : [];
+    // Same caveat as above: not confirmed whether 422 errors are wrapped
+    // under `data` or top-level. Accept either.
+    const rawErrors = body?.data?.errors ?? body?.errors;
+    const errors = Array.isArray(rawErrors) ? rawErrors : [];
     return { ok: false, kind: "field", errors };
   }
 
