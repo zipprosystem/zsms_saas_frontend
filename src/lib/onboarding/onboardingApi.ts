@@ -1,10 +1,14 @@
-import { API_BASE } from "@/lib/api/config";
+import { ONBOARDING_API_BASE } from "@/lib/api/config";
 import type { OnboardingContractPayload } from "./types";
 
 /**
  * Muntajir's Public Onboarding API Contract — the ONLY two endpoints the
  * public onboarding form may call. No auth, application/json. Never call
  * provisioning, manager approve/decline, or any S2S endpoint from here.
+ *
+ * These endpoints live on School Manager's API (ONBOARDING_API_BASE), NOT
+ * the SaaS API (API_BASE) that the rest of this app uses — different host,
+ * different service. Do not switch this file back to API_BASE.
  */
 
 export type SlugAvailability = {
@@ -19,7 +23,7 @@ export type SlugAvailability = {
 // rather than showing a wrong available/taken state.
 export async function checkSlugAvailability(slug: string): Promise<SlugAvailability> {
   const response = await fetch(
-    `${API_BASE}/public/onboarding/slug-availability?slug=${encodeURIComponent(slug)}`,
+    `${ONBOARDING_API_BASE}/public/onboarding/slug-availability?slug=${encodeURIComponent(slug)}`,
     { headers: { "Content-Type": "application/json" }, cache: "no-store" },
   );
 
@@ -52,7 +56,7 @@ export async function submitOnboarding(
 ): Promise<OnboardingSubmitResult> {
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}/public/onboarding`, {
+    response = await fetch(`${ONBOARDING_API_BASE}/public/onboarding`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
