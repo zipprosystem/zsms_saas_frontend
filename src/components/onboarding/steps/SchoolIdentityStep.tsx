@@ -105,6 +105,7 @@ export function SchoolIdentityStep({
           checkingLabel={t("onboarding.step1.subdomain.checking")}
           availableLabel={t("onboarding.step1.subdomain.available")}
           takenLabel={t("onboarding.step1.subdomain.taken")}
+          unknownLabel={t("onboarding.step1.subdomain.unknown")}
           hasError={!!errors["school.slug"]}
           error={errorText("school.slug")}
         />

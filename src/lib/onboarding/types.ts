@@ -1,7 +1,11 @@
 export type WorkingDay = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 export type SchoolMode = "day" | "boarding" | "both";
 export type LanguageCode = "en" | "fr";
-export type SlugStatus = "idle" | "checking" | "available" | "taken";
+// "unknown": the availability check failed or timed out. Distinct from
+// "idle" (never checked) so the UI can show a soft "couldn't verify" note
+// instead of a silent reset — and so validation doesn't block on it, since
+// this is a soft UX check only (real enforcement is the 409 on submit).
+export type SlugStatus = "idle" | "checking" | "available" | "taken" | "unknown";
 
 export type OnboardingData = {
   school: {

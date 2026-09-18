@@ -83,10 +83,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
-  // Everything below is unchanged tenant-validation logic. Note neither
-  // "/onboarding" nor "/landing" is special-cased here — on a tenant host
-  // they're just normal paths and go through the same validation as
-  // everything else.
+  // Dev-only: on localhost, "/onboarding" and "/landing" are exempted from
+  // tenant validation so they can be tested without a resolvable dev tenant
+  // — mirroring how they're public or unauthenticated on the production
+  // apex/www host (PUBLIC_PLATFORM_HOSTS above). Gated by isLocalDevAllowed
+  // (hostname AND NODE_ENV), so this never fires in production regardless
+  // of the Host header. Tenant hosts in production still go through full
+  // validation for these paths, unchanged.
+  if (isLocalDevAllowed(hostname) && (pathname === "/onboarding" || pathname === "/landing")) {
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
+
+  // Everything below is unchanged tenant-validation logic. On a production
+  // tenant host, "/onboarding" and "/landing" are NOT special-cased — they
+  // go through the same validation as everything else (the dev-only
+  // exemption above never applies there).
 
   const slug = isLocalDevAllowed(hostname)
     ? request.nextUrl.searchParams.get("tenant") || process.env.DEV_TENANT_SLUG || "demo-school"
