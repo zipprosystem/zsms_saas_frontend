@@ -66,8 +66,17 @@ export type OnboardingData = {
  * do not rename/invent. `tenant` is intentionally omitted (optional, and
  * this form has no concept distinct from `school`). `additional_data` is
  * the only place for the academic-step fields the contract doesn't have a
- * first-class home for (session dates, school mode/types, award bodies) —
- * everything except `academic_year` (from yearName).
+ * first-class home for (session dates, school mode/types, award bodies).
+ *
+ * ADJUSTMENT (pending Muntajir's confirmation, Monday): the written contract
+ * put `working_days` and `academic_year` at the top level, but the deployed
+ * API rejects them there — "Unrecognized key(s) in object: 'working_days',
+ * 'academic_year'" — while `additional_data` and `custom_domain` ARE
+ * accepted top-level. Since `additional_data` already exists and is
+ * accepted, we're inferring `working_days`/`academic_year` belong nested
+ * inside it instead. This is an inference from the deployed API's error,
+ * not a confirmed contract change — reconcile with Muntajir and update this
+ * comment once confirmed.
  */
 export type OnboardingContractPayload = {
   school: {
@@ -95,10 +104,12 @@ export type OnboardingContractPayload = {
     phone: string | null;
   };
   custom_domain?: string;
-  working_days: WorkingDay[];
-  academic_year?: string;
-  additional_data?: {
-    academic: {
+  // working_days is always sent (no default-empty omission, same as
+  // before this change), just nested here instead of top-level now.
+  additional_data: {
+    academic_year?: string;
+    working_days: WorkingDay[];
+    academic?: {
       session_start_date: string;
       session_end_date: string;
       school_mode: SchoolMode;
@@ -139,14 +150,18 @@ export function toContractPayload(data: OnboardingData): OnboardingContractPaylo
       email: data.owner.email.trim(),
       phone: combinedPhone(data.owner.phoneDialCode, data.owner.phoneNumber),
     },
-    working_days: data.school.workingDays,
+    // working_days nested here, not top-level — see the ADJUSTMENT note on
+    // OnboardingContractPayload above.
+    additional_data: {
+      working_days: data.school.workingDays,
+    },
   };
 
   const customDomain = data.school.customDomain.trim();
   if (customDomain) payload.custom_domain = customDomain;
 
   const academicYear = data.academic.yearName.trim();
-  if (academicYear) payload.academic_year = academicYear;
+  if (academicYear) payload.additional_data.academic_year = academicYear;
 
   if (
     data.academic.sessionStartDate ||
@@ -155,14 +170,12 @@ export function toContractPayload(data: OnboardingData): OnboardingContractPaylo
     data.academic.schoolTypes.length ||
     data.academic.awardBodies.length
   ) {
-    payload.additional_data = {
-      academic: {
-        session_start_date: data.academic.sessionStartDate,
-        session_end_date: data.academic.sessionEndDate,
-        school_mode: data.academic.schoolMode || "day",
-        school_types: data.academic.schoolTypes,
-        award_bodies: data.academic.awardBodies,
-      },
+    payload.additional_data.academic = {
+      session_start_date: data.academic.sessionStartDate,
+      session_end_date: data.academic.sessionEndDate,
+      school_mode: data.academic.schoolMode || "day",
+      school_types: data.academic.schoolTypes,
+      award_bodies: data.academic.awardBodies,
     };
   }
 
