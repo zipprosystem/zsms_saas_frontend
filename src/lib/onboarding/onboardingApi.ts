@@ -17,15 +17,29 @@ export type SlugAvailability = {
   reason: string | null;
 };
 
+// Soft UX check only — bounded so a hung/blocked request (e.g. CORS
+// preflight that never resolves, dead network) can't leave the caller
+// waiting forever. Real enforcement is on submit (409), which has no
+// such time pressure.
+const SLUG_CHECK_TIMEOUT_MS = 6000;
+
 // GET {API_BASE}/public/onboarding/slug-availability?slug=... — soft UX
 // check only. Real enforcement is on submit (409). Throws on network/
-// non-2xx failure so the caller (SubdomainField) can fall back to "idle"
-// rather than showing a wrong available/taken state.
+// timeout/non-2xx failure so the caller (SubdomainField) can fall back to
+// "unknown" rather than showing a wrong available/taken state.
 export async function checkSlugAvailability(slug: string): Promise<SlugAvailability> {
-  const response = await fetch(
-    `${ONBOARDING_API_BASE}/public/onboarding/slug-availability?slug=${encodeURIComponent(slug)}`,
-    { headers: { "Content-Type": "application/json" }, cache: "no-store" },
-  );
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), SLUG_CHECK_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(
+      `${ONBOARDING_API_BASE}/public/onboarding/slug-availability?slug=${encodeURIComponent(slug)}`,
+      { headers: { "Content-Type": "application/json" }, cache: "no-store", signal: controller.signal },
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     throw new Error(`slug-availability check failed: ${response.status}`);

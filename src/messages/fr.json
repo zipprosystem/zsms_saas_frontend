@@ -286,7 +286,8 @@
         "helper": "Ceci devient l'adresse du portail de votre école : votresigle.zsmsapp.com. Elle ne pourra plus être modifiée une fois l'école provisionnée.",
         "checking": "Vérification…",
         "available": "Disponible",
-        "taken": "Déjà pris"
+        "taken": "Déjà pris",
+        "unknown": "Impossible de vérifier — vous pouvez continuer"
       },
       "customDomain": {
         "label": "Utiliser votre propre domaine (optionnel)",

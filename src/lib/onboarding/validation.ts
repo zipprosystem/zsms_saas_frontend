@@ -31,9 +31,13 @@ export function validateStep1(
     errors["school.slug"] = "onboarding.errors.invalidSlug";
   } else if (slugStatus === "taken") {
     errors["school.slug"] = "onboarding.errors.slugTaken";
-  } else if (slugStatus === "checking" || slugStatus === "idle") {
+  } else if (slugStatus === "checking") {
     errors["school.slug"] = "onboarding.errors.slugChecking";
   }
+  // "unknown" (check failed/timed out) and "idle" (format valid, not yet
+  // checked) are NOT blocked — this is a soft UX check only, real
+  // enforcement is the 409 on submit. Don't hold the user hostage to a
+  // failed availability lookup.
 
   if (!data.owner.firstName.trim()) {
     errors["owner.firstName"] = "onboarding.errors.required";

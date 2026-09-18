@@ -286,7 +286,8 @@
         "helper": "This becomes your school's portal address: yourslug.zsmsapp.com. It can't be changed once provisioned.",
         "checking": "Checking…",
         "available": "Available",
-        "taken": "Taken"
+        "taken": "Taken",
+        "unknown": "Couldn't verify — you can continue"
       },
       "customDomain": {
         "label": "Use your own domain (optional)",

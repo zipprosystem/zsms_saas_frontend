@@ -18,6 +18,7 @@ type SubdomainFieldProps = {
   checkingLabel: string;
   availableLabel: string;
   takenLabel: string;
+  unknownLabel: string;
   hasError?: boolean;
   error?: string;
 };
@@ -32,6 +33,7 @@ export function SubdomainField({
   checkingLabel,
   availableLabel,
   takenLabel,
+  unknownLabel,
   hasError,
   error,
 }: SubdomainFieldProps) {
@@ -71,11 +73,13 @@ export function SubdomainField({
         })
         .catch(() => {
           if (requestId.current !== currentRequest) return;
-          // Soft UX check only — a failed lookup shouldn't claim the slug
-          // is taken. Real enforcement happens on submit (409).
-          setStatus("idle");
+          // Soft UX check only — a failed/timed-out lookup shouldn't claim
+          // the slug is taken, and must not block the user either. Real
+          // enforcement happens on submit (409). "unknown" (not "idle")
+          // so the field shows a soft note instead of just going quiet.
+          setStatus("unknown");
           setReason(null);
-          onStatusChange("idle");
+          onStatusChange("unknown");
         });
     }, 500);
 
@@ -112,6 +116,9 @@ export function SubdomainField({
                 <CloseIcon className="h-3 w-3" />
                 {reason || takenLabel}
               </span>
+            )}
+            {status === "unknown" && (
+              <span className="text-xs text-text-muted">{unknownLabel}</span>
             )}
           </div>
         </div>
