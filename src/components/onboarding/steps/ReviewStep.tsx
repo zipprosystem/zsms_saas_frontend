@@ -1,7 +1,8 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
 import { useTranslations } from "next-intl";
+import type ReCAPTCHA from "react-google-recaptcha";
 import { useCountries } from "@/lib/onboarding/location/hooks";
 import { buildPortalUrl } from "@/lib/onboarding/portalUrl";
 import {
@@ -12,11 +13,15 @@ import {
   WORKING_DAYS,
   type ConfigOption,
 } from "@/lib/onboarding/config";
+import { RecaptchaField } from "@/components/onboarding/RecaptchaField";
 import type { OnboardingData } from "@/lib/onboarding/types";
 
 type ReviewStepProps = {
   data: OnboardingData;
   submitError: string | null;
+  recaptchaRef: RefObject<ReCAPTCHA>;
+  onRecaptchaChange: (token: string | null) => void;
+  recaptchaError: string | null;
 };
 
 function ReviewRow({ label, value }: { label: string; value: string }) {
@@ -37,7 +42,13 @@ function ReviewSection({ title, children }: { title: string; children: ReactNode
   );
 }
 
-export function ReviewStep({ data, submitError }: ReviewStepProps) {
+export function ReviewStep({
+  data,
+  submitError,
+  recaptchaRef,
+  onRecaptchaChange,
+  recaptchaError,
+}: ReviewStepProps) {
   const t = useTranslations();
   const { countries } = useCountries();
   const notSet = t("onboarding.review.notSet");
@@ -180,6 +191,14 @@ export function ReviewStep({ data, submitError }: ReviewStepProps) {
       <div className="rounded-md bg-brand-tint px-4 py-3 text-sm text-accent">
         {t("onboarding.review.notice")}
       </div>
+
+      <ReviewSection title={t("onboarding.review.sections.verification")}>
+        <RecaptchaField
+          recaptchaRef={recaptchaRef}
+          onChange={onRecaptchaChange}
+          error={recaptchaError}
+        />
+      </ReviewSection>
 
       {submitError ? (
         <div className="rounded-md bg-error/10 px-4 py-3 text-sm text-error">{submitError}</div>

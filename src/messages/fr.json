@@ -400,11 +400,15 @@
         "location": "Localisation",
         "language": "Langue",
         "administrator": "Administrateur",
-        "academicBasics": "Bases académiques"
+        "academicBasics": "Bases académiques",
+        "verification": "Vérification"
       },
       "notSet": "Non renseigné",
       "none": "Aucun",
       "notice": "L'environnement de votre école va être créé et un lien de définition de mot de passe sera envoyé à l'administrateur."
+    },
+    "recaptcha": {
+      "unavailable": "La vérification est temporairement indisponible — vous pouvez tout de même soumettre."
     },
     "success": {
       "heading": "Votre demande d'inscription a été soumise",
@@ -419,6 +423,7 @@
       "slugLength": "Doit contenir entre 2 et 100 caractères",
       "slugTaken": "Ce sous-domaine est déjà pris",
       "slugChecking": "Vérification en cours — veuillez patienter",
+      "recaptchaRequired": "Veuillez compléter la vérification reCAPTCHA",
       "endBeforeStart": "La date de fin de session doit être postérieure à la date de début",
       "selectAtLeastOne": "Sélectionnez au moins une option",
       "fieldInvalid": "Ce champ n'est pas valide",
