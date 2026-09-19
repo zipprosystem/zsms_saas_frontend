@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import type ReCAPTCHA from "react-google-recaptcha";
 import { Button } from "@/components/ui/Button";
 import { StepIndicator } from "./StepIndicator";
 import { SchoolIdentityStep } from "./steps/SchoolIdentityStep";
@@ -10,6 +11,7 @@ import { ReviewStep } from "./steps/ReviewStep";
 import { SuccessScreen } from "./SuccessScreen";
 import { toContractPayload, type OnboardingData, type SlugStatus } from "@/lib/onboarding/types";
 import { submitOnboarding } from "@/lib/onboarding/onboardingApi";
+import { RECAPTCHA_SITE_KEY } from "@/lib/onboarding/config";
 import {
   mapContractFieldErrors,
   stepForFormField,
@@ -65,6 +67,14 @@ export function OnboardingWizard() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [requestReference, setRequestReference] = useState<string | null>(null);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const [recaptchaError, setRecaptchaError] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
+
+  const handleRecaptchaChange = (token: string | null) => {
+    setRecaptchaToken(token);
+    if (token) setRecaptchaError(null);
+  };
 
   const updateSchool = (patch: Partial<OnboardingData["school"]>) =>
     setData((current) => ({ ...current, school: { ...current.school, ...patch } }));
@@ -89,10 +99,25 @@ export function OnboardingWizard() {
     if (Object.keys(stepErrors).length === 0) setStep("review");
   };
 
+  const resetRecaptcha = () => {
+    recaptchaRef.current?.reset();
+    setRecaptchaToken(null);
+  };
+
   const handleSubmit = async () => {
+    // Only enforce the checkbox when the widget can actually render — a
+    // missing site key (see RecaptchaField) means there's nothing for the
+    // user to complete, so don't lock the form on a token that can never
+    // exist. recaptchaToken stays "" in that case (see submitOnboarding call
+    // below), which is expected until Muntajir's server-side check lands.
+    if (RECAPTCHA_SITE_KEY && !recaptchaToken) {
+      setRecaptchaError(t("onboarding.errors.recaptchaRequired"));
+      return;
+    }
+
     setSubmitting(true);
     setSubmitError(null);
-    const result = await submitOnboarding(toContractPayload(data));
+    const result = await submitOnboarding(toContractPayload(data), recaptchaToken ?? "");
     setSubmitting(false);
 
     if (result.ok) {
@@ -100,6 +125,10 @@ export function OnboardingWizard() {
       setStep("success");
       return;
     }
+
+    // A submitted token is single-use and short-lived — whatever the
+    // failure reason, force a fresh check before the next attempt.
+    resetRecaptcha();
 
     switch (result.kind) {
       case "field": {
@@ -155,7 +184,15 @@ export function OnboardingWizard() {
         {step === 2 && (
           <AcademicBasicsStep data={data} errors={errors} onAcademicChange={updateAcademic} />
         )}
-        {step === "review" && <ReviewStep data={data} submitError={submitError} />}
+        {step === "review" && (
+          <ReviewStep
+            data={data}
+            submitError={submitError}
+            recaptchaRef={recaptchaRef}
+            onRecaptchaChange={handleRecaptchaChange}
+            recaptchaError={recaptchaError}
+          />
+        )}
 
         <div className="mt-8 flex items-center justify-between gap-4 border-t border-border pt-6">
           {step !== 1 ? (

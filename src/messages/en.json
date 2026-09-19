@@ -400,11 +400,15 @@
         "location": "Location",
         "language": "Language",
         "administrator": "Administrator",
-        "academicBasics": "Academic Basics"
+        "academicBasics": "Academic Basics",
+        "verification": "Verification"
       },
       "notSet": "Not set",
       "none": "None",
       "notice": "Your school environment will be created and a set-password link emailed to the administrator."
+    },
+    "recaptcha": {
+      "unavailable": "Verification is temporarily unavailable — you can still submit."
     },
     "success": {
       "heading": "Your onboarding request has been submitted",
@@ -419,6 +423,7 @@
       "slugLength": "Must be between 2 and 100 characters",
       "slugTaken": "This subdomain is already taken",
       "slugChecking": "Still checking availability — please wait",
+      "recaptchaRequired": "Please complete the reCAPTCHA verification",
       "endBeforeStart": "Session end date must be after the start date",
       "selectAtLeastOne": "Select at least one",
       "fieldInvalid": "This field is invalid",

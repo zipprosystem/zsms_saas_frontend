@@ -69,15 +69,21 @@ export type OnboardingSubmitResult =
 // { request_reference, status: "pending" }. This is a pending review
 // enquiry, not a live tenant: never derive a login/portal URL from the
 // result.
+//
+// `recaptchaToken` is sent as `recaptcha_token` — FLAGGED, unconfirmed
+// field name. Verification is entirely server-side (Muntajir, pending);
+// the frontend only forwards the completed checkbox's token and never
+// attempts to validate it itself.
 export async function submitOnboarding(
   payload: OnboardingContractPayload,
+  recaptchaToken: string,
 ): Promise<OnboardingSubmitResult> {
   let response: Response;
   try {
     response = await fetch(`${ONBOARDING_API_BASE}/public/onboarding`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, recaptcha_token: recaptchaToken }),
     });
   } catch {
     return { ok: false, kind: "server" };
