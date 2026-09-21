@@ -82,16 +82,16 @@ export type OnboardingContractPayload = {
   school: {
     name: string;
     slug: string;
-    email: string | null;
-    phone: string | null;
-    website: string | null;
-    uin: string | null;
-    address: string | null;
-    city: string | null;
-    postal_code: string | null;
+    email?: string;
+    phone?: string;
+    website?: string;
+    uin?: string;
+    address?: string;
+    city?: string;
+    postal_code?: string;
     country_code: string;
-    region_code: string | null;
-    region_name: string | null;
+    region_code?: string;
+    region_name?: string;
     timezone: string;
     currency: string;
     language: LanguageCode;
@@ -101,7 +101,7 @@ export type OnboardingContractPayload = {
     first_name: string;
     last_name: string;
     email: string;
-    phone: string | null;
+    phone?: string;
   };
   custom_domain?: string;
   // working_days is always sent (no default-empty omission, same as
@@ -119,9 +119,20 @@ export type OnboardingContractPayload = {
   };
 };
 
-function combinedPhone(dialCode: string, number: string): string | null {
+function combinedPhone(dialCode: string, number: string): string {
   const trimmed = number.trim();
-  return trimmed ? `+${dialCode} ${trimmed}` : null;
+  return trimmed ? `+${dialCode} ${trimmed}` : "";
+}
+
+// Optional contract fields are OMITTED when empty, never sent as null.
+// WORKAROUND: the deployed API 422s on `null` for optional fields (confirmed
+// for school.website and school.uin), even though the contract lists them as
+// optional. Reconcile with Muntajir whether the API should accept null or
+// only absent keys for optional fields, then drop or keep this accordingly.
+function omitEmpty<T extends Record<string, string | undefined>>(fields: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(fields).filter(([, value]) => value !== undefined && value !== ""),
+  ) as Partial<T>;
 }
 
 export function toContractPayload(data: OnboardingData): OnboardingContractPayload {
@@ -129,16 +140,18 @@ export function toContractPayload(data: OnboardingData): OnboardingContractPaylo
     school: {
       name: data.school.name.trim(),
       slug: data.school.slug.trim().toLowerCase(),
-      email: data.school.email.trim() || null,
-      phone: combinedPhone(data.school.phoneDialCode, data.school.phoneNumber),
-      website: data.school.website.trim() || null,
-      uin: data.school.uin.trim() || null,
-      address: data.location.street.trim() || null,
-      city: data.location.city.trim() || null,
-      postal_code: data.location.postalCode.trim() || null,
+      ...omitEmpty({
+        email: data.school.email.trim(),
+        phone: combinedPhone(data.school.phoneDialCode, data.school.phoneNumber),
+        website: data.school.website.trim(),
+        uin: data.school.uin.trim(),
+        address: data.location.street.trim(),
+        city: data.location.city.trim(),
+        postal_code: data.location.postalCode.trim(),
+        region_code: data.location.stateCode,
+        region_name: data.location.region.trim(),
+      }),
       country_code: data.location.countryCode,
-      region_code: data.location.stateCode || null,
-      region_name: data.location.region.trim() || null,
       timezone: data.location.timezone,
       currency: data.location.currency,
       language: data.language.default,
@@ -148,7 +161,9 @@ export function toContractPayload(data: OnboardingData): OnboardingContractPaylo
       first_name: data.owner.firstName.trim(),
       last_name: data.owner.lastName.trim(),
       email: data.owner.email.trim(),
-      phone: combinedPhone(data.owner.phoneDialCode, data.owner.phoneNumber),
+      ...omitEmpty({
+        phone: combinedPhone(data.owner.phoneDialCode, data.owner.phoneNumber),
+      }),
     },
     // working_days nested here, not top-level — see the ADJUSTMENT note on
     // OnboardingContractPayload above.

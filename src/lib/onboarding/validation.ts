@@ -4,10 +4,22 @@ export type FieldErrors = Record<string, string>;
 
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export const SCHOOL_NAME_MIN_LENGTH = 2;
 export const SCHOOL_NAME_MAX_LENGTH = 255;
 export const SLUG_MIN_LENGTH = 2;
 export const SLUG_MAX_LENGTH = 100;
+
+// Plausible-URL check for the optional school website: http(s) scheme and a
+// dotted host. Deliberately loose — the backend is the real authority.
+function isPlausibleUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (url.protocol === "http:" || url.protocol === "https:") && url.hostname.includes(".");
+  } catch {
+    return false;
+  }
+}
 
 export function validateStep1(
   data: OnboardingData,
@@ -38,6 +50,13 @@ export function validateStep1(
   // checked) are NOT blocked — this is a soft UX check only, real
   // enforcement is the 409 on submit. Don't hold the user hostage to a
   // failed availability lookup.
+
+  // Website and UIN are optional — empty is valid. Only a non-empty website
+  // is format-checked.
+  const website = data.school.website.trim();
+  if (website && !isPlausibleUrl(website)) {
+    errors["school.website"] = "onboarding.errors.invalidUrl";
+  }
 
   if (!data.owner.firstName.trim()) {
     errors["owner.firstName"] = "onboarding.errors.required";

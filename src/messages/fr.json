@@ -418,6 +418,7 @@
     "errors": {
       "required": "Ce champ est obligatoire",
       "invalidEmail": "Saisissez une adresse e-mail valide",
+      "invalidUrl": "Saisissez une URL valide, p. ex. https://votreecole.edu.ng",
       "invalidSlug": "Utilisez uniquement des minuscules, des chiffres et des tirets",
       "nameLength": "Doit contenir entre 2 et 255 caractères",
       "slugLength": "Doit contenir entre 2 et 100 caractères",

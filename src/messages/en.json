@@ -418,6 +418,7 @@
     "errors": {
       "required": "This field is required",
       "invalidEmail": "Enter a valid email address",
+      "invalidUrl": "Enter a valid URL, e.g. https://yourschool.edu.ng",
       "invalidSlug": "Use lowercase letters, numbers, and hyphens only",
       "nameLength": "Must be between 2 and 255 characters",
       "slugLength": "Must be between 2 and 100 characters",
