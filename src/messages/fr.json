@@ -26,7 +26,8 @@
     "cancel": "Annuler",
     "save": "Enregistrer les modifications",
     "saving": "Enregistrement…",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "selectPlaceholder": "Sélectionner…"
   },
   "login": {
     "submitting": "Connexion en cours…",
@@ -445,7 +446,27 @@
     "edit": "Modifier",
     "notSet": "Non renseigné",
     "toast": {
-      "identityUpdated": "Identité de l'école mise à jour"
+      "identityUpdated": "Identité de l'école mise à jour",
+      "generalBehaviourUpdated": "Comportement général mis à jour",
+      "regionalUpdated": "Paramètres régionaux mis à jour",
+      "questionBankUpdated": "Paramètres par défaut de la banque de questions mis à jour",
+      "notificationRoutingUpdated": "Acheminement des notifications mis à jour"
+    },
+    "options": {
+      "dateFormat": {
+        "dmy": "JJ/MM/AAAA",
+        "mdy": "MM/JJ/AAAA",
+        "iso": "AAAA-MM-JJ"
+      },
+      "timeFormat": {
+        "12h": "Format 12 heures",
+        "24h": "Format 24 heures"
+      },
+      "notificationChannel": {
+        "email": "E-mail",
+        "sms": "SMS",
+        "emailAndSms": "E-mail et SMS"
+      }
     },
     "errors": {
       "forbidden": "Vous n'avez pas la permission de consulter les paramètres.",
@@ -554,6 +575,69 @@
         "invalidEmail": "Saisissez une adresse e-mail valide",
         "invalidUrl": "Saisissez une URL valide, p. ex. https://votreecole.edu.ng",
         "fieldInvalid": "Ce champ n'est pas valide",
+        "submitField": "Veuillez corriger les champs signalés et réessayer.",
+        "forbidden": "Vous n'avez pas la permission de gérer les paramètres.",
+        "submitFailed": "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer."
+      }
+    },
+    "generalBehaviourPanel": {
+      "title": "Modifier le comportement général",
+      "subtitle": "Mettez à jour le fonctionnement quotidien du portail",
+      "workingDays": { "label": "Jours ouvrés" },
+      "recordsPerPage": { "label": "Enregistrements par page" },
+      "dateFormat": { "label": "Format de date" },
+      "timeFormat": { "label": "Format d'heure" },
+      "absenceEndDelayDays": { "label": "Délai de fin d'absence (jours)" },
+      "notificationChannel": { "label": "Canal de notification" },
+      "studentIdPrefix": { "label": "Préfixe ID élève" },
+      "staffIdPrefix": { "label": "Préfixe ID personnel" },
+      "errors": {
+        "invalidNumber": "Saisissez un nombre entier, 0 ou plus",
+        "submitField": "Veuillez corriger les champs signalés et réessayer.",
+        "forbidden": "Vous n'avez pas la permission de gérer les paramètres.",
+        "submitFailed": "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer."
+      }
+    },
+    "regionalPanel": {
+      "title": "Modifier les paramètres régionaux",
+      "subtitle": "Mettez à jour la localisation et les paramètres régionaux de votre école",
+      "address": { "label": "Adresse" },
+      "city": { "label": "Ville" },
+      "postalCode": { "label": "Code postal" },
+      "country": { "label": "Pays", "placeholder": "Rechercher un pays…" },
+      "region": { "label": "État / Région" },
+      "timezone": { "label": "Fuseau horaire" },
+      "currency": { "label": "Devise" },
+      "language": { "label": "Langue par défaut" },
+      "additionalLanguages": { "label": "Langues supplémentaires" },
+      "pax": { "label": "PAX" },
+      "errors": {
+        "submitField": "Veuillez corriger les champs signalés et réessayer.",
+        "forbidden": "Vous n'avez pas la permission de gérer les paramètres.",
+        "submitFailed": "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer."
+      }
+    },
+    "questionBankPanel": {
+      "title": "Modifier les paramètres par défaut de la banque de questions",
+      "subtitle": "Mettez à jour les valeurs par défaut utilisées pour créer des banques de questions",
+      "questionsPerPage": { "label": "Questions par page" },
+      "defaultExamDurationMinutes": { "label": "Durée d'examen par défaut (minutes)" },
+      "errors": {
+        "invalidNumber": "Saisissez un nombre entier, 0 ou plus",
+        "submitField": "Veuillez corriger les champs signalés et réessayer.",
+        "forbidden": "Vous n'avez pas la permission de gérer les paramètres.",
+        "submitFailed": "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer."
+      }
+    },
+    "notificationRoutingPanel": {
+      "title": "Modifier l'acheminement des notifications",
+      "subtitle": "Choisissez qui reçoit les alertes financières et disciplinaires",
+      "financeAlertEmails": { "label": "E-mails d'alerte financière" },
+      "disciplinaryAlertEmails": { "label": "E-mails d'alerte disciplinaire" },
+      "addEmail": "Ajouter un e-mail",
+      "emailPlaceholder": "nom@ecole.edu.ng",
+      "errors": {
+        "invalidEmail": "Saisissez une adresse e-mail valide",
         "submitField": "Veuillez corriger les champs signalés et réessayer.",
         "forbidden": "Vous n'avez pas la permission de gérer les paramètres.",
         "submitFailed": "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer."

@@ -8,6 +8,10 @@ import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { SettingsCard, SettingsField } from "@/components/settings/SettingsCard";
 import { EditSchoolIdentityPanel } from "@/components/settings/EditSchoolIdentityPanel";
+import { GeneralBehaviourPanel } from "@/components/settings/GeneralBehaviourPanel";
+import { RegionalSettingsPanel } from "@/components/settings/RegionalSettingsPanel";
+import { QuestionBankPanel } from "@/components/settings/QuestionBankPanel";
+import { NotificationRoutingPanel } from "@/components/settings/NotificationRoutingPanel";
 import { ComingSoonPanel } from "@/components/settings/ComingSoonPanel";
 import { getSchoolSettings } from "@/lib/settings/settingsApi";
 import type { SettingsData } from "@/lib/settings/types";
@@ -31,6 +35,14 @@ type EditableSection = (typeof EDITABLE_SECTIONS)[number];
 
 function isEditableSection(value: string | null): value is EditableSection {
   return !!value && (EDITABLE_SECTIONS as readonly string[]).includes(value);
+}
+
+// Sections with a real edit panel wired — everything else in
+// EDITABLE_SECTIONS still opens ComingSoonPanel.
+const WIRED_SECTIONS = ["identity", "generalBehaviour", "regional", "questionBank", "notificationRouting"] as const;
+
+function hasWiredPanel(section: EditableSection): boolean {
+  return (WIRED_SECTIONS as readonly string[]).includes(section);
 }
 
 // Widened defensively to string|null|undefined: api_integrations.api_key/
@@ -386,10 +398,54 @@ function SettingsContent() {
         }}
       />
 
+      <GeneralBehaviourPanel
+        isOpen={editingSection === "generalBehaviour"}
+        section={settings.general_behaviour}
+        onClose={closeEditPanel}
+        onSaved={(updated) => {
+          setLoad({ status: "loaded", settings: updated });
+          closeEditPanel();
+          showToast(t("settings.toast.generalBehaviourUpdated"));
+        }}
+      />
+
+      <RegionalSettingsPanel
+        isOpen={editingSection === "regional"}
+        section={settings.regional}
+        onClose={closeEditPanel}
+        onSaved={(updated) => {
+          setLoad({ status: "loaded", settings: updated });
+          closeEditPanel();
+          showToast(t("settings.toast.regionalUpdated"));
+        }}
+      />
+
+      <QuestionBankPanel
+        isOpen={editingSection === "questionBank"}
+        section={settings.question_bank}
+        onClose={closeEditPanel}
+        onSaved={(updated) => {
+          setLoad({ status: "loaded", settings: updated });
+          closeEditPanel();
+          showToast(t("settings.toast.questionBankUpdated"));
+        }}
+      />
+
+      <NotificationRoutingPanel
+        isOpen={editingSection === "notificationRouting"}
+        section={settings.notification_routing}
+        onClose={closeEditPanel}
+        onSaved={(updated) => {
+          setLoad({ status: "loaded", settings: updated });
+          closeEditPanel();
+          showToast(t("settings.toast.notificationRoutingUpdated"));
+        }}
+      />
+
       <ComingSoonPanel
-        isOpen={editingSection !== null && editingSection !== "identity"}
+        isOpen={editingSection !== null && !hasWiredPanel(editingSection)}
         title={
-          editingSection && editingSection !== "identity"
+          editingSection && !hasWiredPanel(editingSection)
             ? t(`settings.sections.${editingSection}.title`)
             : ""
         }
