@@ -21,7 +21,10 @@ export type SettingsData = {
     slug: string;
     status: TenantStatus;
     email: string;
-    phone: string;
+    // Confirmed nullable against real tenant data (this tenant had no
+    // phone on file) — was wrongly typed as always-present `string`,
+    // which let a raw `.trim()` on it crash the read/edit paths.
+    phone: string | null;
     website: string | null;
     uin: string | null;
     client_name: string | null;

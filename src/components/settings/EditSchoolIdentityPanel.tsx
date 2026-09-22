@@ -47,7 +47,11 @@ function toFormState(identity: SettingsData["identity"]): IdentityFormState {
   return {
     schoolName: identity.school_name,
     email: identity.email,
-    phone: identity.phone,
+    // website/uin/client_name/phone are all string|null on the wire — every
+    // one of them must be coalesced to "" here, before the form or the diff
+    // logic below ever calls a string method on it. Missing this for phone
+    // is exactly what crashed on a real tenant with no phone on file.
+    phone: identity.phone ?? "",
     website: identity.website ?? "",
     uin: identity.uin ?? "",
     clientName: identity.client_name ?? "",
@@ -70,8 +74,11 @@ function buildIdentityUpdate(
   const email = form.email.trim();
   if (email !== original.email.trim()) update.email = email;
 
+  // Same null-if-empty treatment as website/uin/client_name below — phone
+  // is also string|null on the wire, so an intentionally-cleared field
+  // should round-trip as null, not "".
   const phone = form.phone.trim();
-  if (phone !== original.phone.trim()) update.phone = phone;
+  if (phone !== original.phone.trim()) update.phone = phone || null;
 
   const website = form.website.trim();
   if (website !== original.website.trim()) update.website = website || null;

@@ -33,7 +33,12 @@ function isEditableSection(value: string | null): value is EditableSection {
   return !!value && (EDITABLE_SECTIONS as readonly string[]).includes(value);
 }
 
-function maskSecret(value: string): string {
+// Widened defensively to string|null|undefined: api_integrations.api_key/
+// client_secret aren't documented nullable, but `configured: boolean`
+// alongside them strongly suggests they may be absent pre-setup. No
+// confirmed case of it yet — this only hardens the function itself against
+// that, without changing SettingsData's typed contract.
+function maskSecret(value: string | null | undefined): string {
   if (!value) return "—";
   if (value.length <= 4) return "•".repeat(value.length);
   return `${"•".repeat(8)}${value.slice(-4)}`;
@@ -174,6 +179,7 @@ function SettingsContent() {
                 </span>
                 <span className="text-sm text-text-secondary">
                   {settings.identity.email}
+                  {/* phone is string|null on the wire — truthy check only, never .trim()/etc on it directly */}
                   {settings.identity.phone ? ` · ${settings.identity.phone}` : ""}
                 </span>
               </div>
