@@ -43,14 +43,16 @@ type IdentityFormState = {
   showWebsiteToVisitors: boolean;
 };
 
+// Every identity field except school_name is string|null on the wire (the
+// 'app' tenant currently has null for all of them) — each one gets
+// coalesced to "" here, before the form or the diff logic below ever calls
+// a string method on it. Missing this field-by-field is exactly what
+// crashed twice already (phone, then email); this coalesces the whole set
+// at once so there's no field left to miss.
 function toFormState(identity: SettingsData["identity"]): IdentityFormState {
   return {
     schoolName: identity.school_name,
-    email: identity.email,
-    // website/uin/client_name/phone are all string|null on the wire — every
-    // one of them must be coalesced to "" here, before the form or the diff
-    // logic below ever calls a string method on it. Missing this for phone
-    // is exactly what crashed on a real tenant with no phone on file.
+    email: identity.email ?? "",
     phone: identity.phone ?? "",
     website: identity.website ?? "",
     uin: identity.uin ?? "",
@@ -71,6 +73,9 @@ function buildIdentityUpdate(
   const schoolName = form.schoolName.trim();
   if (schoolName !== original.schoolName.trim()) update.school_name = schoolName;
 
+  // Unlike phone/website/uin/client_name, email stays required to save
+  // (isValid gates on emailValid below) — it can never be blank by the time
+  // a save reaches here, so no null-if-empty fallback is needed for it.
   const email = form.email.trim();
   if (email !== original.email.trim()) update.email = email;
 
