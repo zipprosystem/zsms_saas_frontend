@@ -25,7 +25,8 @@
     "close": "Fermer",
     "cancel": "Annuler",
     "save": "Enregistrer les modifications",
-    "saving": "Enregistrement…"
+    "saving": "Enregistrement…",
+    "retry": "Réessayer"
   },
   "login": {
     "submitting": "Connexion en cours…",
@@ -446,6 +447,11 @@
     "toast": {
       "identityUpdated": "Identité de l'école mise à jour"
     },
+    "errors": {
+      "forbidden": "Vous n'avez pas la permission de consulter les paramètres.",
+      "loadFailed": "Impossible de charger les paramètres. Vérifiez votre connexion et réessayez.",
+      "devBypassUnavailable": "Les paramètres ne peuvent pas être chargés avec le contournement d'authentification local — testez cela sur un tenant déployé avec une vraie connexion."
+    },
     "comingSoonPanel": {
       "subtitle": "La modification de cette section n'est pas encore disponible.",
       "body": "Cet éditeur est encore en cours de développement. Revenez bientôt."
@@ -523,7 +529,8 @@
         "helpCentre": "Centre d'aide",
         "submitFeedback": "Envoyer un retour",
         "opensInNewTab": "S'ouvre dans un nouvel onglet"
-      }
+      },
+      "emptySection": "Rien à afficher ici pour le moment."
     },
     "identityPanel": {
       "title": "Modifier l'identité de l'école",
@@ -533,20 +540,23 @@
         "label": "Sous-domaine du portail",
         "helper": "Ceci est l'adresse du portail de votre école. Elle ne peut pas être modifiée après le provisionnement."
       },
-      "customDomain": {
-        "label": "Domaine personnalisé (optionnel)",
-        "placeholder": "portail.votreecole.edu.ng",
-        "helper": "Utilisez votre propre domaine. Vous pourrez le vérifier et le configurer après l'enregistrement."
-      },
       "email": { "label": "Adresse e-mail", "placeholder": "info@votreecole.edu.ng" },
-      "phone": { "label": "Numéro de téléphone", "placeholder": "801 234 5678" },
+      "phone": { "label": "Numéro de téléphone", "placeholder": "+234 801 234 5678" },
+      "website": { "label": "Site web de l'école (optionnel)", "placeholder": "https://votreecole.edu.ng" },
+      "uin": { "label": "Numéro unique d'établissement (optionnel)", "placeholder": "ex. UIN-000123" },
+      "clientName": { "label": "Nom du client (optionnel)", "placeholder": "ex. Groupe Éducatif Zenith" },
       "showWebsite": {
         "label": "Afficher le site de l'école aux visiteurs",
         "helper": "Les visiteurs pourront voir le site public de votre école lorsque cette option est activée."
       },
       "errors": {
         "required": "Ce champ est obligatoire",
-        "invalidEmail": "Saisissez une adresse e-mail valide"
+        "invalidEmail": "Saisissez une adresse e-mail valide",
+        "invalidUrl": "Saisissez une URL valide, p. ex. https://votreecole.edu.ng",
+        "fieldInvalid": "Ce champ n'est pas valide",
+        "submitField": "Veuillez corriger les champs signalés et réessayer.",
+        "forbidden": "Vous n'avez pas la permission de gérer les paramètres.",
+        "submitFailed": "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer."
       }
     }
   },

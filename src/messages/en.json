@@ -25,7 +25,8 @@
     "close": "Close",
     "cancel": "Cancel",
     "save": "Save changes",
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "retry": "Try again"
   },
   "login": {
     "submitting": "Signing in…",
@@ -446,6 +447,11 @@
     "toast": {
       "identityUpdated": "School identity updated"
     },
+    "errors": {
+      "forbidden": "You don't have permission to view settings.",
+      "loadFailed": "Couldn't load settings. Check your connection and try again.",
+      "devBypassUnavailable": "Settings can't be loaded with the local dev auth bypass — test this on a deployed tenant with a real login."
+    },
     "comingSoonPanel": {
       "subtitle": "Editing for this section isn't available yet.",
       "body": "We're still building this editor. Check back soon."
@@ -523,7 +529,8 @@
         "helpCentre": "Help Centre",
         "submitFeedback": "Submit Feedback",
         "opensInNewTab": "Opens in a new tab"
-      }
+      },
+      "emptySection": "Nothing to show here yet."
     },
     "identityPanel": {
       "title": "Edit School Identity",
@@ -533,20 +540,23 @@
         "label": "Portal Subdomain",
         "helper": "This is your school's portal address. It can't be changed after provisioning."
       },
-      "customDomain": {
-        "label": "Custom Domain (optional)",
-        "placeholder": "portal.yourschool.edu.ng",
-        "helper": "Use your own domain. You can verify and configure this after saving."
-      },
       "email": { "label": "Email Address", "placeholder": "info@yourschool.edu.ng" },
-      "phone": { "label": "Phone Number", "placeholder": "801 234 5678" },
+      "phone": { "label": "Phone Number", "placeholder": "+234 801 234 5678" },
+      "website": { "label": "School Website (optional)", "placeholder": "https://yourschool.edu.ng" },
+      "uin": { "label": "Unique Institution Number (optional)", "placeholder": "e.g. UIN-000123" },
+      "clientName": { "label": "Client Name (optional)", "placeholder": "e.g. Zenith Education Group" },
       "showWebsite": {
         "label": "Show school website to visitors",
         "helper": "Visitors can view your public school website when this is on."
       },
       "errors": {
         "required": "This field is required",
-        "invalidEmail": "Enter a valid email address"
+        "invalidEmail": "Enter a valid email address",
+        "invalidUrl": "Enter a valid URL, e.g. https://yourschool.edu.ng",
+        "fieldInvalid": "This field is invalid",
+        "submitField": "Please fix the highlighted fields and try again.",
+        "forbidden": "You don't have permission to manage settings.",
+        "submitFailed": "Something went wrong saving your changes. Please try again."
       }
     }
   },

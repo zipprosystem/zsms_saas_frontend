@@ -1,14 +1,16 @@
 "use client";
 
-import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { Suspense, useCallback, useEffect, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { UploadIcon } from "@/components/icons/UploadIcon";
+import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { SettingsCard, SettingsField } from "@/components/settings/SettingsCard";
 import { EditSchoolIdentityPanel } from "@/components/settings/EditSchoolIdentityPanel";
 import { ComingSoonPanel } from "@/components/settings/ComingSoonPanel";
-import { getSchoolSettings, type SchoolSettings } from "@/lib/settings/schoolSettings";
+import { getSchoolSettings } from "@/lib/settings/settingsApi";
+import type { SettingsData } from "@/lib/settings/types";
 import type { TenantStatus } from "@/types/tenant";
 
 type SettingsTab = "general" | "schoolSetup";
@@ -37,6 +39,13 @@ function maskSecret(value: string): string {
   return `${"•".repeat(8)}${value.slice(-4)}`;
 }
 
+type LoadState =
+  | { status: "loading" }
+  | { status: "loaded"; settings: SettingsData }
+  | { status: "forbidden" }
+  | { status: "devBypassUnavailable" }
+  | { status: "error" };
+
 export default function SettingsPage() {
   return (
     <Suspense fallback={<SettingsShell />}>
@@ -61,12 +70,33 @@ function SettingsContent() {
   const { showToast } = useToast();
 
   const [tab, setTab] = useState<SettingsTab>("general");
-  const [settings, setSettings] = useState<SchoolSettings | null>(null);
+  const [load, setLoad] = useState<LoadState>({ status: "loading" });
   const [editingSection, setEditingSection] = useState<EditableSection | null>(null);
 
-  useEffect(() => {
-    getSchoolSettings().then(setSettings);
+  const loadSettings = useCallback(() => {
+    setLoad({ status: "loading" });
+    getSchoolSettings().then((result) => {
+      if (result.ok) {
+        setLoad({ status: "loaded", settings: result.data });
+        return;
+      }
+      if (result.kind === "forbidden") {
+        setLoad({ status: "forbidden" });
+        return;
+      }
+      if (result.kind === "devBypassUnavailable") {
+        setLoad({ status: "devBypassUnavailable" });
+        return;
+      }
+      // "validation" can't happen on a GET; network/server both fall back
+      // to the same retry-able error state.
+      setLoad({ status: "error" });
+    });
   }, []);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   useEffect(() => {
     const edit = searchParams.get("edit");
@@ -84,9 +114,29 @@ function SettingsContent() {
     }
   };
 
-  if (!settings) {
+  if (load.status === "loading") {
     return <SettingsShell />;
   }
+
+  if (load.status === "forbidden") {
+    return <SettingsMessage text={t("settings.errors.forbidden")} />;
+  }
+
+  if (load.status === "devBypassUnavailable") {
+    return <SettingsMessage text={t("settings.errors.devBypassUnavailable")} />;
+  }
+
+  if (load.status === "error") {
+    return (
+      <SettingsMessage text={t("settings.errors.loadFailed")}>
+        <Button type="button" variant="secondary" onClick={loadSettings}>
+          {t("common.retry")}
+        </Button>
+      </SettingsMessage>
+    );
+  }
+
+  const settings = load.settings;
 
   return (
     <div className="flex flex-col gap-6">
@@ -111,11 +161,11 @@ function SettingsContent() {
             onEdit={() => setEditingSection("identity")}
           >
             <div className="flex flex-wrap items-center gap-4">
-              <IdentityLogo schoolName={settings.identity.schoolName} logoUrl={settings.identity.logoUrl} />
+              <IdentityLogo schoolName={settings.identity.school_name} logoUrl={settings.identity.logo_url} />
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-base font-semibold text-text-primary">
-                    {settings.identity.schoolName}
+                    {settings.identity.school_name}
                   </span>
                   <StatusBadge status={settings.identity.status} />
                 </div>
@@ -123,8 +173,8 @@ function SettingsContent() {
                   {settings.identity.slug}.zsmsapp.com
                 </span>
                 <span className="text-sm text-text-secondary">
-                  {settings.identity.email} · +{settings.identity.phoneDialCode}{" "}
-                  {settings.identity.phoneNumber}
+                  {settings.identity.email}
+                  {settings.identity.phone ? ` · ${settings.identity.phone}` : ""}
                 </span>
               </div>
             </div>
@@ -138,19 +188,19 @@ function SettingsContent() {
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <BrandingSlot
                 label={t("settings.sections.branding.schoolLogo")}
-                url={settings.branding.schoolLogoUrl}
+                url={settings.branding.school_logo_url}
               />
               <BrandingSlot
                 label={t("settings.sections.branding.mobileLogo")}
-                url={settings.branding.mobileLogoUrl}
+                url={settings.branding.mobile_logo_url}
               />
               <BrandingSlot
                 label={t("settings.sections.branding.principalSignature")}
-                url={settings.branding.principalSignatureUrl}
+                url={settings.branding.principal_signature_url}
               />
               <BrandingSlot
                 label={t("settings.sections.branding.portalLoader")}
-                url={settings.branding.portalLoaderUrl}
+                url={settings.branding.portal_loader_url}
               />
             </div>
           </SettingsCard>
@@ -163,39 +213,39 @@ function SettingsContent() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <SettingsField
                 label={t("settings.sections.generalBehaviour.workingDays")}
-                value={settings.generalBehaviour.workingDays
+                value={settings.general_behaviour.working_days
                   .map((day) => t(`onboarding.options.workingDays.${day}`))
                   .join(", ")}
               />
               <SettingsField
                 label={t("settings.sections.generalBehaviour.recordsPerPage")}
-                value={settings.generalBehaviour.recordsPerPage}
+                value={settings.general_behaviour.records_per_page}
               />
               <SettingsField
                 label={t("settings.sections.generalBehaviour.dateFormat")}
-                value={settings.generalBehaviour.dateFormat}
+                value={settings.general_behaviour.date_format}
               />
               <SettingsField
                 label={t("settings.sections.generalBehaviour.timeFormat")}
-                value={settings.generalBehaviour.timeFormat}
+                value={settings.general_behaviour.time_format}
               />
               <SettingsField
                 label={t("settings.sections.generalBehaviour.absenceEndDelay")}
                 value={t("settings.sections.generalBehaviour.absenceEndDelayValue", {
-                  days: settings.generalBehaviour.absenceEndDelayDays,
+                  days: settings.general_behaviour.absence_end_delay_days,
                 })}
               />
               <SettingsField
                 label={t("settings.sections.generalBehaviour.notificationChannel")}
-                value={settings.generalBehaviour.notificationChannel}
+                value={settings.general_behaviour.notification_channel}
               />
               <SettingsField
                 label={t("settings.sections.generalBehaviour.studentIdPrefix")}
-                value={settings.generalBehaviour.studentIdPrefix}
+                value={settings.general_behaviour.student_id_prefix}
               />
               <SettingsField
                 label={t("settings.sections.generalBehaviour.staffIdPrefix")}
-                value={settings.generalBehaviour.staffIdPrefix}
+                value={settings.general_behaviour.staff_id_prefix}
               />
             </div>
           </SettingsCard>
@@ -206,10 +256,22 @@ function SettingsContent() {
             onEdit={() => setEditingSection("regional")}
           >
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <SettingsField label={t("settings.sections.regional.address")} value={settings.regional.address} />
-              <SettingsField label={t("settings.sections.regional.country")} value={settings.regional.country} />
-              <SettingsField label={t("settings.sections.regional.timezone")} value={settings.regional.timezone} />
-              <SettingsField label={t("settings.sections.regional.currency")} value={settings.regional.currency} />
+              <SettingsField
+                label={t("settings.sections.regional.address")}
+                value={settings.regional.address}
+              />
+              <SettingsField
+                label={t("settings.sections.regional.country")}
+                value={settings.regional.country_code}
+              />
+              <SettingsField
+                label={t("settings.sections.regional.timezone")}
+                value={settings.regional.timezone}
+              />
+              <SettingsField
+                label={t("settings.sections.regional.currency")}
+                value={settings.regional.currency}
+              />
               <SettingsField label={t("settings.sections.regional.pax")} value={settings.regional.pax} />
             </div>
           </SettingsCard>
@@ -219,15 +281,7 @@ function SettingsContent() {
             editLabel={t("settings.edit")}
             onEdit={() => setEditingSection("banking")}
           >
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <SettingsField label={t("settings.sections.banking.bankName")} value={settings.banking.bankName} />
-              <SettingsField
-                label={t("settings.sections.banking.accountNumber")}
-                value={maskSecret(settings.banking.accountNumber)}
-              />
-              <SettingsField label={t("settings.sections.banking.accountName")} value={settings.banking.accountName} />
-              <SettingsField label={t("settings.sections.banking.branch")} value={settings.banking.branch} />
-            </div>
+            <p className="text-sm text-text-muted">{t("settings.sections.emptySection")}</p>
           </SettingsCard>
 
           <SettingsCard
@@ -238,12 +292,12 @@ function SettingsContent() {
             <div className="grid gap-4 sm:grid-cols-2">
               <SettingsField
                 label={t("settings.sections.questionBank.questionsPerPage")}
-                value={settings.questionBank.questionsPerPage}
+                value={settings.question_bank.questions_per_page}
               />
               <SettingsField
                 label={t("settings.sections.questionBank.defaultExamDuration")}
                 value={t("settings.sections.questionBank.minutesValue", {
-                  minutes: settings.questionBank.defaultExamDurationMinutes,
+                  minutes: settings.question_bank.default_exam_duration_minutes,
                 })}
               />
             </div>
@@ -254,24 +308,7 @@ function SettingsContent() {
             editLabel={t("settings.edit")}
             onEdit={() => setEditingSection("socialMedia")}
           >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SettingsField
-                label={t("settings.sections.socialMedia.facebook")}
-                value={settings.socialMedia.facebook || t("settings.notSet")}
-              />
-              <SettingsField
-                label={t("settings.sections.socialMedia.instagram")}
-                value={settings.socialMedia.instagram || t("settings.notSet")}
-              />
-              <SettingsField
-                label={t("settings.sections.socialMedia.youtube")}
-                value={settings.socialMedia.youtube || t("settings.notSet")}
-              />
-              <SettingsField
-                label={t("settings.sections.socialMedia.twitter")}
-                value={settings.socialMedia.twitter || t("settings.notSet")}
-              />
-            </div>
+            <p className="text-sm text-text-muted">{t("settings.sections.emptySection")}</p>
           </SettingsCard>
 
           <SettingsCard
@@ -282,19 +319,19 @@ function SettingsContent() {
             <div className="grid gap-4 sm:grid-cols-2">
               <SettingsField
                 label={t("settings.sections.apiIntegrations.apiKey")}
-                value={maskSecret(settings.apiIntegrations.apiKey)}
+                value={maskSecret(settings.api_integrations.api_key)}
               />
               <SettingsField
                 label={t("settings.sections.apiIntegrations.smsSenderName")}
-                value={settings.apiIntegrations.smsSenderName}
+                value={settings.api_integrations.sms_sender_name}
               />
               <SettingsField
                 label={t("settings.sections.apiIntegrations.clientId")}
-                value={settings.apiIntegrations.clientId}
+                value={settings.api_integrations.client_id}
               />
               <SettingsField
                 label={t("settings.sections.apiIntegrations.clientSecret")}
-                value={maskSecret(settings.apiIntegrations.clientSecret)}
+                value={maskSecret(settings.api_integrations.client_secret)}
               />
             </div>
           </SettingsCard>
@@ -307,36 +344,17 @@ function SettingsContent() {
             <div className="grid gap-4 sm:grid-cols-2">
               <SettingsField
                 label={t("settings.sections.notificationRouting.financeAlerts")}
-                value={settings.notificationRouting.financeAlertEmails.join(", ")}
+                value={settings.notification_routing.finance_alert_emails.join(", ")}
               />
               <SettingsField
                 label={t("settings.sections.notificationRouting.disciplinaryAlerts")}
-                value={settings.notificationRouting.disciplinaryAlertEmails.join(", ")}
+                value={settings.notification_routing.disciplinary_alert_emails.join(", ")}
               />
             </div>
           </SettingsCard>
 
           <SettingsCard title={t("settings.sections.helpFeedback.title")}>
-            <div className="flex flex-wrap gap-6">
-              <a
-                href={settings.helpFeedback.helpCentreUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-semibold text-accent hover:underline"
-              >
-                {t("settings.sections.helpFeedback.helpCentre")}
-                <span className="sr-only"> ({t("settings.sections.helpFeedback.opensInNewTab")})</span>
-              </a>
-              <a
-                href={settings.helpFeedback.submitFeedbackUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-semibold text-accent hover:underline"
-              >
-                {t("settings.sections.helpFeedback.submitFeedback")}
-                <span className="sr-only"> ({t("settings.sections.helpFeedback.opensInNewTab")})</span>
-              </a>
-            </div>
+            <p className="text-sm text-text-muted">{t("settings.sections.emptySection")}</p>
           </SettingsCard>
         </div>
       )}
@@ -345,8 +363,8 @@ function SettingsContent() {
         isOpen={editingSection === "identity"}
         identity={settings.identity}
         onClose={closeEditPanel}
-        onSaved={(identity) => {
-          setSettings((current) => (current ? { ...current, identity } : current));
+        onSaved={(updated) => {
+          setLoad({ status: "loaded", settings: updated });
           closeEditPanel();
           showToast(t("settings.toast.identityUpdated"));
         }}
@@ -361,6 +379,15 @@ function SettingsContent() {
         }
         onClose={closeEditPanel}
       />
+    </div>
+  );
+}
+
+function SettingsMessage({ text, children }: { text: string; children?: ReactNode }) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+      <p className="max-w-sm text-sm text-text-muted">{text}</p>
+      {children}
     </div>
   );
 }

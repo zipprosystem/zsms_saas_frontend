@@ -7,6 +7,19 @@
 // components/hooks (never from a server component) — it never runs during
 // SSR, so there's no risk of leaking one user's token into another request.
 
+// DEV-ONLY auth bypass flag — double-gated on NODE_ENV==="development" AND
+// NEXT_PUBLIC_DEV_AUTH_BYPASS==="true". MUST NEVER activate in production.
+// Both env vars are inlined at build time, so in a production build
+// NODE_ENV is the literal string "production" and this whole expression is
+// statically false / dead-code-eliminated. Lives here (not in
+// AuthProvider.tsx, which originally defined it) so any authenticated
+// fetch helper — not just AuthProvider — can check it without importing
+// React. See settingsApi.ts for why this matters: the bypass seeds a mock
+// token that must never actually reach a real backend.
+export const DEV_AUTH_BYPASS =
+  process.env.NODE_ENV === "development" &&
+  process.env.NEXT_PUBLIC_DEV_AUTH_BYPASS === "true";
+
 export type RefreshResult = { accessToken: string } | null;
 
 let accessToken: string | null = null;
