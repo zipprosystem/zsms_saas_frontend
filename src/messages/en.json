@@ -26,7 +26,8 @@
     "cancel": "Cancel",
     "save": "Save changes",
     "saving": "Saving…",
-    "retry": "Try again"
+    "retry": "Try again",
+    "selectPlaceholder": "Select…"
   },
   "login": {
     "submitting": "Signing in…",
@@ -445,12 +446,32 @@
     "edit": "Edit",
     "notSet": "Not set",
     "toast": {
-      "identityUpdated": "School identity updated"
+      "identityUpdated": "School identity updated",
+      "generalBehaviourUpdated": "General behaviour updated",
+      "regionalUpdated": "Regional settings updated",
+      "questionBankUpdated": "Question bank defaults updated",
+      "notificationRoutingUpdated": "Notification routing updated"
     },
     "errors": {
       "forbidden": "You don't have permission to view settings.",
       "loadFailed": "Couldn't load settings. Check your connection and try again.",
       "devBypassUnavailable": "Settings can't be loaded with the local dev auth bypass — test this on a deployed tenant with a real login."
+    },
+    "options": {
+      "dateFormat": {
+        "dmy": "DD/MM/YYYY",
+        "mdy": "MM/DD/YYYY",
+        "iso": "YYYY-MM-DD"
+      },
+      "timeFormat": {
+        "12h": "12-hour",
+        "24h": "24-hour"
+      },
+      "notificationChannel": {
+        "email": "Email",
+        "sms": "SMS",
+        "emailAndSms": "Email & SMS"
+      }
     },
     "comingSoonPanel": {
       "subtitle": "Editing for this section isn't available yet.",
@@ -554,6 +575,69 @@
         "invalidEmail": "Enter a valid email address",
         "invalidUrl": "Enter a valid URL, e.g. https://yourschool.edu.ng",
         "fieldInvalid": "This field is invalid",
+        "submitField": "Please fix the highlighted fields and try again.",
+        "forbidden": "You don't have permission to manage settings.",
+        "submitFailed": "Something went wrong saving your changes. Please try again."
+      }
+    },
+    "generalBehaviourPanel": {
+      "title": "Edit General Behaviour",
+      "subtitle": "Update how the portal behaves day to day",
+      "workingDays": { "label": "Working Days" },
+      "recordsPerPage": { "label": "Records per page" },
+      "dateFormat": { "label": "Date format" },
+      "timeFormat": { "label": "Time format" },
+      "absenceEndDelayDays": { "label": "Absence end delay (days)" },
+      "notificationChannel": { "label": "Notification channel" },
+      "studentIdPrefix": { "label": "Student ID prefix" },
+      "staffIdPrefix": { "label": "Staff ID prefix" },
+      "errors": {
+        "invalidNumber": "Enter a whole number, 0 or greater",
+        "submitField": "Please fix the highlighted fields and try again.",
+        "forbidden": "You don't have permission to manage settings.",
+        "submitFailed": "Something went wrong saving your changes. Please try again."
+      }
+    },
+    "regionalPanel": {
+      "title": "Edit Regional Settings",
+      "subtitle": "Update your school's location and locale",
+      "address": { "label": "Address" },
+      "city": { "label": "City" },
+      "postalCode": { "label": "Postal code" },
+      "country": { "label": "Country", "placeholder": "Search countries…" },
+      "region": { "label": "State / Region" },
+      "timezone": { "label": "Timezone" },
+      "currency": { "label": "Currency" },
+      "language": { "label": "Default language" },
+      "additionalLanguages": { "label": "Additional languages" },
+      "pax": { "label": "PAX" },
+      "errors": {
+        "submitField": "Please fix the highlighted fields and try again.",
+        "forbidden": "You don't have permission to manage settings.",
+        "submitFailed": "Something went wrong saving your changes. Please try again."
+      }
+    },
+    "questionBankPanel": {
+      "title": "Edit Question Bank Defaults",
+      "subtitle": "Update the defaults used when building question banks",
+      "questionsPerPage": { "label": "Questions per page" },
+      "defaultExamDurationMinutes": { "label": "Default exam duration (minutes)" },
+      "errors": {
+        "invalidNumber": "Enter a whole number, 0 or greater",
+        "submitField": "Please fix the highlighted fields and try again.",
+        "forbidden": "You don't have permission to manage settings.",
+        "submitFailed": "Something went wrong saving your changes. Please try again."
+      }
+    },
+    "notificationRoutingPanel": {
+      "title": "Edit Notification Routing",
+      "subtitle": "Choose who gets notified for finance and disciplinary alerts",
+      "financeAlertEmails": { "label": "Finance alert emails" },
+      "disciplinaryAlertEmails": { "label": "Disciplinary alert emails" },
+      "addEmail": "Add email",
+      "emailPlaceholder": "name@school.edu.ng",
+      "errors": {
+        "invalidEmail": "Enter a valid email address",
         "submitField": "Please fix the highlighted fields and try again.",
         "forbidden": "You don't have permission to manage settings.",
         "submitFailed": "Something went wrong saving your changes. Please try again."

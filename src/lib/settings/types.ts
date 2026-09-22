@@ -118,8 +118,16 @@ export type IdentityUpdate = Partial<
   >
 >;
 
+// General Behaviour, Regional, Question Bank, and Notification Routing have
+// no forbidden fields within themselves (unlike identity's slug/status), so
+// their update shapes are just Partial<...the whole section...> — no Pick
+// subset needed.
 export type SettingsUpdate = {
   identity?: IdentityUpdate;
-  // Other sections' update shapes are added here as their own edit panels
-  // are wired in future increments.
+  general_behaviour?: Partial<SettingsData["general_behaviour"]>;
+  regional?: Partial<SettingsData["regional"]>;
+  question_bank?: Partial<SettingsData["question_bank"]>;
+  notification_routing?: Partial<SettingsData["notification_routing"]>;
+  // Branding, Banking, Social Media, and API & Integrations' update shapes
+  // are added here as their own edit panels are wired in future increments.
 };
