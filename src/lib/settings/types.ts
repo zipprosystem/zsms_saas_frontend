@@ -6,24 +6,31 @@ import type { TenantStatus } from "@/types/tenant";
  * (GET/PATCH {API_BASE}/school/settings). Field names are load-bearing —
  * do not rename/invent. Snake_case throughout, matching the wire format.
  *
+ * NULLABILITY (updated 2026-09-22, superseding the documented contract):
+ * the real API returns null for far more fields than Muntajir's contract
+ * documented as always-present strings — confirmed directly against the
+ * 'app' tenant, which currently has null for every one of identity's
+ * optional-looking fields, all of regional's string fields, and
+ * academic_year entirely. Chasing these one crash at a time (phone, then
+ * email) isn't sustainable, so the policy going forward is: every string
+ * field is `string | null` unless it's structurally guaranteed to be
+ * present — school_name, slug, status, and enums/arrays/numbers/booleans.
+ * general_behaviour's and api_integrations' string fields are widened on
+ * that same policy, not yet independently observed null — flag to
+ * Muntajir either way, since the documented contract undersells
+ * nullability across the board and should be corrected at the source.
+ *
  * `banking`, `social_media`, and `help_feedback` currently come back as `{}`
  * from the deployed API — no fields defined for them yet. Left untyped
  * (empty object) until Muntajir specifies their shape; do not guess fields
  * for these three.
- *
- * `academic_year` has no confirmed shape and isn't rendered or edited in
- * this increment — kept as `unknown` so it round-trips without being
- * inspected.
  */
 export type SettingsData = {
   identity: {
     school_name: string;
     slug: string;
     status: TenantStatus;
-    email: string;
-    // Confirmed nullable against real tenant data (this tenant had no
-    // phone on file) — was wrongly typed as always-present `string`,
-    // which let a raw `.trim()` on it crash the read/edit paths.
+    email: string | null;
     phone: string | null;
     website: string | null;
     uin: string | null;
@@ -43,25 +50,25 @@ export type SettingsData = {
     // the real payload uses different codes.
     working_days: WorkingDay[];
     records_per_page: number;
-    date_format: string;
-    time_format: string;
+    date_format: string | null;
+    time_format: string | null;
     absence_end_delay_days: number;
-    notification_channel: string;
-    student_id_prefix: string;
-    staff_id_prefix: string;
+    notification_channel: string | null;
+    student_id_prefix: string | null;
+    staff_id_prefix: string | null;
   };
   regional: {
-    address: string;
-    city: string;
-    postal_code: string;
-    country_code: string;
-    region_code: string;
-    region_name: string;
-    timezone: string;
-    currency: string;
+    address: string | null;
+    city: string | null;
+    postal_code: string | null;
+    country_code: string | null;
+    region_code: string | null;
+    region_name: string | null;
+    timezone: string | null;
+    currency: string | null;
     language: string;
     additional_languages: string[];
-    pax: string;
+    pax: string | null;
   };
   banking: Record<string, never>;
   question_bank: {
@@ -70,10 +77,10 @@ export type SettingsData = {
   };
   social_media: Record<string, never>;
   api_integrations: {
-    api_key: string;
-    sms_sender_name: string;
-    client_id: string;
-    client_secret: string;
+    api_key: string | null;
+    sms_sender_name: string | null;
+    client_id: string | null;
+    client_secret: string | null;
     configured: boolean;
   };
   notification_routing: {
@@ -81,6 +88,9 @@ export type SettingsData = {
     disciplinary_alert_emails: string[];
   };
   help_feedback: Record<string, never>;
+  // No confirmed shape, and can be entirely null (confirmed on the 'app'
+  // tenant) — not rendered or edited in this increment, kept as `unknown`
+  // so it round-trips without being inspected.
   academic_year: unknown | null;
   // Optimistic-concurrency style version stamp — read-only, never sent back
   // on PATCH (contract forbids it).

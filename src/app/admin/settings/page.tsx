@@ -44,6 +44,14 @@ function maskSecret(value: string | null | undefined): string {
   return `${"•".repeat(8)}${value.slice(-4)}`;
 }
 
+// Every nullable string field rendered in a read-only card goes through
+// this — never rendered raw, and never a fallback blank. `notSetLabel` is
+// passed in (rather than calling useTranslations here) since this is a
+// plain module-level function, not a component.
+function orNotSet(value: string | null, notSetLabel: string): string {
+  return value ?? notSetLabel;
+}
+
 type LoadState =
   | { status: "loading" }
   | { status: "loaded"; settings: SettingsData }
@@ -178,8 +186,7 @@ function SettingsContent() {
                   {settings.identity.slug}.zsmsapp.com
                 </span>
                 <span className="text-sm text-text-secondary">
-                  {settings.identity.email}
-                  {/* phone is string|null on the wire — truthy check only, never .trim()/etc on it directly */}
+                  {orNotSet(settings.identity.email, t("settings.notSet"))}
                   {settings.identity.phone ? ` · ${settings.identity.phone}` : ""}
                 </span>
               </div>
@@ -229,11 +236,11 @@ function SettingsContent() {
               />
               <SettingsField
                 label={t("settings.sections.generalBehaviour.dateFormat")}
-                value={settings.general_behaviour.date_format}
+                value={orNotSet(settings.general_behaviour.date_format, t("settings.notSet"))}
               />
               <SettingsField
                 label={t("settings.sections.generalBehaviour.timeFormat")}
-                value={settings.general_behaviour.time_format}
+                value={orNotSet(settings.general_behaviour.time_format, t("settings.notSet"))}
               />
               <SettingsField
                 label={t("settings.sections.generalBehaviour.absenceEndDelay")}
@@ -243,15 +250,15 @@ function SettingsContent() {
               />
               <SettingsField
                 label={t("settings.sections.generalBehaviour.notificationChannel")}
-                value={settings.general_behaviour.notification_channel}
+                value={orNotSet(settings.general_behaviour.notification_channel, t("settings.notSet"))}
               />
               <SettingsField
                 label={t("settings.sections.generalBehaviour.studentIdPrefix")}
-                value={settings.general_behaviour.student_id_prefix}
+                value={orNotSet(settings.general_behaviour.student_id_prefix, t("settings.notSet"))}
               />
               <SettingsField
                 label={t("settings.sections.generalBehaviour.staffIdPrefix")}
-                value={settings.general_behaviour.staff_id_prefix}
+                value={orNotSet(settings.general_behaviour.staff_id_prefix, t("settings.notSet"))}
               />
             </div>
           </SettingsCard>
@@ -264,21 +271,24 @@ function SettingsContent() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <SettingsField
                 label={t("settings.sections.regional.address")}
-                value={settings.regional.address}
+                value={orNotSet(settings.regional.address, t("settings.notSet"))}
               />
               <SettingsField
                 label={t("settings.sections.regional.country")}
-                value={settings.regional.country_code}
+                value={orNotSet(settings.regional.country_code, t("settings.notSet"))}
               />
               <SettingsField
                 label={t("settings.sections.regional.timezone")}
-                value={settings.regional.timezone}
+                value={orNotSet(settings.regional.timezone, t("settings.notSet"))}
               />
               <SettingsField
                 label={t("settings.sections.regional.currency")}
-                value={settings.regional.currency}
+                value={orNotSet(settings.regional.currency, t("settings.notSet"))}
               />
-              <SettingsField label={t("settings.sections.regional.pax")} value={settings.regional.pax} />
+              <SettingsField
+                label={t("settings.sections.regional.pax")}
+                value={orNotSet(settings.regional.pax, t("settings.notSet"))}
+              />
             </div>
           </SettingsCard>
 
@@ -329,11 +339,11 @@ function SettingsContent() {
               />
               <SettingsField
                 label={t("settings.sections.apiIntegrations.smsSenderName")}
-                value={settings.api_integrations.sms_sender_name}
+                value={orNotSet(settings.api_integrations.sms_sender_name, t("settings.notSet"))}
               />
               <SettingsField
                 label={t("settings.sections.apiIntegrations.clientId")}
-                value={settings.api_integrations.client_id}
+                value={orNotSet(settings.api_integrations.client_id, t("settings.notSet"))}
               />
               <SettingsField
                 label={t("settings.sections.apiIntegrations.clientSecret")}
