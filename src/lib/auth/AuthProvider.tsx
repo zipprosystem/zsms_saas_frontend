@@ -29,7 +29,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { API_BASE } from "@/lib/api/config";
-import { getAccessToken, setAccessToken, registerAuthBridge } from "./authBridge";
+import { getAccessToken, setAccessToken, registerAuthBridge, DEV_AUTH_BYPASS } from "./authBridge";
 
 export type AuthUser = Record<string, unknown> & { id?: string; email?: string };
 export type AuthSchool = Record<string, unknown> & { id?: string; slug?: string };
@@ -71,20 +71,12 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-// DEV-ONLY auth bypass — double-gated on NODE_ENV==="development" AND
-// NEXT_PUBLIC_DEV_AUTH_BYPASS==="true". MUST NEVER activate in production.
-// Both env vars are inlined at build time, so in a production build
-// NODE_ENV is the literal string "production" and this whole expression
-// (and the branch that reads it below) is statically false / dead-code-
-// eliminated — it cannot activate even if the flag var leaked into a prod
-// environment.
-const DEV_AUTH_BYPASS =
-  process.env.NODE_ENV === "development" &&
-  process.env.NEXT_PUBLIC_DEV_AUTH_BYPASS === "true";
-
-// DEV-ONLY mock session seeded by DEV_AUTH_BYPASS. Clearly-fake values so
-// they're unmistakable in the UI; the token is never sent to a real
-// backend (nothing in this app's current admin pages calls apiFetch yet).
+// DEV-ONLY mock session seeded by DEV_AUTH_BYPASS (now defined in
+// authBridge.ts — see that file for why). Clearly-fake values so they're
+// unmistakable in the UI. The token itself is inert here; it's on each
+// authenticated caller (e.g. settingsApi.ts) to check DEV_AUTH_BYPASS
+// before ever handing it to apiFetch, so it's never actually sent to a
+// real backend.
 const DEV_MOCK_USER: AuthUser = {
   id: "dev-user",
   email: "dev@demo-school.local",
