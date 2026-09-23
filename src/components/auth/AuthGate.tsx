@@ -22,11 +22,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (status === "idle") {
-      // restoreSession() only recovers the access token (see the
-      // TODO(auth-me) note in AuthProvider.restoreSession) — user/school
-      // stay null after a reload until that endpoint exists. Route
-      // protection is unaffected; this only matters for anything here that
-      // reads useAuth().user / .school.
+      // restoreSession() recovers the access token via /auth/refresh, then
+      // fills in user/school via /auth/me (see AuthProvider.restoreSession)
+      // — both are restored after a reload now, not just route access.
       restoreSession();
     }
   }, [status, restoreSession]);

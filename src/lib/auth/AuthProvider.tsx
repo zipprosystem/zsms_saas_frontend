@@ -1,15 +1,23 @@
 "use client";
 
-// Verified contract from Muntajir (Chirag Technology), confirmed 2026-09-04.
+// Verified contract from Muntajir (Chirag Technology), confirmed 2026-09-04,
+// GET /auth/me added 2026-09-23.
 //
 //   POST /auth/login  { email, password, school_slug }  credentials:'include'
 //     -> 200: data.access_token, data.expires_in (seconds, 900), data.user, data.school
+//        (data.school now includes logo_url, confirmed 2026-09-23)
 //     -> 401 UNAUTHORIZED / 422 VALIDATION_ERROR / 429 RATE_LIMITED (Retry-After header)
 //
 //   POST /auth/refresh  {}  credentials:'include'  (refresh token is an
 //   httpOnly cookie the backend set on login — never touched from the frontend)
 //     -> 200: new data.access_token, data.expires_in. Cookie rotates automatically.
+//        Only a token — no user/school, which is why /auth/me exists below.
 //     -> 401/422: session dead.
+//
+//   GET /auth/me  Bearer auth (via apiFetch)
+//     -> 200: data.user, data.school (name, slug, logo_url) — used to
+//        restore user/school after a reload, since /auth/refresh alone
+//        can't. See restoreSession below.
 //
 //   POST /auth/logout  credentials:'include'  (clears the cookie backend-side)
 //
@@ -29,15 +37,13 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { API_BASE } from "@/lib/api/config";
+import { apiFetch } from "@/lib/api/client";
 import { getAccessToken, setAccessToken, registerAuthBridge, DEV_AUTH_BYPASS } from "./authBridge";
 
 export type AuthUser = Record<string, unknown> & { id?: string; email?: string };
-// `name`/`logo_url` are UNCONFIRMED against the real login response — the
-// verified contract above only says data.school exists, not its own
-// sub-fields. Added here (still optional) so the sidebar brand (see
-// Sidebar.tsx) can read them with a type instead of casting `unknown`
-// inline; falls back gracefully either way if these turn out wrong or
-// absent. Reconcile with Muntajir and tighten this once confirmed.
+// logo_url confirmed present (login's data.school and /auth/me's data.school
+// both include it, per Muntajir 2026-09-23) — no longer the "unconfirmed"
+// guess it was when the sidebar brand was first wired.
 export type AuthSchool = Record<string, unknown> & {
   id?: string;
   slug?: string;
@@ -150,12 +156,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     registerAuthBridge({ refresh, forceLogout: clearLocalAuth });
   }, [refresh, clearLocalAuth]);
 
+  // Only called from restoreSession, right after a successful refresh (so
+  // apiFetch has a fresh token to attach). Failure here is NEVER fatal to
+  // the session — refresh already proved it valid, so a failed /auth/me is
+  // treated as "user/school stay null", not a logout. See the long comment
+  // on restoreSession below for why. If /auth/me genuinely 401s, apiFetch's
+  // own refresh-and-retry-then-force-logout chain has already run by the
+  // time this returns — nothing more to do here in that case either.
+  const fetchCurrentUser = useCallback(async (): Promise<{
+    user: AuthUser | null;
+    school: AuthSchool | null;
+  } | null> => {
+    try {
+      const response = await apiFetch("auth/me");
+      if (!response.ok) return null;
+      const body = await response.json().catch(() => null);
+      return { user: body?.data?.user ?? null, school: body?.data?.school ?? null };
+    } catch {
+      return null;
+    }
+  }, []);
+
   const restoreSession = useCallback(async (): Promise<boolean> => {
     // DEV-ONLY auth bypass — double-gated on NODE_ENV==="development" AND
     // NEXT_PUBLIC_DEV_AUTH_BYPASS==="true". MUST NEVER activate in
     // production. Skips the real /auth/refresh (which can't succeed on
     // localhost — no session cookie + CORS) and seeds a mock authenticated
     // session instead, so AuthGate never hits the network or redirects.
+    // Returns before ever reaching /auth/me below — the mock path is fully
+    // isolated from the real network calls, same as it always was.
     if (DEV_AUTH_BYPASS) {
       setAccessToken(DEV_MOCK_ACCESS_TOKEN);
       setUser(DEV_MOCK_USER);
@@ -170,15 +199,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearLocalAuth();
       return false;
     }
-    // TODO(auth-me): /auth/refresh only returns a token, not user/school, so
-    // a reload restores the session (route protection still works — status
-    // goes "authenticated") but leaves user/school null until the next real
-    // login. Once Muntajir adds a /auth/me endpoint (or refresh starts
-    // returning user/school), fetch it here and setUser(...)/setSchool(...)
-    // before flipping status — this is the one place that needs the change.
+
+    // /auth/refresh only returns a token, not user/school — /auth/me fills
+    // that in so a reload restores the full context (sidebar name/logo
+    // included), not just route access. A failed /auth/me here degrades to
+    // exactly the old pre-/auth/me behavior (authenticated, user/school
+    // null) rather than blocking the reload or forcing a logout over what
+    // might be a transient failure in a call that already isn't route-
+    // protection-critical.
+    const me = await fetchCurrentUser();
+    setUser(me?.user ?? null);
+    setSchool(me?.school ?? null);
     setStatus("authenticated");
     return true;
-  }, [refresh, clearLocalAuth]);
+  }, [refresh, clearLocalAuth, fetchCurrentUser]);
 
   const login = useCallback(async (email: string, password: string, schoolSlug: string) => {
     let response: Response;
