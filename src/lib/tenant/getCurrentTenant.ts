@@ -12,10 +12,13 @@ export function getCurrentTenant(): Tenant | null {
   const slug = h.get("x-tenant-slug");
   const name = h.get("x-tenant-name");
   const status = h.get("x-tenant-status");
+  // Empty string means "no logo configured" (headers can't carry null) —
+  // see middleware.ts.
+  const logoUrl = h.get("x-tenant-logo") || null;
 
   if (!slug || !name || status !== "active") {
     return null;
   }
 
-  return { slug, name, status };
+  return { slug, name, status, logoUrl };
 }

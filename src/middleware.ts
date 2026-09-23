@@ -14,7 +14,7 @@ const RESERVED_HOSTS = new Set([ROOT_DOMAIN, `www.${ROOT_DOMAIN}`, `api.${ROOT_D
 // NOT public-routed — it stays a bare pass-through, unchanged).
 const PUBLIC_PLATFORM_HOSTS = new Set([ROOT_DOMAIN, `www.${ROOT_DOMAIN}`]);
 
-const TENANT_HEADERS = ["x-tenant-slug", "x-tenant-name", "x-tenant-status"];
+const TENANT_HEADERS = ["x-tenant-slug", "x-tenant-name", "x-tenant-status", "x-tenant-logo"];
 
 // Per Muntajir: on any tenant-validation failure, send the visitor to the
 // public marketing site instead of rendering a "School not found" page.
@@ -115,6 +115,9 @@ export async function middleware(request: NextRequest) {
   requestHeaders.set("x-tenant-slug", result.tenant.slug);
   requestHeaders.set("x-tenant-name", result.tenant.name);
   requestHeaders.set("x-tenant-status", result.tenant.status);
+  // Headers can't carry null — empty string means "no logo configured",
+  // read back that way in getCurrentTenant().
+  requestHeaders.set("x-tenant-logo", result.tenant.logoUrl ?? "");
 
   return NextResponse.next({ request: { headers: requestHeaders } });
 }

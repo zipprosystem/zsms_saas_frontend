@@ -7,8 +7,13 @@ export type TenantStatus = "active" | "suspended" | "pending";
 // SaaS backend registry (GET /tenants/by-slug/:slug) — status is always
 // "active" because unknown/inactive/suspended/deactivated/pending slugs
 // never construct one; see src/lib/tenant/validateTenant.ts.
+//
+// logoUrl added 2026-09-23 (Muntajir) — null means no logo configured for
+// this tenant, not a failure; callers (the login page) fall back to the
+// default ZSMS logo in that case.
 export type Tenant = {
   slug: string;
   name: string;
   status: "active";
+  logoUrl: string | null;
 };
