@@ -27,7 +27,13 @@
     "save": "Enregistrer les modifications",
     "saving": "Enregistrement…",
     "retry": "Réessayer",
-    "selectPlaceholder": "Sélectionner…"
+    "selectPlaceholder": "Sélectionner…",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "confirm": "Confirmer"
+  },
+  "overview": {
+    "dashboardComingSoon": "Votre tableau de bord arrive bientôt."
   },
   "login": {
     "submitting": "Connexion en cours…",
@@ -121,6 +127,7 @@
   },
   "nav": {
     "overview": "Vue d'ensemble",
+    "setup": "Configuration",
     "academics": "Académique",
     "attendance": "Présence",
     "conducts": "Conduite",
@@ -255,6 +262,82 @@
       "timetableStructure": { "name": "Structure de l'emploi du temps" },
       "periodsAndBells": { "name": "Périodes et sonneries" },
       "calendarAndEvents": { "name": "Calendrier et événements" }
+    },
+    "shell": {
+      "browseCategories": "Parcourir les catégories",
+      "breadcrumbRoot": "Configuration"
+    },
+    "dataTable": {
+      "actionsHeader": "Actions",
+      "loading": "Chargement…",
+      "previous": "Précédent",
+      "next": "Suivant",
+      "pageOf": "Page {page} sur {total}",
+      "errors": {
+        "loadFailed": "Impossible de charger cette liste. Vérifiez votre connexion et réessayez."
+      }
+    },
+    "crudScreen": {
+      "errors": {
+        "forbidden": "Vous n'avez pas la permission de gérer ceci.",
+        "conflict": "Cette action n'a pas pu être effectuée en raison d'un conflit avec son état actuel.",
+        "validation": "Veuillez corriger les champs signalés et réessayer.",
+        "fieldInvalid": "Ce champ n'est pas valide",
+        "saveFailed": "Une erreur est survenue. Veuillez réessayer.",
+        "devBypassUnavailable": "Ceci ne peut pas être chargé avec le contournement d'authentification local — testez cela sur un tenant déployé avec une vraie connexion."
+      }
+    },
+    "academicYears": {
+      "title": "Années académiques",
+      "subtitle": "Définissez les années académiques de votre école et indiquez laquelle est active",
+      "addNew": "Ajouter une année académique",
+      "searchPlaceholder": "Rechercher une année académique…",
+      "empty": "Aucune année académique pour le moment — ajoutez-en une pour commencer.",
+      "columns": {
+        "name": "Année",
+        "startDate": "Date de début",
+        "endDate": "Date de fin",
+        "status": "Statut"
+      },
+      "status": {
+        "active": "Active",
+        "upcoming": "À venir",
+        "completed": "Terminée"
+      },
+      "filters": {
+        "status": "Statut",
+        "all": "Tous les statuts"
+      },
+      "actions": {
+        "activate": "Activer",
+        "alreadyActive": "C'est déjà l'année active",
+        "cantDeleteActive": "Impossible de supprimer l'année active"
+      },
+      "confirmDelete": {
+        "title": "Supprimer l'année académique ?",
+        "message": "Ceci supprimera « {name} ». Cette action est irréversible."
+      },
+      "panel": {
+        "createTitle": "Ajouter une année académique",
+        "editTitle": "Modifier l'année académique",
+        "subtitle": "Les nouvelles années sont créées inactives — activez-en une depuis la liste lorsqu'elle commence."
+      },
+      "fields": {
+        "name": { "label": "Nom de l'année", "placeholder": "ex. 2025/2026" },
+        "startDate": { "label": "Date de début" },
+        "endDate": { "label": "Date de fin" }
+      },
+      "errors": {
+        "nameRequired": "Saisissez un nom pour cette année académique",
+        "startDateRequired": "Sélectionnez une date de début",
+        "endDateRequired": "Sélectionnez une date de fin",
+        "endBeforeStart": "La date de fin doit être postérieure à la date de début"
+      },
+      "toast": {
+        "created": "Année académique créée",
+        "updated": "Année académique mise à jour",
+        "deleted": "Année académique supprimée"
+      }
     }
   },
   "onboarding": {
@@ -441,7 +524,6 @@
       "general": "Paramètres généraux",
       "schoolSetup": "Configuration de l'école"
     },
-    "schoolSetupComingSoon": "La configuration de l'école arrive bientôt.",
     "editProfile": "Modifier le profil",
     "edit": "Modifier",
     "notSet": "Non renseigné",

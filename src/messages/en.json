@@ -27,7 +27,13 @@
     "save": "Save changes",
     "saving": "Saving…",
     "retry": "Try again",
-    "selectPlaceholder": "Select…"
+    "selectPlaceholder": "Select…",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm"
+  },
+  "overview": {
+    "dashboardComingSoon": "Your dashboard is coming soon."
   },
   "login": {
     "submitting": "Signing in…",
@@ -121,6 +127,7 @@
   },
   "nav": {
     "overview": "Overview",
+    "setup": "Setup",
     "academics": "Academics",
     "attendance": "Attendance",
     "conducts": "Conducts",
@@ -255,6 +262,82 @@
       "timetableStructure": { "name": "Timetable Structure" },
       "periodsAndBells": { "name": "Periods & Bells" },
       "calendarAndEvents": { "name": "Calendar & Events" }
+    },
+    "shell": {
+      "browseCategories": "Browse categories",
+      "breadcrumbRoot": "Setup"
+    },
+    "dataTable": {
+      "actionsHeader": "Actions",
+      "loading": "Loading…",
+      "previous": "Previous",
+      "next": "Next",
+      "pageOf": "Page {page} of {total}",
+      "errors": {
+        "loadFailed": "Couldn't load this list. Check your connection and try again."
+      }
+    },
+    "crudScreen": {
+      "errors": {
+        "forbidden": "You don't have permission to manage this.",
+        "conflict": "That couldn't be completed because of a conflict with its current state.",
+        "validation": "Please fix the highlighted fields and try again.",
+        "fieldInvalid": "This field is invalid",
+        "saveFailed": "Something went wrong. Please try again.",
+        "devBypassUnavailable": "This can't be loaded with the local dev auth bypass — test this on a deployed tenant with a real login."
+      }
+    },
+    "academicYears": {
+      "title": "Academic Years",
+      "subtitle": "Define your school's academic years and mark which one is active",
+      "addNew": "Add Academic Year",
+      "searchPlaceholder": "Search academic years…",
+      "empty": "No academic years yet — add your first one to get started.",
+      "columns": {
+        "name": "Year",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Active",
+        "upcoming": "Upcoming",
+        "completed": "Completed"
+      },
+      "filters": {
+        "status": "Status",
+        "all": "All statuses"
+      },
+      "actions": {
+        "activate": "Activate",
+        "alreadyActive": "This is already the active year",
+        "cantDeleteActive": "Can't delete the active year"
+      },
+      "confirmDelete": {
+        "title": "Delete academic year?",
+        "message": "This will delete \"{name}\". This can't be undone."
+      },
+      "panel": {
+        "createTitle": "Add Academic Year",
+        "editTitle": "Edit Academic Year",
+        "subtitle": "New years are created inactive — activate one from the list when it starts."
+      },
+      "fields": {
+        "name": { "label": "Year Name", "placeholder": "e.g. 2025/2026" },
+        "startDate": { "label": "Start Date" },
+        "endDate": { "label": "End Date" }
+      },
+      "errors": {
+        "nameRequired": "Enter a name for this academic year",
+        "startDateRequired": "Select a start date",
+        "endDateRequired": "Select an end date",
+        "endBeforeStart": "End date must be after the start date"
+      },
+      "toast": {
+        "created": "Academic year created",
+        "updated": "Academic year updated",
+        "deleted": "Academic year deleted"
+      }
     }
   },
   "onboarding": {
@@ -441,7 +524,6 @@
       "general": "General Settings",
       "schoolSetup": "School Setup"
     },
-    "schoolSetupComingSoon": "School Setup configuration is coming soon.",
     "editProfile": "Edit profile",
     "edit": "Edit",
     "notSet": "Not set",

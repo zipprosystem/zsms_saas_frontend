@@ -25,6 +25,8 @@ export type SetupCategory = {
   colorToken: string;
   /** Looked up against the icon map in CategoryCard — keeps this file free of component imports. */
   iconKey: SetupCategoryIconKey;
+  /** Kebab-case slug under /admin/setup/[category]/[screen]. Explicit (not derived from `key`), same reasoning as SetupItem.slug. */
+  slug: string;
   items: SetupItem[];
 };
 
@@ -34,6 +36,7 @@ export const setupCategories: SetupConfig = [
   {
     key: "schoolSettings",
     name: "setup.categories.schoolSettings.name",
+    slug: "school-settings",
     weightPercent: 15,
     colorToken: "category-purple",
     iconKey: "gear",
@@ -68,6 +71,7 @@ export const setupCategories: SetupConfig = [
   {
     key: "academicStructure",
     name: "setup.categories.academicStructure.name",
+    slug: "academic-structure",
     weightPercent: 35,
     colorToken: "category-blue",
     iconKey: "academicCap",
@@ -140,6 +144,7 @@ export const setupCategories: SetupConfig = [
   {
     key: "assessmentConfiguration",
     name: "setup.categories.assessmentConfiguration.name",
+    slug: "assessment-configuration",
     weightPercent: 20,
     colorToken: "category-cyan",
     iconKey: "clipboardChart",
@@ -192,6 +197,7 @@ export const setupCategories: SetupConfig = [
   {
     key: "physicalSpace",
     name: "setup.categories.physicalSpace.name",
+    slug: "physical-space",
     weightPercent: 20,
     colorToken: "category-green",
     iconKey: "locationPin",
@@ -238,6 +244,7 @@ export const setupCategories: SetupConfig = [
   {
     key: "scheduling",
     name: "setup.categories.scheduling.name",
+    slug: "scheduling",
     weightPercent: 10,
     colorToken: "category-amber",
     iconKey: "clock",
@@ -308,15 +315,45 @@ export function getOverallPercent(config: SetupConfig): number {
   }, 0);
 }
 
-export function findSetupItemBySlug(
+// Superseded findSetupItemBySlug (flat, item-slug-only lookup) removed —
+// it backed the old /admin/setup/[slug] stub, which the two-level
+// /admin/setup/[category]/[screen] structure replaces. Use
+// findSetupCategoryBySlug + findSetupItemInCategoryBySlug instead.
+
+export function findSetupCategoryBySlug(
   config: SetupConfig,
-  slug: string,
-): { item: SetupItem; category: SetupCategory } | undefined {
-  for (const category of config) {
-    const item = category.items.find((candidate) => candidate.slug === slug);
-    if (item) {
-      return { item, category };
-    }
-  }
-  return undefined;
+  categorySlug: string,
+): SetupCategory | undefined {
+  return config.find((category) => category.slug === categorySlug);
+}
+
+export function findSetupItemInCategoryBySlug(
+  category: SetupCategory,
+  itemSlug: string,
+): SetupItem | undefined {
+  return category.items.find((item) => item.slug === itemSlug);
+}
+
+/**
+ * Shared by /admin/setup/[category]/[screen]'s layout.tsx and page.tsx —
+ * both need the same category+item lookup independently (App Router gives
+ * each route segment file its own params), so this is the one place that
+ * decides what counts as a valid route. school-settings is explicitly
+ * excluded: its items already link straight to /admin/settings (see
+ * CategoryCard), so nothing should ever land here for that category.
+ */
+export function resolveSetupRoute(
+  categorySlug: string,
+  itemSlug: string,
+): { category: SetupCategory; item: SetupItem } | null {
+  const category = findSetupCategoryBySlug(setupCategories, categorySlug);
+  if (!category || category.key === "schoolSettings") return null;
+  const item = findSetupItemInCategoryBySlug(category, itemSlug);
+  if (!item) return null;
+  return { category, item };
+}
+
+/** The 4 categories this shell's sub-nav shows — School Settings has its own home at /admin/settings. */
+export function getShellCategories(config: SetupConfig): SetupCategory[] {
+  return config.filter((category) => category.key !== "schoolSettings");
 }
