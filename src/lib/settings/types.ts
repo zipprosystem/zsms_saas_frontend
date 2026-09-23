@@ -20,10 +20,9 @@ import type { TenantStatus } from "@/types/tenant";
  * Muntajir either way, since the documented contract undersells
  * nullability across the board and should be corrected at the source.
  *
- * `banking`, `social_media`, and `help_feedback` currently come back as `{}`
- * from the deployed API — no fields defined for them yet. Left untyped
- * (empty object) until Muntajir specifies their shape; do not guess fields
- * for these three.
+ * `banking` and `social_media` fields confirmed by Muntajir 2026-09-23 (were
+ * `{}`/unconfirmed before then — do not revert). `help_feedback` still comes
+ * back as `{}` with no fields defined yet; left untyped until confirmed.
  */
 export type SettingsData = {
   identity: {
@@ -70,17 +69,33 @@ export type SettingsData = {
     additional_languages: string[];
     pax: string | null;
   };
-  banking: Record<string, never>;
+  banking: {
+    bank_name: string | null;
+    account_number: string | null;
+    account_name: string | null;
+    branch: string | null;
+  };
   question_bank: {
     questions_per_page: number;
     default_exam_duration_minutes: number;
   };
-  social_media: Record<string, never>;
+  social_media: {
+    // Exact names per Muntajir — no `_url` suffix.
+    facebook: string | null;
+    instagram: string | null;
+    youtube: string | null;
+    twitter: string | null;
+  };
   api_integrations: {
+    // api_key/client_secret come back masked (e.g. "••••••1234") on GET,
+    // never the real secret — see ApiIntegrationsPanel for why they're
+    // never seeded into an editable field from this value.
     api_key: string | null;
     sms_sender_name: string | null;
     client_id: string | null;
     client_secret: string | null;
+    // Response-only — never sent in a PATCH (excluded from
+    // ApiIntegrationsUpdate below, not just by convention).
     configured: boolean;
   };
   notification_routing: {
@@ -118,16 +133,27 @@ export type IdentityUpdate = Partial<
   >
 >;
 
-// General Behaviour, Regional, Question Bank, and Notification Routing have
-// no forbidden fields within themselves (unlike identity's slug/status), so
-// their update shapes are just Partial<...the whole section...> — no Pick
-// subset needed.
+// api_integrations is the one section with a forbidden field within itself:
+// `configured` is response-only. Excluding it from the Pick (not just
+// leaving it out of the panel's form) makes sending it a compile error,
+// not just a discipline.
+export type ApiIntegrationsUpdate = Partial<
+  Pick<SettingsData["api_integrations"], "api_key" | "sms_sender_name" | "client_id" | "client_secret">
+>;
+
+// General Behaviour, Regional, Question Bank, Notification Routing, Banking,
+// and Social Media have no forbidden fields within themselves (unlike
+// identity's slug/status or api_integrations' configured), so their update
+// shapes are just Partial<...the whole section...> — no Pick subset needed.
 export type SettingsUpdate = {
   identity?: IdentityUpdate;
   general_behaviour?: Partial<SettingsData["general_behaviour"]>;
   regional?: Partial<SettingsData["regional"]>;
   question_bank?: Partial<SettingsData["question_bank"]>;
   notification_routing?: Partial<SettingsData["notification_routing"]>;
-  // Branding, Banking, Social Media, and API & Integrations' update shapes
-  // are added here as their own edit panels are wired in future increments.
+  banking?: Partial<SettingsData["banking"]>;
+  social_media?: Partial<SettingsData["social_media"]>;
+  api_integrations?: ApiIntegrationsUpdate;
+  // Branding's update shape is added here as its own edit panel is wired
+  // in a future increment.
 };

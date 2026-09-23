@@ -450,7 +450,10 @@
       "generalBehaviourUpdated": "Comportement général mis à jour",
       "regionalUpdated": "Paramètres régionaux mis à jour",
       "questionBankUpdated": "Paramètres par défaut de la banque de questions mis à jour",
-      "notificationRoutingUpdated": "Acheminement des notifications mis à jour"
+      "notificationRoutingUpdated": "Acheminement des notifications mis à jour",
+      "bankingUpdated": "Informations bancaires mises à jour",
+      "socialMediaUpdated": "Liens des réseaux sociaux mis à jour",
+      "apiIntegrationsUpdated": "API et intégrations mises à jour"
     },
     "options": {
       "dateFormat": {
@@ -638,6 +641,49 @@
       "emailPlaceholder": "nom@ecole.edu.ng",
       "errors": {
         "invalidEmail": "Saisissez une adresse e-mail valide",
+        "submitField": "Veuillez corriger les champs signalés et réessayer.",
+        "forbidden": "Vous n'avez pas la permission de gérer les paramètres.",
+        "submitFailed": "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer."
+      }
+    },
+    "bankingPanel": {
+      "title": "Modifier les informations bancaires",
+      "subtitle": "Mettez à jour le compte bancaire utilisé pour la collecte des frais",
+      "bankName": { "label": "Nom de la banque" },
+      "accountNumber": { "label": "Numéro de compte" },
+      "accountName": { "label": "Nom du compte" },
+      "branch": { "label": "Agence" },
+      "errors": {
+        "submitField": "Veuillez corriger les champs signalés et réessayer.",
+        "forbidden": "Vous n'avez pas la permission de gérer les paramètres.",
+        "submitFailed": "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer."
+      }
+    },
+    "socialMediaPanel": {
+      "title": "Modifier les réseaux sociaux",
+      "subtitle": "Mettez à jour les liens affichés sur le site public de votre école",
+      "urlPlaceholder": "https://…",
+      "facebook": { "label": "Facebook" },
+      "instagram": { "label": "Instagram" },
+      "youtube": { "label": "YouTube" },
+      "twitter": { "label": "Twitter / X" },
+      "errors": {
+        "invalidUrl": "Saisissez une URL valide, p. ex. https://facebook.com/votreecole",
+        "submitField": "Veuillez corriger les champs signalés et réessayer.",
+        "forbidden": "Vous n'avez pas la permission de gérer les paramètres.",
+        "submitFailed": "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer."
+      }
+    },
+    "apiIntegrationsPanel": {
+      "title": "Modifier l'API et les intégrations",
+      "subtitle": "Mettez à jour les identifiants API et les paramètres d'envoi de SMS",
+      "secretPlaceholder": "Laisser vide pour conserver la valeur actuelle",
+      "currentValue": "Actuel : {value}",
+      "apiKey": { "label": "Clé API" },
+      "smsSenderName": { "label": "Nom d'expéditeur SMS" },
+      "clientId": { "label": "ID client" },
+      "clientSecret": { "label": "Clé secrète client" },
+      "errors": {
         "submitField": "Veuillez corriger les champs signalés et réessayer.",
         "forbidden": "Vous n'avez pas la permission de gérer les paramètres.",
         "submitFailed": "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer."

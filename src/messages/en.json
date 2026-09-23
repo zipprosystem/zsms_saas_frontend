@@ -450,7 +450,10 @@
       "generalBehaviourUpdated": "General behaviour updated",
       "regionalUpdated": "Regional settings updated",
       "questionBankUpdated": "Question bank defaults updated",
-      "notificationRoutingUpdated": "Notification routing updated"
+      "notificationRoutingUpdated": "Notification routing updated",
+      "bankingUpdated": "Banking information updated",
+      "socialMediaUpdated": "Social media links updated",
+      "apiIntegrationsUpdated": "API & Integrations updated"
     },
     "errors": {
       "forbidden": "You don't have permission to view settings.",
@@ -638,6 +641,49 @@
       "emailPlaceholder": "name@school.edu.ng",
       "errors": {
         "invalidEmail": "Enter a valid email address",
+        "submitField": "Please fix the highlighted fields and try again.",
+        "forbidden": "You don't have permission to manage settings.",
+        "submitFailed": "Something went wrong saving your changes. Please try again."
+      }
+    },
+    "bankingPanel": {
+      "title": "Edit Banking Information",
+      "subtitle": "Update the bank account used for fee collection",
+      "bankName": { "label": "Bank name" },
+      "accountNumber": { "label": "Account number" },
+      "accountName": { "label": "Account name" },
+      "branch": { "label": "Branch" },
+      "errors": {
+        "submitField": "Please fix the highlighted fields and try again.",
+        "forbidden": "You don't have permission to manage settings.",
+        "submitFailed": "Something went wrong saving your changes. Please try again."
+      }
+    },
+    "socialMediaPanel": {
+      "title": "Edit Social Media",
+      "subtitle": "Update the links shown on your public school website",
+      "urlPlaceholder": "https://…",
+      "facebook": { "label": "Facebook" },
+      "instagram": { "label": "Instagram" },
+      "youtube": { "label": "YouTube" },
+      "twitter": { "label": "Twitter / X" },
+      "errors": {
+        "invalidUrl": "Enter a valid URL, e.g. https://facebook.com/yourschool",
+        "submitField": "Please fix the highlighted fields and try again.",
+        "forbidden": "You don't have permission to manage settings.",
+        "submitFailed": "Something went wrong saving your changes. Please try again."
+      }
+    },
+    "apiIntegrationsPanel": {
+      "title": "Edit API & Integrations",
+      "subtitle": "Update API credentials and SMS sender settings",
+      "secretPlaceholder": "Leave blank to keep current",
+      "currentValue": "Current: {value}",
+      "apiKey": { "label": "API Key" },
+      "smsSenderName": { "label": "SMS Sender Name" },
+      "clientId": { "label": "Client ID" },
+      "clientSecret": { "label": "Client Secret" },
+      "errors": {
         "submitField": "Please fix the highlighted fields and try again.",
         "forbidden": "You don't have permission to manage settings.",
         "submitFailed": "Something went wrong saving your changes. Please try again."
