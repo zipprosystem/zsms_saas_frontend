@@ -13,5 +13,5 @@ export default function LoginPage() {
     redirect("https://zsmsapp.com");
   }
 
-  return <LoginForm schoolSlug={tenant.slug} />;
+  return <LoginForm schoolSlug={tenant.slug} schoolName={tenant.name} />;
 }

@@ -13,9 +13,10 @@ import { useAuth, LoginError } from "@/lib/auth/AuthProvider";
 
 type LoginFormProps = {
   schoolSlug: string;
+  schoolName: string;
 };
 
-export function LoginForm({ schoolSlug }: LoginFormProps) {
+export function LoginForm({ schoolSlug, schoolName }: LoginFormProps) {
   const t = useTranslations();
   const router = useRouter();
   const { login } = useAuth();
@@ -43,12 +44,18 @@ export function LoginForm({ schoolSlug }: LoginFormProps) {
     <main className="flex min-h-screen w-full flex-col lg:flex-row">
       <AuthHero
         heading={t("welcome.welcomeBack")}
-        schoolName={t("welcome.schoolName")}
+        schoolName={schoolName}
         tagline={t("welcome.tagline")}
       />
 
       <section className="flex w-full flex-1 items-center justify-center bg-surface px-6 py-10 lg:flex-[583]">
         <div className="flex w-full max-w-[446px] flex-col gap-8">
+          {/* FLAGGED: this is the default ZSMS logo, not the tenant's real
+              one — the login page is pre-auth, and the tenant-validation
+              contract (GET /tenants/by-slug/:slug, confirmed with Muntajir)
+              only returns { slug, name, status }, no logo_url. Needs
+              Muntajir to add logo_url there (or a public tenant-branding
+              endpoint) before this can show the real school logo. */}
           <div className="flex h-16 w-16 items-center justify-center rounded-[9px] bg-white p-2.5 shadow-[2px_4px_8px_rgba(0,0,0,0.1)]">
             <Image
               src="/auth/zsms-logo.png"
