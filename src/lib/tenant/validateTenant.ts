@@ -1,13 +1,14 @@
 import type { Tenant } from "@/types/tenant";
 import { API_BASE } from "@/lib/api/config";
 
-// Verified contract from Muntajir (Chirag Technology), confirmed 2026-09-16.
+// Verified contract from Muntajir (Chirag Technology), confirmed 2026-09-16;
+// logo_url added to the response 2026-09-23.
 // GET {API_BASE}/tenants/by-slug/:slug — the SaaS backend registry, NOT
 // School Manager. No auth header required (public tenant-resolution
 // endpoint).
 //
-//   200 { success: true, data: { slug, name, status: "active" } }
-//     -> valid tenant.
+//   200 { success: true, data: { slug, name, status: "active", logo_url } }
+//     -> valid tenant. logo_url is nullable (no logo configured).
 //   404 { success: false, error: { code: "TENANT_NOT_FOUND", ... } }
 //     -> unknown, inactive, suspended, deactivated, AND pending tenants all
 //        collapse to this single response. There is no 200-with-inactive
@@ -57,7 +58,12 @@ export async function validateTenantBySlug(rawSlug: string): Promise<TenantValid
       return { ok: false };
     }
 
-    return { ok: true, tenant: { slug: data.slug, name: data.name, status: "active" } };
+    // Lenient on logo_url specifically — unlike slug/name/status, it's a
+    // display-only field. A missing/malformed value falls back to null
+    // (no logo) rather than failing the whole tenant validation over it.
+    const logoUrl = typeof data.logo_url === "string" && data.logo_url ? data.logo_url : null;
+
+    return { ok: true, tenant: { slug: data.slug, name: data.name, status: "active", logoUrl } };
   } catch {
     return { ok: false };
   } finally {
