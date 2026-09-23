@@ -453,7 +453,8 @@
       "notificationRoutingUpdated": "Acheminement des notifications mis à jour",
       "bankingUpdated": "Informations bancaires mises à jour",
       "socialMediaUpdated": "Liens des réseaux sociaux mis à jour",
-      "apiIntegrationsUpdated": "API et intégrations mises à jour"
+      "apiIntegrationsUpdated": "API et intégrations mises à jour",
+      "brandingUpdated": "Logo de l'école mis à jour"
     },
     "options": {
       "dateFormat": {
@@ -492,7 +493,7 @@
       "branding": {
         "title": "Image de marque",
         "schoolLogo": "Logo de l'école",
-        "mobileLogo": "Mobile",
+        "mobileLogo": "Favicon / Logo carré",
         "principalSignature": "Signature du directeur",
         "portalLoader": "Chargement du portail"
       },
@@ -581,6 +582,36 @@
         "submitField": "Veuillez corriger les champs signalés et réessayer.",
         "forbidden": "Vous n'avez pas la permission de gérer les paramètres.",
         "submitFailed": "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer."
+      }
+    },
+    "brandingPanel": {
+      "title": "Modifier l'image de marque",
+      "subtitle": "Mettez à jour les logos, signatures et visuels",
+      "changeFile": "Changer le fichier",
+      "uploading": "Envoi en cours…",
+      "comingSoon": "Bientôt disponible",
+      "schoolLogo": {
+        "label": "Logo de l'école",
+        "helper": "PNG ou JPG, jusqu'à 2 Mo. PNG transparent, min. 200×200px."
+      },
+      "mobileLogo": {
+        "label": "Favicon / Logo carré",
+        "helper": "PNG ou ICO, 32×32 ou 64×64. Doit être carré."
+      },
+      "principalSignature": {
+        "label": "Signature du directeur",
+        "helper": "PNG, fond transparent."
+      },
+      "portalLoader": {
+        "label": "Chargement du portail",
+        "helper": "PNG ou GIF, jusqu'à 1 Mo."
+      },
+      "errors": {
+        "tooLarge": "Ce fichier est trop volumineux. Choisissez-en un de moins de 2 Mo.",
+        "unsupportedType": "Type de fichier non pris en charge. Utilisez PNG, JPG ou WebP.",
+        "forbidden": "Vous n'avez pas la permission de gérer les paramètres.",
+        "uploadFailed": "Une erreur est survenue lors de l'envoi du logo. Veuillez réessayer.",
+        "uploadedButRefreshFailed": "Le logo a été envoyé, mais la page n'a pas pu se rafraîchir. Rechargez pour le voir."
       }
     },
     "generalBehaviourPanel": {

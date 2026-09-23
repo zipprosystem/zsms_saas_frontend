@@ -453,7 +453,8 @@
       "notificationRoutingUpdated": "Notification routing updated",
       "bankingUpdated": "Banking information updated",
       "socialMediaUpdated": "Social media links updated",
-      "apiIntegrationsUpdated": "API & Integrations updated"
+      "apiIntegrationsUpdated": "API & Integrations updated",
+      "brandingUpdated": "School logo updated"
     },
     "errors": {
       "forbidden": "You don't have permission to view settings.",
@@ -492,7 +493,7 @@
       "branding": {
         "title": "Branding",
         "schoolLogo": "School Logo",
-        "mobileLogo": "Mobile",
+        "mobileLogo": "Favicon / Square Logo",
         "principalSignature": "Principal Signature",
         "portalLoader": "Portal Loader"
       },
@@ -581,6 +582,36 @@
         "submitField": "Please fix the highlighted fields and try again.",
         "forbidden": "You don't have permission to manage settings.",
         "submitFailed": "Something went wrong saving your changes. Please try again."
+      }
+    },
+    "brandingPanel": {
+      "title": "Edit Branding",
+      "subtitle": "Update logos, signatures, and visual assets",
+      "changeFile": "Change file",
+      "uploading": "Uploading…",
+      "comingSoon": "Coming soon",
+      "schoolLogo": {
+        "label": "School Logo",
+        "helper": "PNG or JPG, up to 2MB. PNG transparent, min 200×200px."
+      },
+      "mobileLogo": {
+        "label": "Favicon / Square Logo",
+        "helper": "PNG or ICO, 32×32 or 64×64. Must be square."
+      },
+      "principalSignature": {
+        "label": "Principal Signature",
+        "helper": "PNG, transparent background."
+      },
+      "portalLoader": {
+        "label": "Frontend Loader",
+        "helper": "PNG or GIF, up to 1MB."
+      },
+      "errors": {
+        "tooLarge": "That file is too large. Choose one under 2MB.",
+        "unsupportedType": "Unsupported file type. Use PNG, JPG, or WebP.",
+        "forbidden": "You don't have permission to manage settings.",
+        "uploadFailed": "Something went wrong uploading the logo. Please try again.",
+        "uploadedButRefreshFailed": "The logo was uploaded, but the page couldn't refresh. Reload to see it."
       }
     },
     "generalBehaviourPanel": {
