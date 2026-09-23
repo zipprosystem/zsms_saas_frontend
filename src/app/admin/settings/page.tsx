@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { SettingsCard, SettingsField } from "@/components/settings/SettingsCard";
 import { EditSchoolIdentityPanel } from "@/components/settings/EditSchoolIdentityPanel";
+import { BrandingPanel } from "@/components/settings/BrandingPanel";
 import { GeneralBehaviourPanel } from "@/components/settings/GeneralBehaviourPanel";
 import { RegionalSettingsPanel } from "@/components/settings/RegionalSettingsPanel";
 import { QuestionBankPanel } from "@/components/settings/QuestionBankPanel";
@@ -44,6 +45,7 @@ function isEditableSection(value: string | null): value is EditableSection {
 // EDITABLE_SECTIONS still opens ComingSoonPanel.
 const WIRED_SECTIONS = [
   "identity",
+  "branding",
   "generalBehaviour",
   "regional",
   "banking",
@@ -441,6 +443,17 @@ function SettingsContent() {
           setLoad({ status: "loaded", settings: updated });
           closeEditPanel();
           showToast(t("settings.toast.identityUpdated"));
+        }}
+      />
+
+      <BrandingPanel
+        isOpen={editingSection === "branding"}
+        section={settings.branding}
+        onClose={closeEditPanel}
+        onSaved={(updated) => {
+          setLoad({ status: "loaded", settings: updated });
+          closeEditPanel();
+          showToast(t("settings.toast.brandingUpdated"));
         }}
       />
 
