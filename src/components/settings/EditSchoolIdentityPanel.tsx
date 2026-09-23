@@ -6,6 +6,7 @@ import { InputField } from "@/components/ui/Input";
 import { Toggle } from "@/components/ui/Toggle";
 import { SlideOverPanel } from "@/components/ui/SlideOverPanel";
 import { updateSchoolSettings } from "@/lib/settings/settingsApi";
+import { isPlausibleUrl } from "@/lib/settings/validation";
 import type { IdentityUpdate, SettingsData } from "@/lib/settings/types";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -23,15 +24,6 @@ const CONTRACT_FIELD_TO_FORM_FIELD: Record<string, keyof IdentityFormState> = {
   client_name: "clientName",
   show_website_to_visitors: "showWebsiteToVisitors",
 };
-
-function isPlausibleUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return (url.protocol === "http:" || url.protocol === "https:") && url.hostname.includes(".");
-  } catch {
-    return false;
-  }
-}
 
 type IdentityFormState = {
   schoolName: string;

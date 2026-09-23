@@ -12,6 +12,9 @@ import { GeneralBehaviourPanel } from "@/components/settings/GeneralBehaviourPan
 import { RegionalSettingsPanel } from "@/components/settings/RegionalSettingsPanel";
 import { QuestionBankPanel } from "@/components/settings/QuestionBankPanel";
 import { NotificationRoutingPanel } from "@/components/settings/NotificationRoutingPanel";
+import { BankingPanel } from "@/components/settings/BankingPanel";
+import { SocialMediaPanel } from "@/components/settings/SocialMediaPanel";
+import { ApiIntegrationsPanel } from "@/components/settings/ApiIntegrationsPanel";
 import { ComingSoonPanel } from "@/components/settings/ComingSoonPanel";
 import { getSchoolSettings } from "@/lib/settings/settingsApi";
 import type { SettingsData } from "@/lib/settings/types";
@@ -39,7 +42,16 @@ function isEditableSection(value: string | null): value is EditableSection {
 
 // Sections with a real edit panel wired — everything else in
 // EDITABLE_SECTIONS still opens ComingSoonPanel.
-const WIRED_SECTIONS = ["identity", "generalBehaviour", "regional", "questionBank", "notificationRouting"] as const;
+const WIRED_SECTIONS = [
+  "identity",
+  "generalBehaviour",
+  "regional",
+  "banking",
+  "questionBank",
+  "socialMedia",
+  "apiIntegrations",
+  "notificationRouting",
+] as const;
 
 function hasWiredPanel(section: EditableSection): boolean {
   return (WIRED_SECTIONS as readonly string[]).includes(section);
@@ -309,7 +321,24 @@ function SettingsContent() {
             editLabel={t("settings.edit")}
             onEdit={() => setEditingSection("banking")}
           >
-            <p className="text-sm text-text-muted">{t("settings.sections.emptySection")}</p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <SettingsField
+                label={t("settings.sections.banking.bankName")}
+                value={orNotSet(settings.banking.bank_name, t("settings.notSet"))}
+              />
+              <SettingsField
+                label={t("settings.sections.banking.accountNumber")}
+                value={maskSecret(settings.banking.account_number)}
+              />
+              <SettingsField
+                label={t("settings.sections.banking.accountName")}
+                value={orNotSet(settings.banking.account_name, t("settings.notSet"))}
+              />
+              <SettingsField
+                label={t("settings.sections.banking.branch")}
+                value={orNotSet(settings.banking.branch, t("settings.notSet"))}
+              />
+            </div>
           </SettingsCard>
 
           <SettingsCard
@@ -336,7 +365,24 @@ function SettingsContent() {
             editLabel={t("settings.edit")}
             onEdit={() => setEditingSection("socialMedia")}
           >
-            <p className="text-sm text-text-muted">{t("settings.sections.emptySection")}</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <SettingsField
+                label={t("settings.sections.socialMedia.facebook")}
+                value={orNotSet(settings.social_media.facebook, t("settings.notSet"))}
+              />
+              <SettingsField
+                label={t("settings.sections.socialMedia.instagram")}
+                value={orNotSet(settings.social_media.instagram, t("settings.notSet"))}
+              />
+              <SettingsField
+                label={t("settings.sections.socialMedia.youtube")}
+                value={orNotSet(settings.social_media.youtube, t("settings.notSet"))}
+              />
+              <SettingsField
+                label={t("settings.sections.socialMedia.twitter")}
+                value={orNotSet(settings.social_media.twitter, t("settings.notSet"))}
+              />
+            </div>
           </SettingsCard>
 
           <SettingsCard
@@ -439,6 +485,39 @@ function SettingsContent() {
           setLoad({ status: "loaded", settings: updated });
           closeEditPanel();
           showToast(t("settings.toast.notificationRoutingUpdated"));
+        }}
+      />
+
+      <BankingPanel
+        isOpen={editingSection === "banking"}
+        section={settings.banking}
+        onClose={closeEditPanel}
+        onSaved={(updated) => {
+          setLoad({ status: "loaded", settings: updated });
+          closeEditPanel();
+          showToast(t("settings.toast.bankingUpdated"));
+        }}
+      />
+
+      <SocialMediaPanel
+        isOpen={editingSection === "socialMedia"}
+        section={settings.social_media}
+        onClose={closeEditPanel}
+        onSaved={(updated) => {
+          setLoad({ status: "loaded", settings: updated });
+          closeEditPanel();
+          showToast(t("settings.toast.socialMediaUpdated"));
+        }}
+      />
+
+      <ApiIntegrationsPanel
+        isOpen={editingSection === "apiIntegrations"}
+        section={settings.api_integrations}
+        onClose={closeEditPanel}
+        onSaved={(updated) => {
+          setLoad({ status: "loaded", settings: updated });
+          closeEditPanel();
+          showToast(t("settings.toast.apiIntegrationsUpdated"));
         }}
       />
 
