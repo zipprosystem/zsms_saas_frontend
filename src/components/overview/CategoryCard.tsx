@@ -116,7 +116,19 @@ export function CategoryCard({
             {category.items.map((item, index) => (
               <SetupItemRow
                 key={item.key}
-                slug={item.slug}
+                // School Settings' items are already real, built screens —
+                // they link straight to /admin/settings (the page itself
+                // supports deep-linking a section via ?edit=, but which of
+                // its sections each item maps 1:1 to isn't unambiguous
+                // enough to guess here, so the row opens the settings page
+                // rather than risking a wrong deep link). Every other
+                // category's items are the new two-level CRUD routes this
+                // increment establishes.
+                href={
+                  category.key === "schoolSettings"
+                    ? "/admin/settings"
+                    : `/admin/setup/${category.slug}/${item.slug}`
+                }
                 name={t(item.name)}
                 description={item.description ? t(item.description) : undefined}
                 done={item.done}

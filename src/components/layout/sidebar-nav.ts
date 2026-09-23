@@ -8,6 +8,7 @@ import { ChartIcon } from "@/components/icons/sidebar/ChartIcon";
 import { DevicesIcon } from "@/components/icons/sidebar/DevicesIcon";
 import { DocumentTextIcon } from "@/components/icons/sidebar/DocumentTextIcon";
 import { FinanceAdminIcon } from "@/components/icons/sidebar/FinanceAdminIcon";
+import { GearIcon } from "@/components/icons/setup/GearIcon";
 import { HospitalAltIcon } from "@/components/icons/sidebar/HospitalAltIcon";
 import { HospitalIcon } from "@/components/icons/sidebar/HospitalIcon";
 import { MessageTextIcon } from "@/components/icons/sidebar/MessageTextIcon";
@@ -46,6 +47,9 @@ export const sidebarNavItems: SidebarNavItem[] = [
   { key: "websiteCms", labelKey: "nav.websiteCms", href: "/admin/website-cms", icon: DevicesIcon, hasSubmenu: true },
   { key: "media", labelKey: "nav.media", href: "/admin/media", icon: HospitalAltIcon },
   { key: "facilities", labelKey: "nav.facilities", href: "/admin/facilities", icon: CarIcon, hasSubmenu: true },
+  // Kept last, per Matthew — quick access to Setup without it competing
+  // with the day-to-day modules above.
+  { key: "setup", labelKey: "nav.setup", href: "/admin/setup", icon: GearIcon },
 ];
 
 const settingsTitleItem = { href: "/admin/settings", labelKey: "nav.schoolSettings" };

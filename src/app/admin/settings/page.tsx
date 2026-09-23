@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { UploadIcon } from "@/components/icons/UploadIcon";
@@ -20,8 +21,6 @@ import { ComingSoonPanel } from "@/components/settings/ComingSoonPanel";
 import { getSchoolSettings } from "@/lib/settings/settingsApi";
 import type { SettingsData } from "@/lib/settings/types";
 import type { TenantStatus } from "@/types/tenant";
-
-type SettingsTab = "general" | "schoolSetup";
 
 const EDITABLE_SECTIONS = [
   "identity",
@@ -108,7 +107,6 @@ function SettingsContent() {
   const searchParams = useSearchParams();
   const { showToast } = useToast();
 
-  const [tab, setTab] = useState<SettingsTab>("general");
   const [load, setLoad] = useState<LoadState>({ status: "loading" });
   const [editingSection, setEditingSection] = useState<EditableSection | null>(null);
 
@@ -180,260 +178,259 @@ function SettingsContent() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex gap-6 border-b border-border">
-        <TabButton active={tab === "general"} onClick={() => setTab("general")}>
-          {t("settings.tabs.general")}
-        </TabButton>
-        <TabButton active={tab === "schoolSetup"} onClick={() => setTab("schoolSetup")}>
+        <TabButton active>{t("settings.tabs.general")}</TabButton>
+        {/* Setup lives as its own area now (sidebar + /admin/setup + the
+            checklist all point there) — this tab navigates away rather
+            than switching in-page content, since there's nothing left to
+            switch to here. */}
+        <Link
+          href="/admin/setup"
+          className="relative pb-3 text-sm font-semibold text-text-muted transition-colors hover:text-text-primary"
+        >
           {t("settings.tabs.schoolSetup")}
-        </TabButton>
+        </Link>
       </div>
 
-      {tab === "schoolSetup" ? (
-        <div className="flex flex-1 items-center justify-center p-8">
-          <p className="text-sm text-text-muted">{t("settings.schoolSetupComingSoon")}</p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-6">
-          <SettingsCard
-            title={t("settings.sections.identity.title")}
-            editLabel={t("settings.editProfile")}
-            onEdit={() => setEditingSection("identity")}
-          >
-            <div className="flex flex-wrap items-center gap-4">
-              <IdentityLogo schoolName={settings.identity.school_name} logoUrl={settings.identity.logo_url} />
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-base font-semibold text-text-primary">
-                    {settings.identity.school_name}
-                  </span>
-                  <StatusBadge status={settings.identity.status} />
-                </div>
-                <span className="text-sm text-text-secondary">
-                  {settings.identity.slug}.zsmsapp.com
+      <div className="flex flex-col gap-6">
+        <SettingsCard
+          title={t("settings.sections.identity.title")}
+          editLabel={t("settings.editProfile")}
+          onEdit={() => setEditingSection("identity")}
+        >
+          <div className="flex flex-wrap items-center gap-4">
+            <IdentityLogo schoolName={settings.identity.school_name} logoUrl={settings.identity.logo_url} />
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-base font-semibold text-text-primary">
+                  {settings.identity.school_name}
                 </span>
-                <span className="text-sm text-text-secondary">
-                  {orNotSet(settings.identity.email, t("settings.notSet"))}
-                  {settings.identity.phone ? ` · ${settings.identity.phone}` : ""}
-                </span>
+                <StatusBadge status={settings.identity.status} />
               </div>
+              <span className="text-sm text-text-secondary">
+                {settings.identity.slug}.zsmsapp.com
+              </span>
+              <span className="text-sm text-text-secondary">
+                {orNotSet(settings.identity.email, t("settings.notSet"))}
+                {settings.identity.phone ? ` · ${settings.identity.phone}` : ""}
+              </span>
             </div>
-          </SettingsCard>
+          </div>
+        </SettingsCard>
 
-          <SettingsCard
-            title={t("settings.sections.branding.title")}
-            editLabel={t("settings.edit")}
-            onEdit={() => setEditingSection("branding")}
-          >
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <BrandingSlot
-                label={t("settings.sections.branding.schoolLogo")}
-                url={settings.branding.school_logo_url}
-              />
-              <BrandingSlot
-                label={t("settings.sections.branding.mobileLogo")}
-                url={settings.branding.mobile_logo_url}
-              />
-              <BrandingSlot
-                label={t("settings.sections.branding.principalSignature")}
-                url={settings.branding.principal_signature_url}
-              />
-              <BrandingSlot
-                label={t("settings.sections.branding.portalLoader")}
-                url={settings.branding.portal_loader_url}
-              />
-            </div>
-          </SettingsCard>
+        <SettingsCard
+          title={t("settings.sections.branding.title")}
+          editLabel={t("settings.edit")}
+          onEdit={() => setEditingSection("branding")}
+        >
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <BrandingSlot
+              label={t("settings.sections.branding.schoolLogo")}
+              url={settings.branding.school_logo_url}
+            />
+            <BrandingSlot
+              label={t("settings.sections.branding.mobileLogo")}
+              url={settings.branding.mobile_logo_url}
+            />
+            <BrandingSlot
+              label={t("settings.sections.branding.principalSignature")}
+              url={settings.branding.principal_signature_url}
+            />
+            <BrandingSlot
+              label={t("settings.sections.branding.portalLoader")}
+              url={settings.branding.portal_loader_url}
+            />
+          </div>
+        </SettingsCard>
 
-          <SettingsCard
-            title={t("settings.sections.generalBehaviour.title")}
-            editLabel={t("settings.edit")}
-            onEdit={() => setEditingSection("generalBehaviour")}
-          >
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <SettingsField
-                label={t("settings.sections.generalBehaviour.workingDays")}
-                value={settings.general_behaviour.working_days
-                  .map((day) => t(`onboarding.options.workingDays.${day}`))
-                  .join(", ")}
-              />
-              <SettingsField
-                label={t("settings.sections.generalBehaviour.recordsPerPage")}
-                value={settings.general_behaviour.records_per_page}
-              />
-              <SettingsField
-                label={t("settings.sections.generalBehaviour.dateFormat")}
-                value={orNotSet(settings.general_behaviour.date_format, t("settings.notSet"))}
-              />
-              <SettingsField
-                label={t("settings.sections.generalBehaviour.timeFormat")}
-                value={orNotSet(settings.general_behaviour.time_format, t("settings.notSet"))}
-              />
-              <SettingsField
-                label={t("settings.sections.generalBehaviour.absenceEndDelay")}
-                value={t("settings.sections.generalBehaviour.absenceEndDelayValue", {
-                  days: settings.general_behaviour.absence_end_delay_days,
-                })}
-              />
-              <SettingsField
-                label={t("settings.sections.generalBehaviour.notificationChannel")}
-                value={orNotSet(settings.general_behaviour.notification_channel, t("settings.notSet"))}
-              />
-              <SettingsField
-                label={t("settings.sections.generalBehaviour.studentIdPrefix")}
-                value={orNotSet(settings.general_behaviour.student_id_prefix, t("settings.notSet"))}
-              />
-              <SettingsField
-                label={t("settings.sections.generalBehaviour.staffIdPrefix")}
-                value={orNotSet(settings.general_behaviour.staff_id_prefix, t("settings.notSet"))}
-              />
-            </div>
-          </SettingsCard>
+        <SettingsCard
+          title={t("settings.sections.generalBehaviour.title")}
+          editLabel={t("settings.edit")}
+          onEdit={() => setEditingSection("generalBehaviour")}
+        >
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <SettingsField
+              label={t("settings.sections.generalBehaviour.workingDays")}
+              value={settings.general_behaviour.working_days
+                .map((day) => t(`onboarding.options.workingDays.${day}`))
+                .join(", ")}
+            />
+            <SettingsField
+              label={t("settings.sections.generalBehaviour.recordsPerPage")}
+              value={settings.general_behaviour.records_per_page}
+            />
+            <SettingsField
+              label={t("settings.sections.generalBehaviour.dateFormat")}
+              value={orNotSet(settings.general_behaviour.date_format, t("settings.notSet"))}
+            />
+            <SettingsField
+              label={t("settings.sections.generalBehaviour.timeFormat")}
+              value={orNotSet(settings.general_behaviour.time_format, t("settings.notSet"))}
+            />
+            <SettingsField
+              label={t("settings.sections.generalBehaviour.absenceEndDelay")}
+              value={t("settings.sections.generalBehaviour.absenceEndDelayValue", {
+                days: settings.general_behaviour.absence_end_delay_days,
+              })}
+            />
+            <SettingsField
+              label={t("settings.sections.generalBehaviour.notificationChannel")}
+              value={orNotSet(settings.general_behaviour.notification_channel, t("settings.notSet"))}
+            />
+            <SettingsField
+              label={t("settings.sections.generalBehaviour.studentIdPrefix")}
+              value={orNotSet(settings.general_behaviour.student_id_prefix, t("settings.notSet"))}
+            />
+            <SettingsField
+              label={t("settings.sections.generalBehaviour.staffIdPrefix")}
+              value={orNotSet(settings.general_behaviour.staff_id_prefix, t("settings.notSet"))}
+            />
+          </div>
+        </SettingsCard>
 
-          <SettingsCard
-            title={t("settings.sections.regional.title")}
-            editLabel={t("settings.edit")}
-            onEdit={() => setEditingSection("regional")}
-          >
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <SettingsField
-                label={t("settings.sections.regional.address")}
-                value={orNotSet(settings.regional.address, t("settings.notSet"))}
-              />
-              <SettingsField
-                label={t("settings.sections.regional.country")}
-                value={orNotSet(settings.regional.country_code, t("settings.notSet"))}
-              />
-              <SettingsField
-                label={t("settings.sections.regional.timezone")}
-                value={orNotSet(settings.regional.timezone, t("settings.notSet"))}
-              />
-              <SettingsField
-                label={t("settings.sections.regional.currency")}
-                value={orNotSet(settings.regional.currency, t("settings.notSet"))}
-              />
-              <SettingsField
-                label={t("settings.sections.regional.pax")}
-                value={orNotSet(settings.regional.pax, t("settings.notSet"))}
-              />
-            </div>
-          </SettingsCard>
+        <SettingsCard
+          title={t("settings.sections.regional.title")}
+          editLabel={t("settings.edit")}
+          onEdit={() => setEditingSection("regional")}
+        >
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <SettingsField
+              label={t("settings.sections.regional.address")}
+              value={orNotSet(settings.regional.address, t("settings.notSet"))}
+            />
+            <SettingsField
+              label={t("settings.sections.regional.country")}
+              value={orNotSet(settings.regional.country_code, t("settings.notSet"))}
+            />
+            <SettingsField
+              label={t("settings.sections.regional.timezone")}
+              value={orNotSet(settings.regional.timezone, t("settings.notSet"))}
+            />
+            <SettingsField
+              label={t("settings.sections.regional.currency")}
+              value={orNotSet(settings.regional.currency, t("settings.notSet"))}
+            />
+            <SettingsField
+              label={t("settings.sections.regional.pax")}
+              value={orNotSet(settings.regional.pax, t("settings.notSet"))}
+            />
+          </div>
+        </SettingsCard>
 
-          <SettingsCard
-            title={t("settings.sections.banking.title")}
-            editLabel={t("settings.edit")}
-            onEdit={() => setEditingSection("banking")}
-          >
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <SettingsField
-                label={t("settings.sections.banking.bankName")}
-                value={orNotSet(settings.banking.bank_name, t("settings.notSet"))}
-              />
-              <SettingsField
-                label={t("settings.sections.banking.accountNumber")}
-                value={maskSecret(settings.banking.account_number)}
-              />
-              <SettingsField
-                label={t("settings.sections.banking.accountName")}
-                value={orNotSet(settings.banking.account_name, t("settings.notSet"))}
-              />
-              <SettingsField
-                label={t("settings.sections.banking.branch")}
-                value={orNotSet(settings.banking.branch, t("settings.notSet"))}
-              />
-            </div>
-          </SettingsCard>
+        <SettingsCard
+          title={t("settings.sections.banking.title")}
+          editLabel={t("settings.edit")}
+          onEdit={() => setEditingSection("banking")}
+        >
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <SettingsField
+              label={t("settings.sections.banking.bankName")}
+              value={orNotSet(settings.banking.bank_name, t("settings.notSet"))}
+            />
+            <SettingsField
+              label={t("settings.sections.banking.accountNumber")}
+              value={maskSecret(settings.banking.account_number)}
+            />
+            <SettingsField
+              label={t("settings.sections.banking.accountName")}
+              value={orNotSet(settings.banking.account_name, t("settings.notSet"))}
+            />
+            <SettingsField
+              label={t("settings.sections.banking.branch")}
+              value={orNotSet(settings.banking.branch, t("settings.notSet"))}
+            />
+          </div>
+        </SettingsCard>
 
-          <SettingsCard
-            title={t("settings.sections.questionBank.title")}
-            editLabel={t("settings.edit")}
-            onEdit={() => setEditingSection("questionBank")}
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SettingsField
-                label={t("settings.sections.questionBank.questionsPerPage")}
-                value={settings.question_bank.questions_per_page}
-              />
-              <SettingsField
-                label={t("settings.sections.questionBank.defaultExamDuration")}
-                value={t("settings.sections.questionBank.minutesValue", {
-                  minutes: settings.question_bank.default_exam_duration_minutes,
-                })}
-              />
-            </div>
-          </SettingsCard>
+        <SettingsCard
+          title={t("settings.sections.questionBank.title")}
+          editLabel={t("settings.edit")}
+          onEdit={() => setEditingSection("questionBank")}
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <SettingsField
+              label={t("settings.sections.questionBank.questionsPerPage")}
+              value={settings.question_bank.questions_per_page}
+            />
+            <SettingsField
+              label={t("settings.sections.questionBank.defaultExamDuration")}
+              value={t("settings.sections.questionBank.minutesValue", {
+                minutes: settings.question_bank.default_exam_duration_minutes,
+              })}
+            />
+          </div>
+        </SettingsCard>
 
-          <SettingsCard
-            title={t("settings.sections.socialMedia.title")}
-            editLabel={t("settings.edit")}
-            onEdit={() => setEditingSection("socialMedia")}
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SettingsField
-                label={t("settings.sections.socialMedia.facebook")}
-                value={orNotSet(settings.social_media.facebook, t("settings.notSet"))}
-              />
-              <SettingsField
-                label={t("settings.sections.socialMedia.instagram")}
-                value={orNotSet(settings.social_media.instagram, t("settings.notSet"))}
-              />
-              <SettingsField
-                label={t("settings.sections.socialMedia.youtube")}
-                value={orNotSet(settings.social_media.youtube, t("settings.notSet"))}
-              />
-              <SettingsField
-                label={t("settings.sections.socialMedia.twitter")}
-                value={orNotSet(settings.social_media.twitter, t("settings.notSet"))}
-              />
-            </div>
-          </SettingsCard>
+        <SettingsCard
+          title={t("settings.sections.socialMedia.title")}
+          editLabel={t("settings.edit")}
+          onEdit={() => setEditingSection("socialMedia")}
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <SettingsField
+              label={t("settings.sections.socialMedia.facebook")}
+              value={orNotSet(settings.social_media.facebook, t("settings.notSet"))}
+            />
+            <SettingsField
+              label={t("settings.sections.socialMedia.instagram")}
+              value={orNotSet(settings.social_media.instagram, t("settings.notSet"))}
+            />
+            <SettingsField
+              label={t("settings.sections.socialMedia.youtube")}
+              value={orNotSet(settings.social_media.youtube, t("settings.notSet"))}
+            />
+            <SettingsField
+              label={t("settings.sections.socialMedia.twitter")}
+              value={orNotSet(settings.social_media.twitter, t("settings.notSet"))}
+            />
+          </div>
+        </SettingsCard>
 
-          <SettingsCard
-            title={t("settings.sections.apiIntegrations.title")}
-            editLabel={t("settings.edit")}
-            onEdit={() => setEditingSection("apiIntegrations")}
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SettingsField
-                label={t("settings.sections.apiIntegrations.apiKey")}
-                value={maskSecret(settings.api_integrations.api_key)}
-              />
-              <SettingsField
-                label={t("settings.sections.apiIntegrations.smsSenderName")}
-                value={orNotSet(settings.api_integrations.sms_sender_name, t("settings.notSet"))}
-              />
-              <SettingsField
-                label={t("settings.sections.apiIntegrations.clientId")}
-                value={orNotSet(settings.api_integrations.client_id, t("settings.notSet"))}
-              />
-              <SettingsField
-                label={t("settings.sections.apiIntegrations.clientSecret")}
-                value={maskSecret(settings.api_integrations.client_secret)}
-              />
-            </div>
-          </SettingsCard>
+        <SettingsCard
+          title={t("settings.sections.apiIntegrations.title")}
+          editLabel={t("settings.edit")}
+          onEdit={() => setEditingSection("apiIntegrations")}
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <SettingsField
+              label={t("settings.sections.apiIntegrations.apiKey")}
+              value={maskSecret(settings.api_integrations.api_key)}
+            />
+            <SettingsField
+              label={t("settings.sections.apiIntegrations.smsSenderName")}
+              value={orNotSet(settings.api_integrations.sms_sender_name, t("settings.notSet"))}
+            />
+            <SettingsField
+              label={t("settings.sections.apiIntegrations.clientId")}
+              value={orNotSet(settings.api_integrations.client_id, t("settings.notSet"))}
+            />
+            <SettingsField
+              label={t("settings.sections.apiIntegrations.clientSecret")}
+              value={maskSecret(settings.api_integrations.client_secret)}
+            />
+          </div>
+        </SettingsCard>
 
-          <SettingsCard
-            title={t("settings.sections.notificationRouting.title")}
-            editLabel={t("settings.edit")}
-            onEdit={() => setEditingSection("notificationRouting")}
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <SettingsField
-                label={t("settings.sections.notificationRouting.financeAlerts")}
-                value={settings.notification_routing.finance_alert_emails.join(", ")}
-              />
-              <SettingsField
-                label={t("settings.sections.notificationRouting.disciplinaryAlerts")}
-                value={settings.notification_routing.disciplinary_alert_emails.join(", ")}
-              />
-            </div>
-          </SettingsCard>
+        <SettingsCard
+          title={t("settings.sections.notificationRouting.title")}
+          editLabel={t("settings.edit")}
+          onEdit={() => setEditingSection("notificationRouting")}
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <SettingsField
+              label={t("settings.sections.notificationRouting.financeAlerts")}
+              value={settings.notification_routing.finance_alert_emails.join(", ")}
+            />
+            <SettingsField
+              label={t("settings.sections.notificationRouting.disciplinaryAlerts")}
+              value={settings.notification_routing.disciplinary_alert_emails.join(", ")}
+            />
+          </div>
+        </SettingsCard>
 
-          <SettingsCard title={t("settings.sections.helpFeedback.title")}>
-            <p className="text-sm text-text-muted">{t("settings.sections.emptySection")}</p>
-          </SettingsCard>
-        </div>
-      )}
+        <SettingsCard title={t("settings.sections.helpFeedback.title")}>
+          <p className="text-sm text-text-muted">{t("settings.sections.emptySection")}</p>
+        </SettingsCard>
+      </div>
 
       <EditSchoolIdentityPanel
         isOpen={editingSection === "identity"}
@@ -562,7 +559,7 @@ function TabButton({
   children,
 }: {
   active: boolean;
-  onClick: () => void;
+  onClick?: () => void;
   children: ReactNode;
 }) {
   return (
