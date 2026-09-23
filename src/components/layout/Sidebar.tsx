@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { ChevronDownIcon } from "@/components/icons/sidebar/ChevronDownIcon";
 import { Setting2Icon } from "@/components/icons/sidebar/Setting2Icon";
 import { sidebarNavItems } from "@/components/layout/sidebar-nav";
+import { useAuth } from "@/lib/auth/AuthProvider";
 
 type SidebarProps = {
   isOpen: boolean;
@@ -32,10 +33,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
-      <div className="flex items-center gap-2.5 pl-3">
-        <div className="h-8 w-8 shrink-0 rounded-lg bg-white" />
-        <p className="text-base font-semibold text-white">ZSMS</p>
-      </div>
+      <SidebarBrand />
 
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden">
         {sidebarNavItems.map((item) => {
@@ -108,5 +106,38 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <span className="text-sm font-semibold">{t("nav.schoolSettings")}</span>
       </Link>
     </aside>
+  );
+}
+
+// school.name/logo_url are unconfirmed against the real login response (see
+// the flag on AuthSchool in AuthProvider.tsx) — every branch here degrades
+// gracefully if either is missing, so this is safe to ship ahead of that
+// confirmation. The dev-bypass mock school has no logo_url, so locally this
+// always falls to the box/initial fallback; a real logo only shows on a
+// deployed tenant with a real login.
+function SidebarBrand() {
+  const { school } = useAuth();
+  const name = typeof school?.name === "string" && school.name.trim() ? school.name.trim() : "ZSMS";
+  const logoUrl = typeof school?.logo_url === "string" && school.logo_url ? school.logo_url : null;
+
+  return (
+    <div className="flex items-center gap-2.5 pl-3">
+      {/* Kept white behind the logo (not just a bare <img>) so a
+          dark-on-transparent upload still shows up against the sidebar's
+          dark background. Revisit once a real uploaded logo is visible on
+          a deployed tenant — may need a dedicated light/white variant
+          instead of relying on this background. */}
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white">
+        {logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logoUrl} alt="" className="h-full w-full object-contain" />
+        ) : name !== "ZSMS" ? (
+          <span className="text-sm font-semibold text-[#0c111d]">
+            {name.charAt(0).toUpperCase()}
+          </span>
+        ) : null}
+      </div>
+      <p className="truncate text-base font-semibold text-white">{name}</p>
+    </div>
   );
 }

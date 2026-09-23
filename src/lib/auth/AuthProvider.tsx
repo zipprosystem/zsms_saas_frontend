@@ -32,7 +32,18 @@ import { API_BASE } from "@/lib/api/config";
 import { getAccessToken, setAccessToken, registerAuthBridge, DEV_AUTH_BYPASS } from "./authBridge";
 
 export type AuthUser = Record<string, unknown> & { id?: string; email?: string };
-export type AuthSchool = Record<string, unknown> & { id?: string; slug?: string };
+// `name`/`logo_url` are UNCONFIRMED against the real login response — the
+// verified contract above only says data.school exists, not its own
+// sub-fields. Added here (still optional) so the sidebar brand (see
+// Sidebar.tsx) can read them with a type instead of casting `unknown`
+// inline; falls back gracefully either way if these turn out wrong or
+// absent. Reconcile with Muntajir and tighten this once confirmed.
+export type AuthSchool = Record<string, unknown> & {
+  id?: string;
+  slug?: string;
+  name?: string;
+  logo_url?: string;
+};
 
 export type LoginErrorReason =
   | "invalid_credentials"
