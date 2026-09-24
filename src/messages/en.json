@@ -160,7 +160,13 @@
     "openMenu": "Open navigation menu",
     "userMenu": "Open user menu",
     "defaultUserName": "Admin User",
-    "defaultUserRole": "Administrator"
+    "defaultUserRole": "Administrator",
+    "sessionPicker": {
+      "openLabel": "Open academic year picker",
+      "menuTitle": "Academic years",
+      "loading": "Loading…",
+      "noYears": "Set up academic year"
+    }
   },
   "tenant": {
     "label": "Tenant",

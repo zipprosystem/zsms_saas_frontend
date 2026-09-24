@@ -8,19 +8,12 @@ import {
   type AcademicYear,
   type AcademicYearInput,
 } from "@/lib/setup/academicStructure/academicYearsApi";
+import {
+  deriveAcademicYearStatus,
+  ACADEMIC_YEAR_STATUS_BADGE_STYLES,
+  type AcademicYearStatus,
+} from "@/lib/setup/academicStructure/academicYearStatus";
 import type { ColumnDef, FilterDef } from "@/lib/setup/crudTypes";
-
-type Status = "active" | "upcoming" | "completed";
-
-// FLAGGED derivation: the confirmed contract only gives is_active + dates,
-// no explicit status field. is_active=true -> Active. Otherwise, Completed
-// if the year has already ended, else Upcoming. Only one row can ever be
-// "active" at a time (server-enforced via the activate endpoint).
-function deriveStatus(year: AcademicYear): Status {
-  if (year.is_active) return "active";
-  const today = new Date().toISOString().slice(0, 10);
-  return year.end_date < today ? "completed" : "upcoming";
-}
 
 type FormState = {
   name: string;
@@ -30,15 +23,9 @@ type FormState = {
 
 const EMPTY_FORM: FormState = { name: "", start_date: "", end_date: "" };
 
-const STATUS_BADGE_STYLES: Record<Status, string> = {
-  active: "bg-category-green-tint text-status-done-text",
-  upcoming: "bg-category-amber-tint text-warning",
-  completed: "bg-background text-text-muted",
-};
-
 export function AcademicYearsScreen() {
   const t = useTranslations();
-  const statusLabel = (status: Status) => t(`setup.academicYears.status.${status}`);
+  const statusLabel = (status: AcademicYearStatus) => t(`setup.academicYears.status.${status}`);
 
   const columns: ColumnDef<AcademicYear>[] = [
     { key: "name", header: t("setup.academicYears.columns.name"), render: (row) => row.name },
@@ -48,9 +35,9 @@ export function AcademicYearsScreen() {
       key: "status",
       header: t("setup.academicYears.columns.status"),
       render: (row) => {
-        const status = deriveStatus(row);
+        const status = deriveAcademicYearStatus(row);
         return (
-          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_BADGE_STYLES[status]}`}>
+          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${ACADEMIC_YEAR_STATUS_BADGE_STYLES[status]}`}>
             {statusLabel(status)}
           </span>
         );
@@ -87,7 +74,7 @@ export function AcademicYearsScreen() {
       searchPlaceholder={t("setup.academicYears.searchPlaceholder")}
       matchesSearch={(row, query) => row.name.toLowerCase().includes(query.toLowerCase())}
       filterDefs={filterDefs}
-      matchesFilters={(row, filters) => !filters.status || deriveStatus(row) === filters.status}
+      matchesFilters={(row, filters) => !filters.status || deriveAcademicYearStatus(row) === filters.status}
       rowActions={(row, helpers) => [
         { key: "edit", label: t("common.edit"), onClick: helpers.edit },
         {
