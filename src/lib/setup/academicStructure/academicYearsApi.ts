@@ -9,10 +9,21 @@ import type { CrudResult, CrudService } from "@/lib/setup/crudTypes";
  * false, server-side — this frontend never tries to reason about that
  * itself, it just refetches the list after any mutation).
  *
- * FLAGGED assumption: GET's data is a bare array (AcademicYear[]), not
- * { items: [...] } — not yet confirmed against the real API, to verify on
- * deploy. Defensive fallback to [] if it's some other shape rather than
- * crashing.
+ * GET's list shape, confirmed against a deployed tenant 2026-09-24:
+ *   { success: true, data: { items: [...], total, page, limit, has_more } }
+ * — i.e. paginated, not a bare array (the original, wrong assumption).
+ * create/update/activate all confirmed to return { success, data: <entity> }
+ * directly (the entity itself, never wrapped in `items`) — no change needed
+ * there, only the list parse was wrong.
+ *
+ * The endpoint DOES support server-side pagination (page/limit/total/
+ * has_more) — this screen still paginates the returned items client-side
+ * (fine here; a school won't have >50 academic years). Muntajir says
+ * Classes/Sections/Subjects share this exact {data:{items,total,page,
+ * limit,has_more}} shape, so for a future high-volume screen,
+ * CrudService.list() (currently a no-args () => Promise<CrudResult<T[]>>)
+ * and useCrudTable would need extending to accept and forward page/limit
+ * and read total/has_more back, rather than fetching everything at once.
  */
 export type AcademicYear = {
   id: string;
@@ -48,6 +59,14 @@ function toResult<T>(response: Response, body: unknown): CrudResult<T> {
   return { ok: false, kind: "server" };
 }
 
+// Confirmed shape: data.items. Still falls back to [] rather than crashing
+// if items is ever missing/malformed (e.g. an unexpected error body) —
+// cheap safety net, not a sign this is still guessed.
+function extractYearList(body: unknown): AcademicYear[] {
+  const items = (body as { data?: { items?: unknown } } | null)?.data?.items;
+  return Array.isArray(items) ? (items as AcademicYear[]) : [];
+}
+
 async function list(): Promise<CrudResult<AcademicYear[]>> {
   if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
 
@@ -60,8 +79,7 @@ async function list(): Promise<CrudResult<AcademicYear[]>> {
 
   const body = await parseBody(response);
   if (response.ok) {
-    const data = (body as { data?: unknown } | null)?.data;
-    return { ok: true, data: Array.isArray(data) ? (data as AcademicYear[]) : [] };
+    return { ok: true, data: extractYearList(body) };
   }
   return toResult(response, body);
 }

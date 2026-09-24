@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { SearchIcon } from "@/components/icons/header/SearchIcon";
+import { ChevronDownIcon } from "@/components/icons/sidebar/ChevronDownIcon";
 import { PlusIcon } from "@/components/icons/PlusIcon";
 import { Button } from "@/components/ui/Button";
-import { SelectField } from "@/components/ui/Select";
 import { ConfirmDialog } from "@/components/setup/ConfirmDialog";
 import type { ColumnDef, FilterDef, RowAction } from "@/lib/setup/crudTypes";
 
@@ -86,15 +86,9 @@ export function DataTable<T>({
     <div className="flex min-w-0 flex-col gap-4">
       {/*
         Mobile-first: everything stacks full-width below `sm`, so no single
-        item's min-width (the search box, a filter select) can ever force
+        item's min-width (the search box, a filter dropdown) can ever force
         the row — and therefore the page — wider than the viewport. At `sm`
-        and up it becomes the original wrapping row. Each filter's own width
-        is controlled by the WRAPPING div, not by a className passed
-        straight into SelectField — SelectField's own base classes already
-        include `w-full`, and a same-element className can't reliably win
-        against that in Tailwind's cascade (specificity ties resolve by
-        stylesheet order, not by which one is passed last), so overriding it
-        from a parent element sidesteps the conflict entirely.
+        and up it becomes the original wrapping row.
       */}
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <div className="relative w-full min-w-0 sm:min-w-[200px] sm:flex-1">
@@ -109,21 +103,7 @@ export function DataTable<T>({
         </div>
 
         {filters?.map(({ def, value, onChange }) => (
-          <div key={def.key} className="w-full sm:w-auto sm:min-w-[160px]">
-            <SelectField
-              id={`filter-${def.key}`}
-              aria-label={def.label}
-              value={value}
-              onChange={(event) => onChange(event.target.value)}
-              className="h-11"
-            >
-              {def.options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </SelectField>
-          </div>
+          <FilterDropdown key={def.key} def={def} value={value} onChange={onChange} />
         ))}
 
         {onAddNew ? (
@@ -253,6 +233,85 @@ export function DataTable<T>({
         onConfirm={handleConfirm}
         onCancel={() => setPending(null)}
       />
+    </div>
+  );
+}
+
+type FilterDropdownProps = {
+  def: FilterDef;
+  value: string;
+  onChange: (value: string) => void;
+};
+
+// A native <select>'s open dropdown is rendered by the browser/OS, not by
+// this page's CSS — there is no reliable way to constrain its width or
+// position from here, and on mobile (or a narrow desktop-emulated
+// viewport) it can render wider than the screen regardless of how the
+// closed trigger is styled. This custom dropdown renders its own menu, so
+// its width and position are ordinary CSS: `left-0 right-0` ties the menu
+// to its own trigger's width, which is itself already viewport-safe (full
+// width on mobile, per the toolbar layout above) — it can never be wider
+// than its parent, on any screen size.
+function FilterDropdown({ def, value, onChange }: FilterDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
+
+  const selectedLabel = def.options.find((option) => option.value === value)?.label ?? def.label;
+
+  return (
+    <div ref={containerRef} className="relative w-full sm:w-auto">
+      <button
+        type="button"
+        onClick={() => setIsOpen((current) => !current)}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-label={def.label}
+        className="flex h-11 w-full items-center justify-between gap-2 rounded-md border border-border bg-surface px-4 text-sm text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent sm:w-auto sm:min-w-[160px]"
+      >
+        <span className="truncate">{selectedLabel}</span>
+        <ChevronDownIcon
+          className={`h-4 w-4 shrink-0 text-text-muted transition-transform duration-150 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {isOpen ? (
+        <ul
+          role="listbox"
+          className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border border-border bg-surface py-1 shadow-lg sm:right-auto sm:w-max sm:min-w-full"
+        >
+          {def.options.map((option) => (
+            <li key={option.value} role="option" aria-selected={option.value === value}>
+              <button
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                className={`block w-full truncate px-4 py-2 text-left text-sm transition-colors ${
+                  option.value === value
+                    ? "bg-brand-tint text-accent"
+                    : "text-text-primary hover:bg-background"
+                }`}
+              >
+                {option.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }
