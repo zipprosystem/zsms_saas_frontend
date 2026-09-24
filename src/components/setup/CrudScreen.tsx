@@ -5,8 +5,9 @@ import { useTranslations } from "next-intl";
 import { useToast } from "@/components/ui/Toast";
 import { SlideOverPanel } from "@/components/ui/SlideOverPanel";
 import { DataTable } from "@/components/setup/DataTable";
+import { CardGrid } from "@/components/setup/CardGrid";
 import { useCrudTable } from "@/lib/setup/useCrudTable";
-import type { ColumnDef, CrudResult, CrudService, FilterDef, RowAction } from "@/lib/setup/crudTypes";
+import type { CrudDisplay, CrudResult, CrudService, FilterDef, RowAction } from "@/lib/setup/crudTypes";
 
 type RowActionHelpers = {
   edit: () => void;
@@ -29,7 +30,7 @@ export type CrudScreenProps<T, CreateInput, UpdateInput, FormState> = {
   panelTitle: { create: string; edit: string };
   panelSubtitle?: string;
   service: CrudService<T, CreateInput, UpdateInput>;
-  columns: ColumnDef<T>[];
+  display: CrudDisplay<T>;
   getRowId: (row: T) => string;
   searchPlaceholder: string;
   matchesSearch?: (row: T, query: string) => boolean;
@@ -79,7 +80,7 @@ export function CrudScreen<T, CreateInput, UpdateInput, FormState>({
   panelTitle,
   panelSubtitle,
   service,
-  columns,
+  display,
   getRowId,
   searchPlaceholder,
   matchesSearch,
@@ -186,6 +187,38 @@ export function CrudScreen<T, CreateInput, UpdateInput, FormState>({
     },
   }));
 
+  const listProps = {
+    rows: table.items,
+    getRowId,
+    rowActions: (row: T) =>
+      rowActions(row, {
+        edit: () => openEdit(row),
+        remove: () => runDelete(row),
+        runCustom: (actionKey: string) => runCustom(row, actionKey),
+      }),
+    searchValue: table.search,
+    onSearchChange: table.setSearch,
+    searchPlaceholder,
+    filters,
+    onAddNew: openCreate,
+    addNewLabel,
+    isLoading: table.load.status === "loading",
+    errorMessage:
+      table.load.status === "forbidden"
+        ? t("setup.crudScreen.errors.forbidden")
+        : table.load.status === "devBypassUnavailable"
+          ? t("setup.crudScreen.errors.devBypassUnavailable")
+          : table.load.status === "error"
+            ? t("setup.dataTable.errors.loadFailed")
+            : null,
+    onRetry: table.refetch,
+    emptyMessage,
+    page: table.page,
+    totalPages: table.totalPages,
+    onPreviousPage: () => table.setPage((current) => Math.max(1, current - 1)),
+    onNextPage: () => table.setPage((current) => Math.min(table.totalPages, current + 1)),
+  };
+
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <div>
@@ -193,40 +226,11 @@ export function CrudScreen<T, CreateInput, UpdateInput, FormState>({
         {subtitle ? <p className="mt-1 text-sm text-text-secondary">{subtitle}</p> : null}
       </div>
 
-      <DataTable
-        columns={columns}
-        rows={table.items}
-        getRowId={getRowId}
-        rowActions={(row) =>
-          rowActions(row, {
-            edit: () => openEdit(row),
-            remove: () => runDelete(row),
-            runCustom: (actionKey) => runCustom(row, actionKey),
-          })
-        }
-        searchValue={table.search}
-        onSearchChange={table.setSearch}
-        searchPlaceholder={searchPlaceholder}
-        filters={filters}
-        onAddNew={openCreate}
-        addNewLabel={addNewLabel}
-        isLoading={table.load.status === "loading"}
-        errorMessage={
-          table.load.status === "forbidden"
-            ? t("setup.crudScreen.errors.forbidden")
-            : table.load.status === "devBypassUnavailable"
-              ? t("setup.crudScreen.errors.devBypassUnavailable")
-              : table.load.status === "error"
-                ? t("setup.dataTable.errors.loadFailed")
-                : null
-        }
-        onRetry={table.refetch}
-        emptyMessage={emptyMessage}
-        page={table.page}
-        totalPages={table.totalPages}
-        onPreviousPage={() => table.setPage((current) => Math.max(1, current - 1))}
-        onNextPage={() => table.setPage((current) => Math.min(table.totalPages, current + 1))}
-      />
+      {display.mode === "table" ? (
+        <DataTable columns={display.columns} {...listProps} />
+      ) : (
+        <CardGrid card={display.card} {...listProps} />
+      )}
 
       <SlideOverPanel
         isOpen={panel.mode !== "closed"}
@@ -240,11 +244,13 @@ export function CrudScreen<T, CreateInput, UpdateInput, FormState>({
           {generalError ? (
             <div className="rounded-md bg-error/10 px-4 py-3 text-sm text-error">{generalError}</div>
           ) : null}
-          {renderFields({
-            data: formData,
-            onChange: (patch) => setFormData((current) => ({ ...current, ...patch })),
-            errors: formErrors,
-          })}
+          {panel.mode !== "closed"
+            ? renderFields({
+                data: formData,
+                onChange: (patch) => setFormData((current) => ({ ...current, ...patch })),
+                errors: formErrors,
+              })
+            : null}
         </div>
       </SlideOverPanel>
     </div>

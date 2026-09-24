@@ -344,6 +344,68 @@
         "updated": "Academic year updated",
         "deleted": "Academic year deleted"
       }
+    },
+    "awardBodies": {
+      "title": "Award Bodies",
+      "subtitle": "Examining bodies your school's results are recognised by",
+      "addNew": "Add Award Body",
+      "searchPlaceholder": "Search award bodies…",
+      "empty": "No award bodies yet — add your first one to get started.",
+      "panel": {
+        "createTitle": "Add Award Body",
+        "editTitle": "Edit Award Body"
+      },
+      "fields": {
+        "name": { "label": "Name", "placeholder": "e.g. WAEC" },
+        "description": { "label": "Description (optional)", "placeholder": "e.g. West African Examinations Council" }
+      },
+      "errors": {
+        "nameRequired": "Enter a name for this award body"
+      },
+      "confirmDelete": {
+        "title": "Delete award body?",
+        "message": "This will delete \"{name}\". This can't be undone."
+      },
+      "toast": {
+        "created": "Award body created",
+        "updated": "Award body updated",
+        "deleted": "Award body deleted"
+      }
+    },
+    "schoolTypes": {
+      "title": "School Types",
+      "subtitle": "The divisions your school is organised into",
+      "addNew": "Add School Type",
+      "searchPlaceholder": "Search school types…",
+      "empty": "No school types yet — add your first one to get started.",
+      "panel": {
+        "createTitle": "Add School Type",
+        "editTitle": "Edit School Type"
+      },
+      "fields": {
+        "name": { "label": "Name", "placeholder": "e.g. Junior Secondary" },
+        "awardBody": {
+          "label": "Award Body (optional)",
+          "none": "None",
+          "loading": "Loading award bodies…",
+          "emptyHint": "No award bodies yet.",
+          "emptyHintLink": "Add one first",
+          "loadError": "Couldn't load award bodies. You can still save without one."
+        },
+        "description": { "label": "Description (optional)", "placeholder": "e.g. Early years foundation stage" }
+      },
+      "errors": {
+        "nameRequired": "Enter a name for this school type"
+      },
+      "confirmDelete": {
+        "title": "Delete school type?",
+        "message": "This will delete \"{name}\". This can't be undone."
+      },
+      "toast": {
+        "created": "School type created",
+        "updated": "School type updated",
+        "deleted": "School type deleted"
+      }
     }
   },
   "onboarding": {

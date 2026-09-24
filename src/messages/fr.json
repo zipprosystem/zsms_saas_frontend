@@ -344,6 +344,68 @@
         "updated": "Année académique mise à jour",
         "deleted": "Année académique supprimée"
       }
+    },
+    "awardBodies": {
+      "title": "Organismes d'examen",
+      "subtitle": "Les organismes d'examen reconnaissant les résultats de votre école",
+      "addNew": "Ajouter un organisme d'examen",
+      "searchPlaceholder": "Rechercher un organisme d'examen…",
+      "empty": "Aucun organisme d'examen pour le moment — ajoutez-en un pour commencer.",
+      "panel": {
+        "createTitle": "Ajouter un organisme d'examen",
+        "editTitle": "Modifier l'organisme d'examen"
+      },
+      "fields": {
+        "name": { "label": "Nom", "placeholder": "ex. WAEC" },
+        "description": { "label": "Description (optionnel)", "placeholder": "ex. West African Examinations Council" }
+      },
+      "errors": {
+        "nameRequired": "Saisissez un nom pour cet organisme d'examen"
+      },
+      "confirmDelete": {
+        "title": "Supprimer l'organisme d'examen ?",
+        "message": "Ceci supprimera « {name} ». Cette action est irréversible."
+      },
+      "toast": {
+        "created": "Organisme d'examen créé",
+        "updated": "Organisme d'examen mis à jour",
+        "deleted": "Organisme d'examen supprimé"
+      }
+    },
+    "schoolTypes": {
+      "title": "Types d'établissement",
+      "subtitle": "Les divisions dans lesquelles votre école est organisée",
+      "addNew": "Ajouter un type d'établissement",
+      "searchPlaceholder": "Rechercher un type d'établissement…",
+      "empty": "Aucun type d'établissement pour le moment — ajoutez-en un pour commencer.",
+      "panel": {
+        "createTitle": "Ajouter un type d'établissement",
+        "editTitle": "Modifier le type d'établissement"
+      },
+      "fields": {
+        "name": { "label": "Nom", "placeholder": "ex. Premier cycle secondaire" },
+        "awardBody": {
+          "label": "Organisme d'examen (optionnel)",
+          "none": "Aucun",
+          "loading": "Chargement des organismes d'examen…",
+          "emptyHint": "Aucun organisme d'examen pour le moment.",
+          "emptyHintLink": "En ajouter un d'abord",
+          "loadError": "Impossible de charger les organismes d'examen. Vous pouvez tout de même enregistrer sans en choisir un."
+        },
+        "description": { "label": "Description (optionnel)", "placeholder": "ex. Cycle préscolaire" }
+      },
+      "errors": {
+        "nameRequired": "Saisissez un nom pour ce type d'établissement"
+      },
+      "confirmDelete": {
+        "title": "Supprimer le type d'établissement ?",
+        "message": "Ceci supprimera « {name} ». Cette action est irréversible."
+      },
+      "toast": {
+        "created": "Type d'établissement créé",
+        "updated": "Type d'établissement mis à jour",
+        "deleted": "Type d'établissement supprimé"
+      }
     }
   },
   "onboarding": {
