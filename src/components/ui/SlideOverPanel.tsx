@@ -47,6 +47,20 @@ export function SlideOverPanel({
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useRef(`slide-over-title-${Math.random().toString(36).slice(2)}`).current;
 
+  // Read via a ref inside the effect below instead of depending on `onClose`
+  // directly. A caller that keeps its own form state in the SAME component
+  // that defines `onClose` (e.g. CrudScreen) hands this a fresh function
+  // identity on every keystroke — if the effect depended on it, it would
+  // tear down and re-run its focus-trap setup after every character typed,
+  // which includes an imperative panelRef.current.focus() that yanks focus
+  // off whatever input the user is actively typing into. This ref sync is
+  // a plain assignment with no side effects, so it's safe to re-run on
+  // every render regardless of how often `onClose` changes identity.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
@@ -65,7 +79,7 @@ export function SlideOverPanel({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== "Tab" || !panelRef.current) return;
@@ -90,7 +104,10 @@ export function SlideOverPanel({
       document.removeEventListener("keydown", handleKeyDown);
       previouslyFocused?.focus();
     };
-  }, [isOpen, onClose]);
+    // Deliberately NOT depending on onClose — see onCloseRef above. This
+    // effect should only ever re-run when the panel opens/closes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   if (!shouldRender) return null;
 
