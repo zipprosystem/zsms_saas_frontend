@@ -15,6 +15,20 @@ export type ColumnDef<T> = {
   className?: string;
 };
 
+/** A card's fixed layout (title/description/badge), for screens whose Figma is a card grid rather than a table — e.g. School Types. */
+export type CardFieldsDef<T> = {
+  title: (row: T) => string;
+  description?: (row: T) => string | null | undefined;
+  badge?: (row: T) => ReactNode;
+};
+
+// A discriminated union rather than two optional props on CrudScreen — a
+// screen provides exactly one display shape, enforced at the type level
+// (can't accidentally pass both `columns` and `card`, or neither).
+export type CrudDisplay<T> =
+  | { mode: "table"; columns: ColumnDef<T>[] }
+  | { mode: "cards"; card: CardFieldsDef<T> };
+
 export type FilterOption = { value: string; label: string };
 export type FilterDef = { key: string; label: string; options: FilterOption[] };
 
@@ -57,4 +71,35 @@ export type CrudService<T, CreateInput, UpdateInput> = {
   update: (id: string, data: UpdateInput) => Promise<CrudResult<T>>;
   remove: (id: string) => Promise<CrudResult<void>>;
   customActions?: Record<string, (id: string) => Promise<CrudResult<T>>>;
+};
+
+/**
+ * Everything DataTable and CardGrid have in common — both are just a
+ * presentation of the same useCrudTable state, wrapped in the same
+ * SetupToolbar/SetupPagination. Each extends this with only its own
+ * display-specific prop (`columns` or `card`).
+ */
+export type SetupListBaseProps<T> = {
+  rows: T[];
+  getRowId: (row: T) => string;
+  rowActions?: (row: T) => RowAction<T>[];
+
+  searchValue: string;
+  onSearchChange: (value: string) => void;
+  searchPlaceholder: string;
+
+  filters?: Array<{ def: FilterDef; value: string; onChange: (value: string) => void }>;
+
+  onAddNew?: () => void;
+  addNewLabel?: string;
+
+  isLoading: boolean;
+  errorMessage: string | null;
+  onRetry?: () => void;
+  emptyMessage: string;
+
+  page: number;
+  totalPages: number;
+  onPreviousPage: () => void;
+  onNextPage: () => void;
 };

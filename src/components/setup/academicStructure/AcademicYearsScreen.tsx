@@ -69,7 +69,7 @@ export function AcademicYearsScreen() {
       }}
       panelSubtitle={t("setup.academicYears.panel.subtitle")}
       service={academicYearsService}
-      columns={columns}
+      display={{ mode: "table", columns }}
       getRowId={(row) => row.id}
       searchPlaceholder={t("setup.academicYears.searchPlaceholder")}
       matchesSearch={(row, query) => row.name.toLowerCase().includes(query.toLowerCase())}
