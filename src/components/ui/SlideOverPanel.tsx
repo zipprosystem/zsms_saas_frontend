@@ -44,6 +44,19 @@ export function SlideOverPanel({
 }: SlideOverPanelProps) {
   const t = useTranslations();
   const [shouldRender, setShouldRender] = useState(isOpen);
+  // True once the open animation has finished and the panel is just
+  // sitting still. Firefox for Android has a long-standing bug where a
+  // native <input type="date">/"time" picker fails to open when the
+  // input's ancestor chain has ANY CSS `transform`, even an at-rest
+  // `translateY(0)` from `transition-transform` — which this panel always
+  // carries while open, for the slide animation. Chrome isn't affected,
+  // matching the reported "works on Chrome mobile, not Firefox mobile".
+  // Once settled, translateY(0)/translateX(0) and "no transform at all"
+  // render identically (the box doesn't move), so it's safe to drop the
+  // transform classes entirely at that point — Firefox then sees no
+  // transformed ancestor when the field is tapped. The classes come back
+  // the instant `isOpen` goes false, so the closing slide-out is untouched.
+  const [isSettled, setIsSettled] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useRef(`slide-over-title-${Math.random().toString(36).slice(2)}`).current;
 
@@ -67,6 +80,15 @@ export function SlideOverPanel({
       return;
     }
     const timeout = setTimeout(() => setShouldRender(false), TRANSITION_MS);
+    return () => clearTimeout(timeout);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setIsSettled(false);
+      return;
+    }
+    const timeout = setTimeout(() => setIsSettled(true), TRANSITION_MS);
     return () => clearTimeout(timeout);
   }, [isOpen]);
 
@@ -127,10 +149,14 @@ export function SlideOverPanel({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`absolute inset-x-0 bottom-0 flex max-h-[90vh] flex-col rounded-t-2xl bg-surface shadow-xl outline-none transition-transform duration-300 ease-out sm:inset-y-0 sm:left-auto sm:right-0 sm:h-full sm:max-h-none sm:w-full sm:max-w-md sm:rounded-t-none ${
-          isOpen
-            ? "translate-y-0 sm:translate-x-0"
-            : "translate-y-full sm:translate-x-full sm:translate-y-0"
+        className={`absolute inset-x-0 bottom-0 flex max-h-[90vh] flex-col rounded-t-2xl bg-surface shadow-xl outline-none sm:inset-y-0 sm:left-auto sm:right-0 sm:h-full sm:max-h-none sm:w-full sm:max-w-md sm:rounded-t-none ${
+          isSettled
+            ? ""
+            : `transition-transform duration-300 ease-out ${
+                isOpen
+                  ? "translate-y-0 sm:translate-x-0"
+                  : "translate-y-full sm:translate-x-full sm:translate-y-0"
+              }`
         }`}
       >
         <div className="flex justify-center pt-2 sm:hidden" aria-hidden="true">
