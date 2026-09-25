@@ -596,6 +596,74 @@
         "updated": "Class-arm updated",
         "deleted": "Class-arm deleted"
       }
+    },
+    "classTerms": {
+      "title": "Class Terms",
+      "subtitle": "Terms applied to each class this academic year",
+      "addNew": "Add Term",
+      "searchPlaceholder": "Search terms…",
+      "empty": "No terms yet for this academic year — add your first one to get started.",
+      "noMatches": "No terms match your search.",
+      "noYear": {
+        "message": "Select or create an academic year to manage class terms.",
+        "linkLabel": "Go to Academic Years"
+      },
+      "termType": {
+        "first": "First Term",
+        "second": "Second Term",
+        "third": "Third Term"
+      },
+      "classCount": "{count, plural, one {# class} other {# classes}}",
+      "columns": {
+        "fee": "Fee"
+      },
+      "filters": {
+        "termType": "Term Type",
+        "class": "Class",
+        "all": "All"
+      },
+      "panel": {
+        "createTitle": "Add Term",
+        "editTitle": "Edit Term"
+      },
+      "fields": {
+        "academicYear": { "label": "Academic Year" },
+        "class": { "label": "Class" },
+        "termName": { "label": "Term Name", "placeholder": "e.g. First Term 2026" },
+        "startDate": { "label": "Start Date" },
+        "endDate": { "label": "End Date" },
+        "nextTermStartDate": { "label": "Next Term Start Date" },
+        "nextTermFee": { "label": "Next Term Fee (optional)", "placeholder": "e.g. 50000" },
+        "termType": { "label": "Term Type" },
+        "applyTo": {
+          "label": "Apply To",
+          "selectAll": "Select All",
+          "loading": "Loading classes…",
+          "emptyHint": "No active classes yet for this academic year.",
+          "emptyHintLink": "Add one first"
+        }
+      },
+      "errors": {
+        "yearRequired": "Select an academic year",
+        "termNameRequired": "Enter a name for this term",
+        "startDateRequired": "Enter a start date",
+        "endDateRequired": "Enter an end date",
+        "endBeforeStart": "End date must be after the start date",
+        "nextTermStartRequired": "Enter the next term's start date",
+        "nextTermStartBeforeEnd": "Next term start date must be after this term's end date",
+        "feeInvalid": "Enter a valid fee",
+        "termTypeRequired": "Select a term type",
+        "classesRequired": "Select at least one class"
+      },
+      "confirmDelete": {
+        "title": "Delete term?",
+        "message": "This will delete {class}'s term. This can't be undone."
+      },
+      "toast": {
+        "created": "Term created for {count, plural, one {# class} other {# classes}}.",
+        "updated": "Term updated",
+        "deleted": "Term deleted"
+      }
     }
   },
   "onboarding": {

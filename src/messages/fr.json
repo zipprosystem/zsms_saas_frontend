@@ -596,6 +596,74 @@
         "updated": "Section mise à jour",
         "deleted": "Section supprimée"
       }
+    },
+    "classTerms": {
+      "title": "Trimestres de classe",
+      "subtitle": "Trimestres appliqués à chaque classe cette année académique",
+      "addNew": "Ajouter un trimestre",
+      "searchPlaceholder": "Rechercher un trimestre…",
+      "empty": "Aucun trimestre pour le moment cette année académique — ajoutez-en un pour commencer.",
+      "noMatches": "Aucun trimestre ne correspond à votre recherche.",
+      "noYear": {
+        "message": "Sélectionnez ou créez une année académique pour gérer les trimestres de classe.",
+        "linkLabel": "Aller aux années académiques"
+      },
+      "termType": {
+        "first": "Premier trimestre",
+        "second": "Deuxième trimestre",
+        "third": "Troisième trimestre"
+      },
+      "classCount": "{count, plural, one {# classe} other {# classes}}",
+      "columns": {
+        "fee": "Frais"
+      },
+      "filters": {
+        "termType": "Type de trimestre",
+        "class": "Classe",
+        "all": "Tous"
+      },
+      "panel": {
+        "createTitle": "Ajouter un trimestre",
+        "editTitle": "Modifier le trimestre"
+      },
+      "fields": {
+        "academicYear": { "label": "Année académique" },
+        "class": { "label": "Classe" },
+        "termName": { "label": "Nom du trimestre", "placeholder": "ex. Premier trimestre 2026" },
+        "startDate": { "label": "Date de début" },
+        "endDate": { "label": "Date de fin" },
+        "nextTermStartDate": { "label": "Date de début du trimestre suivant" },
+        "nextTermFee": { "label": "Frais du trimestre suivant (optionnel)", "placeholder": "ex. 50000" },
+        "termType": { "label": "Type de trimestre" },
+        "applyTo": {
+          "label": "Appliquer à",
+          "selectAll": "Tout sélectionner",
+          "loading": "Chargement des classes…",
+          "emptyHint": "Aucune classe active pour le moment cette année académique.",
+          "emptyHintLink": "En ajouter une d'abord"
+        }
+      },
+      "errors": {
+        "yearRequired": "Sélectionnez une année académique",
+        "termNameRequired": "Saisissez un nom pour ce trimestre",
+        "startDateRequired": "Saisissez une date de début",
+        "endDateRequired": "Saisissez une date de fin",
+        "endBeforeStart": "La date de fin doit être postérieure à la date de début",
+        "nextTermStartRequired": "Saisissez la date de début du trimestre suivant",
+        "nextTermStartBeforeEnd": "La date de début du trimestre suivant doit être postérieure à la date de fin de ce trimestre",
+        "feeInvalid": "Saisissez des frais valides",
+        "termTypeRequired": "Sélectionnez un type de trimestre",
+        "classesRequired": "Sélectionnez au moins une classe"
+      },
+      "confirmDelete": {
+        "title": "Supprimer le trimestre ?",
+        "message": "Ceci supprimera le trimestre de {class}. Cette action est irréversible."
+      },
+      "toast": {
+        "created": "Trimestre créé pour {count, plural, one {# classe} other {# classes}}.",
+        "updated": "Trimestre mis à jour",
+        "deleted": "Trimestre supprimé"
+      }
     }
   },
   "onboarding": {
