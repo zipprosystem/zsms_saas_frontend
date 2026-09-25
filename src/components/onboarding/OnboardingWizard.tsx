@@ -51,7 +51,7 @@ const INITIAL_DATA: OnboardingData = {
     sessionStartDate: "",
     sessionEndDate: "",
     schoolMode: "",
-    schoolTypes: [],
+    schoolTypePairs: [],
     awardBodies: [],
   },
 };
@@ -117,7 +117,7 @@ export function OnboardingWizard() {
 
     setSubmitting(true);
     setSubmitError(null);
-    const result = await submitOnboarding(toContractPayload(data), recaptchaToken ?? "");
+    const result = await submitOnboarding(toContractPayload(data, t), recaptchaToken ?? "");
     setSubmitting(false);
 
     if (result.ok) {

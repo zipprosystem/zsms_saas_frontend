@@ -179,11 +179,23 @@ export function ReviewStep({
           }
         />
         <ReviewRow
-          label={t("onboarding.step2.schoolType.label")}
-          value={labelList(SCHOOL_TYPES, data.academic.schoolTypes)}
+          label={t("onboarding.step2.schoolTypePairs.sectionTitle")}
+          value={
+            data.academic.schoolTypePairs.length
+              ? data.academic.schoolTypePairs
+                  .map((pair) => {
+                    const schoolType = pair.schoolType
+                      ? labelOne(SCHOOL_TYPES, pair.schoolType)
+                      : notSet;
+                    const awardBody = pair.awardBody ? labelOne(AWARD_BODIES, pair.awardBody) : notSet;
+                    return `${schoolType} (${awardBody})`;
+                  })
+                  .join(", ")
+              : none
+          }
         />
         <ReviewRow
-          label={t("onboarding.step2.awardBody.label")}
+          label={t("onboarding.step2.extraAwardBodies.label")}
           value={labelList(AWARD_BODIES, data.academic.awardBodies)}
         />
       </ReviewSection>

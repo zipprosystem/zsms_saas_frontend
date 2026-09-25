@@ -220,16 +220,24 @@
         "name": "Academic Years",
         "description": "Define your school year and date range"
       },
-      "schoolTypes": {
-        "name": "School Types",
-        "description": "Your school divisions — Primary, JSS, SSS"
-      },
       "awardBodies": {
         "name": "Award Bodies",
         "description": "Examining bodies — WAEC, NECO, Cambridge"
       },
-      "terms": {
-        "name": "Terms",
+      "schoolTypes": {
+        "name": "School Type",
+        "description": "Your school divisions — Primary, JSS, SSS"
+      },
+      "classes": {
+        "name": "Classes",
+        "description": "Study programmes — Science, Arts, Commercial"
+      },
+      "classArms": {
+        "name": "Class-arm / Form-group",
+        "description": "Arms or form groups within a class"
+      },
+      "classTerms": {
+        "name": "Class Terms",
         "description": "Academic terms with start and end dates"
       },
       "departments": {
@@ -237,20 +245,28 @@
         "description": "Academic departments for subjects and staff"
       },
       "subjectsMaster": {
-        "name": "Subjects Master",
+        "name": "Subject Master",
         "description": "Global registry of all subjects offered"
       },
-      "courses": {
-        "name": "Courses",
-        "description": "Study programmes — Science, Arts, Commercial"
+      "classSubjects": {
+        "name": "Class Subjects",
+        "description": "Map subjects to classes with grade units"
       },
-      "courseSubjectGroups": {
-        "name": "Course Subject Groups",
-        "description": "Group subjects within courses"
+      "classSubjectGrouping": {
+        "name": "Class Subject Grouping",
+        "description": "Group subjects within classes"
       },
-      "courseSubjects": {
-        "name": "Course Subjects",
-        "description": "Map subjects to courses with grade units"
+      "subjectEnrolment": {
+        "name": "Subject Enrolment",
+        "description": "Enrol students into their subjects"
+      },
+      "studentTermDetails": {
+        "name": "Student Term Details",
+        "description": "Per-term student status and placement"
+      },
+      "classAcademicMaterial": {
+        "name": "Class Academic Material",
+        "description": "Learning materials attached to a class"
       },
       "gradingSchemes": { "name": "Grading Schemes" },
       "gradeScales": { "name": "Grade Scales" },
@@ -385,17 +401,18 @@
       "fields": {
         "name": { "label": "Name", "placeholder": "e.g. Junior Secondary" },
         "awardBody": {
-          "label": "Award Body (optional)",
-          "none": "None",
+          "label": "Award Body",
+          "placeholder": "Select an award body",
           "loading": "Loading award bodies…",
           "emptyHint": "No award bodies yet.",
           "emptyHintLink": "Add one first",
-          "loadError": "Couldn't load award bodies. You can still save without one."
+          "loadError": "Couldn't load award bodies."
         },
         "description": { "label": "Description (optional)", "placeholder": "e.g. Early years foundation stage" }
       },
       "errors": {
-        "nameRequired": "Enter a name for this school type"
+        "nameRequired": "Enter a name for this school type",
+        "awardBodyRequired": "Select an award body"
       },
       "confirmDelete": {
         "title": "Delete school type?",
@@ -506,8 +523,18 @@
       "schoolMode": { "label": "School Mode" },
       "schoolType": { "label": "School Type", "customPlaceholder": "Type a school type…" },
       "awardBody": {
-        "label": "Award Body (optional)",
+        "label": "Award Body",
         "customPlaceholder": "Type an award body…"
+      },
+      "schoolTypePairs": {
+        "sectionTitle": "School Types & Award Bodies",
+        "sectionSubtitle": "Pair each school type with the body that examines it — e.g. Senior Secondary with WAEC.",
+        "rowLabel": "Pair {number}",
+        "removeRow": "Remove this pair",
+        "addPair": "Add pair"
+      },
+      "extraAwardBodies": {
+        "label": "Additional Award Bodies (optional)"
       },
       "addCustom": "Add custom"
     },
@@ -580,6 +607,7 @@
       "recaptchaRequired": "Please complete the reCAPTCHA verification",
       "endBeforeStart": "Session end date must be after the start date",
       "selectAtLeastOne": "Select at least one",
+      "maxLength100": "Must be 100 characters or fewer",
       "fieldInvalid": "This field is invalid",
       "submitField": "Please fix the highlighted fields and try again.",
       "submitBadRequest": "There was a problem with your submission. Please check your details and try again.",

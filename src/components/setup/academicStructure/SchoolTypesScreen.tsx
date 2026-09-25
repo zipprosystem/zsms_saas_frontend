@@ -46,10 +46,7 @@ export function SchoolTypesScreen() {
     };
   }, []);
 
-  const awardBodyName = (id: string | null): string | null => {
-    if (!id || awardBodies.status !== "loaded") return null;
-    return awardBodies.items.find((body) => body.id === id)?.name ?? null;
-  };
+  const noAwardBodiesYet = awardBodies.status === "loaded" && awardBodies.items.length === 0;
 
   return (
     <CrudScreen<SchoolType, SchoolTypeInput, SchoolTypeInput, FormState>
@@ -66,10 +63,11 @@ export function SchoolTypesScreen() {
         card: {
           title: (row) => row.name,
           description: (row) => {
-            const bodyName = awardBodyName(row.award_body_id);
+            const bodyName = row.award_body?.name ?? null;
             if (bodyName && row.description) return `${bodyName} — ${row.description}`;
             return bodyName ?? row.description;
           },
+          tags: (row) => row.classes.filter((cls) => cls.is_active).map((cls) => cls.name),
         },
       }}
       getRowId={(row) => row.id}
@@ -91,22 +89,23 @@ export function SchoolTypesScreen() {
       emptyFormState={EMPTY_FORM}
       toFormState={(row) => ({
         name: row.name,
-        award_body_id: row.award_body_id ?? "",
+        award_body_id: row.award_body_id,
         description: row.description ?? "",
       })}
       validate={(data) => {
         const errors: Record<string, string> = {};
         if (!data.name.trim()) errors.name = t("setup.schoolTypes.errors.nameRequired");
+        if (!data.award_body_id) errors.award_body_id = t("setup.schoolTypes.errors.awardBodyRequired");
         return errors;
       }}
       toCreateInput={(data) => ({
         name: data.name.trim(),
-        award_body_id: data.award_body_id || null,
+        award_body_id: data.award_body_id,
         description: data.description.trim() || null,
       })}
       toUpdateInput={(data) => ({
         name: data.name.trim(),
-        award_body_id: data.award_body_id || null,
+        award_body_id: data.award_body_id,
         description: data.description.trim() || null,
       })}
       renderFields={({ data, onChange, errors }) => (
@@ -119,6 +118,7 @@ export function SchoolTypesScreen() {
             onChange={(event) => onChange({ name: event.target.value })}
             hasError={!!errors.name}
             error={errors.name}
+            maxLength={100}
           />
 
           <div className="flex flex-col gap-1.5">
@@ -127,13 +127,17 @@ export function SchoolTypesScreen() {
               label={t("setup.schoolTypes.fields.awardBody.label")}
               value={data.award_body_id}
               onChange={(event) => onChange({ award_body_id: event.target.value })}
-              disabled={awardBodies.status === "loading"}
+              disabled={awardBodies.status === "loading" || noAwardBodiesYet}
+              hasError={!!errors.award_body_id}
+              error={errors.award_body_id}
             >
               {awardBodies.status === "loading" ? (
                 <option value="">{t("setup.schoolTypes.fields.awardBody.loading")}</option>
               ) : (
                 <>
-                  <option value="">{t("setup.schoolTypes.fields.awardBody.none")}</option>
+                  <option value="" disabled>
+                    {t("setup.schoolTypes.fields.awardBody.placeholder")}
+                  </option>
                   {awardBodies.status === "loaded"
                     ? awardBodies.items.map((body) => (
                         <option key={body.id} value={body.id}>
@@ -144,7 +148,7 @@ export function SchoolTypesScreen() {
                 </>
               )}
             </SelectField>
-            {awardBodies.status === "loaded" && awardBodies.items.length === 0 ? (
+            {noAwardBodiesYet ? (
               <p className="text-xs text-text-muted">
                 {t("setup.schoolTypes.fields.awardBody.emptyHint")}{" "}
                 <Link
@@ -166,6 +170,7 @@ export function SchoolTypesScreen() {
             placeholder={t("setup.schoolTypes.fields.description.placeholder")}
             value={data.description}
             onChange={(event) => onChange({ description: event.target.value })}
+            maxLength={100}
           />
         </>
       )}

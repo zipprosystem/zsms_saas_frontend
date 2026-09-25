@@ -1,38 +1,66 @@
 import { apiFetch } from "@/lib/api/client";
 import { DEV_AUTH_BYPASS } from "@/lib/auth/authBridge";
+import { extractErpError } from "@/lib/setup/erpError";
 import type { CrudResult, CrudService } from "@/lib/setup/crudTypes";
 
 /**
- * Real, deployed contract per Muntajir (mirrors academicYearsApi.ts's
- * confirmed shape): { success, data }, Bearer auth via apiFetch.
+ * Finalized contract per Muntajir: { success, data }, Bearer auth via
+ * apiFetch. No is_active — same confirmed correction as Award Bodies.
  *
- *   GET  {API_BASE}/erp/school-types
+ *   GET {API_BASE}/erp/school-types?page=&limit=
  *     -> { success: true, data: { items: [...], total, page, limit, has_more } }
- *        Paginated, same shape as Academic Years — this screen still
- *        fetches and paginates client-side (fine for the expected volume
- *        of school types per school), same reasoning as academicYearsApi.
- *   POST/PUT {API_BASE}/erp/school-types[/:id]
+ *        Paginated (default limit 50, max 200) — fetched once with
+ *        limit=200 and searched/paginated client-side, same reasoning and
+ *        accepted limitation as Award Bodies/Academic Years.
+ *        The contract also accepts an optional `academic_year_id` filter —
+ *        deliberately NOT passed here. School Types are a structural,
+ *        year-independent categorisation of the school (Creche/JSS/SSS…),
+ *        not data scoped to a particular session the way Classes likely
+ *        are (hence "active classes only" on this entity's own `classes`
+ *        field below) — confirmed with Matthew.
+ *   POST/PUT {API_BASE}/erp/school-types[/:id] { name, award_body_id, description? }
  *     -> { success: true, data: <entity> } directly, never wrapped in items.
+ *     award_body_id is REQUIRED (changed from the earlier optional/"None"
+ *     assumption) — every school type must reference an award body now.
  *   DELETE {API_BASE}/erp/school-types/:id
- *   GET {API_BASE}/erp/school-types/:id exists too but isn't used here —
- *     same as Academic Years, edit forms seed from the already-fetched
- *     list row, never a separate single-item fetch.
  *
- * award_body_id is optional — not every school type has an examining body
- * (Creche/Nursery/Primary typically don't; JSS/SSS/etc. do). Confirmed by
- * Matthew, matching onboarding's own School Types step where Award Body
- * was optional too.
+ * Response entity includes `award_body` (the nested Award Body object) and
+ * `classes` (this school type's classes) alongside `award_body_id` itself —
+ * the card reads award_body.name directly rather than looking it up
+ * client-side. `classes`' exact shape is an ASSUMPTION (only "the active
+ * ones show as chips" was specified, not confirmed field-by-field) —
+ * reconcile once a real payload is seen.
+ *
+ * Error body shape (all non-2xx responses): { success:false, error:{ code,
+ * message } } — see erpError.ts. Known codes handled below:
+ *   DUPLICATE_NAME         -> validation error on the `name` field
+ *   AWARD_BODY_REQUIRED    -> validation error on the `award_body_id` field
+ *   AWARD_BODY_NOT_FOUND   -> validation error on the `award_body_id` field
+ *                             (a stale/deleted award body was selected)
+ *   SCHOOL_TYPE_HAS_CLASSES -> 409 delete conflict, item NOT removed
+ *                              locally, backend message surfaced as-is
+ *   SCHOOL_TYPE_NOT_FOUND  -> conflict (stale row)
+ * Any other/missing code falls back to the plain status-code classification
+ * (403/409/422/else), same defensive pattern as Award Bodies/Academic Years.
  */
+export type SchoolTypeClass = {
+  id: string;
+  name: string;
+  is_active: boolean;
+};
+
 export type SchoolType = {
   id: string;
   name: string;
-  award_body_id: string | null;
+  award_body_id: string;
+  award_body: { id: string; name: string; description: string | null } | null;
   description: string | null;
+  classes: SchoolTypeClass[];
 };
 
 export type SchoolTypeInput = {
   name: string;
-  award_body_id: string | null;
+  award_body_id: string;
   description: string | null;
 };
 
@@ -43,17 +71,35 @@ async function parseBody(response: Response): Promise<unknown> {
 }
 
 function toResult<T>(response: Response, body: unknown): CrudResult<T> {
-  if (response.status === 403) return { ok: false, kind: "forbidden" };
-  if (response.status === 409) return { ok: false, kind: "conflict" };
-  if (response.status === 422) {
-    const rawErrors = (body as { data?: { errors?: unknown }; errors?: unknown } | null)?.data?.errors
-      ?? (body as { errors?: unknown } | null)?.errors;
-    return { ok: false, kind: "validation", errors: Array.isArray(rawErrors) ? rawErrors : [] };
+  const { code, message } = extractErpError(body);
+
+  if (code === "DUPLICATE_NAME") {
+    return { ok: false, kind: "validation", errors: [{ field: "name", message: message ?? undefined }] };
   }
+  if (code === "AWARD_BODY_REQUIRED" || code === "AWARD_BODY_NOT_FOUND") {
+    return {
+      ok: false,
+      kind: "validation",
+      errors: [{ field: "award_body_id", message: message ?? undefined }],
+    };
+  }
+  if (code === "SCHOOL_TYPE_HAS_CLASSES" || code === "SCHOOL_TYPE_NOT_FOUND") {
+    return { ok: false, kind: "conflict", message: message ?? undefined };
+  }
+  if (code === "FORBIDDEN" || code === "UNAUTHORIZED") {
+    return { ok: false, kind: "forbidden", message: message ?? undefined };
+  }
+  if (code === "VALIDATION_ERROR") {
+    return { ok: false, kind: "server", message: message ?? undefined };
+  }
+
+  if (response.status === 403) return { ok: false, kind: "forbidden" };
+  if (response.status === 409) return { ok: false, kind: "conflict", message: message ?? undefined };
+  if (response.status === 422) return { ok: false, kind: "validation", errors: [] };
   // 401 isn't handled here: apiFetch already retries once via /auth/refresh
   // and force-logs-out + redirects to /login on failure, same as every
   // other authenticated call in this app.
-  return { ok: false, kind: "server" };
+  return { ok: false, kind: "server", message: message ?? undefined };
 }
 
 function extractSchoolTypeList(body: unknown): SchoolType[] {
@@ -66,7 +112,7 @@ async function list(): Promise<CrudResult<SchoolType[]>> {
 
   let response: Response;
   try {
-    response = await apiFetch(BASE_PATH, { method: "GET" });
+    response = await apiFetch(`${BASE_PATH}?page=1&limit=200`, { method: "GET" });
   } catch {
     return { ok: false, kind: "network" };
   }

@@ -55,13 +55,15 @@ function resultErrorMessage(
 ): string {
   switch (result.kind) {
     case "forbidden":
-      return t("setup.crudScreen.errors.forbidden");
+      return result.message ?? t("setup.crudScreen.errors.forbidden");
     case "conflict":
-      return t("setup.crudScreen.errors.conflict");
+      return result.message ?? t("setup.crudScreen.errors.conflict");
     case "devBypassUnavailable":
       return t("setup.crudScreen.errors.devBypassUnavailable");
     case "validation":
       return t("setup.crudScreen.errors.validation");
+    case "server":
+      return result.message ?? t("setup.crudScreen.errors.saveFailed");
     default:
       return t("setup.crudScreen.errors.saveFailed");
   }
@@ -146,7 +148,9 @@ export function CrudScreen<T, CreateInput, UpdateInput, FormState>({
     if (result.kind === "validation") {
       const fieldErrors: Record<string, string> = {};
       for (const error of result.errors) {
-        fieldErrors[error.field] = t("setup.crudScreen.errors.fieldInvalid");
+        // Prefer the backend's own message (e.g. "already exists") over the
+        // generic fallback, same reasoning as resultErrorMessage() above.
+        fieldErrors[error.field] = error.message ?? t("setup.crudScreen.errors.fieldInvalid");
       }
       setFormErrors(fieldErrors);
     }

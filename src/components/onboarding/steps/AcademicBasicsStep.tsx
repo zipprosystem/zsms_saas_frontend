@@ -3,15 +3,22 @@
 import { useTranslations } from "next-intl";
 import { InputField } from "@/components/ui/Input";
 import { ChipGroup } from "@/components/ui/ChipGroup";
+import { CloseIcon } from "@/components/icons/CloseIcon";
 import { AWARD_BODIES, SCHOOL_MODES, SCHOOL_TYPES } from "@/lib/onboarding/config";
 import type { OnboardingData, SchoolMode } from "@/lib/onboarding/types";
 import type { FieldErrors } from "@/lib/onboarding/validation";
+
+type SchoolTypePair = OnboardingData["academic"]["schoolTypePairs"][number];
 
 type AcademicBasicsStepProps = {
   data: OnboardingData;
   errors: FieldErrors;
   onAcademicChange: (patch: Partial<OnboardingData["academic"]>) => void;
 };
+
+function generatePairId(): string {
+  return `pair-${Math.random().toString(36).slice(2, 10)}`;
+}
 
 export function AcademicBasicsStep({
   data,
@@ -20,6 +27,24 @@ export function AcademicBasicsStep({
 }: AcademicBasicsStepProps) {
   const t = useTranslations();
   const errorText = (key: string) => (errors[key] ? t(errors[key]) : undefined);
+
+  const pairs = data.academic.schoolTypePairs;
+
+  const updatePair = (id: string, patch: Partial<SchoolTypePair>) => {
+    onAcademicChange({
+      schoolTypePairs: pairs.map((pair) => (pair.id === id ? { ...pair, ...patch } : pair)),
+    });
+  };
+
+  const addPair = () => {
+    onAcademicChange({
+      schoolTypePairs: [...pairs, { id: generatePairId(), schoolType: "", awardBody: "" }],
+    });
+  };
+
+  const removePair = (id: string) => {
+    onAcademicChange({ schoolTypePairs: pairs.filter((pair) => pair.id !== id) });
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -79,20 +104,80 @@ export function AcademicBasicsStep({
         error={errorText("academic.schoolMode")}
       />
 
-      <ChipGroup
-        label={t("onboarding.step2.schoolType.label")}
-        options={SCHOOL_TYPES.map((type) => ({ value: type.value, label: t(type.labelKey) }))}
-        value={data.academic.schoolTypes}
-        onChange={(schoolTypes) => onAcademicChange({ schoolTypes })}
-        hasError={!!errors["academic.schoolTypes"]}
-        error={errorText("academic.schoolTypes")}
-        allowCustom
-        addLabel={t("onboarding.step2.addCustom")}
-        addPlaceholder={t("onboarding.step2.schoolType.customPlaceholder")}
-      />
+      <div className="flex flex-col gap-4">
+        <div>
+          <h3 className="text-sm font-semibold text-text-primary">
+            {t("onboarding.step2.schoolTypePairs.sectionTitle")}
+          </h3>
+          <p className="mt-1 text-sm text-text-secondary">
+            {t("onboarding.step2.schoolTypePairs.sectionSubtitle")}
+          </p>
+        </div>
+
+        {errors["academic.schoolTypePairs"] ? (
+          <p className="text-sm text-error">{t(errors["academic.schoolTypePairs"])}</p>
+        ) : null}
+
+        <div className="flex flex-col gap-5">
+          {pairs.map((pair, index) => (
+            <div
+              key={pair.id}
+              className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                  {t("onboarding.step2.schoolTypePairs.rowLabel", { number: index + 1 })}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removePair(pair.id)}
+                  aria-label={t("onboarding.step2.schoolTypePairs.removeRow")}
+                  className="text-text-muted transition-colors hover:text-error"
+                >
+                  <CloseIcon className="h-4 w-4" />
+                </button>
+              </div>
+
+              <ChipGroup
+                label={t("onboarding.step2.schoolType.label")}
+                multiple={false}
+                options={SCHOOL_TYPES.map((type) => ({ value: type.value, label: t(type.labelKey) }))}
+                value={pair.schoolType ? [pair.schoolType] : []}
+                onChange={(values) => updatePair(pair.id, { schoolType: values[0] ?? "" })}
+                hasError={!!errors[`academic.schoolTypePairs.${index}.schoolType`]}
+                error={errorText(`academic.schoolTypePairs.${index}.schoolType`)}
+                allowCustom
+                addLabel={t("onboarding.step2.addCustom")}
+                addPlaceholder={t("onboarding.step2.schoolType.customPlaceholder")}
+              />
+
+              <ChipGroup
+                label={t("onboarding.step2.awardBody.label")}
+                multiple={false}
+                options={AWARD_BODIES.map((body) => ({ value: body.value, label: t(body.labelKey) }))}
+                value={pair.awardBody ? [pair.awardBody] : []}
+                onChange={(values) => updatePair(pair.id, { awardBody: values[0] ?? "" })}
+                hasError={!!errors[`academic.schoolTypePairs.${index}.awardBody`]}
+                error={errorText(`academic.schoolTypePairs.${index}.awardBody`)}
+                allowCustom
+                addLabel={t("onboarding.step2.addCustom")}
+                addPlaceholder={t("onboarding.step2.awardBody.customPlaceholder")}
+              />
+            </div>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={addPair}
+          className="self-start rounded-full border border-dashed border-border px-3.5 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-accent hover:text-accent"
+        >
+          + {t("onboarding.step2.schoolTypePairs.addPair")}
+        </button>
+      </div>
 
       <ChipGroup
-        label={t("onboarding.step2.awardBody.label")}
+        label={t("onboarding.step2.extraAwardBodies.label")}
         options={AWARD_BODIES.map((body) => ({ value: body.value, label: t(body.labelKey) }))}
         value={data.academic.awardBodies}
         onChange={(awardBodies) => onAcademicChange({ awardBodies })}
