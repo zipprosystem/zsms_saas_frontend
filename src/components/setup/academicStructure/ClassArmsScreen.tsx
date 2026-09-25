@@ -1,14 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { InputField } from "@/components/ui/Input";
 import { SelectField } from "@/components/ui/Select";
 import { Toggle } from "@/components/ui/Toggle";
-import { CrudScreen } from "@/components/setup/CrudScreen";
+import { useToast } from "@/components/ui/Toast";
+import { DataTable } from "@/components/setup/DataTable";
+import { resultErrorMessage } from "@/components/setup/CrudScreen";
+import { SlideOverPanel } from "@/components/ui/SlideOverPanel";
 import { FilterDropdown } from "@/components/setup/SetupToolbar";
 import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
+import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
+import { throwIfTransient } from "@/lib/setup/crudTypes";
+import { usePaginatedView } from "@/lib/setup/usePaginatedView";
 import { createClassesService, type SchoolClass } from "@/lib/setup/academicStructure/classesApi";
 import { schoolTypesService, type SchoolType } from "@/lib/setup/academicStructure/schoolTypesApi";
 import {
@@ -18,12 +25,17 @@ import {
   type Classroom,
 } from "@/lib/setup/academicStructure/facilitiesApi";
 import {
-  createSectionsService,
+  createSection,
+  deactivateSection,
+  fetchSectionsForClass,
+  reactivateSection,
+  removeSection,
+  sectionsQueryKey,
+  updateSection,
   type Section,
-  type SectionCache,
   type SectionInput,
 } from "@/lib/setup/academicStructure/sectionsApi";
-import type { ColumnDef, FilterDef } from "@/lib/setup/crudTypes";
+import type { ColumnDef, FilterDef, RowAction } from "@/lib/setup/crudTypes";
 
 type FormState = {
   school_type_id: string;
@@ -87,25 +99,20 @@ export function ClassArmsScreen() {
 
 /**
  * Fetches School Types + all of the year's Classes once, owns which
- * school type is currently being viewed, and owns the section cache
- * (a plain Map in a ref — the SAME instance survives every school-type
- * switch within this mount, which is what makes "switching back doesn't
- * refetch" work: SectionsTable rebuilds its service on each switch, but
- * every one of those services shares this one cache).
+ * school type is currently being viewed. No cache of its own anymore
+ * (react-query owns that per-class, keyed by sectionsQueryKey) — switching
+ * school types back and forth just re-derives `activeClasses`, and
+ * whichever classes were already fetched stay cached under their own key
+ * regardless of which school type is currently selected.
  */
 function SchoolTypeGate({ yearId }: { yearId: string }) {
   const t = useTranslations();
   const [schoolTypes, setSchoolTypes] = useState<SchoolTypesState>({ status: "loading" });
   const [classes, setClasses] = useState<ClassesState>({ status: "loading" });
   const [selectedSchoolTypeId, setSelectedSchoolTypeId] = useState("");
-  const cacheRef = useRef<SectionCache>(new Map());
 
   useEffect(() => {
     let cancelled = false;
-    // A different year means an entirely different set of class ids —
-    // wipe the cache and the current selection rather than risk any
-    // cross-year confusion.
-    cacheRef.current = new Map();
     setSelectedSchoolTypeId("");
     setSchoolTypes({ status: "loading" });
     setClasses({ status: "loading" });
@@ -186,31 +193,48 @@ function SchoolTypeGate({ yearId }: { yearId: string }) {
           classes={classes.items}
           activeClasses={activeClasses}
           selectedSchoolTypeId={selectedSchoolTypeId}
-          cache={cacheRef.current}
         />
       )}
     </div>
   );
 }
 
+type PanelState = { mode: "closed" } | { mode: "create" } | { mode: "edit"; row: Section };
+
+type SectionsLoadState =
+  | { status: "loading" }
+  | { status: "loaded"; items: Section[] }
+  | { status: "forbidden" }
+  | { status: "devBypassUnavailable" }
+  | { status: "error" };
+
+/**
+ * Reads bypass the generic CrudScreen/useCrudTable pattern entirely —
+ * there's no single "list sections for a school type" endpoint to back a
+ * service.list(), only per-class (see sectionsApi.ts). useQueries runs one
+ * query per active class, and this component merges + presents them via
+ * DataTable directly (the same presentational component CrudScreen itself
+ * uses under the hood) plus a hand-wired SlideOverPanel for create/edit —
+ * mirroring CrudScreen's own internal logic, just adapted for a merged
+ * multi-query source instead of one service.
+ */
 function ClassArmsTable({
   schoolTypes,
   classes,
   activeClasses,
   selectedSchoolTypeId,
-  cache,
 }: {
   schoolTypes: SchoolType[];
   classes: SchoolClass[];
   activeClasses: SchoolClass[];
   selectedSchoolTypeId: string;
-  cache: SectionCache;
 }) {
   const t = useTranslations();
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
 
   const [buildings, setBuildings] = useState<ReferenceListState<Building>>({ status: "loading" });
   const [classrooms, setClassrooms] = useState<ReferenceListState<Classroom>>({ status: "loading" });
-  const [armNames, setArmNames] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -225,21 +249,56 @@ function ClassArmsTable({
     };
   }, []);
 
-  // Rebuilt on every school-type switch, but all instances share the same
-  // `cache` (a ref one level up) — a switch back to an already-visited
-  // type finds its classes' entries already warm.
-  const classIdsKey = activeClasses
-    .map((cls) => cls.id)
-    .sort()
-    .join(",");
-  const sectionsService = useMemo(
-    () => createSectionsService({ classIds: activeClasses.map((cls) => cls.id), cache }),
-    // classIdsKey fully captures what activeClasses/cache changing means
-    // here — depending on the array/Map references directly would rebuild
-    // every render for no reason.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [classIdsKey],
-  );
+  // One query per active class, sharing react-query's own per-key cache —
+  // switching school types back to an already-visited one finds its
+  // classes' queries already cached, no manual cache of our own needed.
+  const sectionQueries = useQueries({
+    queries: activeClasses.map((cls) => ({
+      queryKey: sectionsQueryKey(cls.id),
+      queryFn: () => fetchSectionsForClass(cls.id).then(throwIfTransient),
+      staleTime: STRUCTURAL_STALE_TIME_MS,
+    })),
+  });
+
+  // Same "one failed class fails the whole merge" rule the old Map-cache
+  // design had — a partial list would misrepresent what's actually under
+  // this school type.
+  const load: SectionsLoadState =
+    activeClasses.length === 0
+      ? { status: "loaded", items: [] }
+      : sectionQueries.some((query) => query.isPending)
+        ? { status: "loading" }
+        : sectionQueries.some((query) => query.isError)
+          ? { status: "error" }
+          : (() => {
+              const failed = sectionQueries.find((query) => query.data && !query.data.ok);
+              if (!failed?.data || failed.data.ok) {
+                return {
+                  status: "loaded" as const,
+                  items: sectionQueries.flatMap((query) => (query.data?.ok ? query.data.data : [])),
+                };
+              }
+              if (failed.data.kind === "forbidden") return { status: "forbidden" as const };
+              if (failed.data.kind === "devBypassUnavailable") return { status: "devBypassUnavailable" as const };
+              return { status: "error" as const };
+            })();
+
+  // Not memoized: useQueries returns a fresh array every render regardless
+  // of whether any underlying query result actually changed, so `load` (and
+  // therefore `allItems`) has no stable reference to key a useMemo off in
+  // the first place — recomputing this plain filter/map/sort every render
+  // is cheap enough (a school's section count) that it isn't worth fighting
+  // that with a deep-equality check.
+  const allItems = load.status === "loaded" ? load.items : [];
+  const armNames = Array.from(new Set(allItems.map((item) => item.name))).sort();
+
+  const view = usePaginatedView(allItems, {
+    matchesSearch: (row, query) => row.name.toLowerCase().includes(query.toLowerCase()),
+    matchesFilters: (row, filters) =>
+      (!filters.class || row.class_id === filters.class) &&
+      (!filters.armName || row.name === filters.armName) &&
+      (!filters.status || (filters.status === "active") === row.is_active),
+  });
 
   const classById = (id: string): SchoolClass | null => classes.find((cls) => cls.id === id) ?? null;
   const schoolTypeNameForClass = (classId: string): string | null => {
@@ -322,131 +381,239 @@ function ClassArmsTable({
       ],
     },
   ];
+  const filters = filterDefs.map((def) => ({
+    def,
+    value: view.filters[def.key] ?? "",
+    onChange: (value: string) => {
+      view.setFilters((current) => {
+        const next = { ...current };
+        if (value) next[def.key] = value;
+        else delete next[def.key];
+        return next;
+      });
+    },
+  }));
 
-  // Defaulted on create (a typical school day), never overridden on edit —
-  // toFormState() below always seeds from the actual record's own values,
-  // this default only ever applies via CrudScreen's openCreate().
   const emptyFormState: FormState = {
     school_type_id: selectedSchoolTypeId,
     class_id: "",
     arm_name: "",
     building_id: "",
     classroom_id: "",
+    // Defaulted on create (a typical school day), never overridden on
+    // edit — toFormState() always seeds from the actual record's values.
     class_time_start: "08:00",
     class_time_end: "15:00",
     description: "",
     is_active: true,
   };
 
+  const toFormState = (row: Section): FormState => ({
+    school_type_id: classById(row.class_id)?.school_type_id ?? "",
+    class_id: row.class_id,
+    arm_name: row.name,
+    building_id: row.building_id ?? "",
+    classroom_id: row.classroom_id ?? "",
+    class_time_start: row.class_time_start ?? "",
+    class_time_end: row.class_time_end ?? "",
+    description: row.description ?? "",
+    is_active: row.is_active,
+  });
+
+  const toInput = (data: FormState): SectionInput => ({
+    class_id: data.class_id,
+    arm_name: data.arm_name.trim(),
+    building_id: data.building_id || null,
+    classroom_id: data.classroom_id || null,
+    class_time_start: data.class_time_start || null,
+    class_time_end: data.class_time_end || null,
+    description: data.description.trim() || null,
+    is_active: data.is_active,
+  });
+
+  const validate = (data: FormState): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    if (!data.school_type_id) errors.school_type_id = t("setup.classArms.errors.schoolTypeRequired");
+    if (!data.class_id) errors.class_id = t("setup.classArms.errors.classRequired");
+    if (!data.arm_name.trim()) errors.arm_name = t("setup.classArms.errors.armNameRequired");
+    if (data.class_time_start && data.class_time_end && data.class_time_end <= data.class_time_start) {
+      errors.class_time_end = t("setup.classArms.errors.endBeforeStart");
+    }
+    return errors;
+  };
+
+  const [panel, setPanel] = useState<PanelState>({ mode: "closed" });
+  const [formData, setFormData] = useState<FormState>(emptyFormState);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const openCreate = () => {
+    setFormData(emptyFormState);
+    setFormErrors({});
+    setGeneralError(null);
+    setPanel({ mode: "create" });
+  };
+  const openEdit = (row: Section) => {
+    setFormData(toFormState(row));
+    setFormErrors({});
+    setGeneralError(null);
+    setPanel({ mode: "edit", row });
+  };
+  const closePanel = () => setPanel({ mode: "closed" });
+
+  const invalidateClass = (classId: string) => queryClient.invalidateQueries({ queryKey: sectionsQueryKey(classId) });
+
+  const handleSave = async () => {
+    const errors = validate(formData);
+    setFormErrors(errors);
+    setGeneralError(null);
+    if (Object.keys(errors).length > 0) return;
+
+    setIsSaving(true);
+    const result =
+      panel.mode === "edit" ? await updateSection(panel.row.id, toInput(formData)) : await createSection(toInput(formData));
+    setIsSaving(false);
+
+    if (result.ok) {
+      const wasEdit = panel.mode === "edit";
+      // An edit's Class dropdown is changeable — if it moved the section
+      // to a different class, the OLD class's cache needs invalidating
+      // too, not just the new one. panel.row is still the pre-edit row
+      // here (captured when the panel opened), so its class_id is exactly
+      // that "old" value — no lookup needed.
+      const previousClassId = wasEdit ? panel.row.class_id : null;
+      closePanel();
+      await invalidateClass(formData.class_id);
+      if (previousClassId && previousClassId !== formData.class_id) {
+        await invalidateClass(previousClassId);
+      }
+      showToast(wasEdit ? t("setup.classArms.toast.updated") : t("setup.classArms.toast.created"));
+      return;
+    }
+
+    if (result.kind === "validation") {
+      const fieldErrors: Record<string, string> = {};
+      for (const error of result.errors) {
+        fieldErrors[error.field] = error.message ?? t("setup.crudScreen.errors.fieldInvalid");
+      }
+      setFormErrors(fieldErrors);
+    }
+    setGeneralError(resultErrorMessage(result, t));
+  };
+
+  const runDelete = async (row: Section) => {
+    const result = await removeSection(row.id);
+    if (result.ok) {
+      await invalidateClass(row.class_id);
+      showToast(t("setup.classArms.toast.deleted"));
+      return;
+    }
+    showToast(resultErrorMessage(result, t), "error");
+  };
+
+  const runDeactivate = async (row: Section) => {
+    const result = await deactivateSection(row.id);
+    if (result.ok) {
+      await invalidateClass(row.class_id);
+      return;
+    }
+    showToast(resultErrorMessage(result, t), "error");
+  };
+
+  const runReactivate = async (row: Section) => {
+    const result = await reactivateSection(row.id);
+    if (result.ok) {
+      await invalidateClass(row.class_id);
+      return;
+    }
+    showToast(resultErrorMessage(result, t), "error");
+  };
+
+  const rowActions = (row: Section): RowAction<Section>[] => [
+    { key: "edit", label: t("common.edit"), onClick: () => openEdit(row) },
+    row.is_active
+      ? { key: "deactivate", label: t("setup.classArms.actions.deactivate"), onClick: () => runDeactivate(row) }
+      : { key: "reactivate", label: t("setup.classArms.actions.reactivate"), onClick: () => runReactivate(row) },
+    {
+      key: "delete",
+      label: t("common.delete"),
+      variant: "danger",
+      onClick: () => runDelete(row),
+      confirm: {
+        title: t("setup.classArms.confirmDelete.title"),
+        message: t("setup.classArms.confirmDelete.message", { name: row.name }),
+      },
+    },
+  ];
+
+  const errorMessage =
+    load.status === "forbidden"
+      ? t("setup.crudScreen.errors.forbidden")
+      : load.status === "devBypassUnavailable"
+        ? t("setup.crudScreen.errors.devBypassUnavailable")
+        : load.status === "error"
+          ? t("setup.dataTable.errors.loadFailed")
+          : null;
+
+  const noSchoolTypesForForm = schoolTypes.length === 0;
+  const classesOfFormType = classes.filter(
+    (cls) => cls.school_type_id === formData.school_type_id && cls.is_active,
+  );
+
   return (
     <div className="flex flex-col gap-3">
+      <div>
+        <h1 className="text-xl font-semibold text-text-primary">{t("setup.classArms.title")}</h1>
+        <p className="mt-1 text-sm text-text-secondary">{t("setup.classArms.subtitle")}</p>
+      </div>
+
       <p className="text-xs text-text-muted">{t("setup.classArms.inactiveClassNote")}</p>
 
-      <CrudScreen<Section, SectionInput, SectionInput, FormState>
-        title={t("setup.classArms.title")}
-        subtitle={t("setup.classArms.subtitle")}
-        addNewLabel={t("setup.classArms.addNew")}
-        panelTitle={{
-          create: t("setup.classArms.panel.createTitle"),
-          edit: t("setup.classArms.panel.editTitle"),
-        }}
-        service={sectionsService}
-        display={{ mode: "table", columns }}
+      <DataTable<Section>
+        columns={columns}
+        rows={view.items}
         getRowId={(row) => row.id}
+        rowActions={rowActions}
+        searchValue={view.search}
+        onSearchChange={view.setSearch}
         searchPlaceholder={t("setup.classArms.searchPlaceholder")}
-        matchesSearch={(row, query) => row.name.toLowerCase().includes(query.toLowerCase())}
-        filterDefs={filterDefs}
-        matchesFilters={(row, filters) =>
-          (!filters.class || row.class_id === filters.class) &&
-          (!filters.armName || row.name === filters.armName) &&
-          (!filters.status || (filters.status === "active") === row.is_active)
-        }
-        onItemsLoaded={(items) => {
-          setArmNames(Array.from(new Set(items.map((item) => item.name))).sort());
-        }}
-        rowActions={(row, helpers) => [
-          { key: "edit", label: t("common.edit"), onClick: helpers.edit },
-          row.is_active
-            ? {
-                key: "deactivate",
-                label: t("setup.classArms.actions.deactivate"),
-                onClick: () => helpers.runCustom("deactivate"),
-              }
-            : {
-                key: "reactivate",
-                label: t("setup.classArms.actions.reactivate"),
-                onClick: () => helpers.runCustom("reactivate"),
-              },
-          {
-            key: "delete",
-            label: t("common.delete"),
-            variant: "danger",
-            onClick: helpers.remove,
-            confirm: {
-              title: t("setup.classArms.confirmDelete.title"),
-              message: t("setup.classArms.confirmDelete.message", { name: row.name }),
-            },
-          },
-        ]}
-        emptyFormState={emptyFormState}
-        toFormState={(row) => ({
-          school_type_id: classById(row.class_id)?.school_type_id ?? "",
-          class_id: row.class_id,
-          arm_name: row.name,
-          building_id: row.building_id ?? "",
-          classroom_id: row.classroom_id ?? "",
-          class_time_start: row.class_time_start ?? "",
-          class_time_end: row.class_time_end ?? "",
-          description: row.description ?? "",
-          is_active: row.is_active,
-        })}
-        validate={(data) => {
-          const errors: Record<string, string> = {};
-          if (!data.school_type_id) errors.school_type_id = t("setup.classArms.errors.schoolTypeRequired");
-          if (!data.class_id) errors.class_id = t("setup.classArms.errors.classRequired");
-          if (!data.arm_name.trim()) errors.arm_name = t("setup.classArms.errors.armNameRequired");
-          if (
-            data.class_time_start &&
-            data.class_time_end &&
-            data.class_time_end <= data.class_time_start
-          ) {
-            errors.class_time_end = t("setup.classArms.errors.endBeforeStart");
-          }
-          return errors;
-        }}
-        toCreateInput={(data) => ({
-          class_id: data.class_id,
-          arm_name: data.arm_name.trim(),
-          building_id: data.building_id || null,
-          classroom_id: data.classroom_id || null,
-          class_time_start: data.class_time_start || null,
-          class_time_end: data.class_time_end || null,
-          description: data.description.trim() || null,
-          is_active: data.is_active,
-        })}
-        toUpdateInput={(data) => ({
-          class_id: data.class_id,
-          arm_name: data.arm_name.trim(),
-          building_id: data.building_id || null,
-          classroom_id: data.classroom_id || null,
-          class_time_start: data.class_time_start || null,
-          class_time_end: data.class_time_end || null,
-          description: data.description.trim() || null,
-          is_active: data.is_active,
-        })}
-        renderFields={({ data, onChange, errors }) => {
-          const classesOfFormType = classes.filter(
-            (cls) => cls.school_type_id === data.school_type_id && cls.is_active,
-          );
-          return (
+        filters={filters}
+        onAddNew={openCreate}
+        addNewLabel={t("setup.classArms.addNew")}
+        isLoading={load.status === "loading"}
+        errorMessage={errorMessage}
+        onRetry={() => sectionQueries.forEach((query) => query.refetch())}
+        emptyMessage={t("setup.classArms.empty")}
+        page={view.page}
+        totalPages={view.totalPages}
+        onPreviousPage={() => view.setPage((current) => Math.max(1, current - 1))}
+        onNextPage={() => view.setPage((current) => Math.min(view.totalPages, current + 1))}
+      />
+
+      <SlideOverPanel
+        isOpen={panel.mode !== "closed"}
+        onClose={closePanel}
+        title={panel.mode === "edit" ? t("setup.classArms.panel.editTitle") : t("setup.classArms.panel.createTitle")}
+        onSave={handleSave}
+        isSaving={isSaving}
+      >
+        <div className="flex flex-col gap-5">
+          {generalError ? (
+            <div className="rounded-md bg-error/10 px-4 py-3 text-sm text-error">{generalError}</div>
+          ) : null}
+          {panel.mode !== "closed" ? (
             <>
               <SelectField
                 id="section-school-type"
                 label={t("setup.classArms.fields.schoolType.label")}
-                value={data.school_type_id}
-                onChange={(event) => onChange({ school_type_id: event.target.value, class_id: "" })}
-                hasError={!!errors.school_type_id}
-                error={errors.school_type_id}
+                value={formData.school_type_id}
+                onChange={(event) =>
+                  setFormData((current) => ({ ...current, school_type_id: event.target.value, class_id: "" }))
+                }
+                disabled={noSchoolTypesForForm}
+                hasError={!!formErrors.school_type_id}
+                error={formErrors.school_type_id}
               >
                 <option value="" disabled>
                   {t("setup.classArms.fields.schoolType.placeholder")}
@@ -461,11 +628,11 @@ function ClassArmsTable({
               <SelectField
                 id="section-class"
                 label={t("setup.classArms.fields.class.label")}
-                value={data.class_id}
-                onChange={(event) => onChange({ class_id: event.target.value })}
-                disabled={!data.school_type_id}
-                hasError={!!errors.class_id}
-                error={errors.class_id}
+                value={formData.class_id}
+                onChange={(event) => setFormData((current) => ({ ...current, class_id: event.target.value }))}
+                disabled={!formData.school_type_id}
+                hasError={!!formErrors.class_id}
+                error={formErrors.class_id}
               >
                 <option value="" disabled>
                   {t("setup.classArms.fields.class.placeholder")}
@@ -481,18 +648,18 @@ function ClassArmsTable({
                 id="section-arm-name"
                 label={t("setup.classArms.fields.armName.label")}
                 placeholder={t("setup.classArms.fields.armName.placeholder")}
-                value={data.arm_name}
-                onChange={(event) => onChange({ arm_name: event.target.value })}
-                hasError={!!errors.arm_name}
-                error={errors.arm_name}
+                value={formData.arm_name}
+                onChange={(event) => setFormData((current) => ({ ...current, arm_name: event.target.value }))}
+                hasError={!!formErrors.arm_name}
+                error={formErrors.arm_name}
               />
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <SelectField
                   id="section-building"
                   label={t("setup.classArms.fields.building.label")}
-                  value={data.building_id}
-                  onChange={(event) => onChange({ building_id: event.target.value })}
+                  value={formData.building_id}
+                  onChange={(event) => setFormData((current) => ({ ...current, building_id: event.target.value }))}
                   disabled={buildings.status === "loading"}
                 >
                   {buildings.status === "loading" ? (
@@ -512,8 +679,8 @@ function ClassArmsTable({
                 <SelectField
                   id="section-classroom"
                   label={t("setup.classArms.fields.classroom.label")}
-                  value={data.classroom_id}
-                  onChange={(event) => onChange({ classroom_id: event.target.value })}
+                  value={formData.classroom_id}
+                  onChange={(event) => setFormData((current) => ({ ...current, classroom_id: event.target.value }))}
                   disabled={classrooms.status === "loading"}
                 >
                   {classrooms.status === "loading" ? (
@@ -536,17 +703,19 @@ function ClassArmsTable({
                   id="section-time-start"
                   type="time"
                   label={t("setup.classArms.fields.classTimeStart.label")}
-                  value={data.class_time_start}
-                  onChange={(event) => onChange({ class_time_start: event.target.value })}
+                  value={formData.class_time_start}
+                  onChange={(event) =>
+                    setFormData((current) => ({ ...current, class_time_start: event.target.value }))
+                  }
                 />
                 <InputField
                   id="section-time-end"
                   type="time"
                   label={t("setup.classArms.fields.classTimeEnd.label")}
-                  value={data.class_time_end}
-                  onChange={(event) => onChange({ class_time_end: event.target.value })}
-                  hasError={!!errors.class_time_end}
-                  error={errors.class_time_end}
+                  value={formData.class_time_end}
+                  onChange={(event) => setFormData((current) => ({ ...current, class_time_end: event.target.value }))}
+                  hasError={!!formErrors.class_time_end}
+                  error={formErrors.class_time_end}
                 />
               </div>
 
@@ -554,27 +723,21 @@ function ClassArmsTable({
                 id="section-description"
                 label={t("setup.classArms.fields.description.label")}
                 placeholder={t("setup.classArms.fields.description.placeholder")}
-                value={data.description}
-                onChange={(event) => onChange({ description: event.target.value })}
+                value={formData.description}
+                onChange={(event) => setFormData((current) => ({ ...current, description: event.target.value }))}
               />
 
               <Toggle
                 id="section-is-active"
                 label={t("setup.classArms.fields.isActive.label")}
                 helper={t("setup.classArms.fields.isActive.helper")}
-                checked={data.is_active}
-                onChange={(checked) => onChange({ is_active: checked })}
+                checked={formData.is_active}
+                onChange={(checked) => setFormData((current) => ({ ...current, is_active: checked }))}
               />
             </>
-          );
-        }}
-        emptyMessage={t("setup.classArms.empty")}
-        toastMessages={{
-          created: t("setup.classArms.toast.created"),
-          updated: t("setup.classArms.toast.updated"),
-          deleted: t("setup.classArms.toast.deleted"),
-        }}
-      />
+          ) : null}
+        </div>
+      </SlideOverPanel>
     </div>
   );
 }

@@ -36,6 +36,7 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { API_BASE } from "@/lib/api/config";
 import { apiFetch } from "@/lib/api/client";
 import { getAccessToken, setAccessToken, registerAuthBridge, DEV_AUTH_BYPASS } from "./authBridge";
@@ -117,16 +118,25 @@ function readRetryAfterSeconds(response: Response): number | undefined {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [school, setSchool] = useState<AuthSchool | null>(null);
   const [status, setStatus] = useState<AuthStatus>("idle");
 
+  // The ONE place any session ends, one way or another — explicit logout()
+  // below calls this directly, and it's also registered as authBridge's
+  // forceLogout handler (called when a 401's refresh-and-retry chain fails,
+  // e.g. an expired/revoked refresh cookie). queryClient.clear() belongs
+  // here, not only in logout(), specifically so a forced session end can
+  // never leave a subsequent different-school login on the same tab
+  // reading another school's cached data.
   const clearLocalAuth = useCallback(() => {
     setAccessToken(null);
     setUser(null);
     setSchool(null);
     setStatus("unauthenticated");
-  }, []);
+    queryClient.clear();
+  }, [queryClient]);
 
   // Used both by restoreSession (silent, on load) and by the API client
   // (reactive, on a 401) — this is the ONE place that calls /auth/refresh.

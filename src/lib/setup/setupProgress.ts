@@ -1,112 +1,121 @@
-import { useEffect, useState } from "react";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
+import { PROGRESS_STALE_TIME_MS } from "@/lib/queryClient";
+import { throwIfTransient } from "@/lib/setup/crudTypes";
 import { academicYearsService } from "@/lib/setup/academicStructure/academicYearsApi";
 import { awardBodiesService } from "@/lib/setup/academicStructure/awardBodiesApi";
 import { schoolTypesService } from "@/lib/setup/academicStructure/schoolTypesApi";
 import { createClassesService } from "@/lib/setup/academicStructure/classesApi";
-import { createSectionsService } from "@/lib/setup/academicStructure/sectionsApi";
+import { fetchSectionsForClass, sectionsQueryKey } from "@/lib/setup/academicStructure/sectionsApi";
 import type { SetupItem } from "@/lib/setup/setupConfig";
 
 /**
  * Product-owner rule: a setup item counts as configured once at least ONE
  * record exists in its list — we can't know how many classes/terms/etc. a
  * school actually needs, so one saved record is the signal. This only
- * applies to BUILT, list-based CRUD screens (registered below); items with
- * no checker (School Settings' already-real single-instance screens, and
+ * applies to these BUILT, list-based CRUD screens; items with no live
+ * check (School Settings' already-real single-instance screens, and
  * not-yet-built stubs) keep using their own static `item.done` — see
  * isSetupItemComplete().
  *
- * Each checker reuses the entity's own real service — no new endpoints,
- * no separate "count" API. That's a slightly heavier call than a true
- * limit=1 would be (list() fetches up to 200), but it's the same
- * fetch-once-and-check pattern already used throughout Setup, and reusing
- * the existing, already-correct service (auth, error handling, dev-bypass
- * guard) beats adding a parallel lightweight variant of each one for a
- * check that only needs to run once per checklist page load.
+ * react-query retrofit: every check below reuses the EXACT query key its
+ * own real Setup screen uses (academicYearsService.queryKey, etc.), via
+ * `select` to derive just a boolean from the same cached list — there's no
+ * separate "progress" cache. That means visiting Academic Years' screen
+ * and this checklist share one fetch, and creating a record on the screen
+ * (which invalidates that key) flips the checklist's checkmark without a
+ * separate refetch of its own. `select` runs per-observer, not on the
+ * shared cache entry itself, so the screen's own (unselected) query and
+ * this boolean-selecting one coexist against the same underlying data
+ * without conflict — and PROGRESS_STALE_TIME_MS here can be shorter than
+ * the screen's own STRUCTURAL_STALE_TIME_MS, since this is the one place a
+ * user actively watches for a just-made change to reflect.
+ *
+ * The old Record<string, ExistenceChecker> registry doesn't fit a
+ * hook-based model (hooks can't be called dynamically in a loop over a
+ * Record) — this set is now just the "which items have a live check"
+ * lookup isSetupItemComplete() needs; the actual fetching is explicit
+ * per-entity hook calls below.
  */
-export type ExistenceCheckContext = { yearId: string | null };
-export type ExistenceChecker = (context: ExistenceCheckContext) => Promise<boolean>;
-
-export const setupExistenceCheckers: Record<string, ExistenceChecker> = {
-  academicYears: async () => {
-    const result = await academicYearsService.list();
-    return result.ok && result.data.length > 0;
-  },
-  awardBodies: async () => {
-    const result = await awardBodiesService.list();
-    return result.ok && result.data.length > 0;
-  },
-  schoolTypes: async () => {
-    const result = await schoolTypesService.list();
-    return result.ok && result.data.length > 0;
-  },
-  classes: async ({ yearId }) => {
-    if (!yearId) return false;
-    const result = await createClassesService(yearId).list();
-    return result.ok && result.data.length > 0;
-  },
-  // Sections have no "all sections for a school" endpoint (see
-  // sectionsApi.ts) — reuses that same factory's list() across every
-  // active class for the year, exactly like the Class-arms screen itself
-  // does per school type, just with a fresh, throwaway cache (this check
-  // runs once on the checklist page, not repeatedly).
-  classArms: async ({ yearId }) => {
-    if (!yearId) return false;
-    const classesResult = await createClassesService(yearId).list();
-    if (!classesResult.ok) return false;
-    const activeClassIds = classesResult.data.filter((cls) => cls.is_active).map((cls) => cls.id);
-    if (activeClassIds.length === 0) return false;
-    const sectionsResult = await createSectionsService({ classIds: activeClassIds, cache: new Map() }).list();
-    return sectionsResult.ok && sectionsResult.data.length > 0;
-  },
-};
+const ITEMS_WITH_LIVE_CHECK = new Set(["academicYears", "awardBodies", "schoolTypes", "classes", "classArms"]);
 
 export type SetupProgressState =
   | { status: "loading" }
   | { status: "loaded"; completedKeys: Set<string> };
 
-/**
- * Fires every registered checker in parallel, once, on mount and again
- * whenever the selected academic year changes (year-scoped checkers —
- * Classes, Class-arms — depend on it). A single failure (rejected promise
- * or a CrudResult that isn't ok) is caught and treated as "doesn't exist",
- * never as a crash — this is a progress indicator, not a hard gate.
- *
- * This is exactly the shape a react-query retrofit will manage instead
- * (parallel queries keyed by [checkerKey, yearId], cached across
- * navigations) — the checker registry above is already the right unit to
- * hand to it; only this hook's body would change.
- */
 export function useSetupProgress(): SetupProgressState {
-  const { selectedYearId } = useAcademicYear();
-  const [state, setState] = useState<SetupProgressState>({ status: "loading" });
+  const { selectedYearId: yearId } = useAcademicYear();
 
-  useEffect(() => {
-    let cancelled = false;
-    setState({ status: "loading" });
+  const academicYearsQuery = useQuery({
+    queryKey: academicYearsService.queryKey,
+    queryFn: () => academicYearsService.list().then(throwIfTransient),
+    select: (result) => result.ok && result.data.length > 0,
+    staleTime: PROGRESS_STALE_TIME_MS,
+  });
 
-    Promise.all(
-      Object.entries(setupExistenceCheckers).map(async ([key, checker]) => {
-        try {
-          return [key, await checker({ yearId: selectedYearId })] as const;
-        } catch {
-          return [key, false] as const;
-        }
-      }),
-    ).then((results) => {
-      if (cancelled) return;
-      setState({
-        status: "loaded",
-        completedKeys: new Set(results.filter(([, exists]) => exists).map(([key]) => key)),
-      });
-    });
+  const awardBodiesQuery = useQuery({
+    queryKey: awardBodiesService.queryKey,
+    queryFn: () => awardBodiesService.list().then(throwIfTransient),
+    select: (result) => result.ok && result.data.length > 0,
+    staleTime: PROGRESS_STALE_TIME_MS,
+  });
 
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedYearId]);
+  const schoolTypesQuery = useQuery({
+    queryKey: schoolTypesService.queryKey,
+    queryFn: () => schoolTypesService.list().then(throwIfTransient),
+    select: (result) => result.ok && result.data.length > 0,
+    staleTime: PROGRESS_STALE_TIME_MS,
+  });
 
-  return state;
+  // Raw (unselected) — classArms below needs the actual class list to know
+  // which classes to check sections for, not just a boolean, so this one
+  // stays a plain CrudResult and gets its own boolean derived separately.
+  const classesService = yearId ? createClassesService(yearId) : null;
+  const classesQuery = useQuery({
+    queryKey: classesService?.queryKey ?? ["setup", "classes", "none"],
+    queryFn: () => classesService!.list().then(throwIfTransient),
+    enabled: !!classesService,
+    staleTime: PROGRESS_STALE_TIME_MS,
+  });
+  const classesExist = !!yearId && !!classesQuery.data?.ok && classesQuery.data.data.length > 0;
+
+  // Sections have no "all sections for a school" endpoint (see
+  // sectionsApi.ts) — a dependent query set: which classes to check isn't
+  // known until classesQuery itself resolves. Same active-classes-only
+  // scoping Class-arms' own screen uses (see its backend-limitation note).
+  const activeClassIds =
+    yearId && classesQuery.data?.ok ? classesQuery.data.data.filter((cls) => cls.is_active).map((cls) => cls.id) : [];
+  const sectionQueries = useQueries({
+    queries: activeClassIds.map((classId) => ({
+      queryKey: sectionsQueryKey(classId),
+      queryFn: () => fetchSectionsForClass(classId).then(throwIfTransient),
+      select: (result: Awaited<ReturnType<typeof fetchSectionsForClass>>) => result.ok && result.data.length > 0,
+      staleTime: PROGRESS_STALE_TIME_MS,
+    })),
+  });
+  // Lenient by design (any one class having a section is enough), distinct
+  // from the Class-arms screen's own stricter "any failed class fails the
+  // whole merge" — that rule exists there because a partial list would
+  // misrepresent the screen's contents; here we only need one true.
+  const classArmsExist = !!yearId && sectionQueries.some((query) => query.data === true);
+
+  const sectionsStillLoading = activeClassIds.length > 0 && sectionQueries.some((query) => query.isPending);
+  const isLoading =
+    academicYearsQuery.isPending ||
+    awardBodiesQuery.isPending ||
+    schoolTypesQuery.isPending ||
+    (!!yearId && (classesQuery.isPending || sectionsStillLoading));
+
+  if (isLoading) return { status: "loading" };
+
+  const completedKeys = new Set<string>();
+  if (academicYearsQuery.data) completedKeys.add("academicYears");
+  if (awardBodiesQuery.data) completedKeys.add("awardBodies");
+  if (schoolTypesQuery.data) completedKeys.add("schoolTypes");
+  if (classesExist) completedKeys.add("classes");
+  if (classArmsExist) completedKeys.add("classArms");
+
+  return { status: "loaded", completedKeys };
 }
 
 /**
@@ -116,7 +125,6 @@ export function useSetupProgress(): SetupProgressState {
  * loading (never true, never a guess) rather than flashing a wrong state.
  */
 export function isSetupItemComplete(item: SetupItem, progress: SetupProgressState): boolean {
-  const checker = setupExistenceCheckers[item.key];
-  if (!checker) return item.done;
+  if (!ITEMS_WITH_LIVE_CHECK.has(item.key)) return item.done;
   return progress.status === "loaded" && progress.completedKeys.has(item.key);
 }

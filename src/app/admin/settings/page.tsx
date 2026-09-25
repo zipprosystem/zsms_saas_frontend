@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UploadIcon } from "@/components/icons/UploadIcon";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
@@ -18,9 +19,13 @@ import { BankingPanel } from "@/components/settings/BankingPanel";
 import { SocialMediaPanel } from "@/components/settings/SocialMediaPanel";
 import { ApiIntegrationsPanel } from "@/components/settings/ApiIntegrationsPanel";
 import { ComingSoonPanel } from "@/components/settings/ComingSoonPanel";
-import { getSchoolSettings } from "@/lib/settings/settingsApi";
+import { getSchoolSettings, throwIfTransientSettings, type SettingsResult } from "@/lib/settings/settingsApi";
+import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import type { SettingsData } from "@/lib/settings/types";
 import type { TenantStatus } from "@/types/tenant";
+
+/** Shared by useQuery here and queryClient.setQueryData in every panel's onSaved below — must match exactly. */
+const SETTINGS_QUERY_KEY = ["settings"];
 
 const EDITABLE_SECTIONS = [
   "identity",
@@ -106,34 +111,29 @@ function SettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
 
-  const [load, setLoad] = useState<LoadState>({ status: "loading" });
+  const query = useQuery({
+    queryKey: SETTINGS_QUERY_KEY,
+    queryFn: () => getSchoolSettings().then(throwIfTransientSettings),
+    staleTime: STRUCTURAL_STALE_TIME_MS,
+  });
   const [editingSection, setEditingSection] = useState<EditableSection | null>(null);
 
-  const loadSettings = useCallback(() => {
-    setLoad({ status: "loading" });
-    getSchoolSettings().then((result) => {
-      if (result.ok) {
-        setLoad({ status: "loaded", settings: result.data });
-        return;
-      }
-      if (result.kind === "forbidden") {
-        setLoad({ status: "forbidden" });
-        return;
-      }
-      if (result.kind === "devBypassUnavailable") {
-        setLoad({ status: "devBypassUnavailable" });
-        return;
-      }
-      // "validation" can't happen on a GET; network/server both fall back
-      // to the same retry-able error state.
-      setLoad({ status: "error" });
-    });
-  }, []);
-
-  useEffect(() => {
-    loadSettings();
-  }, [loadSettings]);
+  // Mapped from react-query's own {data, isPending, isError} into the same
+  // LoadState shape this screen has always used below — same reasoning as
+  // useCrudTable's retrofit (see crudTypes.ts's throwIfTransient).
+  const load: LoadState = query.isPending
+    ? { status: "loading" }
+    : query.isError
+      ? { status: "error" } // TransientQueryError, retries already exhausted
+      : query.data.ok
+        ? { status: "loaded", settings: query.data.data }
+        : query.data.kind === "forbidden"
+          ? { status: "forbidden" }
+          : query.data.kind === "devBypassUnavailable"
+            ? { status: "devBypassUnavailable" }
+            : { status: "error" }; // "validation" can't happen on a GET
 
   useEffect(() => {
     const edit = searchParams.get("edit");
@@ -166,7 +166,7 @@ function SettingsContent() {
   if (load.status === "error") {
     return (
       <SettingsMessage text={t("settings.errors.loadFailed")}>
-        <Button type="button" variant="secondary" onClick={loadSettings}>
+        <Button type="button" variant="secondary" onClick={() => query.refetch()}>
           {t("common.retry")}
         </Button>
       </SettingsMessage>
@@ -437,7 +437,16 @@ function SettingsContent() {
         identity={settings.identity}
         onClose={closeEditPanel}
         onSaved={(updated) => {
-          setLoad({ status: "loaded", settings: updated });
+          // Writes the fresh data straight into the cache rather than
+          // invalidating — the panel's own PATCH response IS the full
+          // settings object, exactly matching this query's cache shape, so
+          // there's nothing a refetch would learn that we don't already
+          // have in hand. Typed via the local first (rather than an
+          // explicit generic on setQueryData) so TS infers the cache's
+          // TData from an already-annotated value instead of trying to
+          // match the object literal against setQueryData's updater overload.
+          const nextSettingsResult: SettingsResult<SettingsData> = { ok: true, data: updated };
+          queryClient.setQueryData(SETTINGS_QUERY_KEY, nextSettingsResult);
           closeEditPanel();
           showToast(t("settings.toast.identityUpdated"));
         }}
@@ -448,7 +457,16 @@ function SettingsContent() {
         section={settings.branding}
         onClose={closeEditPanel}
         onSaved={(updated) => {
-          setLoad({ status: "loaded", settings: updated });
+          // Writes the fresh data straight into the cache rather than
+          // invalidating — the panel's own PATCH response IS the full
+          // settings object, exactly matching this query's cache shape, so
+          // there's nothing a refetch would learn that we don't already
+          // have in hand. Typed via the local first (rather than an
+          // explicit generic on setQueryData) so TS infers the cache's
+          // TData from an already-annotated value instead of trying to
+          // match the object literal against setQueryData's updater overload.
+          const nextSettingsResult: SettingsResult<SettingsData> = { ok: true, data: updated };
+          queryClient.setQueryData(SETTINGS_QUERY_KEY, nextSettingsResult);
           closeEditPanel();
           showToast(t("settings.toast.brandingUpdated"));
         }}
@@ -459,7 +477,16 @@ function SettingsContent() {
         section={settings.general_behaviour}
         onClose={closeEditPanel}
         onSaved={(updated) => {
-          setLoad({ status: "loaded", settings: updated });
+          // Writes the fresh data straight into the cache rather than
+          // invalidating — the panel's own PATCH response IS the full
+          // settings object, exactly matching this query's cache shape, so
+          // there's nothing a refetch would learn that we don't already
+          // have in hand. Typed via the local first (rather than an
+          // explicit generic on setQueryData) so TS infers the cache's
+          // TData from an already-annotated value instead of trying to
+          // match the object literal against setQueryData's updater overload.
+          const nextSettingsResult: SettingsResult<SettingsData> = { ok: true, data: updated };
+          queryClient.setQueryData(SETTINGS_QUERY_KEY, nextSettingsResult);
           closeEditPanel();
           showToast(t("settings.toast.generalBehaviourUpdated"));
         }}
@@ -470,7 +497,16 @@ function SettingsContent() {
         section={settings.regional}
         onClose={closeEditPanel}
         onSaved={(updated) => {
-          setLoad({ status: "loaded", settings: updated });
+          // Writes the fresh data straight into the cache rather than
+          // invalidating — the panel's own PATCH response IS the full
+          // settings object, exactly matching this query's cache shape, so
+          // there's nothing a refetch would learn that we don't already
+          // have in hand. Typed via the local first (rather than an
+          // explicit generic on setQueryData) so TS infers the cache's
+          // TData from an already-annotated value instead of trying to
+          // match the object literal against setQueryData's updater overload.
+          const nextSettingsResult: SettingsResult<SettingsData> = { ok: true, data: updated };
+          queryClient.setQueryData(SETTINGS_QUERY_KEY, nextSettingsResult);
           closeEditPanel();
           showToast(t("settings.toast.regionalUpdated"));
         }}
@@ -481,7 +517,16 @@ function SettingsContent() {
         section={settings.question_bank}
         onClose={closeEditPanel}
         onSaved={(updated) => {
-          setLoad({ status: "loaded", settings: updated });
+          // Writes the fresh data straight into the cache rather than
+          // invalidating — the panel's own PATCH response IS the full
+          // settings object, exactly matching this query's cache shape, so
+          // there's nothing a refetch would learn that we don't already
+          // have in hand. Typed via the local first (rather than an
+          // explicit generic on setQueryData) so TS infers the cache's
+          // TData from an already-annotated value instead of trying to
+          // match the object literal against setQueryData's updater overload.
+          const nextSettingsResult: SettingsResult<SettingsData> = { ok: true, data: updated };
+          queryClient.setQueryData(SETTINGS_QUERY_KEY, nextSettingsResult);
           closeEditPanel();
           showToast(t("settings.toast.questionBankUpdated"));
         }}
@@ -492,7 +537,16 @@ function SettingsContent() {
         section={settings.notification_routing}
         onClose={closeEditPanel}
         onSaved={(updated) => {
-          setLoad({ status: "loaded", settings: updated });
+          // Writes the fresh data straight into the cache rather than
+          // invalidating — the panel's own PATCH response IS the full
+          // settings object, exactly matching this query's cache shape, so
+          // there's nothing a refetch would learn that we don't already
+          // have in hand. Typed via the local first (rather than an
+          // explicit generic on setQueryData) so TS infers the cache's
+          // TData from an already-annotated value instead of trying to
+          // match the object literal against setQueryData's updater overload.
+          const nextSettingsResult: SettingsResult<SettingsData> = { ok: true, data: updated };
+          queryClient.setQueryData(SETTINGS_QUERY_KEY, nextSettingsResult);
           closeEditPanel();
           showToast(t("settings.toast.notificationRoutingUpdated"));
         }}
@@ -503,7 +557,16 @@ function SettingsContent() {
         section={settings.banking}
         onClose={closeEditPanel}
         onSaved={(updated) => {
-          setLoad({ status: "loaded", settings: updated });
+          // Writes the fresh data straight into the cache rather than
+          // invalidating — the panel's own PATCH response IS the full
+          // settings object, exactly matching this query's cache shape, so
+          // there's nothing a refetch would learn that we don't already
+          // have in hand. Typed via the local first (rather than an
+          // explicit generic on setQueryData) so TS infers the cache's
+          // TData from an already-annotated value instead of trying to
+          // match the object literal against setQueryData's updater overload.
+          const nextSettingsResult: SettingsResult<SettingsData> = { ok: true, data: updated };
+          queryClient.setQueryData(SETTINGS_QUERY_KEY, nextSettingsResult);
           closeEditPanel();
           showToast(t("settings.toast.bankingUpdated"));
         }}
@@ -514,7 +577,16 @@ function SettingsContent() {
         section={settings.social_media}
         onClose={closeEditPanel}
         onSaved={(updated) => {
-          setLoad({ status: "loaded", settings: updated });
+          // Writes the fresh data straight into the cache rather than
+          // invalidating — the panel's own PATCH response IS the full
+          // settings object, exactly matching this query's cache shape, so
+          // there's nothing a refetch would learn that we don't already
+          // have in hand. Typed via the local first (rather than an
+          // explicit generic on setQueryData) so TS infers the cache's
+          // TData from an already-annotated value instead of trying to
+          // match the object literal against setQueryData's updater overload.
+          const nextSettingsResult: SettingsResult<SettingsData> = { ok: true, data: updated };
+          queryClient.setQueryData(SETTINGS_QUERY_KEY, nextSettingsResult);
           closeEditPanel();
           showToast(t("settings.toast.socialMediaUpdated"));
         }}
@@ -525,7 +597,16 @@ function SettingsContent() {
         section={settings.api_integrations}
         onClose={closeEditPanel}
         onSaved={(updated) => {
-          setLoad({ status: "loaded", settings: updated });
+          // Writes the fresh data straight into the cache rather than
+          // invalidating — the panel's own PATCH response IS the full
+          // settings object, exactly matching this query's cache shape, so
+          // there's nothing a refetch would learn that we don't already
+          // have in hand. Typed via the local first (rather than an
+          // explicit generic on setQueryData) so TS infers the cache's
+          // TData from an already-annotated value instead of trying to
+          // match the object literal against setQueryData's updater overload.
+          const nextSettingsResult: SettingsResult<SettingsData> = { ok: true, data: updated };
+          queryClient.setQueryData(SETTINGS_QUERY_KEY, nextSettingsResult);
           closeEditPanel();
           showToast(t("settings.toast.apiIntegrationsUpdated"));
         }}

@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
-import type { CrudService } from "./crudTypes";
-
-const PAGE_SIZE = 10;
+import { useQuery } from "@tanstack/react-query";
+import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
+import { throwIfTransient, type CrudService } from "./crudTypes";
+import { usePaginatedView } from "./usePaginatedView";
 
 export type TableLoadState<T> =
   | { status: "loading" }
@@ -18,91 +18,53 @@ type UseCrudTableOptions<T> = {
 /**
  * Owns list/search/filter/paginate state for a CRUD screen. Deliberately
  * does NOT own create/update/delete — CrudScreen calls the service
- * directly for those and calls refetch() on success. That's simpler than
- * this hook trying to patch mutation results into local state: activate,
- * for instance, changes MULTIPLE rows server-side (the previously-active
- * one flips off), which a single mutation response can't fully reflect.
+ * directly for those and invalidates service.queryKey on success, which
+ * is what makes THIS hook's query refetch (react-query, not a manual
+ * refetch() call, though `refetch` is still exposed below for the
+ * DataTable/CardGrid "retry" button and behaves the same either way).
  *
- * Client-side pagination: the confirmed Academic Years contract has no
- * page/pageSize/search query params, so list() fetches everything once and
- * this hook paginates/searches/filters in memory. matchesSearch/
- * matchesFilters are supplied per-screen since what "search" or a given
- * filter key means is entity-specific.
+ * The search/filter/paginate part (everything past "here are the loaded
+ * items") lives in usePaginatedView — factored out so Class-arms, whose
+ * merged multi-class list can't go through a single service.list() (see
+ * sectionsApi.ts), can reuse it directly instead of duplicating it.
+ *
+ * react-query retrofit: `service.queryKey` is the cache key (a fixed
+ * constant for a singleton service, or including e.g. a year id for a
+ * factory-built one — see crudTypes.ts's CrudService). The queryFn runs
+ * the result through throwIfTransient so only genuinely transient
+ * failures (network/server) get react-query's retry+backoff; every other
+ * failure kind resolves normally and is mapped below into the exact same
+ * TableLoadState shape this hook has always returned — DataTable/CardGrid/
+ * CrudScreen and every screen consuming this hook are unchanged by this.
  */
 export function useCrudTable<T, CreateInput, UpdateInput>(
   service: CrudService<T, CreateInput, UpdateInput>,
   { matchesSearch, matchesFilters }: UseCrudTableOptions<T>,
 ) {
-  const [load, setLoad] = useState<TableLoadState<T>>({ status: "loading" });
-  const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState<Record<string, string>>({});
-  const [page, setPage] = useState(1);
+  const query = useQuery({
+    queryKey: service.queryKey,
+    queryFn: () => service.list().then(throwIfTransient),
+    staleTime: STRUCTURAL_STALE_TIME_MS,
+  });
 
-  const refetch = useCallback(() => {
-    setLoad({ status: "loading" });
-    service.list().then((result) => {
-      if (result.ok) {
-        setLoad({ status: "loaded", items: result.data });
-        return;
-      }
-      if (result.kind === "forbidden") {
-        setLoad({ status: "forbidden" });
-        return;
-      }
-      if (result.kind === "devBypassUnavailable") {
-        setLoad({ status: "devBypassUnavailable" });
-        return;
-      }
-      // "validation"/"conflict" can't happen on a list call; network/server
-      // both fall back to the same retry-able error state.
-      setLoad({ status: "error" });
-    });
-  }, [service]);
-
-  // Runs on mount, and again whenever `service` itself changes identity —
-  // refetch is otherwise called explicitly after mutations, not via this
-  // effect. For most screens `service` is a stable module-level singleton
-  // that never changes, so this only ever fires once, same as before. A
-  // year-scoped screen (Classes, Subjects, ...) instead builds a NEW
-  // service (via useMemo keyed on the selected year) whenever the session
-  // picker's year changes — that new reference is exactly what this effect
-  // needs to see to know a refetch is due.
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
-
-  // Reset to page 1 whenever the visible set could shrink out from under
-  // the current page.
-  useEffect(() => {
-    setPage(1);
-  }, [search, filters]);
+  const load: TableLoadState<T> = query.isPending
+    ? { status: "loading" }
+    : query.isError
+      ? { status: "error" } // TransientQueryError, retries already exhausted
+      : query.data.ok
+        ? { status: "loaded", items: query.data.data }
+        : query.data.kind === "forbidden"
+          ? { status: "forbidden" }
+          : query.data.kind === "devBypassUnavailable"
+            ? { status: "devBypassUnavailable" }
+            : { status: "error" };
 
   const allItems = load.status === "loaded" ? load.items : [];
-  const filteredItems = allItems
-    .filter((row) => !search.trim() || (matchesSearch?.(row, search.trim()) ?? true))
-    .filter(
-      (row) =>
-        Object.keys(filters).length === 0 || (matchesFilters?.(row, filters) ?? true),
-    );
-
-  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-  const pageItems = filteredItems.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
+  const view = usePaginatedView(allItems, { matchesSearch, matchesFilters });
 
   return {
     load,
-    items: pageItems,
-    totalItems: filteredItems.length,
-    page: currentPage,
-    totalPages,
-    setPage,
-    search,
-    setSearch,
-    filters,
-    setFilters,
-    refetch,
+    ...view,
+    refetch: query.refetch,
   };
 }

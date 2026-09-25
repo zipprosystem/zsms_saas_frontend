@@ -152,6 +152,7 @@ async function remove(id: string): Promise<CrudResult<void>> {
 }
 
 export const awardBodiesService: CrudService<AwardBody, AwardBodyInput, AwardBodyInput> = {
+  queryKey: ["setup", "awardBodies"],
   list,
   create,
   update,
