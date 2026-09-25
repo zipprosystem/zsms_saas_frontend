@@ -103,28 +103,8 @@ export function validateStep2(data: OnboardingData): FieldErrors {
     errors["academic.schoolMode"] = "onboarding.errors.required";
   }
 
-  if (data.academic.schoolTypePairs.length === 0) {
-    errors["academic.schoolTypePairs"] = "onboarding.errors.selectAtLeastOne";
-  }
-  // Per-row errors keyed by index so AcademicBasicsStep can highlight the
-  // specific row/side that's incomplete, rather than one banner for the
-  // whole list. Award Body IS required per pair — a school type with no
-  // examining body shouldn't be paired at all, it just isn't listed here.
-  data.academic.schoolTypePairs.forEach((pair, index) => {
-    if (!pair.schoolType.trim()) {
-      errors[`academic.schoolTypePairs.${index}.schoolType`] = "onboarding.errors.required";
-    } else if (pair.schoolType.trim().length > 100) {
-      errors[`academic.schoolTypePairs.${index}.schoolType`] = "onboarding.errors.maxLength100";
-    }
-    if (!pair.awardBody.trim()) {
-      errors[`academic.schoolTypePairs.${index}.awardBody`] = "onboarding.errors.required";
-    } else if (pair.awardBody.trim().length > 100) {
-      errors[`academic.schoolTypePairs.${index}.awardBody`] = "onboarding.errors.maxLength100";
-    }
-  });
-
-  // Extra (unpaired) award bodies remain optional — a school with no
-  // additional affiliations must still be able to proceed.
+  // School Type + Award Body collection removed from onboarding entirely
+  // (Onboarding Option 2) — nothing left to validate for that here.
 
   return errors;
 }
@@ -160,12 +140,15 @@ const CONTRACT_FIELD_TO_FORM_FIELD: Record<string, string> = {
   "owner.phone": "owner.phone",
   custom_domain: "school.customDomain",
   working_days: "school.workingDays",
+  // academic_year is now an object ({name, start_date, end_date}) rather
+  // than a bare string — the bare key is kept as a general fallback in
+  // case the backend reports the whole object as invalid, alongside the
+  // nested per-field paths (GUESS at the dot-path convention, unconfirmed
+  // against a real 422 — reconcile once tested).
   academic_year: "academic.yearName",
-  // GUESS, unconfirmed against a real 422 for a bad pair — the backend's
-  // actual field path for additional_data.school_types isn't known yet.
-  // Maps to the pairs list as a whole (a general highlight, not a specific
-  // row) until this is tested and the real path (if different) is added.
-  "additional_data.school_types": "academic.schoolTypePairs",
+  "academic_year.name": "academic.yearName",
+  "academic_year.start_date": "academic.sessionStartDate",
+  "academic_year.end_date": "academic.sessionEndDate",
 };
 
 export type MappedFieldErrors = {

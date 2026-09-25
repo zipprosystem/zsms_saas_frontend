@@ -6,10 +6,8 @@ import type ReCAPTCHA from "react-google-recaptcha";
 import { useCountries } from "@/lib/onboarding/location/hooks";
 import { buildPortalUrl } from "@/lib/onboarding/portalUrl";
 import {
-  AWARD_BODIES,
   LANGUAGES,
   SCHOOL_MODES,
-  SCHOOL_TYPES,
   WORKING_DAYS,
   type ConfigOption,
 } from "@/lib/onboarding/config";
@@ -177,26 +175,6 @@ export function ReviewStep({
           value={
             data.academic.schoolMode ? labelOne(SCHOOL_MODES, data.academic.schoolMode) : notSet
           }
-        />
-        <ReviewRow
-          label={t("onboarding.step2.schoolTypePairs.sectionTitle")}
-          value={
-            data.academic.schoolTypePairs.length
-              ? data.academic.schoolTypePairs
-                  .map((pair) => {
-                    const schoolType = pair.schoolType
-                      ? labelOne(SCHOOL_TYPES, pair.schoolType)
-                      : notSet;
-                    const awardBody = pair.awardBody ? labelOne(AWARD_BODIES, pair.awardBody) : notSet;
-                    return `${schoolType} (${awardBody})`;
-                  })
-                  .join(", ")
-              : none
-          }
-        />
-        <ReviewRow
-          label={t("onboarding.step2.extraAwardBodies.label")}
-          value={labelList(AWARD_BODIES, data.academic.awardBodies)}
         />
       </ReviewSection>
 

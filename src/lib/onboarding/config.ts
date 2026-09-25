@@ -16,28 +16,10 @@ export const SCHOOL_MODES: ConfigOption[] = [
   { value: "both", labelKey: "onboarding.options.schoolMode.both" },
 ];
 
-export const SCHOOL_TYPES: ConfigOption[] = [
-  { value: "creche", labelKey: "onboarding.options.schoolType.creche" },
-  { value: "playgroup", labelKey: "onboarding.options.schoolType.playgroup" },
-  { value: "preNursery", labelKey: "onboarding.options.schoolType.preNursery" },
-  { value: "nursery", labelKey: "onboarding.options.schoolType.nursery" },
-  { value: "primary", labelKey: "onboarding.options.schoolType.primary" },
-  { value: "grade", labelKey: "onboarding.options.schoolType.grade" },
-  { value: "secondary", labelKey: "onboarding.options.schoolType.secondary" },
-  { value: "juniorSecondary", labelKey: "onboarding.options.schoolType.juniorSecondary" },
-  { value: "seniorSecondary", labelKey: "onboarding.options.schoolType.seniorSecondary" },
-  { value: "college", labelKey: "onboarding.options.schoolType.college" },
-  { value: "keystage3", labelKey: "onboarding.options.schoolType.keystage3" },
-  { value: "keystage4", labelKey: "onboarding.options.schoolType.keystage4" },
-];
-
-export const AWARD_BODIES: ConfigOption[] = [
-  { value: "waec", labelKey: "onboarding.options.awardBody.waec" },
-  { value: "neco", labelKey: "onboarding.options.awardBody.neco" },
-  { value: "cambridge", labelKey: "onboarding.options.awardBody.cambridge" },
-  { value: "ib", labelKey: "onboarding.options.awardBody.ib" },
-  { value: "edexcel", labelKey: "onboarding.options.awardBody.edexcel" },
-];
+// SCHOOL_TYPES/AWARD_BODIES config removed — Onboarding Option 2 drops
+// School Type + Award Body collection from the public onboarding form
+// entirely (that's now purely a post-approval Setup-screen concern; see
+// src/lib/setup/academicStructure/{schoolTypesApi,awardBodiesApi}.ts).
 
 export const WORKING_DAYS: ConfigOption[] = [
   { value: "mon", labelKey: "onboarding.options.workingDays.mon" },

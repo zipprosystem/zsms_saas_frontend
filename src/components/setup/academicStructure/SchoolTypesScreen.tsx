@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { InputField } from "@/components/ui/Input";
-import { SelectField } from "@/components/ui/Select";
+import { ChipGroup } from "@/components/ui/ChipGroup";
 import { CrudScreen } from "@/components/setup/CrudScreen";
 import {
   schoolTypesService,
@@ -15,11 +15,11 @@ import { awardBodiesService, type AwardBody } from "@/lib/setup/academicStructur
 
 type FormState = {
   name: string;
-  award_body_id: string;
+  award_body_ids: string[];
   description: string;
 };
 
-const EMPTY_FORM: FormState = { name: "", award_body_id: "", description: "" };
+const EMPTY_FORM: FormState = { name: "", award_body_ids: [], description: "" };
 
 type AwardBodiesState =
   | { status: "loading" }
@@ -30,9 +30,10 @@ export function SchoolTypesScreen() {
   const t = useTranslations();
 
   // Fetched once, independently of useCrudTable/CrudScreen — this is the
-  // dropdown's OWN data source, not a school-type field itself. No changes
-  // to the generic pattern needed for this: renderFields is a closure
-  // defined right here, so it naturally sees this component's own state.
+  // multi-select's OWN data source, not a school-type field itself. No
+  // changes to the generic pattern needed for this: renderFields is a
+  // closure defined right here, so it naturally sees this component's own
+  // state.
   const [awardBodies, setAwardBodies] = useState<AwardBodiesState>({ status: "loading" });
 
   useEffect(() => {
@@ -63,9 +64,9 @@ export function SchoolTypesScreen() {
         card: {
           title: (row) => row.name,
           description: (row) => {
-            const bodyName = row.award_body?.name ?? null;
-            if (bodyName && row.description) return `${bodyName} — ${row.description}`;
-            return bodyName ?? row.description;
+            const bodyNames = row.award_bodies.map((body) => body.name).join(", ") || null;
+            if (bodyNames && row.description) return `${bodyNames} — ${row.description}`;
+            return bodyNames ?? row.description;
           },
           tags: (row) => row.classes.filter((cls) => cls.is_active).map((cls) => cls.name),
         },
@@ -89,23 +90,25 @@ export function SchoolTypesScreen() {
       emptyFormState={EMPTY_FORM}
       toFormState={(row) => ({
         name: row.name,
-        award_body_id: row.award_body_id,
+        award_body_ids: row.award_body_ids,
         description: row.description ?? "",
       })}
       validate={(data) => {
         const errors: Record<string, string> = {};
         if (!data.name.trim()) errors.name = t("setup.schoolTypes.errors.nameRequired");
-        if (!data.award_body_id) errors.award_body_id = t("setup.schoolTypes.errors.awardBodyRequired");
+        if (data.award_body_ids.length === 0) {
+          errors.award_body_ids = t("setup.schoolTypes.errors.awardBodiesRequired");
+        }
         return errors;
       }}
       toCreateInput={(data) => ({
         name: data.name.trim(),
-        award_body_id: data.award_body_id,
+        award_body_ids: data.award_body_ids,
         description: data.description.trim() || null,
       })}
       toUpdateInput={(data) => ({
         name: data.name.trim(),
-        award_body_id: data.award_body_id,
+        award_body_ids: data.award_body_ids,
         description: data.description.trim() || null,
       })}
       renderFields={({ data, onChange, errors }) => (
@@ -122,45 +125,35 @@ export function SchoolTypesScreen() {
           />
 
           <div className="flex flex-col gap-1.5">
-            <SelectField
-              id="school-type-award-body"
-              label={t("setup.schoolTypes.fields.awardBody.label")}
-              value={data.award_body_id}
-              onChange={(event) => onChange({ award_body_id: event.target.value })}
-              disabled={awardBodies.status === "loading" || noAwardBodiesYet}
-              hasError={!!errors.award_body_id}
-              error={errors.award_body_id}
-            >
-              {awardBodies.status === "loading" ? (
-                <option value="">{t("setup.schoolTypes.fields.awardBody.loading")}</option>
-              ) : (
-                <>
-                  <option value="" disabled>
-                    {t("setup.schoolTypes.fields.awardBody.placeholder")}
-                  </option>
-                  {awardBodies.status === "loaded"
-                    ? awardBodies.items.map((body) => (
-                        <option key={body.id} value={body.id}>
-                          {body.name}
-                        </option>
-                      ))
-                    : null}
-                </>
-              )}
-            </SelectField>
+            {awardBodies.status === "loading" ? (
+              <p className="text-sm text-text-muted">{t("setup.schoolTypes.fields.awardBodies.loading")}</p>
+            ) : (
+              <ChipGroup
+                label={t("setup.schoolTypes.fields.awardBodies.label")}
+                options={
+                  awardBodies.status === "loaded"
+                    ? awardBodies.items.map((body) => ({ value: body.id, label: body.name }))
+                    : []
+                }
+                value={data.award_body_ids}
+                onChange={(award_body_ids) => onChange({ award_body_ids })}
+                hasError={!!errors.award_body_ids}
+                error={errors.award_body_ids}
+              />
+            )}
             {noAwardBodiesYet ? (
               <p className="text-xs text-text-muted">
-                {t("setup.schoolTypes.fields.awardBody.emptyHint")}{" "}
+                {t("setup.schoolTypes.fields.awardBodies.emptyHint")}{" "}
                 <Link
                   href="/admin/setup/academic-structure/award-bodies"
                   className="font-semibold text-accent hover:underline"
                 >
-                  {t("setup.schoolTypes.fields.awardBody.emptyHintLink")}
+                  {t("setup.schoolTypes.fields.awardBodies.emptyHintLink")}
                 </Link>
               </p>
             ) : null}
             {awardBodies.status === "error" ? (
-              <p className="text-xs text-error">{t("setup.schoolTypes.fields.awardBody.loadError")}</p>
+              <p className="text-xs text-error">{t("setup.schoolTypes.fields.awardBodies.loadError")}</p>
             ) : null}
           </div>
 

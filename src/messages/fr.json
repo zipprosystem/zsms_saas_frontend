@@ -400,9 +400,8 @@
       },
       "fields": {
         "name": { "label": "Nom", "placeholder": "ex. Premier cycle secondaire" },
-        "awardBody": {
-          "label": "Organisme d'examen",
-          "placeholder": "Sélectionnez un organisme d'examen",
+        "awardBodies": {
+          "label": "Organismes d'examen",
           "loading": "Chargement des organismes d'examen…",
           "emptyHint": "Aucun organisme d'examen pour le moment.",
           "emptyHintLink": "En ajouter un d'abord",
@@ -412,7 +411,7 @@
       },
       "errors": {
         "nameRequired": "Saisissez un nom pour ce type d'établissement",
-        "awardBodyRequired": "Sélectionnez un organisme d'examen"
+        "awardBodiesRequired": "Sélectionnez au moins un organisme d'examen"
       },
       "confirmDelete": {
         "title": "Supprimer le type d'établissement ?",
@@ -513,54 +512,17 @@
     },
     "step2": {
       "heading": "Bases académiques",
-      "subheading": "Configurez votre première année académique et la structure de l'école.",
+      "subheading": "Configurez votre première année académique.",
       "academicYear": {
         "sectionTitle": "Année académique",
         "name": { "label": "Nom de l'année", "placeholder": "ex. 2025/2026" },
         "startDate": { "label": "Date de début de session" },
         "endDate": { "label": "Date de fin de session" }
       },
-      "schoolMode": { "label": "Mode de l'école" },
-      "schoolType": { "label": "Type d'école", "customPlaceholder": "Saisir un type d'école…" },
-      "awardBody": {
-        "label": "Organisme d'examen",
-        "customPlaceholder": "Saisir un organisme d'examen…"
-      },
-      "schoolTypePairs": {
-        "sectionTitle": "Types d'école et organismes d'examen",
-        "sectionSubtitle": "Associez chaque type d'école à l'organisme qui l'examine — ex. Second cycle secondaire avec WAEC.",
-        "rowLabel": "Paire {number}",
-        "removeRow": "Supprimer cette paire",
-        "addPair": "Ajouter une paire"
-      },
-      "extraAwardBodies": {
-        "label": "Organismes d'examen supplémentaires (optionnel)"
-      },
-      "addCustom": "Ajouter"
+      "schoolMode": { "label": "Mode de l'école" }
     },
     "options": {
       "schoolMode": { "day": "Externat", "boarding": "Internat", "both": "Les deux" },
-      "schoolType": {
-        "creche": "Crèche",
-        "playgroup": "Halte-garderie",
-        "preNursery": "Pré-maternelle",
-        "nursery": "Maternelle",
-        "primary": "Primaire",
-        "grade": "Classe",
-        "secondary": "Secondaire",
-        "juniorSecondary": "Premier cycle secondaire",
-        "seniorSecondary": "Second cycle secondaire",
-        "college": "Collège",
-        "keystage3": "Keystage 3",
-        "keystage4": "Keystage 4"
-      },
-      "awardBody": {
-        "waec": "WAEC",
-        "neco": "NECO",
-        "cambridge": "Cambridge",
-        "ib": "IB",
-        "edexcel": "Edexcel"
-      },
       "workingDays": {
         "mon": "Lun",
         "tue": "Mar",
@@ -606,8 +568,6 @@
       "slugChecking": "Vérification en cours — veuillez patienter",
       "recaptchaRequired": "Veuillez compléter la vérification reCAPTCHA",
       "endBeforeStart": "La date de fin de session doit être postérieure à la date de début",
-      "selectAtLeastOne": "Sélectionnez au moins une option",
-      "maxLength100": "Doit comporter 100 caractères ou moins",
       "fieldInvalid": "Ce champ n'est pas valide",
       "submitField": "Veuillez corriger les champs signalés et réessayer.",
       "submitBadRequest": "Un problème est survenu avec votre soumission. Veuillez vérifier vos informations et réessayer.",
