@@ -400,9 +400,8 @@
       },
       "fields": {
         "name": { "label": "Name", "placeholder": "e.g. Junior Secondary" },
-        "awardBody": {
-          "label": "Award Body",
-          "placeholder": "Select an award body",
+        "awardBodies": {
+          "label": "Award Bodies",
           "loading": "Loading award bodies…",
           "emptyHint": "No award bodies yet.",
           "emptyHintLink": "Add one first",
@@ -412,7 +411,7 @@
       },
       "errors": {
         "nameRequired": "Enter a name for this school type",
-        "awardBodyRequired": "Select an award body"
+        "awardBodiesRequired": "Select at least one award body"
       },
       "confirmDelete": {
         "title": "Delete school type?",
@@ -513,54 +512,17 @@
     },
     "step2": {
       "heading": "Academic Basics",
-      "subheading": "Set up your first academic year and school structure.",
+      "subheading": "Set up your first academic year.",
       "academicYear": {
         "sectionTitle": "Academic Year",
         "name": { "label": "Year Name", "placeholder": "e.g. 2025/2026" },
         "startDate": { "label": "Session Start Date" },
         "endDate": { "label": "Session End Date" }
       },
-      "schoolMode": { "label": "School Mode" },
-      "schoolType": { "label": "School Type", "customPlaceholder": "Type a school type…" },
-      "awardBody": {
-        "label": "Award Body",
-        "customPlaceholder": "Type an award body…"
-      },
-      "schoolTypePairs": {
-        "sectionTitle": "School Types & Award Bodies",
-        "sectionSubtitle": "Pair each school type with the body that examines it — e.g. Senior Secondary with WAEC.",
-        "rowLabel": "Pair {number}",
-        "removeRow": "Remove this pair",
-        "addPair": "Add pair"
-      },
-      "extraAwardBodies": {
-        "label": "Additional Award Bodies (optional)"
-      },
-      "addCustom": "Add custom"
+      "schoolMode": { "label": "School Mode" }
     },
     "options": {
       "schoolMode": { "day": "Day", "boarding": "Boarding", "both": "Both" },
-      "schoolType": {
-        "creche": "Creche",
-        "playgroup": "Playgroup",
-        "preNursery": "Pre-Nursery",
-        "nursery": "Nursery",
-        "primary": "Primary",
-        "grade": "Grade",
-        "secondary": "Secondary",
-        "juniorSecondary": "Junior Secondary",
-        "seniorSecondary": "Senior Secondary",
-        "college": "College",
-        "keystage3": "Keystage 3",
-        "keystage4": "Keystage 4"
-      },
-      "awardBody": {
-        "waec": "WAEC",
-        "neco": "NECO",
-        "cambridge": "Cambridge",
-        "ib": "IB",
-        "edexcel": "Edexcel"
-      },
       "workingDays": {
         "mon": "Mon",
         "tue": "Tue",
@@ -606,8 +568,6 @@
       "slugChecking": "Still checking availability — please wait",
       "recaptchaRequired": "Please complete the reCAPTCHA verification",
       "endBeforeStart": "Session end date must be after the start date",
-      "selectAtLeastOne": "Select at least one",
-      "maxLength100": "Must be 100 characters or fewer",
       "fieldInvalid": "This field is invalid",
       "submitField": "Please fix the highlighted fields and try again.",
       "submitBadRequest": "There was a problem with your submission. Please check your details and try again.",

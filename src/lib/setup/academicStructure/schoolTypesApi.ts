@@ -18,24 +18,32 @@ import type { CrudResult, CrudService } from "@/lib/setup/crudTypes";
  *        not data scoped to a particular session the way Classes likely
  *        are (hence "active classes only" on this entity's own `classes`
  *        field below) — confirmed with Matthew.
- *   POST/PUT {API_BASE}/erp/school-types[/:id] { name, award_body_id, description? }
+ *   POST/PUT {API_BASE}/erp/school-types[/:id] { name, award_body_ids, description? }
  *     -> { success: true, data: <entity> } directly, never wrapped in items.
- *     award_body_id is REQUIRED (changed from the earlier optional/"None"
- *     assumption) — every school type must reference an award body now.
+ *     award_body_ids is MANY-TO-MANY (a school type can have multiple
+ *     award bodies) — the earlier single required award_body_id is
+ *     deprecated, never sent/read here. Requiring at least one selection is
+ *     an ASSUMPTION carried over from the earlier single-required contract
+ *     (Muntajir hasn't explicitly said whether m2m still requires ≥1) —
+ *     reconcile if he says it's actually optional.
  *   DELETE {API_BASE}/erp/school-types/:id
  *
- * Response entity includes `award_body` (the nested Award Body object) and
- * `classes` (this school type's classes) alongside `award_body_id` itself —
- * the card reads award_body.name directly rather than looking it up
- * client-side. `classes`' exact shape is an ASSUMPTION (only "the active
- * ones show as chips" was specified, not confirmed field-by-field) —
- * reconcile once a real payload is seen.
+ * Response entity includes `award_bodies` (the nested Award Body objects,
+ * plural) and `classes` (this school type's classes) alongside
+ * `award_body_ids` itself — the card reads award_bodies[].name directly
+ * rather than looking them up client-side. The deprecated singular
+ * `award_body_id`/`award_body` fields, if the backend still sends them,
+ * are ignored entirely. `classes`' exact shape is an ASSUMPTION (only "the
+ * active ones show as chips" was specified, not confirmed field-by-field)
+ * — reconcile once a real payload is seen.
  *
  * Error body shape (all non-2xx responses): { success:false, error:{ code,
- * message } } — see erpError.ts. Known codes handled below:
+ * message } } — see erpError.ts. Known codes handled below (unchanged from
+ * the single-award-body contract, just retargeted to the `award_body_ids`
+ * field instead of `award_body_id`):
  *   DUPLICATE_NAME         -> validation error on the `name` field
- *   AWARD_BODY_REQUIRED    -> validation error on the `award_body_id` field
- *   AWARD_BODY_NOT_FOUND   -> validation error on the `award_body_id` field
+ *   AWARD_BODY_REQUIRED    -> validation error on the `award_body_ids` field
+ *   AWARD_BODY_NOT_FOUND   -> validation error on the `award_body_ids` field
  *                             (a stale/deleted award body was selected)
  *   SCHOOL_TYPE_HAS_CLASSES -> 409 delete conflict, item NOT removed
  *                              locally, backend message surfaced as-is
@@ -52,15 +60,15 @@ export type SchoolTypeClass = {
 export type SchoolType = {
   id: string;
   name: string;
-  award_body_id: string;
-  award_body: { id: string; name: string; description: string | null } | null;
+  award_body_ids: string[];
+  award_bodies: Array<{ id: string; name: string; description: string | null }>;
   description: string | null;
   classes: SchoolTypeClass[];
 };
 
 export type SchoolTypeInput = {
   name: string;
-  award_body_id: string;
+  award_body_ids: string[];
   description: string | null;
 };
 
@@ -80,7 +88,7 @@ function toResult<T>(response: Response, body: unknown): CrudResult<T> {
     return {
       ok: false,
       kind: "validation",
-      errors: [{ field: "award_body_id", message: message ?? undefined }],
+      errors: [{ field: "award_body_ids", message: message ?? undefined }],
     };
   }
   if (code === "SCHOOL_TYPE_HAS_CLASSES" || code === "SCHOOL_TYPE_NOT_FOUND") {
