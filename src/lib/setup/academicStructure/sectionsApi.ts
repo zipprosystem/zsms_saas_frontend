@@ -1,7 +1,7 @@
 import { apiFetch } from "@/lib/api/client";
 import { DEV_AUTH_BYPASS } from "@/lib/auth/authBridge";
 import { extractErpError } from "@/lib/setup/erpError";
-import type { CrudResult, CrudService } from "@/lib/setup/crudTypes";
+import type { CrudResult } from "@/lib/setup/crudTypes";
 
 /**
  * Finalized contract per Muntajir. { success, data }, Bearer auth via
@@ -12,8 +12,10 @@ import type { CrudResult, CrudService } from "@/lib/setup/crudTypes";
  *     -> { success: true, data: { items: [...], total, page, limit, has_more } }
  *     Per-class, not a single flat endpoint — there is no "all sections
  *     for a school" list. The Setup screen's merged multi-class view is
- *     built client-side (see createSectionsService below), not by this
- *     function directly. Soft-deleted excluded.
+ *     built with useQueries in ClassArmsScreen.tsx, one query per class id
+ *     (queryKey: sectionsQueryKey(classId)) — react-query's own per-key
+ *     cache IS the cache here; there's no separate hand-rolled one. Soft-
+ *     deleted excluded.
  *
  *     BACKEND LIMITATION, not a frontend bug: if the parent class is
  *     INACTIVE, this returns an EMPTY items list regardless of what
@@ -36,11 +38,10 @@ import type { CrudResult, CrudService } from "@/lib/setup/crudTypes";
  *     pattern as Classes — no dedicated activate endpoint).
  *   DELETE {API_BASE}/erp/sections/:id
  *   GET {API_BASE}/erp/sections/:id exists but isn't used — edit forms
- *     seed from the already-fetched/cached row, same as every other Setup
- *     screen.
+ *     seed from the already-fetched row, same as every other Setup screen.
  *
  * school_type_id is NOT a Section field at all — it's inherited from the
- * parent Class and resolved client-side (SectionsScreen looks up
+ * parent Class and resolved client-side (ClassArmsScreen looks up
  * class_id -> class -> school_type_id), never read from or sent in a
  * Section payload.
  *
@@ -51,6 +52,14 @@ import type { CrudResult, CrudService } from "@/lib/setup/crudTypes";
  * (stale row). VALIDATION_ERROR -> general banner. Any other/missing code
  * falls back to plain status-code classification, same defensive pattern
  * as every other Setup service.
+ *
+ * Plain functions here, not a CrudService — Class-arms' read side can't be
+ * a single service.list() (there's no "all sections" endpoint to back
+ * one), so it doesn't go through the generic CrudScreen/useCrudTable
+ * pattern at all. ClassArmsScreen.tsx calls these directly and invalidates
+ * sectionsQueryKey(classId) itself after a mutation, using whichever
+ * class(es) it already has on hand from the row/form being acted on —
+ * no service-side cache or class-id lookup needed for that.
  */
 export type Section = {
   id: string;
@@ -75,8 +84,10 @@ export type SectionInput = {
   is_active: boolean;
 };
 
-/** Keyed by class_id — shared across school-type switches (a useRef at the screen level), which is what makes "switching back doesn't refetch" work: it's the same Map instance, not rebuilt per school type. */
-export type SectionCache = Map<string, Section[]>;
+/** The one place this key's shape is defined — both the useQueries construction and every post-mutation invalidateQueries call go through this, so they can never drift apart. */
+export function sectionsQueryKey(classId: string): readonly unknown[] {
+  return ["setup", "sections", "class", classId];
+}
 
 const SECTIONS_PATH = "erp/sections";
 
@@ -121,7 +132,8 @@ function extractSectionList(body: unknown): Section[] {
   return Array.isArray(items) ? (items as Section[]) : [];
 }
 
-async function fetchSectionsForClass(classId: string): Promise<CrudResult<Section[]>> {
+/** The queryFn for each of useQueries' per-class queries in ClassArmsScreen.tsx. */
+export async function fetchSectionsForClass(classId: string): Promise<CrudResult<Section[]>> {
   if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
 
   let response: Response;
@@ -151,166 +163,87 @@ function requestBody(data: SectionInput): Record<string, unknown> {
   };
 }
 
-/**
- * A factory, not a singleton — `classIds` is whichever school type's
- * active classes are currently being viewed, and `cache` is a shared Map
- * the SCREEN owns (via useRef) across school-type switches. list() only
- * fetches whatever's missing from the cache; every mutation refetches and
- * patches exactly the one class it touched, never the whole merged set —
- * this is deliberately the only place that fetch/cache logic lives, so the
- * planned react-query retrofit can replace it without touching
- * SectionsScreen.tsx.
- */
-export function createSectionsService(options: {
-  classIds: string[];
-  cache: SectionCache;
-}): CrudService<Section, SectionInput, SectionInput> {
-  const { classIds, cache } = options;
+export async function createSection(data: SectionInput): Promise<CrudResult<Section>> {
+  if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
 
-  function findCachedClassId(sectionId: string): string | null {
-    // Array.from(...) rather than iterating the Map directly — this
-    // project's TS target doesn't support downlevel Map iteration.
-    const entry = Array.from(cache.entries()).find(([, sections]) =>
-      sections.some((section) => section.id === sectionId),
-    );
-    return entry ? entry[0] : null;
+  let response: Response;
+  try {
+    response = await apiFetch(SECTIONS_PATH, { method: "POST", body: JSON.stringify(requestBody(data)) });
+  } catch {
+    return { ok: false, kind: "network" };
   }
 
-  // Void, not a CrudResult — a failed refetch here shouldn't fail the
-  // mutation that just succeeded server-side. Deleting the cache entry on
-  // failure (rather than leaving stale data) forces the next list() to
-  // retry that class fresh instead of silently under-reporting it forever.
-  async function refetchClassAndCache(classId: string): Promise<void> {
-    const result = await fetchSectionsForClass(classId);
-    if (result.ok) cache.set(classId, result.data);
-    else cache.delete(classId);
+  const body = await parseBody(response);
+  if (!response.ok) return toResult(response, body);
+  const created = (body as { data?: Section } | null)?.data;
+  if (!created) return { ok: false, kind: "server" };
+  return { ok: true, data: created };
+}
+
+export async function updateSection(id: string, data: SectionInput): Promise<CrudResult<Section>> {
+  if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
+
+  let response: Response;
+  try {
+    response = await apiFetch(`${SECTIONS_PATH}/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body: JSON.stringify(requestBody(data)),
+    });
+  } catch {
+    return { ok: false, kind: "network" };
   }
 
-  async function list(): Promise<CrudResult<Section[]>> {
-    const missing = classIds.filter((id) => !cache.has(id));
-    if (missing.length > 0) {
-      const results = await Promise.all(missing.map(fetchSectionsForClass));
-      // One failed class fails the whole merge — a partial list would
-      // misrepresent what's actually under this school type.
-      for (const result of results) {
-        if (!result.ok) return result;
-      }
-      missing.forEach((id, index) => {
-        const result = results[index];
-        if (result.ok) cache.set(id, result.data);
-      });
-    }
-    return { ok: true, data: classIds.flatMap((id) => cache.get(id) ?? []) };
+  const body = await parseBody(response);
+  if (!response.ok) return toResult(response, body);
+  const updated = (body as { data?: Section } | null)?.data;
+  if (!updated) return { ok: false, kind: "server" };
+  return { ok: true, data: updated };
+}
+
+export async function removeSection(id: string): Promise<CrudResult<void>> {
+  if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
+
+  let response: Response;
+  try {
+    response = await apiFetch(`${SECTIONS_PATH}/${encodeURIComponent(id)}`, { method: "DELETE" });
+  } catch {
+    return { ok: false, kind: "network" };
   }
 
-  async function create(data: SectionInput): Promise<CrudResult<Section>> {
-    if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
+  if (response.ok) return { ok: true, data: undefined };
+  const body = await parseBody(response);
+  return toResult(response, body);
+}
 
-    let response: Response;
-    try {
-      response = await apiFetch(SECTIONS_PATH, { method: "POST", body: JSON.stringify(requestBody(data)) });
-    } catch {
-      return { ok: false, kind: "network" };
-    }
+// Deactivate/reactivate: a smaller PUT body ({ is_active } only) rather
+// than routing through updateSection()'s full-form shape — the contract
+// confirms this partial body is valid ("reactivate via PUT
+// { is_active: true }"), and it's the natural fit for a one-click row
+// action that shouldn't need the rest of the form's current values.
+async function setActive(id: string, is_active: boolean): Promise<CrudResult<Section>> {
+  if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
 
-    const body = await parseBody(response);
-    if (!response.ok) return toResult(response, body);
-    const created = (body as { data?: Section } | null)?.data;
-    if (!created) return { ok: false, kind: "server" };
-
-    await refetchClassAndCache(data.class_id);
-    return { ok: true, data: created };
+  let response: Response;
+  try {
+    response = await apiFetch(`${SECTIONS_PATH}/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body: JSON.stringify({ is_active }),
+    });
+  } catch {
+    return { ok: false, kind: "network" };
   }
 
-  async function update(id: string, data: SectionInput): Promise<CrudResult<Section>> {
-    if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
+  const body = await parseBody(response);
+  if (!response.ok) return toResult(response, body);
+  const updated = (body as { data?: Section } | null)?.data;
+  if (!updated) return { ok: false, kind: "server" };
+  return { ok: true, data: updated };
+}
 
-    // Captured before the PUT — if the edit moved the section to a
-    // different class (the form's Class dropdown is editable), the OLD
-    // class's cache entry needs invalidating too, not just the new one.
-    const previousClassId = findCachedClassId(id);
+export function deactivateSection(id: string): Promise<CrudResult<Section>> {
+  return setActive(id, false);
+}
 
-    let response: Response;
-    try {
-      response = await apiFetch(`${SECTIONS_PATH}/${encodeURIComponent(id)}`, {
-        method: "PUT",
-        body: JSON.stringify(requestBody(data)),
-      });
-    } catch {
-      return { ok: false, kind: "network" };
-    }
-
-    const body = await parseBody(response);
-    if (!response.ok) return toResult(response, body);
-    const updated = (body as { data?: Section } | null)?.data;
-    if (!updated) return { ok: false, kind: "server" };
-
-    await refetchClassAndCache(data.class_id);
-    if (previousClassId && previousClassId !== data.class_id) {
-      await refetchClassAndCache(previousClassId);
-    }
-    return { ok: true, data: updated };
-  }
-
-  async function remove(id: string): Promise<CrudResult<void>> {
-    if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
-
-    const classId = findCachedClassId(id);
-
-    let response: Response;
-    try {
-      response = await apiFetch(`${SECTIONS_PATH}/${encodeURIComponent(id)}`, { method: "DELETE" });
-    } catch {
-      return { ok: false, kind: "network" };
-    }
-
-    if (!response.ok) {
-      const body = await parseBody(response);
-      return toResult(response, body);
-    }
-    if (classId) await refetchClassAndCache(classId);
-    return { ok: true, data: undefined };
-  }
-
-  async function setActive(id: string, is_active: boolean): Promise<CrudResult<Section>> {
-    if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
-
-    const classId = findCachedClassId(id);
-
-    let response: Response;
-    try {
-      response = await apiFetch(`${SECTIONS_PATH}/${encodeURIComponent(id)}`, {
-        method: "PUT",
-        body: JSON.stringify({ is_active }),
-      });
-    } catch {
-      return { ok: false, kind: "network" };
-    }
-
-    const body = await parseBody(response);
-    if (!response.ok) return toResult(response, body);
-    const updated = (body as { data?: Section } | null)?.data;
-    if (!updated) return { ok: false, kind: "server" };
-
-    if (classId) await refetchClassAndCache(classId);
-    return { ok: true, data: updated };
-  }
-
-  return {
-    // Interim only — Sections' generic-CrudService list() is being
-    // replaced by useQueries-per-classId in the next retrofit step (this
-    // whole Map-cache/factory goes away then). Satisfies CrudService's now-
-    // required queryKey field in the meantime; never actually read by
-    // useCrudTable in production since ClassArmsScreen still uses the
-    // Map-cache list() as of this step.
-    queryKey: ["setup", "sections", ...classIds.slice().sort()],
-    list,
-    create,
-    update,
-    remove,
-    customActions: {
-      deactivate: (id) => setActive(id, false),
-      reactivate: (id) => setActive(id, true),
-    },
-  };
+export function reactivateSection(id: string): Promise<CrudResult<Section>> {
+  return setActive(id, true);
 }

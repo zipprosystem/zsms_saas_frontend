@@ -57,7 +57,10 @@ export type CrudScreenProps<T, CreateInput, UpdateInput, FormState> = {
   onItemsLoaded?: (items: T[]) => void;
 };
 
-function resultErrorMessage(
+// Exported — Class-arms' bespoke mutation handlers (sectionsApi.ts isn't a
+// CrudService, see its own header comment) reuse this exact mapping rather
+// than duplicating it.
+export function resultErrorMessage(
   result: Extract<CrudResult<unknown>, { ok: false }>,
   t: ReturnType<typeof useTranslations>,
 ): string {

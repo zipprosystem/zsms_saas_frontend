@@ -1,9 +1,7 @@
-import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import { throwIfTransient, type CrudService } from "./crudTypes";
-
-const PAGE_SIZE = 10;
+import { usePaginatedView } from "./usePaginatedView";
 
 export type TableLoadState<T> =
   | { status: "loading" }
@@ -25,11 +23,10 @@ type UseCrudTableOptions<T> = {
  * refetch() call, though `refetch` is still exposed below for the
  * DataTable/CardGrid "retry" button and behaves the same either way).
  *
- * Client-side pagination: every current service's list() fetches
- * everything in one call (no real page/limit contract to page against),
- * so this hook still paginates/searches/filters in memory over whatever
- * the query returns. matchesSearch/matchesFilters are supplied per-screen
- * since what "search" or a given filter key means is entity-specific.
+ * The search/filter/paginate part (everything past "here are the loaded
+ * items") lives in usePaginatedView — factored out so Class-arms, whose
+ * merged multi-class list can't go through a single service.list() (see
+ * sectionsApi.ts), can reuse it directly instead of duplicating it.
  *
  * react-query retrofit: `service.queryKey` is the cache key (a fixed
  * constant for a singleton service, or including e.g. a year id for a
@@ -50,10 +47,6 @@ export function useCrudTable<T, CreateInput, UpdateInput>(
     staleTime: STRUCTURAL_STALE_TIME_MS,
   });
 
-  const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState<Record<string, string>>({});
-  const [page, setPage] = useState(1);
-
   const load: TableLoadState<T> = query.isPending
     ? { status: "loading" }
     : query.isError
@@ -66,38 +59,12 @@ export function useCrudTable<T, CreateInput, UpdateInput>(
             ? { status: "devBypassUnavailable" }
             : { status: "error" };
 
-  // Reset to page 1 whenever the visible set could shrink out from under
-  // the current page.
-  useEffect(() => {
-    setPage(1);
-  }, [search, filters]);
-
   const allItems = load.status === "loaded" ? load.items : [];
-  const filteredItems = allItems
-    .filter((row) => !search.trim() || (matchesSearch?.(row, search.trim()) ?? true))
-    .filter(
-      (row) =>
-        Object.keys(filters).length === 0 || (matchesFilters?.(row, filters) ?? true),
-    );
-
-  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-  const pageItems = filteredItems.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
-  );
+  const view = usePaginatedView(allItems, { matchesSearch, matchesFilters });
 
   return {
     load,
-    items: pageItems,
-    totalItems: filteredItems.length,
-    page: currentPage,
-    totalPages,
-    setPage,
-    search,
-    setSearch,
-    filters,
-    setFilters,
+    ...view,
     refetch: query.refetch,
   };
 }

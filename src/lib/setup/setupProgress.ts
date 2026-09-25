@@ -4,7 +4,7 @@ import { academicYearsService } from "@/lib/setup/academicStructure/academicYear
 import { awardBodiesService } from "@/lib/setup/academicStructure/awardBodiesApi";
 import { schoolTypesService } from "@/lib/setup/academicStructure/schoolTypesApi";
 import { createClassesService } from "@/lib/setup/academicStructure/classesApi";
-import { createSectionsService } from "@/lib/setup/academicStructure/sectionsApi";
+import { fetchSectionsForClass } from "@/lib/setup/academicStructure/sectionsApi";
 import type { SetupItem } from "@/lib/setup/setupConfig";
 
 /**
@@ -46,18 +46,18 @@ export const setupExistenceCheckers: Record<string, ExistenceChecker> = {
     return result.ok && result.data.length > 0;
   },
   // Sections have no "all sections for a school" endpoint (see
-  // sectionsApi.ts) — reuses that same factory's list() across every
-  // active class for the year, exactly like the Class-arms screen itself
-  // does per school type, just with a fresh, throwaway cache (this check
-  // runs once on the checklist page, not repeatedly).
+  // sectionsApi.ts) — fetches every active class's sections in parallel,
+  // same as Class-arms' own useQueries does per school type, just a
+  // one-off Promise.all here rather than a hook (this check runs once on
+  // the checklist page load, not from a component that needs caching).
   classArms: async ({ yearId }) => {
     if (!yearId) return false;
     const classesResult = await createClassesService(yearId).list();
     if (!classesResult.ok) return false;
     const activeClassIds = classesResult.data.filter((cls) => cls.is_active).map((cls) => cls.id);
     if (activeClassIds.length === 0) return false;
-    const sectionsResult = await createSectionsService({ classIds: activeClassIds, cache: new Map() }).list();
-    return sectionsResult.ok && sectionsResult.data.length > 0;
+    const sectionResults = await Promise.all(activeClassIds.map(fetchSectionsForClass));
+    return sectionResults.some((result) => result.ok && result.data.length > 0);
   },
 };
 
