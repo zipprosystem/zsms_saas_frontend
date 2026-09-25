@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { useToast } from "@/components/ui/Toast";
 import { SlideOverPanel } from "@/components/ui/SlideOverPanel";
@@ -47,6 +47,13 @@ export type CrudScreenProps<T, CreateInput, UpdateInput, FormState> = {
   renderFields: FormFieldsRenderer<FormState>;
   emptyMessage: string;
   toastMessages: { created: string; updated: string; deleted: string };
+  /**
+   * Called with the full fetched list whenever a load succeeds — for
+   * screens that need to derive something from the data itself (e.g.
+   * Class-arms' "distinct arm names" filter options) rather than from an
+   * independently-fetched reference list. Most screens don't need this.
+   */
+  onItemsLoaded?: (items: T[]) => void;
 };
 
 function resultErrorMessage(
@@ -97,10 +104,22 @@ export function CrudScreen<T, CreateInput, UpdateInput, FormState>({
   renderFields,
   emptyMessage,
   toastMessages,
+  onItemsLoaded,
 }: CrudScreenProps<T, CreateInput, UpdateInput, FormState>) {
   const t = useTranslations();
   const { showToast } = useToast();
   const table = useCrudTable(service, { matchesSearch, matchesFilters });
+
+  useEffect(() => {
+    if (table.load.status === "loaded") {
+      onItemsLoaded?.(table.load.items);
+    }
+    // onItemsLoaded is a screen-provided callback, typically a fresh
+    // closure every render — depending only on the load result (not the
+    // callback identity) avoids re-firing for reasons unrelated to a new
+    // fetch actually landing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table.load]);
 
   const [panel, setPanel] = useState<PanelState<T>>({ mode: "closed" });
   const [formData, setFormData] = useState<FormState>(emptyFormState);

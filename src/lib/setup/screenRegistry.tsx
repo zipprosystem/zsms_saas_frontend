@@ -3,6 +3,7 @@ import { AcademicYearsScreen } from "@/components/setup/academicStructure/Academ
 import { AwardBodiesScreen } from "@/components/setup/academicStructure/AwardBodiesScreen";
 import { SchoolTypesScreen } from "@/components/setup/academicStructure/SchoolTypesScreen";
 import { ClassesScreen } from "@/components/setup/academicStructure/ClassesScreen";
+import { ClassArmsScreen } from "@/components/setup/academicStructure/ClassArmsScreen";
 
 /**
  * Keyed by "{categorySlug}/{screenSlug}". A screen not listed here falls
@@ -20,4 +21,7 @@ export const setupScreenRegistry: Record<string, ComponentType> = {
   // populated from that service) — same reasoning as School Types/Award
   // Bodies above.
   "academic-structure/classes": ClassesScreen,
+  // Class-arms' school type selector + form depend on both School Types
+  // and Classes existing.
+  "academic-structure/class-arms": ClassArmsScreen,
 };

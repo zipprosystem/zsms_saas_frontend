@@ -498,6 +498,93 @@
         "updated": "Class updated",
         "deleted": "Class deleted"
       }
+    },
+    "classArms": {
+      "title": "Class-arms",
+      "subtitle": "The arms (or form groups) within each class",
+      "addNew": "Add Class-arm",
+      "searchPlaceholder": "Search class-arms…",
+      "empty": "No class-arms yet for this class — add your first one to get started.",
+      "noYear": {
+        "message": "Select or create an academic year to manage class-arms.",
+        "linkLabel": "Go to Academic Years"
+      },
+      "schoolTypeSelector": {
+        "label": "School Type",
+        "placeholder": "Select a school type to view its class-arms"
+      },
+      "selectSchoolTypePrompt": "Select a school type above to see its classes' arms.",
+      "noClassesPrompt": {
+        "message": "This school type has no active classes yet.",
+        "linkLabel": "Go to Classes"
+      },
+      "inactiveClassNote": "Class-arms under an inactive class aren't shown here — reactivate the class first to manage them.",
+      "panel": {
+        "createTitle": "Add Class-arm",
+        "editTitle": "Edit Class-arm"
+      },
+      "columns": {
+        "name": "Arm Name",
+        "class": "Class",
+        "schoolType": "School Type",
+        "location": "Building / Room",
+        "classTime": "Class Time",
+        "status": "Status"
+      },
+      "status": { "active": "Active", "inactive": "Inactive" },
+      "filters": {
+        "class": "Class",
+        "armName": "Class-arm",
+        "status": "Status",
+        "all": "All"
+      },
+      "fields": {
+        "schoolType": {
+          "label": "School Type",
+          "placeholder": "Select a school type"
+        },
+        "class": {
+          "label": "Class",
+          "placeholder": "Select a class"
+        },
+        "armName": { "label": "Arm Name", "placeholder": "e.g. A" },
+        "building": {
+          "label": "Building (optional)",
+          "none": "None",
+          "loading": "Loading buildings…"
+        },
+        "classroom": {
+          "label": "Class Room (optional)",
+          "none": "None",
+          "loading": "Loading classrooms…"
+        },
+        "classTimeStart": { "label": "Class Time Start (optional)" },
+        "classTimeEnd": { "label": "Class Time End (optional)" },
+        "description": { "label": "Description (optional)", "placeholder": "e.g. Morning arm" },
+        "isActive": {
+          "label": "Active",
+          "helper": "Inactive class-arms are hidden from dropdowns elsewhere in the app, but stay visible and manageable here."
+        }
+      },
+      "errors": {
+        "schoolTypeRequired": "Select a school type",
+        "classRequired": "Select a class",
+        "armNameRequired": "Enter a name for this class-arm",
+        "endBeforeStart": "Class time end must be after the start time"
+      },
+      "actions": {
+        "deactivate": "Deactivate",
+        "reactivate": "Reactivate"
+      },
+      "confirmDelete": {
+        "title": "Delete class-arm?",
+        "message": "This will delete \"{name}\". This can't be undone."
+      },
+      "toast": {
+        "created": "Class-arm created",
+        "updated": "Class-arm updated",
+        "deleted": "Class-arm deleted"
+      }
     }
   },
   "onboarding": {
