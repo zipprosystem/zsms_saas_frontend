@@ -1,4 +1,6 @@
-import { getTranslations } from "next-intl/server";
+"use client";
+
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
 import { PieChartIcon } from "@/components/icons/PieChartIcon";
 import {
@@ -7,15 +9,24 @@ import {
   getConfiguredItems,
   getOverallPercent,
   getCategoryProgress,
+  type SetupItem,
 } from "@/lib/setup/setupConfig";
+import { isSetupItemComplete, type SetupProgressState } from "@/lib/setup/setupProgress";
 import { categoryColorClasses } from "./categoryColors";
 
-export async function OverallProgressCard() {
-  const t = await getTranslations();
+// Was an async Server Component reading only static `item.done` flags —
+// now needs the live existence-check results (setupProgress.ts), which can
+// only run client-side (they go through apiFetch/the in-memory access
+// token), so this becomes a client component receiving that result as a
+// prop from SetupProgressBoard instead of fetching translations itself.
+export function OverallProgressCard({ progress }: { progress: SetupProgressState }) {
+  const t = useTranslations();
+  const isComplete = (item: SetupItem) => isSetupItemComplete(item, progress);
 
   const totalItems = getTotalItems(setupCategories);
-  const configuredItems = getConfiguredItems(setupCategories);
-  const overallPercent = getOverallPercent(setupCategories);
+  const configuredItems = getConfiguredItems(setupCategories, isComplete);
+  const overallPercent = getOverallPercent(setupCategories, isComplete);
+  const isLoading = progress.status === "loading";
 
   return (
     <div className="min-w-0 rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-6">
@@ -25,10 +36,12 @@ export async function OverallProgressCard() {
             {t("setup.overallProgress.title")}
           </h2>
           <p className="mt-1 text-xs text-text-muted">
-            {t("setup.overallProgress.itemsConfigured", {
-              configured: configuredItems,
-              total: totalItems,
-            })}
+            {isLoading
+              ? t("setup.overallProgress.checking")
+              : t("setup.overallProgress.itemsConfigured", {
+                  configured: configuredItems,
+                  total: totalItems,
+                })}
           </p>
         </div>
 
@@ -43,14 +56,14 @@ export async function OverallProgressCard() {
             {t("setup.overallProgress.goToOverview")}
           </Button>
           <span className="text-xl font-bold text-text-primary">
-            {overallPercent}%
+            {isLoading ? "—" : `${overallPercent}%`}
           </span>
         </div>
       </div>
 
       <div className="mt-5 flex h-2.5 min-w-0 gap-0.5 overflow-hidden rounded-full bg-subtle-track">
         {setupCategories.map((category) => {
-          const { categoryComplete } = getCategoryProgress(category);
+          const { categoryComplete } = getCategoryProgress(category, isComplete);
           const colorClasses = categoryColorClasses[category.colorToken];
           return (
             <div

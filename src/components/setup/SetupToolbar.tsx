@@ -64,7 +64,7 @@ export function SetupToolbar({
   );
 }
 
-type FilterDropdownProps = {
+export type FilterDropdownProps = {
   def: FilterDef;
   value: string;
   onChange: (value: string) => void;
@@ -79,7 +79,13 @@ type FilterDropdownProps = {
 // to its own trigger's width, which is itself already viewport-safe (full
 // width on mobile, per the toolbar layout above) — it can never be wider
 // than its parent, on any screen size.
-function FilterDropdown({ def, value, onChange }: FilterDropdownProps) {
+//
+// Exported (not just used internally by SetupToolbar) — Class-arms' School
+// Type selector sits outside any CrudScreen's own filter row entirely (it
+// drives which multi-class dataset gets fetched, not a client-side filter
+// over an already-fetched list) but hits the exact same native-<select>
+// overflow problem, so it reuses this rather than reintroducing the bug.
+export function FilterDropdown({ def, value, onChange }: FilterDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 

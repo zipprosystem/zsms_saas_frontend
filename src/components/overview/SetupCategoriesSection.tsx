@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { setupCategories } from "@/lib/setup/setupConfig";
+import type { SetupProgressState } from "@/lib/setup/setupProgress";
 import { CategoryCard } from "./CategoryCard";
 
 const DEFAULT_EXPANDED_KEYS = ["schoolSettings", "academicStructure"];
 
-export function SetupCategoriesSection() {
+export function SetupCategoriesSection({ progress }: { progress: SetupProgressState }) {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(
     () => new Set(DEFAULT_EXPANDED_KEYS),
   );
@@ -29,6 +30,7 @@ export function SetupCategoriesSection() {
         <CategoryCard
           key={category.key}
           category={category}
+          progress={progress}
           isExpanded={expandedKeys.has(category.key)}
           onToggle={() => toggleCategory(category.key)}
         />
