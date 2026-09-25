@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api/client";
 import { DEV_AUTH_BYPASS } from "@/lib/auth/authBridge";
+import { TransientQueryError } from "@/lib/queryClient";
 import type { SettingsData, SettingsUpdate } from "./types";
 
 /**
@@ -21,6 +22,19 @@ export type SettingsResult<T> =
   // network call at all when DEV_AUTH_BYPASS is active — this endpoint can
   // only be genuinely tested on a deployed tenant with a real login.
   | { ok: false; kind: "devBypassUnavailable" };
+
+// Same reasoning as crudTypes.ts's throwIfTransient — only network/server
+// are genuinely worth react-query's retry+backoff; every other kind is a
+// deterministic outcome (forbidden, validation, the dev-bypass guard) that
+// resolves normally instead. A separate small helper rather than reusing
+// crudTypes.ts's directly since SettingsResult isn't a CrudResult (no
+// `conflict` kind, and this file predates that type).
+export function throwIfTransientSettings<T>(result: SettingsResult<T>): SettingsResult<T> {
+  if (!result.ok && (result.kind === "network" || result.kind === "server")) {
+    throw new TransientQueryError();
+  }
+  return result;
+}
 
 async function parseBody(response: Response): Promise<unknown> {
   return response.json().catch(() => null);
