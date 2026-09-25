@@ -14,6 +14,7 @@ import {
   type SetupCategory,
   type SetupCategoryIconKey,
 } from "@/lib/setup/setupConfig";
+import { isSetupItemComplete, type SetupProgressState } from "@/lib/setup/setupProgress";
 import { categoryColorClasses } from "./categoryColors";
 import { SetupItemRow } from "./SetupItemRow";
 
@@ -27,12 +28,14 @@ const categoryIcons: Record<SetupCategoryIconKey, typeof GearIcon> = {
 
 type CategoryCardProps = {
   category: SetupCategory;
+  progress: SetupProgressState;
   isExpanded: boolean;
   onToggle: () => void;
 };
 
 export function CategoryCard({
   category,
+  progress,
   isExpanded,
   onToggle,
 }: CategoryCardProps) {
@@ -40,9 +43,9 @@ export function CategoryCard({
 
   const Icon = categoryIcons[category.iconKey];
   const colorClasses = categoryColorClasses[category.colorToken];
-  const { configuredCount, totalCount, categoryComplete } =
-    getCategoryProgress(category);
-  const percent = getCategoryPercent(category);
+  const isComplete = (item: SetupCategory["items"][number]) => isSetupItemComplete(item, progress);
+  const { configuredCount, totalCount, categoryComplete } = getCategoryProgress(category, isComplete);
+  const percent = getCategoryPercent(category, isComplete);
   const categoryName = t(category.name);
 
   return (
@@ -131,7 +134,7 @@ export function CategoryCard({
                 }
                 name={t(item.name)}
                 description={item.description ? t(item.description) : undefined}
-                done={item.done}
+                done={isComplete(item)}
                 doneLabel={t("setup.categoryCard.done")}
                 isLast={index === category.items.length - 1}
               />

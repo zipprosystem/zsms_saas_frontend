@@ -1,8 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { getCurrentTenant } from "@/lib/tenant/getCurrentTenant";
 import { SetupHeader } from "@/components/overview/SetupHeader";
-import { OverallProgressCard } from "@/components/overview/OverallProgressCard";
-import { SetupCategoriesSection } from "@/components/overview/SetupCategoriesSection";
+import { SetupProgressBoard } from "@/components/overview/SetupProgressBoard";
 
 // Moved here from /admin/overview verbatim — Overview is now a placeholder
 // for the future real dashboard, and this ("Complete Your School Setup")
@@ -20,8 +19,7 @@ export default async function Page() {
       )}
       <div className="flex min-w-0 flex-col gap-6">
         <SetupHeader />
-        <OverallProgressCard />
-        <SetupCategoriesSection />
+        <SetupProgressBoard />
       </div>
     </div>
   );

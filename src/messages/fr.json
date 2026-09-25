@@ -195,6 +195,7 @@
     "overallProgress": {
       "title": "Progression globale de la configuration",
       "itemsConfigured": "{configured} sur {total} éléments configurés",
+      "checking": "Vérification de ce qui est déjà configuré…",
       "goToOverview": "Aller à la vue d'ensemble"
     },
     "categoryCard": {
@@ -510,8 +511,7 @@
         "linkLabel": "Aller aux années académiques"
       },
       "schoolTypeSelector": {
-        "label": "Type d'établissement",
-        "placeholder": "Sélectionnez un type d'établissement pour voir ses sections"
+        "label": "Type d'établissement"
       },
       "selectSchoolTypePrompt": "Sélectionnez un type d'établissement ci-dessus pour voir les sections de ses classes.",
       "noClassesPrompt": {

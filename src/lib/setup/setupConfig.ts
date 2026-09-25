@@ -307,21 +307,34 @@ export function getTotalItems(config: SetupConfig): number {
   return config.reduce((sum, category) => sum + category.items.length, 0);
 }
 
-export function getConfiguredItems(config: SetupConfig): number {
+/**
+ * `isComplete` used to just read `item.done` internally — it's now an
+ * explicit parameter so the checklist can drive it from live "does at
+ * least one record exist" checks (see setupProgress.ts) for built
+ * CRUD-list screens, while items with no such check (School Settings'
+ * already-real screens, and not-yet-built stubs) keep using their own
+ * static `item.done`. These functions stay pure either way; setupProgress.ts
+ * is what decides what `isComplete` actually means for a given item.
+ */
+export type SetupItemComplete = (item: SetupItem) => boolean;
+
+export function getConfiguredItems(config: SetupConfig, isComplete: SetupItemComplete): number {
   return config.reduce(
-    (sum, category) =>
-      sum + category.items.filter((item) => item.done).length,
+    (sum, category) => sum + category.items.filter(isComplete).length,
     0,
   );
 }
 
-export function getCategoryProgress(category: SetupCategory): {
+export function getCategoryProgress(
+  category: SetupCategory,
+  isComplete: SetupItemComplete,
+): {
   configuredCount: number;
   totalCount: number;
   categoryComplete: boolean;
 } {
   const totalCount = category.items.length;
-  const configuredCount = category.items.filter((item) => item.done).length;
+  const configuredCount = category.items.filter(isComplete).length;
   return {
     configuredCount,
     totalCount,
@@ -329,8 +342,8 @@ export function getCategoryProgress(category: SetupCategory): {
   };
 }
 
-export function getCategoryPercent(category: SetupCategory): number {
-  const { configuredCount, totalCount } = getCategoryProgress(category);
+export function getCategoryPercent(category: SetupCategory, isComplete: SetupItemComplete): number {
+  const { configuredCount, totalCount } = getCategoryProgress(category, isComplete);
   return totalCount > 0 ? Math.round((configuredCount / totalCount) * 100) : 0;
 }
 
@@ -339,9 +352,9 @@ export function getCategoryPercent(category: SetupCategory): number {
  * that are fully complete. A future refinement could instead weight by
  * per-item completion within each category. Kept a pure function of the data.
  */
-export function getOverallPercent(config: SetupConfig): number {
+export function getOverallPercent(config: SetupConfig, isComplete: SetupItemComplete): number {
   return config.reduce((sum, category) => {
-    const { categoryComplete } = getCategoryProgress(category);
+    const { categoryComplete } = getCategoryProgress(category, isComplete);
     return categoryComplete ? sum + category.weightPercent : sum;
   }, 0);
 }

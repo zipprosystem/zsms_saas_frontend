@@ -195,6 +195,7 @@
     "overallProgress": {
       "title": "Overall Setup Progress",
       "itemsConfigured": "{configured} of {total} items configured",
+      "checking": "Checking what's already set up…",
       "goToOverview": "Go to Overview"
     },
     "categoryCard": {
@@ -510,8 +511,7 @@
         "linkLabel": "Go to Academic Years"
       },
       "schoolTypeSelector": {
-        "label": "School Type",
-        "placeholder": "Select a school type to view its class-arms"
+        "label": "School Type"
       },
       "selectSchoolTypePrompt": "Select a school type above to see its classes' arms.",
       "noClassesPrompt": {

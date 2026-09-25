@@ -7,6 +7,7 @@ import { InputField } from "@/components/ui/Input";
 import { SelectField } from "@/components/ui/Select";
 import { Toggle } from "@/components/ui/Toggle";
 import { CrudScreen } from "@/components/setup/CrudScreen";
+import { FilterDropdown } from "@/components/setup/SetupToolbar";
 import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
 import { createClassesService, type SchoolClass } from "@/lib/setup/academicStructure/classesApi";
 import { schoolTypesService, type SchoolType } from "@/lib/setup/academicStructure/schoolTypesApi";
@@ -147,23 +148,23 @@ function SchoolTypeGate({ yearId }: { yearId: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="max-w-xs">
-        <SelectField
-          id="class-arms-school-type"
-          label={t("setup.classArms.schoolTypeSelector.label")}
-          value={selectedSchoolTypeId}
-          onChange={(event) => setSelectedSchoolTypeId(event.target.value)}
-        >
-          <option value="" disabled>
-            {t("setup.classArms.schoolTypeSelector.placeholder")}
-          </option>
-          {schoolTypes.items.map((type) => (
-            <option key={type.id} value={type.id}>
-              {type.name}
-            </option>
-          ))}
-        </SelectField>
-      </div>
+      {/*
+        A native <select>'s open menu is rendered by the browser/OS and
+        can't be constrained by this page's CSS — on mobile (or a narrow
+        desktop viewport) it can overflow past the screen edge regardless
+        of the closed trigger's own width. FilterDropdown renders its own
+        CSS-anchored menu instead (same fix already applied to the
+        Status/School Type filters inside DataTable/CardGrid's toolbar).
+      */}
+      <FilterDropdown
+        def={{
+          key: "schoolType",
+          label: t("setup.classArms.schoolTypeSelector.label"),
+          options: schoolTypes.items.map((type) => ({ value: type.id, label: type.name })),
+        }}
+        value={selectedSchoolTypeId}
+        onChange={setSelectedSchoolTypeId}
+      />
 
       {!selectedSchoolTypeId ? (
         <div className="flex items-center justify-center rounded-xl border border-border bg-surface px-4 py-10 text-center text-sm text-text-muted">
@@ -322,14 +323,17 @@ function ClassArmsTable({
     },
   ];
 
+  // Defaulted on create (a typical school day), never overridden on edit —
+  // toFormState() below always seeds from the actual record's own values,
+  // this default only ever applies via CrudScreen's openCreate().
   const emptyFormState: FormState = {
     school_type_id: selectedSchoolTypeId,
     class_id: "",
     arm_name: "",
     building_id: "",
     classroom_id: "",
-    class_time_start: "",
-    class_time_end: "",
+    class_time_start: "08:00",
+    class_time_end: "15:00",
     description: "",
     is_active: true,
   };
