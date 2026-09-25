@@ -74,6 +74,7 @@ export function CardGrid<T>({
           {rows.map((row) => {
             const description = card.description?.(row);
             const badge = card.badge?.(row);
+            const tags = card.tags?.(row) ?? [];
             const actions = rowActions?.(row);
 
             return (
@@ -90,6 +91,19 @@ export function CardGrid<T>({
                   </div>
                   {badge ? <div className="shrink-0">{badge}</div> : null}
                 </div>
+
+                {tags.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full bg-brand-tint px-2.5 py-1 text-xs font-medium text-accent"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
 
                 {actions && actions.length > 0 ? (
                   <div className="flex flex-wrap items-center gap-3 border-t border-border pt-3">

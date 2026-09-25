@@ -15,11 +15,13 @@ export type ColumnDef<T> = {
   className?: string;
 };
 
-/** A card's fixed layout (title/description/badge), for screens whose Figma is a card grid rather than a table — e.g. School Types. */
+/** A card's fixed layout (title/description/badge/tags), for screens whose Figma is a card grid rather than a table — e.g. School Types. */
 export type CardFieldsDef<T> = {
   title: (row: T) => string;
   description?: (row: T) => string | null | undefined;
   badge?: (row: T) => ReactNode;
+  /** Rendered as a row of small pill chips between the description and the actions footer — e.g. School Types' active class chips. */
+  tags?: (row: T) => string[];
 };
 
 // A discriminated union rather than two optional props on CrudScreen — a
@@ -48,13 +50,21 @@ export type RowAction<T> = {
 // because at least one mutation per screen tends to have a real, explained
 // conflict case (e.g. "can't delete the active year") that deserves a
 // specific message, not a generic failure banner.
+//
+// `message`, where present, is the backend's own error text (from an ERP
+// `{success:false, error:{code,message}}` body — see erpError.ts) — kinds
+// that can carry one prefer it over their generic i18n fallback in
+// CrudScreen's resultErrorMessage(), so e.g. "can't delete: 3 school types
+// still reference this award body" reaches the user verbatim instead of a
+// generic "conflict" banner. Kinds with no realistic per-request backend
+// text (network failure, the dev-bypass guard) don't carry one.
 export type CrudResult<T> =
   | { ok: true; data: T }
-  | { ok: false; kind: "forbidden" }
+  | { ok: false; kind: "forbidden"; message?: string }
   | { ok: false; kind: "validation"; errors: Array<{ field: string; message?: string }> }
-  | { ok: false; kind: "conflict" }
+  | { ok: false; kind: "conflict"; message?: string }
   | { ok: false; kind: "network" }
-  | { ok: false; kind: "server" }
+  | { ok: false; kind: "server"; message?: string }
   // DEV-ONLY: same guard as settingsApi.ts — the local dev-auth-bypass
   // token must never reach a real endpoint.
   | { ok: false; kind: "devBypassUnavailable" };

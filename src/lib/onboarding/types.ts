@@ -1,3 +1,5 @@
+import { AWARD_BODIES, SCHOOL_TYPES, type ConfigOption } from "./config";
+
 export type WorkingDay = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 export type SchoolMode = "day" | "boarding" | "both";
 export type LanguageCode = "en" | "fr";
@@ -55,7 +57,16 @@ export type OnboardingData = {
     sessionStartDate: string;
     sessionEndDate: string;
     schoolMode: SchoolMode | "";
-    schoolTypes: string[];
+    /**
+     * Each row pairs a School Type with the Award Body that examines it
+     * (e.g. "Senior Secondary" + "WAEC") — `id` is a client-only key for
+     * React/remove, never sent. `schoolType`/`awardBody` hold either a
+     * SCHOOL_TYPES/AWARD_BODIES option `value` (resolved to its display
+     * label via ConfigOption lookup, same as ReviewStep's labelOne/
+     * labelList) or literal custom text typed via ChipGroup's allowCustom.
+     */
+    schoolTypePairs: Array<{ id: string; schoolType: string; awardBody: string }>;
+    /** Award bodies NOT paired to a school type — e.g. a body the school is affiliated with generally. Kept as a flat multi-select, unchanged from before. */
     awardBodies: string[];
   };
 };
@@ -113,15 +124,30 @@ export type OnboardingContractPayload = {
       session_start_date: string;
       session_end_date: string;
       school_mode: SchoolMode;
-      school_types: string[];
-      award_bodies: string[];
     };
+    // School Type + Award Body PAIRS (snake_case keys, per Muntajir's
+    // finalized contract) — sibling to `academic`, not nested inside it.
+    // `award_bodies` here is the EXTRAS multi-select only (bodies not
+    // paired to any school type) — distinct from a pair's own `award_body`.
+    school_types?: Array<{ name: string; award_body: string }>;
+    award_bodies?: string[];
   };
 };
 
 function combinedPhone(dialCode: string, number: string): string {
   const trimmed = number.trim();
   return trimmed ? `+${dialCode} ${trimmed}` : "";
+}
+
+// ChipGroup's stored value is the config option's `value` key for a preset
+// chip (e.g. "juniorSecondary") or literal typed text for a custom one
+// (allowCustom) — this resolves either to the display text the payload
+// should carry, same lookup ReviewStep's labelOne/labelList already do for
+// on-screen display. `t` is passed in rather than imported, since this file
+// is a plain data-transform module with no React/next-intl dependency.
+function resolveOptionLabel(options: ConfigOption[], value: string, t: (key: string) => string): string {
+  const option = options.find((candidate) => candidate.value === value);
+  return option ? t(option.labelKey) : value;
 }
 
 // Optional contract fields are OMITTED when empty, never sent as null.
@@ -135,7 +161,10 @@ function omitEmpty<T extends Record<string, string | undefined>>(fields: T): Par
   ) as Partial<T>;
 }
 
-export function toContractPayload(data: OnboardingData): OnboardingContractPayload {
+export function toContractPayload(
+  data: OnboardingData,
+  t: (key: string) => string,
+): OnboardingContractPayload {
   const payload: OnboardingContractPayload = {
     school: {
       name: data.school.name.trim(),
@@ -178,20 +207,25 @@ export function toContractPayload(data: OnboardingData): OnboardingContractPaylo
   const academicYear = data.academic.yearName.trim();
   if (academicYear) payload.additional_data.academic_year = academicYear;
 
-  if (
-    data.academic.sessionStartDate ||
-    data.academic.sessionEndDate ||
-    data.academic.schoolMode ||
-    data.academic.schoolTypes.length ||
-    data.academic.awardBodies.length
-  ) {
+  if (data.academic.sessionStartDate || data.academic.sessionEndDate || data.academic.schoolMode) {
     payload.additional_data.academic = {
       session_start_date: data.academic.sessionStartDate,
       session_end_date: data.academic.sessionEndDate,
       school_mode: data.academic.schoolMode || "day",
-      school_types: data.academic.schoolTypes,
-      award_bodies: data.academic.awardBodies,
     };
+  }
+
+  if (data.academic.schoolTypePairs.length) {
+    payload.additional_data.school_types = data.academic.schoolTypePairs.map((pair) => ({
+      name: resolveOptionLabel(SCHOOL_TYPES, pair.schoolType, t),
+      award_body: resolveOptionLabel(AWARD_BODIES, pair.awardBody, t),
+    }));
+  }
+
+  if (data.academic.awardBodies.length) {
+    payload.additional_data.award_bodies = data.academic.awardBodies.map((value) =>
+      resolveOptionLabel(AWARD_BODIES, value, t),
+    );
   }
 
   return payload;

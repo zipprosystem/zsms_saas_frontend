@@ -220,16 +220,24 @@
         "name": "Années académiques",
         "description": "Définissez votre année scolaire et sa plage de dates"
       },
-      "schoolTypes": {
-        "name": "Types d'école",
-        "description": "Vos divisions scolaires — Primaire, JSS, SSS"
-      },
       "awardBodies": {
         "name": "Organismes d'examen",
         "description": "Organismes examinateurs — WAEC, NECO, Cambridge"
       },
-      "terms": {
-        "name": "Trimestres",
+      "schoolTypes": {
+        "name": "Type d'école",
+        "description": "Vos divisions scolaires — Primaire, JSS, SSS"
+      },
+      "classes": {
+        "name": "Classes",
+        "description": "Programmes d'études — Sciences, Arts, Commercial"
+      },
+      "classArms": {
+        "name": "Section de classe / Groupe",
+        "description": "Sections ou groupes au sein d'une classe"
+      },
+      "classTerms": {
+        "name": "Trimestres de classe",
         "description": "Trimestres académiques avec dates de début et de fin"
       },
       "departments": {
@@ -240,17 +248,25 @@
         "name": "Registre des matières",
         "description": "Registre global de toutes les matières proposées"
       },
-      "courses": {
-        "name": "Filières",
-        "description": "Programmes d'études — Sciences, Arts, Commercial"
+      "classSubjects": {
+        "name": "Matières par classe",
+        "description": "Associer les matières aux classes avec unités de notation"
       },
-      "courseSubjectGroups": {
-        "name": "Groupes de matières par filière",
-        "description": "Regrouper les matières au sein des filières"
+      "classSubjectGrouping": {
+        "name": "Groupement des matières par classe",
+        "description": "Regrouper les matières au sein des classes"
       },
-      "courseSubjects": {
-        "name": "Matières par filière",
-        "description": "Associer les matières aux filières avec unités de notation"
+      "subjectEnrolment": {
+        "name": "Inscription aux matières",
+        "description": "Inscrire les élèves à leurs matières"
+      },
+      "studentTermDetails": {
+        "name": "Détails trimestriels de l'élève",
+        "description": "Statut et affectation de l'élève par trimestre"
+      },
+      "classAcademicMaterial": {
+        "name": "Support pédagogique de classe",
+        "description": "Supports pédagogiques associés à une classe"
       },
       "gradingSchemes": { "name": "Barèmes de notation" },
       "gradeScales": { "name": "Échelles de notes" },
@@ -385,17 +401,18 @@
       "fields": {
         "name": { "label": "Nom", "placeholder": "ex. Premier cycle secondaire" },
         "awardBody": {
-          "label": "Organisme d'examen (optionnel)",
-          "none": "Aucun",
+          "label": "Organisme d'examen",
+          "placeholder": "Sélectionnez un organisme d'examen",
           "loading": "Chargement des organismes d'examen…",
           "emptyHint": "Aucun organisme d'examen pour le moment.",
           "emptyHintLink": "En ajouter un d'abord",
-          "loadError": "Impossible de charger les organismes d'examen. Vous pouvez tout de même enregistrer sans en choisir un."
+          "loadError": "Impossible de charger les organismes d'examen."
         },
         "description": { "label": "Description (optionnel)", "placeholder": "ex. Cycle préscolaire" }
       },
       "errors": {
-        "nameRequired": "Saisissez un nom pour ce type d'établissement"
+        "nameRequired": "Saisissez un nom pour ce type d'établissement",
+        "awardBodyRequired": "Sélectionnez un organisme d'examen"
       },
       "confirmDelete": {
         "title": "Supprimer le type d'établissement ?",
@@ -506,8 +523,18 @@
       "schoolMode": { "label": "Mode de l'école" },
       "schoolType": { "label": "Type d'école", "customPlaceholder": "Saisir un type d'école…" },
       "awardBody": {
-        "label": "Organisme d'examen (optionnel)",
+        "label": "Organisme d'examen",
         "customPlaceholder": "Saisir un organisme d'examen…"
+      },
+      "schoolTypePairs": {
+        "sectionTitle": "Types d'école et organismes d'examen",
+        "sectionSubtitle": "Associez chaque type d'école à l'organisme qui l'examine — ex. Second cycle secondaire avec WAEC.",
+        "rowLabel": "Paire {number}",
+        "removeRow": "Supprimer cette paire",
+        "addPair": "Ajouter une paire"
+      },
+      "extraAwardBodies": {
+        "label": "Organismes d'examen supplémentaires (optionnel)"
       },
       "addCustom": "Ajouter"
     },
@@ -580,6 +607,7 @@
       "recaptchaRequired": "Veuillez compléter la vérification reCAPTCHA",
       "endBeforeStart": "La date de fin de session doit être postérieure à la date de début",
       "selectAtLeastOne": "Sélectionnez au moins une option",
+      "maxLength100": "Doit comporter 100 caractères ou moins",
       "fieldInvalid": "Ce champ n'est pas valide",
       "submitField": "Veuillez corriger les champs signalés et réessayer.",
       "submitBadRequest": "Un problème est survenu avec votre soumission. Veuillez vérifier vos informations et réessayer.",

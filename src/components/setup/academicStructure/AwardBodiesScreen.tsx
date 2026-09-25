@@ -77,6 +77,7 @@ export function AwardBodiesScreen() {
             onChange={(event) => onChange({ name: event.target.value })}
             hasError={!!errors.name}
             error={errors.name}
+            maxLength={100}
           />
           <InputField
             id="award-body-description"
@@ -84,6 +85,7 @@ export function AwardBodiesScreen() {
             placeholder={t("setup.awardBodies.fields.description.placeholder")}
             value={data.description}
             onChange={(event) => onChange({ description: event.target.value })}
+            maxLength={100}
           />
         </>
       )}
