@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/Toast";
 import { SlideOverPanel } from "@/components/ui/SlideOverPanel";
 import { DataTable } from "@/components/setup/DataTable";
@@ -108,7 +109,15 @@ export function CrudScreen<T, CreateInput, UpdateInput, FormState>({
 }: CrudScreenProps<T, CreateInput, UpdateInput, FormState>) {
   const t = useTranslations();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
   const table = useCrudTable(service, { matchesSearch, matchesFilters });
+
+  // The one thing every mutation below does on success, instead of the old
+  // table.refetch() — invalidating service.queryKey is what makes
+  // useCrudTable's own useQuery refetch, and it's "targeted" for free:
+  // service.queryKey already scopes to exactly this entity (and, for a
+  // factory-built service like Classes, exactly this year).
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: service.queryKey });
 
   useEffect(() => {
     if (table.load.status === "loaded") {
@@ -159,7 +168,7 @@ export function CrudScreen<T, CreateInput, UpdateInput, FormState>({
     if (result.ok) {
       const wasEdit = panel.mode === "edit";
       closePanel();
-      table.refetch();
+      invalidate();
       showToast(wasEdit ? toastMessages.updated : toastMessages.created);
       return;
     }
@@ -179,7 +188,7 @@ export function CrudScreen<T, CreateInput, UpdateInput, FormState>({
   const runDelete = async (row: T) => {
     const result = await service.remove(getRowId(row));
     if (result.ok) {
-      table.refetch();
+      invalidate();
       showToast(toastMessages.deleted);
       return;
     }
@@ -191,7 +200,7 @@ export function CrudScreen<T, CreateInput, UpdateInput, FormState>({
     if (!action) return;
     const result = await action(getRowId(row));
     if (result.ok) {
-      table.refetch();
+      invalidate();
       return;
     }
     showToast(resultErrorMessage(result, t), "error");

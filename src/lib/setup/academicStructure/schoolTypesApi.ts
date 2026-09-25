@@ -189,6 +189,7 @@ async function remove(id: string): Promise<CrudResult<void>> {
 }
 
 export const schoolTypesService: CrudService<SchoolType, SchoolTypeInput, SchoolTypeInput> = {
+  queryKey: ["setup", "schoolTypes"],
   list,
   create,
   update,

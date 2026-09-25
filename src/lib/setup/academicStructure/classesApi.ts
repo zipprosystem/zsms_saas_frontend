@@ -236,6 +236,7 @@ export function createClassesService(
   }
 
   return {
+    queryKey: ["setup", "classes", yearId],
     list,
     create,
     update,

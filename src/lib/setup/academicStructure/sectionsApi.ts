@@ -297,6 +297,13 @@ export function createSectionsService(options: {
   }
 
   return {
+    // Interim only — Sections' generic-CrudService list() is being
+    // replaced by useQueries-per-classId in the next retrofit step (this
+    // whole Map-cache/factory goes away then). Satisfies CrudService's now-
+    // required queryKey field in the meantime; never actually read by
+    // useCrudTable in production since ClassArmsScreen still uses the
+    // Map-cache list() as of this step.
+    queryKey: ["setup", "sections", ...classIds.slice().sort()],
     list,
     create,
     update,

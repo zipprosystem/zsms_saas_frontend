@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { TransientQueryError } from "@/lib/queryClient";
 
 /**
  * Shared shape for the ~29 Setup CRUD screens (Setup-1 establishes the
@@ -74,14 +75,40 @@ export type CrudResult<T> =
  * e.g. Academic Years' POST /:id/activate. Keyed by an action name the
  * screen's rowActions() choose to invoke via the `runCustom` helper
  * CrudScreen passes down.
+ *
+ * `queryKey` is the react-query cache key useCrudTable's list() call lives
+ * under. For a module-level singleton service (Academic Years, Award
+ * Bodies, School Types) it's a fixed constant; a year-scoped service
+ * (Classes) is a FACTORY whose returned queryKey includes the year id, so
+ * a different year's data never collides in the cache. Screens never see
+ * or set this themselves — it's a service-layer concern, not a screen
+ * prop, which is what keeps every screen file unchanged by this.
  */
 export type CrudService<T, CreateInput, UpdateInput> = {
+  queryKey: readonly unknown[];
   list: () => Promise<CrudResult<T[]>>;
   create: (data: CreateInput) => Promise<CrudResult<T>>;
   update: (id: string, data: UpdateInput) => Promise<CrudResult<T>>;
   remove: (id: string) => Promise<CrudResult<void>>;
   customActions?: Record<string, (id: string) => Promise<CrudResult<T>>>;
 };
+
+/**
+ * Every retrofitted queryFn runs its service's CrudResult through this
+ * before handing it to react-query. Only `network`/`server` are genuinely
+ * worth retrying — those throw a TransientQueryError so the QueryClient's
+ * retry+backoff (see queryClient.tsx) kicks in. Every other failure kind
+ * (forbidden, devBypassUnavailable, validation, conflict) is a
+ * deterministic outcome no retry can fix, so it resolves normally instead
+ * — the query settles immediately, and useCrudTable maps it to the same
+ * TableLoadState it always has.
+ */
+export function throwIfTransient<T>(result: CrudResult<T>): CrudResult<T> {
+  if (!result.ok && (result.kind === "network" || result.kind === "server")) {
+    throw new TransientQueryError();
+  }
+  return result;
+}
 
 /**
  * Everything DataTable and CardGrid have in common — both are just a

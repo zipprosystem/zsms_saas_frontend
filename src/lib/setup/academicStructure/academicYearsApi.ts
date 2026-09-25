@@ -160,6 +160,7 @@ async function activate(id: string): Promise<CrudResult<AcademicYear>> {
 }
 
 export const academicYearsService: CrudService<AcademicYear, AcademicYearInput, AcademicYearInput> = {
+  queryKey: ["setup", "academicYears"],
   list,
   create,
   update,
