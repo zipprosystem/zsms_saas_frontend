@@ -498,6 +498,93 @@
         "updated": "Classe mise à jour",
         "deleted": "Classe supprimée"
       }
+    },
+    "classArms": {
+      "title": "Sections de classe",
+      "subtitle": "Les sections (ou groupes) au sein de chaque classe",
+      "addNew": "Ajouter une section",
+      "searchPlaceholder": "Rechercher une section…",
+      "empty": "Aucune section pour le moment pour cette classe — ajoutez-en une pour commencer.",
+      "noYear": {
+        "message": "Sélectionnez ou créez une année académique pour gérer les sections.",
+        "linkLabel": "Aller aux années académiques"
+      },
+      "schoolTypeSelector": {
+        "label": "Type d'établissement",
+        "placeholder": "Sélectionnez un type d'établissement pour voir ses sections"
+      },
+      "selectSchoolTypePrompt": "Sélectionnez un type d'établissement ci-dessus pour voir les sections de ses classes.",
+      "noClassesPrompt": {
+        "message": "Ce type d'établissement n'a pas encore de classe active.",
+        "linkLabel": "Aller aux classes"
+      },
+      "inactiveClassNote": "Les sections d'une classe inactive ne sont pas affichées ici — réactivez d'abord la classe pour les gérer.",
+      "panel": {
+        "createTitle": "Ajouter une section",
+        "editTitle": "Modifier la section"
+      },
+      "columns": {
+        "name": "Nom de la section",
+        "class": "Classe",
+        "schoolType": "Type d'établissement",
+        "location": "Bâtiment / Salle",
+        "classTime": "Horaire",
+        "status": "Statut"
+      },
+      "status": { "active": "Actif", "inactive": "Inactif" },
+      "filters": {
+        "class": "Classe",
+        "armName": "Section",
+        "status": "Statut",
+        "all": "Tous"
+      },
+      "fields": {
+        "schoolType": {
+          "label": "Type d'établissement",
+          "placeholder": "Sélectionnez un type d'établissement"
+        },
+        "class": {
+          "label": "Classe",
+          "placeholder": "Sélectionnez une classe"
+        },
+        "armName": { "label": "Nom de la section", "placeholder": "ex. A" },
+        "building": {
+          "label": "Bâtiment (optionnel)",
+          "none": "Aucun",
+          "loading": "Chargement des bâtiments…"
+        },
+        "classroom": {
+          "label": "Salle de classe (optionnel)",
+          "none": "Aucune",
+          "loading": "Chargement des salles…"
+        },
+        "classTimeStart": { "label": "Heure de début (optionnel)" },
+        "classTimeEnd": { "label": "Heure de fin (optionnel)" },
+        "description": { "label": "Description (optionnel)", "placeholder": "ex. Section du matin" },
+        "isActive": {
+          "label": "Actif",
+          "helper": "Les sections inactives sont masquées des listes déroulantes ailleurs dans l'application, mais restent visibles et modifiables ici."
+        }
+      },
+      "errors": {
+        "schoolTypeRequired": "Sélectionnez un type d'établissement",
+        "classRequired": "Sélectionnez une classe",
+        "armNameRequired": "Saisissez un nom pour cette section",
+        "endBeforeStart": "L'heure de fin doit être postérieure à l'heure de début"
+      },
+      "actions": {
+        "deactivate": "Désactiver",
+        "reactivate": "Réactiver"
+      },
+      "confirmDelete": {
+        "title": "Supprimer la section ?",
+        "message": "Ceci supprimera « {name} ». Cette action est irréversible."
+      },
+      "toast": {
+        "created": "Section créée",
+        "updated": "Section mise à jour",
+        "deleted": "Section supprimée"
+      }
     }
   },
   "onboarding": {
