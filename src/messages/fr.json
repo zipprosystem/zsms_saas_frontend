@@ -168,6 +168,17 @@
       "noYears": "Configurer une année académique"
     }
   },
+  "search": {
+    "paletteLabel": "Recherche",
+    "shortcutHint": "⌘K",
+    "noResults": "Aucun résultat",
+    "noResultsHint": "Essayez un autre terme de recherche.",
+    "groups": {
+      "navigation": "Navigation",
+      "settings": "Paramètres",
+      "setup": "Configuration"
+    }
+  },
   "tenant": {
     "label": "Établissement",
     "invalid": {
