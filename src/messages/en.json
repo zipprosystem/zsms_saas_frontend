@@ -168,6 +168,17 @@
       "noYears": "Set up academic year"
     }
   },
+  "search": {
+    "paletteLabel": "Search",
+    "shortcutHint": "⌘K",
+    "noResults": "No matches",
+    "noResultsHint": "Try a different search term.",
+    "groups": {
+      "navigation": "Navigation",
+      "settings": "Settings",
+      "setup": "Setup"
+    }
+  },
   "tenant": {
     "label": "Tenant",
     "invalid": {

@@ -20,6 +20,7 @@ import { SocialMediaPanel } from "@/components/settings/SocialMediaPanel";
 import { ApiIntegrationsPanel } from "@/components/settings/ApiIntegrationsPanel";
 import { ComingSoonPanel } from "@/components/settings/ComingSoonPanel";
 import { getSchoolSettings, throwIfTransientSettings, type SettingsResult } from "@/lib/settings/settingsApi";
+import { SETTINGS_SECTION_KEYS, type SettingsSectionKey } from "@/lib/settings/settingsSections";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import type { SettingsData } from "@/lib/settings/types";
 import type { TenantStatus } from "@/types/tenant";
@@ -27,19 +28,11 @@ import type { TenantStatus } from "@/types/tenant";
 /** Shared by useQuery here and queryClient.setQueryData in every panel's onSaved below — must match exactly. */
 const SETTINGS_QUERY_KEY = ["settings"];
 
-const EDITABLE_SECTIONS = [
-  "identity",
-  "branding",
-  "generalBehaviour",
-  "regional",
-  "banking",
-  "questionBank",
-  "socialMedia",
-  "apiIntegrations",
-  "notificationRouting",
-] as const;
+// Shared with the global search index (src/lib/search) — see
+// settingsSections.ts's own header comment for why this moved out of here.
+const EDITABLE_SECTIONS = SETTINGS_SECTION_KEYS;
 
-type EditableSection = (typeof EDITABLE_SECTIONS)[number];
+type EditableSection = SettingsSectionKey;
 
 function isEditableSection(value: string | null): value is EditableSection {
   return !!value && (EDITABLE_SECTIONS as readonly string[]).includes(value);
