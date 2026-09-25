@@ -653,7 +653,8 @@
         "nextTermStartBeforeEnd": "La date de début du trimestre suivant doit être postérieure à la date de fin de ce trimestre",
         "feeInvalid": "Saisissez des frais valides",
         "termTypeRequired": "Sélectionnez un type de trimestre",
-        "classesRequired": "Sélectionnez au moins une classe"
+        "classesRequired": "Sélectionnez au moins une classe",
+        "duplicateTerm": "Un trimestre existe déjà pour cette classe"
       },
       "confirmDelete": {
         "title": "Supprimer le trimestre ?",
