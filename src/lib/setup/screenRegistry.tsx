@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import { AcademicYearsScreen } from "@/components/setup/academicStructure/AcademicYearsScreen";
 import { AwardBodiesScreen } from "@/components/setup/academicStructure/AwardBodiesScreen";
 import { SchoolTypesScreen } from "@/components/setup/academicStructure/SchoolTypesScreen";
+import { ClassesScreen } from "@/components/setup/academicStructure/ClassesScreen";
 
 /**
  * Keyed by "{categorySlug}/{screenSlug}". A screen not listed here falls
@@ -15,4 +16,8 @@ export const setupScreenRegistry: Record<string, ComponentType> = {
   // Award Bodies existing (its dropdown is populated from that service).
   "academic-structure/award-bodies": AwardBodiesScreen,
   "academic-structure/school-types": SchoolTypesScreen,
+  // Classes' form depends on School Types existing (its dropdown is
+  // populated from that service) — same reasoning as School Types/Award
+  // Bodies above.
+  "academic-structure/classes": ClassesScreen,
 };
