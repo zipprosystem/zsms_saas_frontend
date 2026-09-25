@@ -423,6 +423,82 @@
         "updated": "School type updated",
         "deleted": "School type deleted"
       }
+    },
+    "classes": {
+      "title": "Classes",
+      "subtitle": "The classes offered under each school type this academic year",
+      "addNew": "Add Class",
+      "searchPlaceholder": "Search classes…",
+      "empty": "No classes yet for this academic year — add your first one to get started.",
+      "noYear": {
+        "message": "Select or create an academic year to manage its classes.",
+        "linkLabel": "Go to Academic Years"
+      },
+      "panel": {
+        "createTitle": "Add Class",
+        "editTitle": "Edit Class"
+      },
+      "columns": {
+        "name": "Name",
+        "shortName": "Short Name",
+        "schoolType": "School Type",
+        "level": "Level",
+        "duration": "Duration",
+        "minimumAge": "Min. Age",
+        "status": "Status"
+      },
+      "status": { "active": "Active", "inactive": "Inactive" },
+      "filters": {
+        "schoolType": "School Type",
+        "status": "Status",
+        "all": "All"
+      },
+      "fields": {
+        "schoolType": {
+          "label": "School Type",
+          "placeholder": "Select a school type",
+          "loading": "Loading school types…",
+          "emptyHint": "No school types yet.",
+          "emptyHintLink": "Add one first",
+          "loadError": "Couldn't load school types."
+        },
+        "name": { "label": "Class Name", "placeholder": "e.g. Junior Secondary 1" },
+        "duration": { "label": "Duration", "placeholder": "e.g. 1 Year" },
+        "shortName": { "label": "Short Name (optional)", "placeholder": "e.g. JSS1" },
+        "level": { "label": "Level (optional)", "placeholder": "e.g. 1" },
+        "minimumAge": { "label": "Minimum Age (years)", "placeholder": "e.g. 12" },
+        "description": { "label": "Description (optional)", "placeholder": "e.g. First year of junior secondary" },
+        "fee": {
+          "label": "Fee (optional)",
+          "none": "None",
+          "loading": "Loading fees…"
+        },
+        "isActive": {
+          "label": "Active",
+          "helper": "Inactive classes are hidden from dropdowns elsewhere in the app, but stay visible and manageable here."
+        }
+      },
+      "errors": {
+        "nameRequired": "Enter a name for this class",
+        "schoolTypeRequired": "Select a school type",
+        "durationRequired": "Enter a duration for this class",
+        "minimumAgeRequired": "Enter a minimum age",
+        "minimumAgeInvalid": "Enter a valid age",
+        "levelInvalid": "Enter a valid level"
+      },
+      "actions": {
+        "deactivate": "Deactivate",
+        "reactivate": "Reactivate"
+      },
+      "confirmDelete": {
+        "title": "Delete class?",
+        "message": "This will delete \"{name}\". This can't be undone."
+      },
+      "toast": {
+        "created": "Class created",
+        "updated": "Class updated",
+        "deleted": "Class deleted"
+      }
     }
   },
   "onboarding": {

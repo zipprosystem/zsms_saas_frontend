@@ -423,6 +423,82 @@
         "updated": "Type d'établissement mis à jour",
         "deleted": "Type d'établissement supprimé"
       }
+    },
+    "classes": {
+      "title": "Classes",
+      "subtitle": "Les classes proposées pour chaque type d'établissement cette année académique",
+      "addNew": "Ajouter une classe",
+      "searchPlaceholder": "Rechercher une classe…",
+      "empty": "Aucune classe pour le moment cette année académique — ajoutez-en une pour commencer.",
+      "noYear": {
+        "message": "Sélectionnez ou créez une année académique pour gérer ses classes.",
+        "linkLabel": "Aller aux années académiques"
+      },
+      "panel": {
+        "createTitle": "Ajouter une classe",
+        "editTitle": "Modifier la classe"
+      },
+      "columns": {
+        "name": "Nom",
+        "shortName": "Nom court",
+        "schoolType": "Type d'établissement",
+        "level": "Niveau",
+        "duration": "Durée",
+        "minimumAge": "Âge min.",
+        "status": "Statut"
+      },
+      "status": { "active": "Actif", "inactive": "Inactif" },
+      "filters": {
+        "schoolType": "Type d'établissement",
+        "status": "Statut",
+        "all": "Tous"
+      },
+      "fields": {
+        "schoolType": {
+          "label": "Type d'établissement",
+          "placeholder": "Sélectionnez un type d'établissement",
+          "loading": "Chargement des types d'établissement…",
+          "emptyHint": "Aucun type d'établissement pour le moment.",
+          "emptyHintLink": "En ajouter un d'abord",
+          "loadError": "Impossible de charger les types d'établissement."
+        },
+        "name": { "label": "Nom de la classe", "placeholder": "ex. Premier cycle secondaire 1" },
+        "duration": { "label": "Durée", "placeholder": "ex. 1 an" },
+        "shortName": { "label": "Nom court (optionnel)", "placeholder": "ex. JSS1" },
+        "level": { "label": "Niveau (optionnel)", "placeholder": "ex. 1" },
+        "minimumAge": { "label": "Âge minimum (années)", "placeholder": "ex. 12" },
+        "description": { "label": "Description (optionnel)", "placeholder": "ex. Première année du premier cycle secondaire" },
+        "fee": {
+          "label": "Frais (optionnel)",
+          "none": "Aucun",
+          "loading": "Chargement des frais…"
+        },
+        "isActive": {
+          "label": "Actif",
+          "helper": "Les classes inactives sont masquées des listes déroulantes ailleurs dans l'application, mais restent visibles et modifiables ici."
+        }
+      },
+      "errors": {
+        "nameRequired": "Saisissez un nom pour cette classe",
+        "schoolTypeRequired": "Sélectionnez un type d'établissement",
+        "durationRequired": "Saisissez une durée pour cette classe",
+        "minimumAgeRequired": "Saisissez un âge minimum",
+        "minimumAgeInvalid": "Saisissez un âge valide",
+        "levelInvalid": "Saisissez un niveau valide"
+      },
+      "actions": {
+        "deactivate": "Désactiver",
+        "reactivate": "Réactiver"
+      },
+      "confirmDelete": {
+        "title": "Supprimer la classe ?",
+        "message": "Ceci supprimera « {name} ». Cette action est irréversible."
+      },
+      "toast": {
+        "created": "Classe créée",
+        "updated": "Classe mise à jour",
+        "deleted": "Classe supprimée"
+      }
     }
   },
   "onboarding": {

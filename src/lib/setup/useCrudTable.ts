@@ -59,13 +59,17 @@ export function useCrudTable<T, CreateInput, UpdateInput>(
     });
   }, [service]);
 
+  // Runs on mount, and again whenever `service` itself changes identity —
+  // refetch is otherwise called explicitly after mutations, not via this
+  // effect. For most screens `service` is a stable module-level singleton
+  // that never changes, so this only ever fires once, same as before. A
+  // year-scoped screen (Classes, Subjects, ...) instead builds a NEW
+  // service (via useMemo keyed on the selected year) whenever the session
+  // picker's year changes — that new reference is exactly what this effect
+  // needs to see to know a refetch is due.
   useEffect(() => {
     refetch();
-    // Only meant to run on mount (and when the service instance itself
-    // changes, which it never does for a given screen) — refetch is called
-    // explicitly after mutations instead.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refetch]);
 
   // Reset to page 1 whenever the visible set could shrink out from under
   // the current page.
