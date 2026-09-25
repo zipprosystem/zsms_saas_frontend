@@ -653,7 +653,8 @@
         "nextTermStartBeforeEnd": "Next term start date must be after this term's end date",
         "feeInvalid": "Enter a valid fee",
         "termTypeRequired": "Select a term type",
-        "classesRequired": "Select at least one class"
+        "classesRequired": "Select at least one class",
+        "duplicateTerm": "A term already exists for this class"
       },
       "confirmDelete": {
         "title": "Delete term?",

@@ -307,6 +307,14 @@ function ClassTermsTable({ yearId }: { yearId: string }) {
 
   const invalidateClass = (classId: string) => queryClient.invalidateQueries({ queryKey: classTermsQueryKey(classId) });
 
+  // DUPLICATE_NAME maps to the `term_name` field (classTermsApi.ts) — since
+  // client-side validation already guarantees term_name is non-empty
+  // before a request is ever sent, a server-side validation error landing
+  // on that specific field with no message of its own is, in practice,
+  // always this duplicate case, not a generic "invalid" one.
+  const fieldErrorFallback = (field: string): string =>
+    field === "term_name" ? t("setup.classTerms.errors.duplicateTerm") : t("setup.crudScreen.errors.fieldInvalid");
+
   const handleSave = async () => {
     // Only ever invoked while the panel is open (SlideOverPanel's onSave),
     // but TS can't infer that from control flow alone — this guard is what
@@ -344,7 +352,7 @@ function ClassTermsTable({ yearId }: { yearId: string }) {
       if (result.kind === "validation") {
         const fieldErrors: Record<string, string> = {};
         for (const error of result.errors) {
-          fieldErrors[error.field] = error.message ?? t("setup.crudScreen.errors.fieldInvalid");
+          fieldErrors[error.field] = error.message ?? fieldErrorFallback(error.field);
         }
         setFormErrors(fieldErrors);
       }
@@ -373,7 +381,7 @@ function ClassTermsTable({ yearId }: { yearId: string }) {
     if (result.kind === "validation") {
       const fieldErrors: Record<string, string> = {};
       for (const error of result.errors) {
-        fieldErrors[error.field] = error.message ?? t("setup.crudScreen.errors.fieldInvalid");
+        fieldErrors[error.field] = error.message ?? fieldErrorFallback(error.field);
       }
       setFormErrors(fieldErrors);
     }

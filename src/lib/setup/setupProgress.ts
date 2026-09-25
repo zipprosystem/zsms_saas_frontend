@@ -7,6 +7,7 @@ import { awardBodiesService } from "@/lib/setup/academicStructure/awardBodiesApi
 import { schoolTypesService } from "@/lib/setup/academicStructure/schoolTypesApi";
 import { createClassesService } from "@/lib/setup/academicStructure/classesApi";
 import { fetchSectionsForClass, sectionsQueryKey } from "@/lib/setup/academicStructure/sectionsApi";
+import { classTermsQueryKey, fetchTermsForClass } from "@/lib/setup/academicStructure/classTermsApi";
 import type { SetupItem } from "@/lib/setup/setupConfig";
 
 /**
@@ -37,7 +38,14 @@ import type { SetupItem } from "@/lib/setup/setupConfig";
  * lookup isSetupItemComplete() needs; the actual fetching is explicit
  * per-entity hook calls below.
  */
-const ITEMS_WITH_LIVE_CHECK = new Set(["academicYears", "awardBodies", "schoolTypes", "classes", "classArms"]);
+const ITEMS_WITH_LIVE_CHECK = new Set([
+  "academicYears",
+  "awardBodies",
+  "schoolTypes",
+  "classes",
+  "classArms",
+  "classTerms",
+]);
 
 export type SetupProgressState =
   | { status: "loading" }
@@ -99,12 +107,30 @@ export function useSetupProgress(): SetupProgressState {
   // misrepresent the screen's contents; here we only need one true.
   const classArmsExist = !!yearId && sectionQueries.some((query) => query.data === true);
 
+  // Class Terms — same dependent-query shape as classArms above, but
+  // scoped to ALL of the year's classes (active and inactive), matching
+  // the Class Terms screen's own read scope: unlike Sections, there's no
+  // CONFIRMED backend limitation making an inactive class's terms
+  // disappear, so a term on an inactive class should still count here.
+  const allClassIds = yearId && classesQuery.data?.ok ? classesQuery.data.data.map((cls) => cls.id) : [];
+  const classTermQueries = useQueries({
+    queries: allClassIds.map((classId) => ({
+      queryKey: classTermsQueryKey(classId),
+      queryFn: () => fetchTermsForClass(classId).then(throwIfTransient),
+      select: (result: Awaited<ReturnType<typeof fetchTermsForClass>>) => result.ok && result.data.length > 0,
+      staleTime: PROGRESS_STALE_TIME_MS,
+    })),
+  });
+  // Same lenient "any one class is enough" rule as classArms.
+  const classTermsExist = !!yearId && classTermQueries.some((query) => query.data === true);
+
   const sectionsStillLoading = activeClassIds.length > 0 && sectionQueries.some((query) => query.isPending);
+  const classTermsStillLoading = allClassIds.length > 0 && classTermQueries.some((query) => query.isPending);
   const isLoading =
     academicYearsQuery.isPending ||
     awardBodiesQuery.isPending ||
     schoolTypesQuery.isPending ||
-    (!!yearId && (classesQuery.isPending || sectionsStillLoading));
+    (!!yearId && (classesQuery.isPending || sectionsStillLoading || classTermsStillLoading));
 
   if (isLoading) return { status: "loading" };
 
@@ -114,6 +140,7 @@ export function useSetupProgress(): SetupProgressState {
   if (schoolTypesQuery.data) completedKeys.add("schoolTypes");
   if (classesExist) completedKeys.add("classes");
   if (classArmsExist) completedKeys.add("classArms");
+  if (classTermsExist) completedKeys.add("classTerms");
 
   return { status: "loaded", completedKeys };
 }

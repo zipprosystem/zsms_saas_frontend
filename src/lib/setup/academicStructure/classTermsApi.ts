@@ -19,10 +19,13 @@ import type { CrudResult } from "@/lib/setup/crudTypes";
  *     term_name, start_date, end_date, next_term_start_date,
  *     next_term_fee?, term_type }
  *     -> Transactional (all-or-nothing) — creates one independent
- *     ClassTerm per class_id. FLAGGED, UNCONFIRMED response shape:
- *     assumed { success: true, data: <ClassTerm[]> } (one full row per
- *     class, each already carrying its own id + class_id) — reconcile
- *     once tested against the real API.
+ *     ClassTerm per class_id. Response shape still not fully confirmed —
+ *     see extractCreatedTerms() below, which accepts several plausible
+ *     shapes for the created rows but never treats an unrecognized-yet-
+ *     successful (2xx) shape as a failure. A first real attempt did 2xx
+ *     but the frontend misread it as an error (the fix here) — reconcile
+ *     extractCreatedTerms() to the exact shape once confirmed from
+ *     DevTools.
  *   PUT {API_BASE}/erp/class-terms/:id { term_name, start_date, end_date,
  *     next_term_start_date, next_term_fee?, term_type }
  *     -> Edits ONE class's term only. No class_ids/academic_year_id in
@@ -152,6 +155,27 @@ export async function fetchTermsForClass(classId: string): Promise<CrudResult<Cl
   return toResult(response, body);
 }
 
+// BUG FIX (Matthew, confirmed via DevTools): the original version fell
+// through to `{ok:false, kind:"server"}` whenever `data` wasn't a
+// non-empty bare array — but the create had already succeeded server-side
+// (a retry 409s as DUPLICATE, proving it), so this showed a false "Something
+// went wrong" for a request that actually worked. `response.ok` (2xx) is
+// the ONLY thing that determines success now; the rows themselves are a
+// best-effort extraction across a few plausible shapes, never a reason to
+// report failure. FLAGGED: exact shape still unconfirmed pending the real
+// POST response — reconcile extractCreatedTerms() once known.
+function extractCreatedTerms(body: unknown): ClassTerm[] {
+  const data = (body as { data?: unknown } | null)?.data;
+  if (Array.isArray(data)) return data as ClassTerm[];
+  if (data && typeof data === "object") {
+    const items = (data as { items?: unknown }).items;
+    if (Array.isArray(items)) return items as ClassTerm[];
+    const created = (data as { created?: unknown }).created;
+    if (Array.isArray(created)) return created as ClassTerm[];
+  }
+  return [];
+}
+
 export async function createClassTerms(data: ClassTermCreateInput): Promise<CrudResult<ClassTerm[]>> {
   if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
 
@@ -164,11 +188,11 @@ export async function createClassTerms(data: ClassTermCreateInput): Promise<Crud
 
   const body = await parseBody(response);
   if (!response.ok) return toResult(response, body);
-  const created = (body as { data?: unknown } | null)?.data;
-  if (Array.isArray(created) && created.length > 0) {
-    return { ok: true, data: created as ClassTerm[] };
-  }
-  return { ok: false, kind: "server" };
+  // Success regardless of whether the rows parsed — the caller
+  // (ClassTermsScreen.handleSave) invalidates every selected class's term
+  // query either way, so the list refetches and shows the real,
+  // authoritative state even if this returns an empty array here.
+  return { ok: true, data: extractCreatedTerms(body) };
 }
 
 export async function updateClassTerm(id: string, data: ClassTermUpdateInput): Promise<CrudResult<ClassTerm>> {
