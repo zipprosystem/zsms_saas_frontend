@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
+import { QueryProvider } from "@/lib/queryClient";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -49,7 +50,9 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased`}
       >
         <NextIntlClientProvider messages={messages}>
-          <AuthProvider>{children}</AuthProvider>
+          <QueryProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </QueryProvider>
         </NextIntlClientProvider>
       </body>
     </html>
