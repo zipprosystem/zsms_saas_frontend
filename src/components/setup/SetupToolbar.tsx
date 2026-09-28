@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { SearchIcon } from "@/components/icons/header/SearchIcon";
 import { ChevronDownIcon } from "@/components/icons/sidebar/ChevronDownIcon";
 import { PlusIcon } from "@/components/icons/PlusIcon";
 import { Button } from "@/components/ui/Button";
 import { ExportMenu } from "@/components/setup/ExportMenu";
+import { useDropdown, DropdownList } from "@/components/ui/Dropdown";
 import type { FilterDef } from "@/lib/setup/crudTypes";
 import type { ExportConfig } from "@/lib/export/exportTypes";
 
@@ -96,19 +96,17 @@ export type FilterDropdownProps = {
 // over an already-fetched list) but hits the exact same native-<select>
 // overflow problem, so it reuses this rather than reintroducing the bug.
 export function FilterDropdown({ def, value, onChange }: FilterDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen]);
+  const {
+    isOpen,
+    openUpward,
+    highlightedIndex,
+    setHighlightedIndex,
+    containerRef,
+    toggle,
+    commitIndex,
+    handleTriggerKeyDown,
+    handleListKeyDown,
+  } = useDropdown({ options: def.options, value, onCommit: onChange });
 
   const selectedLabel = def.options.find((option) => option.value === value)?.label ?? def.label;
 
@@ -116,7 +114,8 @@ export function FilterDropdown({ def, value, onChange }: FilterDropdownProps) {
     <div ref={containerRef} className="relative w-full sm:w-auto">
       <button
         type="button"
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={toggle}
+        onKeyDown={(event) => (isOpen ? handleListKeyDown(event) : handleTriggerKeyDown(event))}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label={def.label}
@@ -131,29 +130,15 @@ export function FilterDropdown({ def, value, onChange }: FilterDropdownProps) {
       </button>
 
       {isOpen ? (
-        <ul
-          role="listbox"
-          className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border border-border bg-surface py-1 shadow-lg sm:right-auto sm:w-max sm:min-w-full"
-        >
-          {def.options.map((option) => (
-            <li key={option.value} role="option" aria-selected={option.value === value}>
-              <button
-                type="button"
-                onClick={() => {
-                  onChange(option.value);
-                  setIsOpen(false);
-                }}
-                className={`block w-full truncate px-4 py-2 text-left text-sm transition-colors ${
-                  option.value === value
-                    ? "bg-brand-tint text-accent"
-                    : "text-text-primary hover:bg-background"
-                }`}
-              >
-                {option.label}
-              </button>
-            </li>
-          ))}
-        </ul>
+        <DropdownList
+          options={def.options}
+          value={value}
+          highlightedIndex={highlightedIndex}
+          openUpward={openUpward}
+          onHover={setHighlightedIndex}
+          onCommit={commitIndex}
+          listClassName="sm:right-auto sm:w-max sm:min-w-full"
+        />
       ) : null}
     </div>
   );
