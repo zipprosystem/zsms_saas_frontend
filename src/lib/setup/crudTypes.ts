@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { TransientQueryError } from "@/lib/queryClient";
+import type { ExportConfig } from "@/lib/export/exportTypes";
 
 /**
  * Shared shape for the ~29 Setup CRUD screens (Setup-1 establishes the
@@ -129,6 +130,7 @@ export type SetupListBaseProps<T> = {
 
   onAddNew?: () => void;
   addNewLabel?: string;
+  exportConfig?: ExportConfig<T>;
 
   isLoading: boolean;
   errorMessage: string | null;

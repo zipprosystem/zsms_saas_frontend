@@ -29,6 +29,7 @@ export function CardGrid<T>({
   filters,
   onAddNew,
   addNewLabel,
+  exportConfig,
   isLoading,
   errorMessage,
   onRetry,
@@ -50,6 +51,7 @@ export function CardGrid<T>({
         filters={filters}
         onAddNew={onAddNew}
         addNewLabel={addNewLabel}
+        exportConfig={exportConfig}
       />
 
       {isLoading ? (

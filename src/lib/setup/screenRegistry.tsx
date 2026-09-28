@@ -7,6 +7,8 @@ import { ClassArmsScreen } from "@/components/setup/academicStructure/ClassArmsS
 import { ClassTermsScreen } from "@/components/setup/academicStructure/ClassTermsScreen";
 import { DepartmentsScreen } from "@/components/setup/academicStructure/DepartmentsScreen";
 import { SubjectsMasterScreen } from "@/components/setup/academicStructure/SubjectsMasterScreen";
+import { ClassSubjectsScreen } from "@/components/setup/academicStructure/ClassSubjectsScreen";
+import { ClassSubjectGroupingScreen } from "@/components/setup/academicStructure/ClassSubjectGroupingScreen";
 
 /**
  * Keyed by "{categorySlug}/{screenSlug}". A screen not listed here falls
@@ -34,4 +36,8 @@ export const setupScreenRegistry: Record<string, ComponentType> = {
   // Subject Master's Department dropdown depends on Departments existing —
   // same reasoning as every other dependency-ordered pair above.
   "academic-structure/subjects-master": SubjectsMasterScreen,
+  // Class Subjects' form depends on Classes + Subject Master existing.
+  "academic-structure/class-subjects": ClassSubjectsScreen,
+  // Grouping's form depends on Classes + Class Subjects existing.
+  "academic-structure/class-subject-grouping": ClassSubjectGroupingScreen,
 };

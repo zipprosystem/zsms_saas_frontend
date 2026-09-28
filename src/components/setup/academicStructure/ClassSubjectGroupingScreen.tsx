@@ -1,0 +1,311 @@
+"use client";
+
+import { useMemo } from "react";
+import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { useQuery } from "@tanstack/react-query";
+import { InputField } from "@/components/ui/Input";
+import { SelectField } from "@/components/ui/Select";
+import { CrudScreen } from "@/components/setup/CrudScreen";
+import { CheckboxList, type CheckboxListOption } from "@/components/setup/CheckboxList";
+import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
+import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
+import { throwIfTransient, type ColumnDef } from "@/lib/setup/crudTypes";
+import type { ExportColumn } from "@/lib/export/exportTypes";
+import { createClassesService, type SchoolClass } from "@/lib/setup/academicStructure/classesApi";
+import { schoolTypesService, type SchoolType } from "@/lib/setup/academicStructure/schoolTypesApi";
+import { subjectsMasterService, type SubjectMaster } from "@/lib/setup/academicStructure/subjectsMasterApi";
+import { classSubjectsQueryKey, fetchClassSubjectsForYear, type ClassSubject } from "@/lib/setup/academicStructure/classSubjectsApi";
+import {
+  createClassSubjectGroupService,
+  type ClassSubjectGroup,
+  type ClassSubjectGroupInput,
+} from "@/lib/setup/academicStructure/classSubjectGroupingApi";
+
+type FormState = {
+  name: string;
+  /** Filter only, narrows the Classes checklist — never sent to the service. */
+  school_type_id: string;
+  class_ids: string[];
+  class_subject_ids: string[];
+};
+
+const EMPTY_FORM: FormState = { name: "", school_type_id: "", class_ids: [], class_subject_ids: [] };
+
+/**
+ * Outer guard — a group always belongs to an academic year (same shape as
+ * Classes/Class Subjects). Unlike Class Subjects, a group IS a single
+ * record per create/edit (no fan-out), so this goes straight through
+ * CrudScreen via a year-scoped factory service, same pattern as Classes
+ * itself (createClassesService(yearId)).
+ */
+export function ClassSubjectGroupingScreen() {
+  const t = useTranslations();
+  const { selectedYearId, isLoading, error } = useAcademicYear();
+
+  if (!isLoading && !error && !selectedYearId) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-surface px-4 py-10 text-center">
+        <p className="text-sm text-text-secondary">{t("setup.classSubjectGrouping.noYear.message")}</p>
+        <Link
+          href="/admin/setup/academic-structure/academic-years"
+          className="text-sm font-semibold text-accent hover:underline"
+        >
+          {t("setup.classSubjectGrouping.noYear.linkLabel")}
+        </Link>
+      </div>
+    );
+  }
+
+  if (!selectedYearId) {
+    return (
+      <div className="flex items-center justify-center rounded-xl border border-border bg-surface px-4 py-10 text-sm text-text-muted">
+        {t("setup.dataTable.loading")}
+      </div>
+    );
+  }
+
+  return <ClassSubjectGroupingTable yearId={selectedYearId} />;
+}
+
+function ClassSubjectGroupingTable({ yearId }: { yearId: string }) {
+  const t = useTranslations();
+  const { selectedYear } = useAcademicYear();
+
+  const classesService = createClassesService(yearId);
+  const classesQuery = useQuery({
+    queryKey: classesService.queryKey,
+    queryFn: () => classesService.list().then(throwIfTransient),
+    staleTime: STRUCTURAL_STALE_TIME_MS,
+  });
+  const classes: SchoolClass[] = classesQuery.data?.ok ? classesQuery.data.data : [];
+  const activeClasses = classes.filter((cls) => cls.is_active);
+
+  const schoolTypesQuery = useQuery({
+    queryKey: schoolTypesService.queryKey,
+    queryFn: () => schoolTypesService.list().then(throwIfTransient),
+    staleTime: STRUCTURAL_STALE_TIME_MS,
+  });
+  const schoolTypes: SchoolType[] = schoolTypesQuery.data?.ok ? schoolTypesQuery.data.data : [];
+
+  const subjectsQuery = useQuery({
+    queryKey: subjectsMasterService.queryKey,
+    queryFn: () => subjectsMasterService.list().then(throwIfTransient),
+    staleTime: STRUCTURAL_STALE_TIME_MS,
+  });
+  const subjects: SubjectMaster[] = subjectsQuery.data?.ok ? subjectsQuery.data.data : [];
+
+  const classSubjectsQuery = useQuery({
+    queryKey: classSubjectsQueryKey(yearId),
+    queryFn: () => fetchClassSubjectsForYear(yearId).then(throwIfTransient),
+    staleTime: STRUCTURAL_STALE_TIME_MS,
+  });
+  const classSubjects: ClassSubject[] = classSubjectsQuery.data?.ok ? classSubjectsQuery.data.data : [];
+
+  const classById = (id: string): SchoolClass | null => classes.find((cls) => cls.id === id) ?? null;
+  const subjectById = (id: string): SubjectMaster | null => subjects.find((subject) => subject.id === id) ?? null;
+  const classSubjectLabel = (row: ClassSubject): string =>
+    `${classById(row.class_id)?.name ?? "—"} — ${subjectById(row.subject_id)?.name ?? "—"}`;
+
+  const groupService = useMemo(() => createClassSubjectGroupService(yearId), [yearId]);
+
+  const columns: ColumnDef<ClassSubjectGroup>[] = [
+    { key: "name", header: t("setup.classSubjectGrouping.columns.name"), render: (row) => row.name },
+    {
+      key: "classes",
+      header: t("setup.classSubjectGrouping.columns.classes"),
+      render: (row) => {
+        const names = row.class_ids.map((id) => classById(id)?.name).filter((name): name is string => !!name);
+        if (names.length === 0) return "—";
+        return names.length <= 2 ? names.join(", ") : `${names.slice(0, 2).join(", ")} +${names.length - 2}`;
+      },
+    },
+    {
+      key: "subjects",
+      header: t("setup.classSubjectGrouping.columns.subjects"),
+      render: (row) => (
+        <span className="text-sm text-text-secondary">
+          {t("setup.classSubjectGrouping.columns.subjectsCount", { count: row.class_subject_ids.length })}
+        </span>
+      ),
+    },
+  ];
+
+  const exportColumns: ExportColumn<ClassSubjectGroup>[] = [
+    { header: t("setup.classSubjectGrouping.columns.name"), value: (row) => row.name },
+    {
+      header: t("setup.classSubjectGrouping.columns.classes"),
+      value: (row) => row.class_ids.map((id) => classById(id)?.name).filter(Boolean).join(", "),
+    },
+    { header: t("setup.classSubjectGrouping.columns.subjects"), value: (row) => row.class_subject_ids.length },
+  ];
+
+  return (
+    <CrudScreen<ClassSubjectGroup, ClassSubjectGroupInput, ClassSubjectGroupInput, FormState>
+      title={t("setup.classSubjectGrouping.title")}
+      subtitle={t("setup.classSubjectGrouping.subtitle")}
+      addNewLabel={t("setup.classSubjectGrouping.addNew")}
+      panelTitle={{
+        create: t("setup.classSubjectGrouping.panel.createTitle"),
+        edit: t("setup.classSubjectGrouping.panel.editTitle"),
+      }}
+      service={groupService}
+      display={{ mode: "table", columns }}
+      exportColumns={exportColumns}
+      exportFilenamePrefix="class-subject-grouping"
+      exportPeriodLabel={selectedYear?.name}
+      getRowId={(row) => row.id}
+      searchPlaceholder={t("setup.classSubjectGrouping.searchPlaceholder")}
+      matchesSearch={(row, query) => row.name.toLowerCase().includes(query.toLowerCase())}
+      rowActions={(row, helpers) => [
+        { key: "edit", label: t("common.edit"), onClick: helpers.edit },
+        {
+          key: "delete",
+          label: t("common.delete"),
+          variant: "danger",
+          onClick: helpers.remove,
+          confirm: {
+            title: t("setup.classSubjectGrouping.confirmDelete.title"),
+            message: t("setup.classSubjectGrouping.confirmDelete.message", { name: row.name }),
+          },
+        },
+      ]}
+      emptyFormState={EMPTY_FORM}
+      toFormState={(row) => ({
+        name: row.name,
+        // Best-effort: nothing enforces a group's classes share one school
+        // type, so this just seeds the filter from the first class — the
+        // full class_ids list itself is always the source of truth.
+        school_type_id: classById(row.class_ids[0])?.school_type_id ?? "",
+        class_ids: row.class_ids,
+        class_subject_ids: row.class_subject_ids,
+      })}
+      validate={(data) => {
+        const errors: Record<string, string> = {};
+        if (!data.name.trim()) errors.name = t("setup.classSubjectGrouping.errors.nameRequired");
+        if (data.class_ids.length === 0) errors.class_ids = t("setup.classSubjectGrouping.errors.classesRequired");
+        if (data.class_subject_ids.length === 0) {
+          errors.class_subject_ids = t("setup.classSubjectGrouping.errors.classSubjectsRequired");
+        }
+        return errors;
+      }}
+      toCreateInput={(data) => ({
+        name: data.name.trim(),
+        class_ids: data.class_ids,
+        class_subject_ids: data.class_subject_ids,
+      })}
+      toUpdateInput={(data) => ({
+        name: data.name.trim(),
+        class_ids: data.class_ids,
+        class_subject_ids: data.class_subject_ids,
+      })}
+      renderFields={({ data, onChange, errors }) => {
+        const classesOfType = (
+          data.school_type_id ? activeClasses.filter((cls) => cls.school_type_id === data.school_type_id) : activeClasses
+        ).map((cls): CheckboxListOption => ({ id: cls.id, label: cls.name }));
+
+        const classSubjectsForChosenClasses = classSubjects.filter((row) => data.class_ids.includes(row.class_id));
+        const classSubjectOptions: CheckboxListOption[] = classSubjectsForChosenClasses.map((row) => ({
+          id: row.id,
+          label: classSubjectLabel(row),
+        }));
+
+        return (
+          <>
+            <InputField
+              id="class-subject-group-name"
+              label={t("setup.classSubjectGrouping.fields.name.label")}
+              placeholder={t("setup.classSubjectGrouping.fields.name.placeholder")}
+              value={data.name}
+              onChange={(event) => onChange({ name: event.target.value })}
+              hasError={!!errors.name}
+              error={errors.name}
+            />
+
+            <SelectField
+              id="class-subject-group-school-type"
+              label={t("setup.classSubjectGrouping.fields.schoolType.label")}
+              value={data.school_type_id}
+              onChange={(event) =>
+                onChange({ school_type_id: event.target.value, class_ids: [], class_subject_ids: [] })
+              }
+            >
+              <option value="">{t("setup.classSubjectGrouping.fields.schoolType.all")}</option>
+              {schoolTypes.map((type) => (
+                <option key={type.id} value={type.id}>
+                  {type.name}
+                </option>
+              ))}
+            </SelectField>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-text-primary">
+                {t("setup.classSubjectGrouping.fields.classes.label")}
+              </span>
+              {classesOfType.length === 0 ? (
+                <p className="text-xs text-text-muted">
+                  {t("setup.classSubjectGrouping.fields.classes.emptyHint")}{" "}
+                  <Link
+                    href="/admin/setup/academic-structure/classes"
+                    className="font-semibold text-accent hover:underline"
+                  >
+                    {t("setup.classSubjectGrouping.fields.classes.emptyHintLink")}
+                  </Link>
+                </p>
+              ) : (
+                <CheckboxList
+                  options={classesOfType}
+                  selectedIds={data.class_ids}
+                  onChange={(class_ids) => {
+                    const stillValidIds = new Set(
+                      classSubjects.filter((row) => class_ids.includes(row.class_id)).map((row) => row.id),
+                    );
+                    onChange({
+                      class_ids,
+                      class_subject_ids: data.class_subject_ids.filter((id) => stillValidIds.has(id)),
+                    });
+                  }}
+                  selectAllLabel={t("setup.classSubjectGrouping.fields.classes.selectAll")}
+                />
+              )}
+              {errors.class_ids ? <p className="text-xs text-error">{errors.class_ids}</p> : null}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-text-primary">
+                {t("setup.classSubjectGrouping.fields.classSubjects.label")}
+              </span>
+              {data.class_ids.length === 0 ? (
+                <p className="text-xs text-text-muted">{t("setup.classSubjectGrouping.fields.classSubjects.selectClassesFirst")}</p>
+              ) : classSubjectOptions.length === 0 ? (
+                <p className="text-xs text-text-muted">
+                  {t("setup.classSubjectGrouping.fields.classSubjects.emptyHint")}{" "}
+                  <Link
+                    href="/admin/setup/academic-structure/class-subjects"
+                    className="font-semibold text-accent hover:underline"
+                  >
+                    {t("setup.classSubjectGrouping.fields.classSubjects.emptyHintLink")}
+                  </Link>
+                </p>
+              ) : (
+                <CheckboxList
+                  options={classSubjectOptions}
+                  selectedIds={data.class_subject_ids}
+                  onChange={(class_subject_ids) => onChange({ class_subject_ids })}
+                  selectAllLabel={t("setup.classSubjectGrouping.fields.classSubjects.selectAll")}
+                />
+              )}
+              {errors.class_subject_ids ? <p className="text-xs text-error">{errors.class_subject_ids}</p> : null}
+            </div>
+          </>
+        );
+      }}
+      emptyMessage={t("setup.classSubjectGrouping.empty")}
+      toastMessages={{
+        created: t("setup.classSubjectGrouping.toast.created"),
+        updated: t("setup.classSubjectGrouping.toast.updated"),
+        deleted: t("setup.classSubjectGrouping.toast.deleted"),
+      }}
+    />
+  );
+}

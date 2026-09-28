@@ -775,6 +775,127 @@
         "updated": "Subject updated",
         "deleted": "Subject deleted"
       }
+    },
+    "classSubjects": {
+      "title": "Class Subjects",
+      "subtitle": "Which subjects each class takes, and how they're classified",
+      "addNew": "Add Class Subjects",
+      "searchPlaceholder": "Search by class or subject…",
+      "empty": "No class subjects yet for this academic year — add your first one to get started.",
+      "noYear": {
+        "message": "Select or create an academic year to manage class subjects.",
+        "linkLabel": "Go to Academic Years"
+      },
+      "panel": { "createTitle": "Add Class Subjects", "editTitle": "Edit Class Subject" },
+      "columns": {
+        "class": "Class",
+        "subject": "Subject",
+        "group": "Group",
+        "unit": "Unit",
+        "room": "Room",
+        "file": "File",
+        "fileDownload": "Download"
+      },
+      "subjectGroup": { "core": "Core", "elective": "Elective" },
+      "filters": { "class": "Class", "subject": "Subject", "group": "Group", "all": "All" },
+      "fields": {
+        "schoolType": { "label": "School Type (optional, narrows the class list)", "all": "All school types" },
+        "class": { "label": "Class" },
+        "subject": { "label": "Subject" },
+        "classes": {
+          "label": "Classes",
+          "selectAll": "Select All",
+          "emptyHint": "No active classes yet for this academic year.",
+          "emptyHintLink": "Add one first"
+        },
+        "subjects": {
+          "label": "Subjects",
+          "selectAll": "Select All",
+          "emptyHint": "No subjects in the catalog yet.",
+          "emptyHintLink": "Add one first"
+        },
+        "subjectGroup": { "label": "Subject Group" },
+        "unit": { "label": "Subject Unit (optional)", "placeholder": "1–10" },
+        "room": { "label": "Room (optional)", "none": "None", "loading": "Loading rooms…" },
+        "file": {
+          "label": "Subject File (optional, PDF/DOC/DOCX/PPT/PPTX, up to 5MB)",
+          "choose": "Choose a file",
+          "errors": {
+            "unsupportedType": "Only PDF, DOC, DOCX, PPT or PPTX files are accepted",
+            "tooLarge": "File must be 5MB or smaller"
+          }
+        }
+      },
+      "errors": {
+        "classesRequired": "Select at least one class",
+        "subjectsRequired": "Select at least one subject",
+        "groupRequired": "Select a subject group",
+        "unitInvalid": "Enter a whole number between 1 and 10"
+      },
+      "confirmDelete": {
+        "title": "Delete class subject?",
+        "message": "This will delete {subject} for {class}. This can't be undone."
+      },
+      "toast": {
+        "created": "{created, plural, one {Created # class-subject record} other {Created # class-subject records}}{skipped, plural, =0 {} other {, # already existed}}",
+        "updated": "Class subject updated",
+        "deleted": "Class subject deleted"
+      }
+    },
+    "classSubjectGrouping": {
+      "title": "Class Subject Grouping",
+      "subtitle": "Named groups of class subjects, e.g. a Science group across the senior classes",
+      "addNew": "Add Group",
+      "searchPlaceholder": "Search groups…",
+      "empty": "No subject groups yet for this academic year — add your first one to get started.",
+      "noYear": {
+        "message": "Select or create an academic year to manage subject groups.",
+        "linkLabel": "Go to Academic Years"
+      },
+      "panel": { "createTitle": "Add Group", "editTitle": "Edit Group" },
+      "columns": {
+        "name": "Group Name",
+        "classes": "Classes",
+        "subjects": "Subjects",
+        "subjectsCount": "{count, plural, one {# subject} other {# subjects}}"
+      },
+      "fields": {
+        "name": { "label": "Group Name", "placeholder": "e.g. Science Group" },
+        "schoolType": { "label": "School Type (optional, narrows the class list)", "all": "All school types" },
+        "classes": {
+          "label": "Classes",
+          "selectAll": "Select All",
+          "emptyHint": "No active classes yet for this academic year.",
+          "emptyHintLink": "Add one first"
+        },
+        "classSubjects": {
+          "label": "Class Subjects",
+          "selectAll": "Select All",
+          "selectClassesFirst": "Select at least one class above to choose its subjects.",
+          "emptyHint": "The selected classes have no subjects assigned yet.",
+          "emptyHintLink": "Set up Class Subjects first"
+        }
+      },
+      "errors": {
+        "nameRequired": "Enter a name for this group",
+        "classesRequired": "Select at least one class",
+        "classSubjectsRequired": "Select at least one class subject"
+      },
+      "confirmDelete": {
+        "title": "Delete group?",
+        "message": "This will delete \"{name}\". This can't be undone."
+      },
+      "toast": {
+        "created": "Group created",
+        "updated": "Group updated",
+        "deleted": "Group deleted"
+      }
+    },
+    "export": {
+      "label": "Export",
+      "includeAll": "Include all rows (ignore filters)",
+      "asExcel": "Export as Excel",
+      "asPdf": "Export as PDF"
     }
   },
   "onboarding": {

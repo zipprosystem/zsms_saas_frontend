@@ -20,6 +20,9 @@ export type Classroom = {
   name: string;
 };
 
+/** Shared by every consumer's useQuery call (currently: Class Subjects' Room dropdown) so they hit the same cache entry — classroomsService has no queryKey of its own since it isn't a CrudService. */
+export const classroomsQueryKey = ["facilities", "classrooms"] as const;
+
 const MOCK_BUILDINGS: Building[] = [
   { id: "b2c3d4e5-0010-4000-8000-000000000001", name: "Main Block" },
   { id: "b2c3d4e5-0010-4000-8000-000000000002", name: "Annex Block" },
