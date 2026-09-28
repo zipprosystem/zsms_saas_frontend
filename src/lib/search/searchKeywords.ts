@@ -10,4 +10,5 @@ export const SETUP_ITEM_KEYWORDS: Record<string, string[]> = {
   awardBodies: ["WAEC", "NECO", "Cambridge", "IB", "Edexcel", "exam board", "examining body"],
   schoolTypes: ["Creche", "Nursery", "Primary", "JSS", "SSS", "Junior Secondary", "Senior Secondary"],
   departments: ["HOD", "head of department", "line manager"],
+  classSubjects: ["core", "elective"],
 };

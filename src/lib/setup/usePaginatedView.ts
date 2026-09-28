@@ -38,6 +38,8 @@ export function usePaginatedView<T>(items: T[], { matchesSearch, matchesFilters 
 
   return {
     items: pageItems,
+    /** The full filtered/searched set, before pagination — for anything that needs "everything currently matching" rather than just the visible page (e.g. Export's "export what you see"). */
+    filteredItems,
     totalItems: filteredItems.length,
     page: currentPage,
     totalPages,

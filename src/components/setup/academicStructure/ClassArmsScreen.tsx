@@ -13,6 +13,7 @@ import { resultErrorMessage } from "@/components/setup/CrudScreen";
 import { SlideOverPanel } from "@/components/ui/SlideOverPanel";
 import { FilterDropdown } from "@/components/setup/SetupToolbar";
 import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import { throwIfTransient } from "@/lib/setup/crudTypes";
 import { usePaginatedView } from "@/lib/setup/usePaginatedView";
@@ -36,6 +37,7 @@ import {
   type SectionInput,
 } from "@/lib/setup/academicStructure/sectionsApi";
 import type { ColumnDef, FilterDef, RowAction } from "@/lib/setup/crudTypes";
+import type { ExportColumn, ExportConfig } from "@/lib/export/exportTypes";
 
 type FormState = {
   school_type_id: string;
@@ -232,6 +234,8 @@ function ClassArmsTable({
   const t = useTranslations();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
+  const { selectedYear } = useAcademicYear();
+  const { school } = useAuth();
 
   const [buildings, setBuildings] = useState<ReferenceListState<Building>>({ status: "loading" });
   const [classrooms, setClassrooms] = useState<ReferenceListState<Classroom>>({ status: "loading" });
@@ -393,6 +397,34 @@ function ClassArmsTable({
       });
     },
   }));
+
+  const exportColumns: ExportColumn<Section>[] = [
+    { header: t("setup.classArms.columns.name"), value: (row) => row.name },
+    { header: t("setup.classArms.columns.class"), value: (row) => classById(row.class_id)?.name ?? "" },
+    { header: t("setup.classArms.columns.schoolType"), value: (row) => schoolTypeNameForClass(row.class_id) ?? "" },
+    {
+      header: t("setup.classArms.columns.location"),
+      value: (row) =>
+        [buildingName(row.building_id), classroomName(row.classroom_id)].filter((part): part is string => !!part).join(" — "),
+    },
+    {
+      header: t("setup.classArms.columns.classTime"),
+      value: (row) => (row.class_time_start && row.class_time_end ? `${row.class_time_start}–${row.class_time_end}` : ""),
+    },
+    {
+      header: t("setup.classArms.columns.status"),
+      value: (row) => t(row.is_active ? "setup.classArms.status.active" : "setup.classArms.status.inactive"),
+    },
+  ];
+  const exportConfig: ExportConfig<Section> = {
+    filteredRows: view.filteredItems,
+    allRows: allItems,
+    columns: exportColumns,
+    title: t("setup.classArms.title"),
+    filenamePrefix: "class-arms",
+    schoolName: typeof school?.name === "string" && school.name.trim() ? school.name.trim() : "ZSMS",
+    periodLabel: selectedYear?.name,
+  };
 
   const emptyFormState: FormState = {
     school_type_id: selectedSchoolTypeId,
@@ -579,6 +611,7 @@ function ClassArmsTable({
         onSearchChange={view.setSearch}
         searchPlaceholder={t("setup.classArms.searchPlaceholder")}
         filters={filters}
+        exportConfig={exportConfig}
         onAddNew={openCreate}
         addNewLabel={t("setup.classArms.addNew")}
         isLoading={load.status === "loading"}

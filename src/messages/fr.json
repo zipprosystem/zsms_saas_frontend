@@ -783,6 +783,127 @@
         "updated": "Matière mise à jour",
         "deleted": "Matière supprimée"
       }
+    },
+    "classSubjects": {
+      "title": "Matières par classe",
+      "subtitle": "Quelles matières chaque classe suit, et comment elles sont classées",
+      "addNew": "Ajouter des matières",
+      "searchPlaceholder": "Rechercher par classe ou matière…",
+      "empty": "Aucune matière de classe pour le moment cette année — ajoutez la première pour commencer.",
+      "noYear": {
+        "message": "Sélectionnez ou créez une année académique pour gérer les matières par classe.",
+        "linkLabel": "Aller aux années académiques"
+      },
+      "panel": { "createTitle": "Ajouter des matières", "editTitle": "Modifier la matière de classe" },
+      "columns": {
+        "class": "Classe",
+        "subject": "Matière",
+        "group": "Groupe",
+        "unit": "Unité",
+        "room": "Salle",
+        "file": "Fichier",
+        "fileDownload": "Télécharger"
+      },
+      "subjectGroup": { "core": "Fondamentale", "elective": "Optionnelle" },
+      "filters": { "class": "Classe", "subject": "Matière", "group": "Groupe", "all": "Tous" },
+      "fields": {
+        "schoolType": { "label": "Type d'établissement (facultatif, filtre les classes)", "all": "Tous les types" },
+        "class": { "label": "Classe" },
+        "subject": { "label": "Matière" },
+        "classes": {
+          "label": "Classes",
+          "selectAll": "Tout sélectionner",
+          "emptyHint": "Aucune classe active pour le moment cette année.",
+          "emptyHintLink": "En ajouter une d'abord"
+        },
+        "subjects": {
+          "label": "Matières",
+          "selectAll": "Tout sélectionner",
+          "emptyHint": "Aucune matière dans le catalogue pour le moment.",
+          "emptyHintLink": "En ajouter une d'abord"
+        },
+        "subjectGroup": { "label": "Groupe de matière" },
+        "unit": { "label": "Unité de matière (facultatif)", "placeholder": "1–10" },
+        "room": { "label": "Salle (facultatif)", "none": "Aucune", "loading": "Chargement des salles…" },
+        "file": {
+          "label": "Fichier de la matière (facultatif, PDF/DOC/DOCX/PPT/PPTX, jusqu'à 5 Mo)",
+          "choose": "Choisir un fichier",
+          "errors": {
+            "unsupportedType": "Seuls les fichiers PDF, DOC, DOCX, PPT ou PPTX sont acceptés",
+            "tooLarge": "Le fichier doit faire 5 Mo maximum"
+          }
+        }
+      },
+      "errors": {
+        "classesRequired": "Sélectionnez au moins une classe",
+        "subjectsRequired": "Sélectionnez au moins une matière",
+        "groupRequired": "Sélectionnez un groupe de matière",
+        "unitInvalid": "Saisissez un nombre entier entre 1 et 10"
+      },
+      "confirmDelete": {
+        "title": "Supprimer la matière de classe ?",
+        "message": "Cela supprimera {subject} pour {class}. Cette action est irréversible."
+      },
+      "toast": {
+        "created": "{created, plural, one {# fiche matière-classe créée} other {# fiches matière-classe créées}}{skipped, plural, =0 {} other {, # déjà existante(s)}}",
+        "updated": "Matière de classe mise à jour",
+        "deleted": "Matière de classe supprimée"
+      }
+    },
+    "classSubjectGrouping": {
+      "title": "Regroupement de matières",
+      "subtitle": "Groupes nommés de matières de classe, ex. un groupe Sciences pour les classes senior",
+      "addNew": "Ajouter un groupe",
+      "searchPlaceholder": "Rechercher des groupes…",
+      "empty": "Aucun groupe de matières pour le moment cette année — ajoutez le premier pour commencer.",
+      "noYear": {
+        "message": "Sélectionnez ou créez une année académique pour gérer les groupes de matières.",
+        "linkLabel": "Aller aux années académiques"
+      },
+      "panel": { "createTitle": "Ajouter un groupe", "editTitle": "Modifier le groupe" },
+      "columns": {
+        "name": "Nom du groupe",
+        "classes": "Classes",
+        "subjects": "Matières",
+        "subjectsCount": "{count, plural, one {# matière} other {# matières}}"
+      },
+      "fields": {
+        "name": { "label": "Nom du groupe", "placeholder": "ex. Groupe Sciences" },
+        "schoolType": { "label": "Type d'établissement (facultatif, filtre les classes)", "all": "Tous les types" },
+        "classes": {
+          "label": "Classes",
+          "selectAll": "Tout sélectionner",
+          "emptyHint": "Aucune classe active pour le moment cette année.",
+          "emptyHintLink": "En ajouter une d'abord"
+        },
+        "classSubjects": {
+          "label": "Matières de classe",
+          "selectAll": "Tout sélectionner",
+          "selectClassesFirst": "Sélectionnez au moins une classe ci-dessus pour choisir ses matières.",
+          "emptyHint": "Les classes sélectionnées n'ont pas encore de matières assignées.",
+          "emptyHintLink": "Configurer d'abord les matières par classe"
+        }
+      },
+      "errors": {
+        "nameRequired": "Saisissez un nom pour ce groupe",
+        "classesRequired": "Sélectionnez au moins une classe",
+        "classSubjectsRequired": "Sélectionnez au moins une matière de classe"
+      },
+      "confirmDelete": {
+        "title": "Supprimer le groupe ?",
+        "message": "Cela supprimera « {name} ». Cette action est irréversible."
+      },
+      "toast": {
+        "created": "Groupe créé",
+        "updated": "Groupe mis à jour",
+        "deleted": "Groupe supprimé"
+      }
+    },
+    "export": {
+      "label": "Exporter",
+      "includeAll": "Inclure toutes les lignes (ignorer les filtres)",
+      "asExcel": "Exporter en Excel",
+      "asPdf": "Exporter en PDF"
     }
   },
   "onboarding": {

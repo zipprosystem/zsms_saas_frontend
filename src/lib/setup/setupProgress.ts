@@ -10,6 +10,8 @@ import { fetchSectionsForClass, sectionsQueryKey } from "@/lib/setup/academicStr
 import { classTermsQueryKey, fetchTermsForClass } from "@/lib/setup/academicStructure/classTermsApi";
 import { departmentsService } from "@/lib/setup/academicStructure/departmentsApi";
 import { subjectsMasterService } from "@/lib/setup/academicStructure/subjectsMasterApi";
+import { classSubjectsQueryKey, fetchClassSubjectsForYear } from "@/lib/setup/academicStructure/classSubjectsApi";
+import { createClassSubjectGroupService } from "@/lib/setup/academicStructure/classSubjectGroupingApi";
 import type { SetupItem } from "@/lib/setup/setupConfig";
 
 /**
@@ -49,6 +51,8 @@ const ITEMS_WITH_LIVE_CHECK = new Set([
   "classTerms",
   "departments",
   "subjectsMaster",
+  "classSubjects",
+  "classSubjectGrouping",
 ]);
 
 export type SetupProgressState =
@@ -144,6 +148,26 @@ export function useSetupProgress(): SetupProgressState {
     staleTime: PROGRESS_STALE_TIME_MS,
   });
 
+  // Class Subjects/Grouping — year-scoped like classes, but each has its
+  // own single "list for the year" query (not per-class), so no dependent
+  // useQueries fan-out is needed the way sections/terms need.
+  const classSubjectsForYearQuery = useQuery({
+    queryKey: yearId ? classSubjectsQueryKey(yearId) : ["setup", "classSubjects", "none"],
+    queryFn: () => fetchClassSubjectsForYear(yearId!).then(throwIfTransient),
+    enabled: !!yearId,
+    select: (result) => result.ok && result.data.length > 0,
+    staleTime: PROGRESS_STALE_TIME_MS,
+  });
+
+  const classSubjectGroupService = yearId ? createClassSubjectGroupService(yearId) : null;
+  const classSubjectGroupsQuery = useQuery({
+    queryKey: classSubjectGroupService?.queryKey ?? ["setup", "classSubjectGroups", "none"],
+    queryFn: () => classSubjectGroupService!.list().then(throwIfTransient),
+    enabled: !!classSubjectGroupService,
+    select: (result) => result.ok && result.data.length > 0,
+    staleTime: PROGRESS_STALE_TIME_MS,
+  });
+
   const sectionsStillLoading = activeClassIds.length > 0 && sectionQueries.some((query) => query.isPending);
   const classTermsStillLoading = allClassIds.length > 0 && classTermQueries.some((query) => query.isPending);
   const isLoading =
@@ -152,7 +176,12 @@ export function useSetupProgress(): SetupProgressState {
     schoolTypesQuery.isPending ||
     departmentsQuery.isPending ||
     subjectsMasterQuery.isPending ||
-    (!!yearId && (classesQuery.isPending || sectionsStillLoading || classTermsStillLoading));
+    (!!yearId &&
+      (classesQuery.isPending ||
+        sectionsStillLoading ||
+        classTermsStillLoading ||
+        classSubjectsForYearQuery.isPending ||
+        classSubjectGroupsQuery.isPending));
 
   if (isLoading) return { status: "loading" };
 
@@ -165,6 +194,8 @@ export function useSetupProgress(): SetupProgressState {
   if (classTermsExist) completedKeys.add("classTerms");
   if (departmentsQuery.data) completedKeys.add("departments");
   if (subjectsMasterQuery.data) completedKeys.add("subjectsMaster");
+  if (classSubjectsForYearQuery.data) completedKeys.add("classSubjects");
+  if (classSubjectGroupsQuery.data) completedKeys.add("classSubjectGrouping");
 
   return { status: "loaded", completedKeys };
 }

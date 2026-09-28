@@ -8,6 +8,7 @@ import { CrudScreen } from "@/components/setup/CrudScreen";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import { throwIfTransient } from "@/lib/setup/crudTypes";
 import type { ColumnDef } from "@/lib/setup/crudTypes";
+import type { ExportColumn } from "@/lib/export/exportTypes";
 import {
   departmentsService,
   type Department,
@@ -84,6 +85,16 @@ export function DepartmentsScreen() {
     },
   ];
 
+  const exportColumns: ExportColumn<Department>[] = [
+    { header: t("setup.departments.columns.name"), value: (row) => row.name },
+    { header: t("setup.departments.columns.hod"), value: (row) => staffName(row.hod_staff_id) ?? "" },
+    {
+      header: t("setup.departments.columns.seniorManager"),
+      value: (row) => (row.senior_manager_staff_id ? (staffName(row.senior_manager_staff_id) ?? "") : ""),
+    },
+    { header: t("setup.departments.columns.subjectsCount"), value: (row) => subjectsCount(row.id) },
+  ];
+
   return (
     <CrudScreen<Department, DepartmentInput, DepartmentInput, FormState>
       title={t("setup.departments.title")}
@@ -95,6 +106,7 @@ export function DepartmentsScreen() {
       }}
       service={departmentsService}
       display={{ mode: "table", columns }}
+      exportColumns={exportColumns}
       getRowId={(row) => row.id}
       searchPlaceholder={t("setup.departments.searchPlaceholder")}
       matchesSearch={(row, query) => row.name.toLowerCase().includes(query.toLowerCase())}

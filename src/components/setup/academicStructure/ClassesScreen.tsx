@@ -17,6 +17,7 @@ import {
 import { schoolTypesService, type SchoolType } from "@/lib/setup/academicStructure/schoolTypesApi";
 import { feesService, type Fee } from "@/lib/setup/academicStructure/feesApi";
 import type { ColumnDef, FilterDef } from "@/lib/setup/crudTypes";
+import type { ExportColumn } from "@/lib/export/exportTypes";
 
 type FormState = {
   school_type_id: string;
@@ -91,6 +92,7 @@ export function ClassesScreen() {
 
 function ClassesTable({ yearId }: { yearId: string }) {
   const t = useTranslations();
+  const { selectedYear } = useAcademicYear();
 
   // Both fetched once per mount, independently of useCrudTable/CrudScreen —
   // these are reference data for the form/table/filters, not classes
@@ -161,6 +163,19 @@ function ClassesTable({ yearId }: { yearId: string }) {
     },
   ];
 
+  const exportColumns: ExportColumn<SchoolClass>[] = [
+    { header: t("setup.classes.columns.name"), value: (row) => row.name },
+    { header: t("setup.classes.columns.shortName"), value: (row) => row.short_name ?? "" },
+    { header: t("setup.classes.columns.schoolType"), value: (row) => schoolTypeName(row.school_type_id) ?? "" },
+    { header: t("setup.classes.columns.level"), value: (row) => row.level ?? "" },
+    { header: t("setup.classes.columns.duration"), value: (row) => row.duration },
+    { header: t("setup.classes.columns.minimumAge"), value: (row) => row.minimum_age_years },
+    {
+      header: t("setup.classes.columns.status"),
+      value: (row) => t(row.is_active ? "setup.classes.status.active" : "setup.classes.status.inactive"),
+    },
+  ];
+
   const filterDefs: FilterDef[] = [
     {
       key: "schoolType",
@@ -194,6 +209,8 @@ function ClassesTable({ yearId }: { yearId: string }) {
       }}
       service={classesService}
       display={{ mode: "table", columns }}
+      exportColumns={exportColumns}
+      exportPeriodLabel={selectedYear?.name}
       getRowId={(row) => row.id}
       searchPlaceholder={t("setup.classes.searchPlaceholder")}
       matchesSearch={(row, query) => {

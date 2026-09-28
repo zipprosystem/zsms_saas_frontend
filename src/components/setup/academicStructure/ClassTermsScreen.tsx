@@ -15,8 +15,10 @@ import { resultErrorMessage } from "@/components/setup/CrudScreen";
 import { ChevronDownIcon } from "@/components/icons/sidebar/ChevronDownIcon";
 import { useRowActionConfirm } from "@/lib/setup/useRowActionConfirm";
 import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import { throwIfTransient, type FilterDef, type RowAction } from "@/lib/setup/crudTypes";
+import type { ExportColumn, ExportConfig } from "@/lib/export/exportTypes";
 import { createClassesService, type SchoolClass } from "@/lib/setup/academicStructure/classesApi";
 import {
   classTermsQueryKey,
@@ -145,9 +147,10 @@ function ClassesCheckboxList({
 
 function ClassTermsTable({ yearId }: { yearId: string }) {
   const t = useTranslations();
-  const { years } = useAcademicYear();
+  const { years, selectedYear } = useAcademicYear();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
+  const { school } = useAuth();
 
   const classesService = createClassesService(yearId);
   const classesQuery = useQuery({
@@ -197,6 +200,12 @@ function ClassTermsTable({ yearId }: { yearId: string }) {
     }))
     .filter((group) => !isFiltering || group.rows.length > 0);
 
+  // Flat (ungrouped) filtered set — same filters as `groups` above, just
+  // not partitioned by term type, since Export wants a plain row list.
+  const filteredTerms = allTerms
+    .filter(matchesSearchAndFilters)
+    .filter((term) => !termTypeFilter || term.term_type === termTypeFilter);
+
   const [expanded, setExpanded] = useState<Set<TermType>>(new Set(TERM_TYPES));
   const toggleExpanded = (type: TermType) => {
     setExpanded((current) => {
@@ -226,6 +235,25 @@ function ClassTermsTable({ yearId }: { yearId: string }) {
     { def: filterDefs[0], value: termTypeFilter, onChange: setTermTypeFilter },
     { def: filterDefs[1], value: classFilter, onChange: setClassFilter },
   ];
+
+  const exportColumns: ExportColumn<ClassTerm>[] = [
+    { header: t("setup.classTerms.fields.class.label"), value: (row) => classById(row.class_id)?.name ?? "" },
+    { header: t("setup.classTerms.fields.termName.label"), value: (row) => row.term_name },
+    { header: t("setup.classTerms.fields.termType.label"), value: (row) => termTypeLabel(row.term_type) },
+    { header: t("setup.classTerms.fields.startDate.label"), value: (row) => row.start_date },
+    { header: t("setup.classTerms.fields.endDate.label"), value: (row) => row.end_date },
+    { header: t("setup.classTerms.fields.nextTermStartDate.label"), value: (row) => row.next_term_start_date },
+    { header: t("setup.classTerms.columns.fee"), value: (row) => row.next_term_fee ?? "" },
+  ];
+  const exportConfig: ExportConfig<ClassTerm> = {
+    filteredRows: filteredTerms,
+    allRows: allTerms,
+    columns: exportColumns,
+    title: t("setup.classTerms.title"),
+    filenamePrefix: "class-terms",
+    schoolName: typeof school?.name === "string" && school.name.trim() ? school.name.trim() : "ZSMS",
+    periodLabel: selectedYear?.name,
+  };
 
   // ----- panel / form -----
   const [panel, setPanel] = useState<PanelState>({ mode: "closed" });
@@ -430,6 +458,7 @@ function ClassTermsTable({ yearId }: { yearId: string }) {
         onSearchChange={setSearch}
         searchPlaceholder={t("setup.classTerms.searchPlaceholder")}
         filters={filters}
+        exportConfig={exportConfig}
         onAddNew={openCreate}
         addNewLabel={t("setup.classTerms.addNew")}
       />

@@ -14,6 +14,7 @@ import { CrudScreen } from "@/components/setup/CrudScreen";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import { throwIfTransient } from "@/lib/setup/crudTypes";
 import type { ColumnDef, FilterDef } from "@/lib/setup/crudTypes";
+import type { ExportColumn } from "@/lib/export/exportTypes";
 import {
   subjectsMasterService,
   type SubjectMaster,
@@ -216,6 +217,18 @@ export function SubjectsMasterScreen() {
     },
   ];
 
+  const exportColumns: ExportColumn<SubjectMaster>[] = [
+    { header: t("setup.subjectsMaster.columns.name"), value: (row) => row.name },
+    { header: t("setup.subjectsMaster.columns.shortName"), value: (row) => row.short_name },
+    { header: t("setup.subjectsMaster.columns.color"), value: (row) => row.color },
+    { header: t("setup.subjectsMaster.columns.department"), value: (row) => departmentName(row.department_id) ?? "" },
+    {
+      header: t("setup.subjectsMaster.columns.showOnFrontend"),
+      value: (row) =>
+        t(row.show_on_frontend ? "setup.subjectsMaster.badges.yes" : "setup.subjectsMaster.badges.no"),
+    },
+  ];
+
   const filterDefs: FilterDef[] = [
     {
       key: "department",
@@ -238,6 +251,7 @@ export function SubjectsMasterScreen() {
       }}
       service={subjectsMasterService}
       display={{ mode: "table", columns }}
+      exportColumns={exportColumns}
       getRowId={(row) => row.id}
       searchPlaceholder={t("setup.subjectsMaster.searchPlaceholder")}
       matchesSearch={(row, query) => {

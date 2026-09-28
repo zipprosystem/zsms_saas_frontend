@@ -5,7 +5,9 @@ import { SearchIcon } from "@/components/icons/header/SearchIcon";
 import { ChevronDownIcon } from "@/components/icons/sidebar/ChevronDownIcon";
 import { PlusIcon } from "@/components/icons/PlusIcon";
 import { Button } from "@/components/ui/Button";
+import { ExportMenu } from "@/components/setup/ExportMenu";
 import type { FilterDef } from "@/lib/setup/crudTypes";
+import type { ExportConfig } from "@/lib/export/exportTypes";
 
 export type ActiveFilter = { def: FilterDef; value: string; onChange: (value: string) => void };
 
@@ -16,6 +18,8 @@ export type SetupToolbarProps = {
   filters?: ActiveFilter[];
   onAddNew?: () => void;
   addNewLabel?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- toolbar is generic-free; each screen supplies its own row type when building the config.
+  exportConfig?: ExportConfig<any>;
 };
 
 /**
@@ -32,6 +36,7 @@ export function SetupToolbar({
   filters,
   onAddNew,
   addNewLabel,
+  exportConfig,
 }: SetupToolbarProps) {
   return (
     <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
@@ -50,15 +55,20 @@ export function SetupToolbar({
         <FilterDropdown key={def.key} def={def} value={value} onChange={onChange} />
       ))}
 
-      {onAddNew ? (
-        <Button
-          type="button"
-          onClick={onAddNew}
-          icon={<PlusIcon className="h-4 w-4" />}
-          className="w-full px-4 text-sm sm:ml-auto sm:w-auto"
-        >
-          {addNewLabel}
-        </Button>
+      {exportConfig || onAddNew ? (
+        <div className="flex w-full flex-col gap-3 sm:ml-auto sm:w-auto sm:flex-row sm:items-center">
+          {exportConfig ? <ExportMenu config={exportConfig} /> : null}
+          {onAddNew ? (
+            <Button
+              type="button"
+              onClick={onAddNew}
+              icon={<PlusIcon className="h-4 w-4" />}
+              className="w-full px-4 text-sm sm:w-auto"
+            >
+              {addNewLabel}
+            </Button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

@@ -23,6 +23,7 @@ export function DataTable<T>({
   filters,
   onAddNew,
   addNewLabel,
+  exportConfig,
   isLoading,
   errorMessage,
   onRetry,
@@ -45,6 +46,7 @@ export function DataTable<T>({
         filters={filters}
         onAddNew={onAddNew}
         addNewLabel={addNewLabel}
+        exportConfig={exportConfig}
       />
 
       <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-surface shadow-sm">

@@ -4,11 +4,13 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/Toast";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { SlideOverPanel } from "@/components/ui/SlideOverPanel";
 import { DataTable } from "@/components/setup/DataTable";
 import { CardGrid } from "@/components/setup/CardGrid";
 import { useCrudTable } from "@/lib/setup/useCrudTable";
 import type { CrudDisplay, CrudResult, CrudService, FilterDef, RowAction } from "@/lib/setup/crudTypes";
+import type { ExportColumn, ExportConfig } from "@/lib/export/exportTypes";
 
 type RowActionHelpers = {
   edit: () => void;
@@ -55,6 +57,17 @@ export type CrudScreenProps<T, CreateInput, UpdateInput, FormState> = {
    * independently-fetched reference list. Most screens don't need this.
    */
   onItemsLoaded?: (items: T[]) => void;
+  /**
+   * Presence enables the toolbar's Export button (SheetJS/jsPDF, both
+   * lazy-loaded — see ExportMenu.tsx). Reuses the same rows useCrudTable
+   * already loaded/filtered; a screen not passing this just doesn't show
+   * the button.
+   */
+  exportColumns?: ExportColumn<T>[];
+  /** Defaults to a slug of `title` — override when that slug isn't filename-friendly. */
+  exportFilenamePrefix?: string;
+  /** e.g. the selected academic year's name, for a year-scoped screen. */
+  exportPeriodLabel?: string;
 };
 
 // Exported — Class-arms' bespoke mutation handlers (sectionsApi.ts isn't a
@@ -109,11 +122,35 @@ export function CrudScreen<T, CreateInput, UpdateInput, FormState>({
   emptyMessage,
   toastMessages,
   onItemsLoaded,
+  exportColumns,
+  exportFilenamePrefix,
+  exportPeriodLabel,
 }: CrudScreenProps<T, CreateInput, UpdateInput, FormState>) {
   const t = useTranslations();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
+  const { school } = useAuth();
   const table = useCrudTable(service, { matchesSearch, matchesFilters });
+
+  const exportConfig: ExportConfig<T> | undefined = exportColumns
+    ? {
+        // table.items is just the current PAGE (usePaginatedView) —
+        // "export what you see" means everything matching the current
+        // search/filters, not only the visible page, hence filteredItems.
+        filteredRows: table.filteredItems,
+        allRows: table.load.status === "loaded" ? table.load.items : [],
+        columns: exportColumns,
+        title,
+        filenamePrefix:
+          exportFilenamePrefix ??
+          title
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, ""),
+        schoolName: typeof school?.name === "string" && school.name.trim() ? school.name.trim() : "ZSMS",
+        periodLabel: exportPeriodLabel,
+      }
+    : undefined;
 
   // The one thing every mutation below does on success, instead of the old
   // table.refetch() — invalidating service.queryKey is what makes
@@ -235,6 +272,7 @@ export function CrudScreen<T, CreateInput, UpdateInput, FormState>({
     onSearchChange: table.setSearch,
     searchPlaceholder,
     filters,
+    exportConfig,
     onAddNew: openCreate,
     addNewLabel,
     isLoading: table.load.status === "loading",
