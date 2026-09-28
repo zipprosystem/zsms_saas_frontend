@@ -111,3 +111,44 @@ body {
     text-wrap: balance;
   }
 }
+
+/* Subject Master's TipTap description editor (SubjectDescriptionEditor.tsx)
+   — no @tailwindcss/typography plugin installed, so headings/lists/links
+   inside the editable content get their own minimal, theme-aware rules
+   here rather than relying on browser defaults or a new dependency. */
+@layer components {
+  .tiptap-content {
+    outline: none;
+  }
+  .tiptap-content p {
+    margin: 0 0 0.5em;
+  }
+  .tiptap-content p:last-child {
+    margin-bottom: 0;
+  }
+  .tiptap-content h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0.75em 0 0.4em;
+  }
+  .tiptap-content h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0.65em 0 0.35em;
+  }
+  .tiptap-content ul,
+  .tiptap-content ol {
+    margin: 0 0 0.5em;
+    padding-left: 1.5em;
+  }
+  .tiptap-content ul {
+    list-style: disc;
+  }
+  .tiptap-content ol {
+    list-style: decimal;
+  }
+  .tiptap-content a {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+}

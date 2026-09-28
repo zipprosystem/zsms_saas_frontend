@@ -665,6 +665,116 @@
         "updated": "Term updated",
         "deleted": "Term deleted"
       }
+    },
+    "departments": {
+      "title": "Departments",
+      "subtitle": "Academic departments, each with a head and reporting structure",
+      "addNew": "Add Department",
+      "searchPlaceholder": "Search departments…",
+      "empty": "No departments yet — add your first one to get started.",
+      "panel": { "createTitle": "Add Department", "editTitle": "Edit Department" },
+      "columns": {
+        "name": "Department Name",
+        "hod": "HOD",
+        "seniorManager": "Senior Manager",
+        "subjectsCount": "Subjects",
+        "staffCount": "Staff"
+      },
+      "fields": {
+        "name": { "label": "Department Name", "placeholder": "e.g. Sciences" },
+        "hod": { "label": "Line Manager / HOD", "placeholder": "Select a staff member", "loading": "Loading staff…" },
+        "seniorManager": { "label": "Senior Line Manager (optional)", "none": "None", "loading": "Loading staff…" }
+      },
+      "errors": {
+        "nameRequired": "Enter a name for this department",
+        "hodRequired": "Select a line manager / HOD"
+      },
+      "actions": {
+        "cantDeleteHasSubjects": "Can't delete — {count, plural, one {# subject} other {# subjects}} still belong to this department"
+      },
+      "confirmDelete": {
+        "title": "Delete department?",
+        "message": "This will delete \"{name}\". This can't be undone."
+      },
+      "toast": {
+        "created": "Department created",
+        "updated": "Department updated",
+        "deleted": "Department deleted"
+      }
+    },
+    "subjectsMaster": {
+      "title": "Subject Master",
+      "subtitle": "The school-wide catalog of subjects, independent of any class or year",
+      "addNew": "Add Subject",
+      "searchPlaceholder": "Search subjects…",
+      "empty": "No subjects yet — add your first one to get started.",
+      "panel": { "createTitle": "Add Subject", "editTitle": "Edit Subject" },
+      "columns": {
+        "name": "Subject Name",
+        "shortName": "Short Name",
+        "color": "Color",
+        "department": "Department",
+        "file": "File",
+        "fileDownload": "Download",
+        "showOnFrontend": "On Frontend"
+      },
+      "badges": { "yes": "Yes", "no": "No" },
+      "filters": { "department": "Department", "all": "All" },
+      "fields": {
+        "name": { "label": "Subject Name", "placeholder": "e.g. Mathematics" },
+        "shortName": { "label": "Short Name", "placeholder": "e.g. MATH" },
+        "color": { "label": "Color", "custom": "Custom color" },
+        "department": {
+          "label": "Department",
+          "placeholder": "Select a department",
+          "loading": "Loading departments…",
+          "emptyHint": "No departments yet.",
+          "emptyHintLink": "Add one first"
+        },
+        "file": {
+          "label": "Subject File (optional, PDF, up to 5MB)",
+          "choose": "Choose a PDF file",
+          "errors": {
+            "unsupportedType": "Only PDF files are accepted",
+            "tooLarge": "File must be 5MB or smaller"
+          }
+        },
+        "description": {
+          "label": "Description",
+          "toolbar": {
+            "bold": "Bold",
+            "italic": "Italic",
+            "underline": "Underline",
+            "heading2": "Heading 2",
+            "heading3": "Heading 3",
+            "bulletList": "Bullet list",
+            "orderedList": "Numbered list",
+            "alignLeft": "Align left",
+            "alignCenter": "Align center",
+            "alignRight": "Align right",
+            "link": "Link",
+            "linkPrompt": "Enter a URL (leave blank to remove the link)"
+          }
+        },
+        "showOnFrontend": {
+          "label": "Display on tenant frontend",
+          "helper": "Shows this subject on the school's future public website once that's built."
+        }
+      },
+      "errors": {
+        "nameRequired": "Enter a subject name",
+        "shortNameRequired": "Enter a short name",
+        "departmentRequired": "Select a department"
+      },
+      "confirmDelete": {
+        "title": "Delete subject?",
+        "message": "This will delete \"{name}\". This can't be undone."
+      },
+      "toast": {
+        "created": "Subject created",
+        "updated": "Subject updated",
+        "deleted": "Subject deleted"
+      }
     }
   },
   "onboarding": {

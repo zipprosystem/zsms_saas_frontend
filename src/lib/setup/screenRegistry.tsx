@@ -5,6 +5,8 @@ import { SchoolTypesScreen } from "@/components/setup/academicStructure/SchoolTy
 import { ClassesScreen } from "@/components/setup/academicStructure/ClassesScreen";
 import { ClassArmsScreen } from "@/components/setup/academicStructure/ClassArmsScreen";
 import { ClassTermsScreen } from "@/components/setup/academicStructure/ClassTermsScreen";
+import { DepartmentsScreen } from "@/components/setup/academicStructure/DepartmentsScreen";
+import { SubjectsMasterScreen } from "@/components/setup/academicStructure/SubjectsMasterScreen";
 
 /**
  * Keyed by "{categorySlug}/{screenSlug}". A screen not listed here falls
@@ -28,4 +30,8 @@ export const setupScreenRegistry: Record<string, ComponentType> = {
   // Class Terms' form depends on Classes existing (its "Apply to" checklist
   // is populated from that service).
   "academic-structure/class-terms": ClassTermsScreen,
+  "academic-structure/departments": DepartmentsScreen,
+  // Subject Master's Department dropdown depends on Departments existing —
+  // same reasoning as every other dependency-ordered pair above.
+  "academic-structure/subjects-master": SubjectsMasterScreen,
 };
