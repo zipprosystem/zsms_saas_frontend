@@ -48,8 +48,8 @@ export function Header({ onOpenMobileNav }: HeaderProps) {
   }, []);
 
   return (
-    <header className="flex h-28 w-full shrink-0 items-center justify-between gap-4 border-b border-border bg-surface px-4 lg:px-8">
-      <div className="flex min-w-0 items-center gap-4">
+    <header className="flex h-28 w-full shrink-0 items-center justify-between gap-2 border-b border-border bg-surface px-3 sm:gap-4 sm:px-4 lg:px-8">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-4">
         <button
           type="button"
           onClick={onOpenMobileNav}
@@ -62,8 +62,8 @@ export function Header({ onOpenMobileNav }: HeaderProps) {
         </button>
 
         <div className="min-w-0">
-          <p className="truncate text-xl font-semibold text-text-primary">{title}</p>
-          <p className="truncate text-sm text-text-secondary">{today}</p>
+          <p className="truncate text-base font-semibold text-text-primary sm:text-xl">{title}</p>
+          <p className="hidden truncate text-sm text-text-secondary sm:block">{today}</p>
         </div>
 
         <SessionPill />
@@ -83,7 +83,7 @@ export function Header({ onOpenMobileNav }: HeaderProps) {
         </button>
       </div>
 
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         <button
           type="button"
           onClick={() => setIsSearchOpen(true)}
