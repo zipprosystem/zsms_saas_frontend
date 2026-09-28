@@ -8,6 +8,8 @@ import { schoolTypesService } from "@/lib/setup/academicStructure/schoolTypesApi
 import { createClassesService } from "@/lib/setup/academicStructure/classesApi";
 import { fetchSectionsForClass, sectionsQueryKey } from "@/lib/setup/academicStructure/sectionsApi";
 import { classTermsQueryKey, fetchTermsForClass } from "@/lib/setup/academicStructure/classTermsApi";
+import { departmentsService } from "@/lib/setup/academicStructure/departmentsApi";
+import { subjectsMasterService } from "@/lib/setup/academicStructure/subjectsMasterApi";
 import type { SetupItem } from "@/lib/setup/setupConfig";
 
 /**
@@ -45,6 +47,8 @@ const ITEMS_WITH_LIVE_CHECK = new Set([
   "classes",
   "classArms",
   "classTerms",
+  "departments",
+  "subjectsMaster",
 ]);
 
 export type SetupProgressState =
@@ -124,12 +128,30 @@ export function useSetupProgress(): SetupProgressState {
   // Same lenient "any one class is enough" rule as classArms.
   const classTermsExist = !!yearId && classTermQueries.some((query) => query.data === true);
 
+  // Departments/Subject Master — simple singleton lists, same shape as
+  // Academic Years/Award Bodies/School Types above, no year-scoping needed.
+  const departmentsQuery = useQuery({
+    queryKey: departmentsService.queryKey,
+    queryFn: () => departmentsService.list().then(throwIfTransient),
+    select: (result) => result.ok && result.data.length > 0,
+    staleTime: PROGRESS_STALE_TIME_MS,
+  });
+
+  const subjectsMasterQuery = useQuery({
+    queryKey: subjectsMasterService.queryKey,
+    queryFn: () => subjectsMasterService.list().then(throwIfTransient),
+    select: (result) => result.ok && result.data.length > 0,
+    staleTime: PROGRESS_STALE_TIME_MS,
+  });
+
   const sectionsStillLoading = activeClassIds.length > 0 && sectionQueries.some((query) => query.isPending);
   const classTermsStillLoading = allClassIds.length > 0 && classTermQueries.some((query) => query.isPending);
   const isLoading =
     academicYearsQuery.isPending ||
     awardBodiesQuery.isPending ||
     schoolTypesQuery.isPending ||
+    departmentsQuery.isPending ||
+    subjectsMasterQuery.isPending ||
     (!!yearId && (classesQuery.isPending || sectionsStillLoading || classTermsStillLoading));
 
   if (isLoading) return { status: "loading" };
@@ -141,6 +163,8 @@ export function useSetupProgress(): SetupProgressState {
   if (classesExist) completedKeys.add("classes");
   if (classArmsExist) completedKeys.add("classArms");
   if (classTermsExist) completedKeys.add("classTerms");
+  if (departmentsQuery.data) completedKeys.add("departments");
+  if (subjectsMasterQuery.data) completedKeys.add("subjectsMaster");
 
   return { status: "loaded", completedKeys };
 }

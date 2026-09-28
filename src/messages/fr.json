@@ -665,6 +665,124 @@
         "updated": "Trimestre mis à jour",
         "deleted": "Trimestre supprimé"
       }
+    },
+    "departments": {
+      "title": "Départements",
+      "subtitle": "Départements académiques, chacun avec un responsable et une structure hiérarchique",
+      "addNew": "Ajouter un département",
+      "searchPlaceholder": "Rechercher des départements…",
+      "empty": "Aucun département pour le moment — ajoutez le premier pour commencer.",
+      "panel": { "createTitle": "Ajouter un département", "editTitle": "Modifier le département" },
+      "columns": {
+        "name": "Nom du département",
+        "hod": "Responsable",
+        "seniorManager": "Responsable senior",
+        "subjectsCount": "Matières",
+        "staffCount": "Personnel"
+      },
+      "fields": {
+        "name": { "label": "Nom du département", "placeholder": "ex. Sciences" },
+        "hod": {
+          "label": "Responsable hiérarchique",
+          "placeholder": "Sélectionner un membre du personnel",
+          "loading": "Chargement du personnel…"
+        },
+        "seniorManager": {
+          "label": "Responsable hiérarchique senior (facultatif)",
+          "none": "Aucun",
+          "loading": "Chargement du personnel…"
+        }
+      },
+      "errors": {
+        "nameRequired": "Saisissez un nom pour ce département",
+        "hodRequired": "Sélectionnez un responsable hiérarchique"
+      },
+      "actions": {
+        "cantDeleteHasSubjects": "Impossible de supprimer — {count, plural, one {# matière} other {# matières}} appartiennent encore à ce département"
+      },
+      "confirmDelete": {
+        "title": "Supprimer le département ?",
+        "message": "Cela supprimera « {name} ». Cette action est irréversible."
+      },
+      "toast": {
+        "created": "Département créé",
+        "updated": "Département mis à jour",
+        "deleted": "Département supprimé"
+      }
+    },
+    "subjectsMaster": {
+      "title": "Catalogue des matières",
+      "subtitle": "Le catalogue des matières à l'échelle de l'école, indépendant de toute classe ou année",
+      "addNew": "Ajouter une matière",
+      "searchPlaceholder": "Rechercher des matières…",
+      "empty": "Aucune matière pour le moment — ajoutez la première pour commencer.",
+      "panel": { "createTitle": "Ajouter une matière", "editTitle": "Modifier la matière" },
+      "columns": {
+        "name": "Nom de la matière",
+        "shortName": "Nom court",
+        "color": "Couleur",
+        "department": "Département",
+        "file": "Fichier",
+        "fileDownload": "Télécharger",
+        "showOnFrontend": "Sur le site"
+      },
+      "badges": { "yes": "Oui", "no": "Non" },
+      "filters": { "department": "Département", "all": "Tous" },
+      "fields": {
+        "name": { "label": "Nom de la matière", "placeholder": "ex. Mathématiques" },
+        "shortName": { "label": "Nom court", "placeholder": "ex. MATH" },
+        "color": { "label": "Couleur", "custom": "Couleur personnalisée" },
+        "department": {
+          "label": "Département",
+          "placeholder": "Sélectionner un département",
+          "loading": "Chargement des départements…",
+          "emptyHint": "Aucun département pour le moment.",
+          "emptyHintLink": "En ajouter un d'abord"
+        },
+        "file": {
+          "label": "Fichier de la matière (facultatif, PDF, jusqu'à 5 Mo)",
+          "choose": "Choisir un fichier PDF",
+          "errors": {
+            "unsupportedType": "Seuls les fichiers PDF sont acceptés",
+            "tooLarge": "Le fichier doit faire 5 Mo maximum"
+          }
+        },
+        "description": {
+          "label": "Description",
+          "toolbar": {
+            "bold": "Gras",
+            "italic": "Italique",
+            "underline": "Souligné",
+            "heading2": "Titre 2",
+            "heading3": "Titre 3",
+            "bulletList": "Liste à puces",
+            "orderedList": "Liste numérotée",
+            "alignLeft": "Aligner à gauche",
+            "alignCenter": "Centrer",
+            "alignRight": "Aligner à droite",
+            "link": "Lien",
+            "linkPrompt": "Saisissez une URL (laissez vide pour retirer le lien)"
+          }
+        },
+        "showOnFrontend": {
+          "label": "Afficher sur le site de l'établissement",
+          "helper": "Affiche cette matière sur le futur site public de l'école, une fois celui-ci construit."
+        }
+      },
+      "errors": {
+        "nameRequired": "Saisissez un nom de matière",
+        "shortNameRequired": "Saisissez un nom court",
+        "departmentRequired": "Sélectionnez un département"
+      },
+      "confirmDelete": {
+        "title": "Supprimer la matière ?",
+        "message": "Cela supprimera « {name} ». Cette action est irréversible."
+      },
+      "toast": {
+        "created": "Matière créée",
+        "updated": "Matière mise à jour",
+        "deleted": "Matière supprimée"
+      }
     }
   },
   "onboarding": {
