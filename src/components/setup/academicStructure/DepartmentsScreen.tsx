@@ -163,7 +163,7 @@ export function DepartmentsScreen() {
                 </option>
                 {staff.map((member) => (
                   <option key={member.id} value={member.id}>
-                    {member.full_name} — {member.role}
+                    {`${member.full_name} — ${member.role}`}
                   </option>
                 ))}
               </>
@@ -184,7 +184,7 @@ export function DepartmentsScreen() {
                 <option value="">{t("setup.departments.fields.seniorManager.none")}</option>
                 {staff.map((member) => (
                   <option key={member.id} value={member.id}>
-                    {member.full_name} — {member.role}
+                    {`${member.full_name} — ${member.role}`}
                   </option>
                 ))}
               </>
