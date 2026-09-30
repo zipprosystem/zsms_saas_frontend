@@ -26,11 +26,20 @@ type FormState = {
   name: string;
   /** Filter only, narrows the Classes checklist — never sent to the service. */
   school_type_id: string;
+  /** Filter only, narrows the Class Subjects checklist — a group has no class_ids in the API (see classSubjectGroupingApi.ts). */
   class_ids: string[];
   class_subject_ids: string[];
+  /** The membership the edit form was seeded with — the service diffs against it to add/remove members. */
+  previous_class_subject_ids: string[];
 };
 
-const EMPTY_FORM: FormState = { name: "", school_type_id: "", class_ids: [], class_subject_ids: [] };
+const EMPTY_FORM: FormState = {
+  name: "",
+  school_type_id: "",
+  class_ids: [],
+  class_subject_ids: [],
+  previous_class_subject_ids: [],
+};
 
 /**
  * Outer guard — a group always belongs to an academic year (same shape as
@@ -105,7 +114,15 @@ function ClassSubjectGroupingTable({ yearId }: { yearId: string }) {
   const classById = (id: string): SchoolClass | null => classes.find((cls) => cls.id === id) ?? null;
   const subjectById = (id: string): SubjectMaster | null => subjects.find((subject) => subject.id === id) ?? null;
   const classSubjectLabel = (row: ClassSubject): string =>
-    `${classById(row.class_id)?.name ?? "—"} — ${subjectById(row.subject_id)?.name ?? "—"}`;
+    `${classById(row.class_id)?.name ?? "—"} — ${subjectById(row.subject_master_id)?.name ?? "—"}`;
+  // A group's classes aren't stored — they're whichever classes its member
+  // class-subjects belong to.
+  const groupClassIds = (group: ClassSubjectGroup): string[] => {
+    const members = new Set(group.class_subject_ids);
+    return Array.from(
+      new Set(classSubjects.filter((row) => members.has(row.id)).map((row) => row.class_id)),
+    );
+  };
 
   const groupService = useMemo(() => createClassSubjectGroupService(yearId), [yearId]);
 
@@ -115,7 +132,7 @@ function ClassSubjectGroupingTable({ yearId }: { yearId: string }) {
       key: "classes",
       header: t("setup.classSubjectGrouping.columns.classes"),
       render: (row) => {
-        const names = row.class_ids.map((id) => classById(id)?.name).filter((name): name is string => !!name);
+        const names = groupClassIds(row).map((id) => classById(id)?.name).filter((name): name is string => !!name);
         if (names.length === 0) return "—";
         return names.length <= 2 ? names.join(", ") : `${names.slice(0, 2).join(", ")} +${names.length - 2}`;
       },
@@ -135,7 +152,7 @@ function ClassSubjectGroupingTable({ yearId }: { yearId: string }) {
     { header: t("setup.classSubjectGrouping.columns.name"), value: (row) => row.name },
     {
       header: t("setup.classSubjectGrouping.columns.classes"),
-      value: (row) => row.class_ids.map((id) => classById(id)?.name).filter(Boolean).join(", "),
+      value: (row) => groupClassIds(row).map((id) => classById(id)?.name).filter(Boolean).join(", "),
     },
     { header: t("setup.classSubjectGrouping.columns.subjects"), value: (row) => row.class_subject_ids.length },
   ];
@@ -171,15 +188,19 @@ function ClassSubjectGroupingTable({ yearId }: { yearId: string }) {
         },
       ]}
       emptyFormState={EMPTY_FORM}
-      toFormState={(row) => ({
-        name: row.name,
-        // Best-effort: nothing enforces a group's classes share one school
-        // type, so this just seeds the filter from the first class — the
-        // full class_ids list itself is always the source of truth.
-        school_type_id: classById(row.class_ids[0])?.school_type_id ?? "",
-        class_ids: row.class_ids,
-        class_subject_ids: row.class_subject_ids,
-      })}
+      toFormState={(row) => {
+        const classIds = groupClassIds(row);
+        return {
+          name: row.name,
+          // Best-effort: nothing enforces a group's classes share one
+          // school type, so this just seeds the filter from the first
+          // class — class_subject_ids is always the source of truth.
+          school_type_id: classById(classIds[0])?.school_type_id ?? "",
+          class_ids: classIds,
+          class_subject_ids: row.class_subject_ids,
+          previous_class_subject_ids: row.class_subject_ids,
+        };
+      }}
       validate={(data) => {
         const errors: Record<string, string> = {};
         if (!data.name.trim()) errors.name = t("setup.classSubjectGrouping.errors.nameRequired");
@@ -191,13 +212,13 @@ function ClassSubjectGroupingTable({ yearId }: { yearId: string }) {
       }}
       toCreateInput={(data) => ({
         name: data.name.trim(),
-        class_ids: data.class_ids,
         class_subject_ids: data.class_subject_ids,
+        previous_class_subject_ids: [],
       })}
       toUpdateInput={(data) => ({
         name: data.name.trim(),
-        class_ids: data.class_ids,
         class_subject_ids: data.class_subject_ids,
+        previous_class_subject_ids: data.previous_class_subject_ids,
       })}
       renderFields={({ data, onChange, errors }) => {
         const classesOfType = (

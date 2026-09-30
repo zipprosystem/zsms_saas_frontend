@@ -6,7 +6,6 @@ import { InputField } from "@/components/ui/Input";
 import { SelectField } from "@/components/ui/Select";
 import { CrudScreen } from "@/components/setup/CrudScreen";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
-import { throwIfTransient } from "@/lib/setup/crudTypes";
 import type { ColumnDef } from "@/lib/setup/crudTypes";
 import type { ExportColumn } from "@/lib/export/exportTypes";
 import {
@@ -14,7 +13,6 @@ import {
   type Department,
   type DepartmentInput,
 } from "@/lib/setup/academicStructure/departmentsApi";
-import { subjectsMasterService } from "@/lib/setup/academicStructure/subjectsMasterApi";
 import { staffQueryKey, listStaff, type StaffMember } from "@/lib/staff/staffApi";
 
 type FormState = {
@@ -38,26 +36,6 @@ export function DepartmentsScreen() {
   const staff: StaffMember[] = staffQuery.data ?? [];
   const staffName = (id: string): string | null => staff.find((member) => member.id === id)?.full_name ?? null;
 
-  // Subjects-count derivation — reads Subject Master's OWN query key (not a
-  // separate fetch) via `select`, so this and SubjectsMasterScreen's own
-  // list share one cache entry. Creating/deleting a subject there
-  // invalidates ["setup","subjectsMaster"], which refetches here too and
-  // updates every department's count with no extra plumbing.
-  const subjectsCountQuery = useQuery({
-    queryKey: subjectsMasterService.queryKey,
-    queryFn: () => subjectsMasterService.list().then(throwIfTransient),
-    select: (result): Record<string, number> => {
-      if (!result.ok) return {};
-      const counts: Record<string, number> = {};
-      for (const subject of result.data) {
-        counts[subject.department_id] = (counts[subject.department_id] ?? 0) + 1;
-      }
-      return counts;
-    },
-    staleTime: STRUCTURAL_STALE_TIME_MS,
-  });
-  const subjectsCount = (departmentId: string): number => subjectsCountQuery.data?.[departmentId] ?? 0;
-
   const columns: ColumnDef<Department>[] = [
     { key: "name", header: t("setup.departments.columns.name"), render: (row) => row.name },
     {
@@ -73,15 +51,16 @@ export function DepartmentsScreen() {
     {
       key: "subjectsCount",
       header: t("setup.departments.columns.subjectsCount"),
-      render: (row) => String(subjectsCount(row.id)),
+      // Backend-calculated (see departmentsApi.ts) — no client derivation.
+      render: (row) => (row.subject_count !== null ? String(row.subject_count) : "—"),
     },
     {
-      // Pending the Staff/HR module — no real staff-to-department link
-      // exists yet, so this is deliberately "—", never a guessed 0 (0
-      // would imply "confirmed zero staff", which we don't know).
+      // Backend-calculated; null until staff-to-department membership
+      // exists — shown as "—", never a guessed 0 (0 would imply
+      // "confirmed zero staff", which we don't know).
       key: "staffCount",
       header: t("setup.departments.columns.staffCount"),
-      render: () => "—",
+      render: (row) => (row.staff_count !== null ? String(row.staff_count) : "—"),
     },
   ];
 
@@ -92,7 +71,7 @@ export function DepartmentsScreen() {
       header: t("setup.departments.columns.seniorManager"),
       value: (row) => (row.senior_manager_staff_id ? (staffName(row.senior_manager_staff_id) ?? "") : ""),
     },
-    { header: t("setup.departments.columns.subjectsCount"), value: (row) => subjectsCount(row.id) },
+    { header: t("setup.departments.columns.subjectsCount"), value: (row) => row.subject_count ?? "" },
   ];
 
   return (
@@ -111,7 +90,7 @@ export function DepartmentsScreen() {
       searchPlaceholder={t("setup.departments.searchPlaceholder")}
       matchesSearch={(row, query) => row.name.toLowerCase().includes(query.toLowerCase())}
       rowActions={(row, helpers) => {
-        const count = subjectsCount(row.id);
+        const count = row.subject_count ?? 0;
         return [
           { key: "edit", label: t("common.edit"), onClick: helpers.edit },
           {
@@ -119,8 +98,9 @@ export function DepartmentsScreen() {
             label: t("common.delete"),
             variant: "danger",
             onClick: helpers.remove,
-            // FRONTEND-ONLY guard until the real API enforces this
-            // server-side (409) — see departmentsApi.ts's remove().
+            // Pre-check only, off the backend's own subject_count — the
+            // backend still enforces this with a 409 whose message is
+            // surfaced if the count here is stale (see departmentsApi.ts).
             disabled: count > 0,
             disabledReason:
               count > 0 ? t("setup.departments.actions.cantDeleteHasSubjects", { count }) : undefined,

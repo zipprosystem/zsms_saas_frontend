@@ -157,7 +157,12 @@ export function CrudScreen<T, CreateInput, UpdateInput, FormState>({
   // useCrudTable's own useQuery refetch, and it's "targeted" for free:
   // service.queryKey already scopes to exactly this entity (and, for a
   // factory-built service like Classes, exactly this year).
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: service.queryKey });
+  const invalidate = () => {
+    for (const queryKey of service.relatedQueryKeys ?? []) {
+      queryClient.invalidateQueries({ queryKey });
+    }
+    return queryClient.invalidateQueries({ queryKey: service.queryKey });
+  };
 
   useEffect(() => {
     if (table.load.status === "loaded") {

@@ -38,7 +38,9 @@ function isRefreshEndpoint(path: string): boolean {
 
 async function requestOnce(path: string, options: RequestInit, token: string | null): Promise<Response> {
   const headers = new Headers(options.headers);
-  if (!headers.has("Content-Type")) {
+  // FormData (multipart uploads, see filesApi.ts) must NOT get a manual
+  // Content-Type — the browser sets it itself, including the boundary.
+  if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
   if (token) {
