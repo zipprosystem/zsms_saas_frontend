@@ -8,13 +8,14 @@ import { TransientQueryError } from "@/lib/queryClient";
  * Muntajir:
  *
  *   GET {API_BASE}/erp/staff
- *     -> { success: true, data: ... } rows of { id, full_name, role, role_key }
- *     `id` is users.id — that's what Departments' hod_staff_id /
- *     senior_manager_staff_id store.
- *     FLAGGED, UNCONFIRMED: whether data is paginated ({ items, ... }) like
- *     the other ERP lists or a bare array — extractStaffList() accepts
- *     both, and limit=200 is sent in case it IS paginated (same "fetch
- *     once at the max, filter client-side" approach as Award Bodies).
+ *     -> { success: true, data: { items, total, page, limit, has_more } },
+ *     same paginated shape as every other ERP list, rows of
+ *     { id, full_name, role, role_key }. `id` is users.id — that's what
+ *     Departments' hod_staff_id / senior_manager_staff_id store.
+ *     Confirmed via real API response — limit=200 is sent and the list is
+ *     fetched once and filtered client-side (same approach as Award
+ *     Bodies). extractStaffList() also tolerates a bare array defensively,
+ *     but the paginated { items } shape is what the backend actually sends.
  *
  * Returns a plain StaffMember[] (not a CrudResult) — consumers only ever
  * need the list for a dropdown. Transient failures (network/5xx) throw a
