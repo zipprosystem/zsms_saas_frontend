@@ -190,6 +190,12 @@
     "student": { "title": "Student Panel" },
     "parent": { "title": "Parent Panel" }
   },
+  "files": {
+    "uploading": "Uploading…",
+    "uploadFailed": "Something went wrong uploading the file. Please try again.",
+    "downloadFailed": "Couldn't get a download link for this file. Please try again.",
+    "attachedFile": "Attached file"
+  },
   "setup": {
     "header": {
       "title": "Complete Your School Setup",

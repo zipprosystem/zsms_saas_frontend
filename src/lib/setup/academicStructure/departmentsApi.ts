@@ -1,22 +1,48 @@
+import { apiFetch } from "@/lib/api/client";
+import { DEV_AUTH_BYPASS } from "@/lib/auth/authBridge";
+import { extractErpError } from "@/lib/setup/erpError";
 import type { CrudResult, CrudService } from "@/lib/setup/crudTypes";
 
 /**
- * MOCK service — no backend endpoint exists yet for Departments; flagged
- * for Muntajir. In-memory only (resets on page reload). Deliberately
- * satisfies the exact same CrudService<T, CreateInput, UpdateInput> shape
- * every real Setup service uses (see e.g. schoolTypesApi.ts) — every
- * consumer (DepartmentsScreen, Subject Master's department dropdown, the
- * subjects-count derivation, setupProgress.ts, search) reads through the
- * `departmentsService` export below, so swapping this file for a real
- * apiFetch-backed implementation later never touches a caller.
+ * Finalized contract per Muntajir: { success, data }, Bearer auth via
+ * apiFetch, ERP error shape (see erpError.ts) — same conventions as Award
+ * Bodies/School Types.
+ *
+ *   GET {API_BASE}/erp/departments?page=&limit=
+ *     -> { success: true, data: { items, total, page, limit, has_more } }
+ *     Fetched once at limit=200 and searched/paginated client-side, same
+ *     reasoning as Award Bodies.
+ *   POST/PUT {API_BASE}/erp/departments[/:id]
+ *     { name, hod_staff_id, senior_manager_staff_id? }
+ *     hod_staff_id is required; senior_manager_staff_id is optional/null.
+ *     Both are users.id values from GET /erp/staff (see staffApi.ts). The
+ *     same person may be both HOD and Senior Manager, and may head
+ *     several departments — no client-side uniqueness rule.
+ *     -> { success: true, data: <entity> }
+ *   DELETE {API_BASE}/erp/departments/:id
+ *     -> 409 if the department still has subjects; backend message
+ *     surfaced as-is (DepartmentsScreen also pre-disables the action off
+ *     subject_count, but the backend is the authority).
+ *   GET {API_BASE}/erp/departments/:id exists but isn't used — edit forms
+ *     seed from the already-fetched list row, same as every Setup screen.
+ *
+ * subject_count / staff_count are backend-calculated. staff_count is null
+ * until staff-to-department membership exists — shown as "—", never 0.
+ *
+ * Error codes: DUPLICATE_NAME -> `name` field. STAFF_NOT_FOUND (GUESSED by
+ * analogy to SCHOOL_TYPE_NOT_FOUND — unconfirmed) -> `hod_staff_id`
+ * field. DEPARTMENT_HAS_SUBJECTS / DEPARTMENT_NOT_FOUND (GUESSED names) ->
+ * conflict; a plain 409 with any other code is still a conflict via the
+ * status fallback below, so the delete-guard message reaches the user
+ * either way.
  */
 export type Department = {
   id: string;
   name: string;
   hod_staff_id: string;
   senior_manager_staff_id: string | null;
-  created_at: string;
-  updated_at: string;
+  subject_count: number | null;
+  staff_count: number | null;
 };
 
 export type DepartmentInput = {
@@ -25,72 +51,132 @@ export type DepartmentInput = {
   senior_manager_staff_id: string | null;
 };
 
-function resolveAfter<T>(value: T, ms = 150): Promise<T> {
-  return new Promise((resolve) => setTimeout(() => resolve(value), ms));
+const BASE_PATH = "erp/departments";
+
+async function parseBody(response: Response): Promise<unknown> {
+  return response.json().catch(() => null);
 }
 
-function makeId(): string {
-  return typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : `dept-${Math.random().toString(36).slice(2)}`;
+function toResult<T>(response: Response, body: unknown): CrudResult<T> {
+  const { code, message } = extractErpError(body);
+
+  if (code === "DUPLICATE_NAME") {
+    return { ok: false, kind: "validation", errors: [{ field: "name", message: message ?? undefined }] };
+  }
+  if (code === "STAFF_NOT_FOUND") {
+    return { ok: false, kind: "validation", errors: [{ field: "hod_staff_id", message: message ?? undefined }] };
+  }
+  if (code === "DEPARTMENT_HAS_SUBJECTS" || code === "DEPARTMENT_NOT_FOUND") {
+    return { ok: false, kind: "conflict", message: message ?? undefined };
+  }
+  if (code === "FORBIDDEN" || code === "UNAUTHORIZED") {
+    return { ok: false, kind: "forbidden", message: message ?? undefined };
+  }
+  if (code === "VALIDATION_ERROR") {
+    return { ok: false, kind: "server", message: message ?? undefined };
+  }
+
+  if (response.status === 403) return { ok: false, kind: "forbidden" };
+  if (response.status === 409) return { ok: false, kind: "conflict", message: message ?? undefined };
+  if (response.status === 422) return { ok: false, kind: "validation", errors: [] };
+  // 401 isn't handled here: apiFetch already retries once via /auth/refresh
+  // and force-logs-out + redirects to /login on failure.
+  return { ok: false, kind: "server", message: message ?? undefined };
 }
 
-const now = () => new Date().toISOString();
+function toDepartment(raw: unknown): Department {
+  const row = raw as Record<string, unknown>;
+  return {
+    id: String(row.id),
+    name: String(row.name ?? ""),
+    hod_staff_id: String(row.hod_staff_id ?? ""),
+    senior_manager_staff_id: typeof row.senior_manager_staff_id === "string" ? row.senior_manager_staff_id : null,
+    subject_count: typeof row.subject_count === "number" ? row.subject_count : null,
+    staff_count: typeof row.staff_count === "number" ? row.staff_count : null,
+  };
+}
 
-let departments: Department[] = [
-  {
-    id: "dept-sciences",
-    name: "Sciences",
-    hod_staff_id: "staff-3",
-    senior_manager_staff_id: "staff-2",
-    created_at: now(),
-    updated_at: now(),
-  },
-  {
-    id: "dept-languages",
-    name: "Languages",
-    hod_staff_id: "staff-4",
-    senior_manager_staff_id: null,
-    created_at: now(),
-    updated_at: now(),
-  },
-  {
-    id: "dept-humanities",
-    name: "Humanities",
-    hod_staff_id: "staff-5",
-    senior_manager_staff_id: "staff-2",
-    created_at: now(),
-    updated_at: now(),
-  },
-];
+function extractDepartmentList(body: unknown): Department[] {
+  const items = (body as { data?: { items?: unknown } } | null)?.data?.items;
+  return Array.isArray(items) ? items.map(toDepartment) : [];
+}
+
+function extractDepartment(body: unknown): Department | null {
+  const data = (body as { data?: unknown } | null)?.data;
+  return data && typeof data === "object" ? toDepartment(data) : null;
+}
 
 async function list(): Promise<CrudResult<Department[]>> {
-  return resolveAfter({ ok: true, data: [...departments] });
+  if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
+
+  let response: Response;
+  try {
+    response = await apiFetch(`${BASE_PATH}?page=1&limit=200`, { method: "GET" });
+  } catch {
+    return { ok: false, kind: "network" };
+  }
+
+  const body = await parseBody(response);
+  if (response.ok) {
+    return { ok: true, data: extractDepartmentList(body) };
+  }
+  return toResult(response, body);
 }
 
 async function create(data: DepartmentInput): Promise<CrudResult<Department>> {
-  const department: Department = { id: makeId(), ...data, created_at: now(), updated_at: now() };
-  departments = [...departments, department];
-  return resolveAfter({ ok: true, data: department });
+  if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
+
+  let response: Response;
+  try {
+    response = await apiFetch(BASE_PATH, { method: "POST", body: JSON.stringify(data) });
+  } catch {
+    return { ok: false, kind: "network" };
+  }
+
+  const body = await parseBody(response);
+  if (response.ok) {
+    const created = extractDepartment(body);
+    if (created) return { ok: true, data: created };
+    return { ok: false, kind: "server" };
+  }
+  return toResult(response, body);
 }
 
 async function update(id: string, data: DepartmentInput): Promise<CrudResult<Department>> {
-  const existing = departments.find((department) => department.id === id);
-  if (!existing) return resolveAfter({ ok: false, kind: "conflict" });
-  const updated: Department = { ...existing, ...data, updated_at: now() };
-  departments = departments.map((department) => (department.id === id ? updated : department));
-  return resolveAfter({ ok: true, data: updated });
+  if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
+
+  let response: Response;
+  try {
+    response = await apiFetch(`${BASE_PATH}/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  } catch {
+    return { ok: false, kind: "network" };
+  }
+
+  const body = await parseBody(response);
+  if (response.ok) {
+    const updated = extractDepartment(body);
+    if (updated) return { ok: true, data: updated };
+    return { ok: false, kind: "server" };
+  }
+  return toResult(response, body);
 }
 
-// The "can't delete a department that still has subjects" rule is enforced
-// client-side by DepartmentsScreen's rowActions (disabling the action
-// entirely, see disabledReason there) — this mock has no way to check
-// Subject Master's data itself, and a real backend would enforce it
-// server-side with a 409 anyway. Flagged as a frontend-only guard until
-// Muntajir's real API exists.
 async function remove(id: string): Promise<CrudResult<void>> {
-  departments = departments.filter((department) => department.id !== id);
-  return resolveAfter({ ok: true, data: undefined });
+  if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
+
+  let response: Response;
+  try {
+    response = await apiFetch(`${BASE_PATH}/${encodeURIComponent(id)}`, { method: "DELETE" });
+  } catch {
+    return { ok: false, kind: "network" };
+  }
+
+  if (response.ok) return { ok: true, data: undefined };
+  const body = await parseBody(response);
+  return toResult(response, body);
 }
 
 export const departmentsService: CrudService<Department, DepartmentInput, DepartmentInput> = {

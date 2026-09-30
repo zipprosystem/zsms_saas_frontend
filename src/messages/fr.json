@@ -190,6 +190,12 @@
     "student": { "title": "Espace élève" },
     "parent": { "title": "Espace parent" }
   },
+  "files": {
+    "uploading": "Envoi en cours…",
+    "uploadFailed": "Une erreur est survenue lors de l'envoi du fichier. Veuillez réessayer.",
+    "downloadFailed": "Impossible d'obtenir un lien de téléchargement pour ce fichier. Veuillez réessayer.",
+    "attachedFile": "Fichier joint"
+  },
   "setup": {
     "header": {
       "title": "Terminez la configuration de votre école",
