@@ -7,11 +7,11 @@ import { uploadFile, type AttachedFile, type FileUploadPurpose } from "@/lib/fil
 import { formatFileSize, type FileValidation } from "@/lib/files/fileValidation";
 
 /**
- * Optional single-file attachment field, shared by Subject Master and
- * Class Subjects. Validates client-side, uploads immediately via
- * filesApi.uploadFile(), and hands the parent an AttachedFile (whose
- * file_id is what the entity saves). The attached file's name is a
- * FileDownloadLink — the signed URL is fetched on click.
+ * Optional single-file attachment field, shared by Subject Master, Class
+ * Subjects, and Students' Past Records. Validates client-side, uploads
+ * immediately via filesApi.uploadFile(), and hands the parent an
+ * AttachedFile (whose file_id is what the entity saves). The attached
+ * file's name is a FileDownloadLink — the signed URL is fetched on click.
  */
 export function FileAttachmentField({
   label,

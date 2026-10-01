@@ -12,9 +12,11 @@ import type { CrudResult } from "@/lib/setup/crudTypes";
  *     -> { success: true, data: { file_id, ...metadata } }
  *     `purpose` is REQUIRED — confirmed via real 422 ("purpose must be one
  *     of subject_master, class_subject"). Every caller must say what the
- *     attachment is for; there's no default. FLAG: if a future entity
- *     attaches files too, it needs its own purpose value confirmed with
- *     Muntajir before reusing either of these two.
+ *     attachment is for; there's no default. `student_photo` and
+ *     `past_record_attachment` (Students' passport photo and past-record
+ *     attachments) are NOT confirmed values the same way — reconcile with
+ *     Muntajir before relying on them; widen further only once a new
+ *     entity's purpose is similarly confirmed.
  *     FLAGGED, UNCONFIRMED: the exact metadata key names. readUploadedFile()
  *     accepts file_id or id, and original_name/name, size/size_bytes,
  *     mime_type/type — reconcile to the real shape from DevTools on deploy.
@@ -108,7 +110,7 @@ function readDownloadUrl(body: unknown): string | null {
 }
 
 /** Entities that can own an uploaded file — extend when a new one is confirmed with Muntajir. */
-export type FileUploadPurpose = "subject_master" | "class_subject";
+export type FileUploadPurpose = "subject_master" | "class_subject" | "student_photo" | "past_record_attachment";
 
 export async function uploadFile(file: File, purpose: FileUploadPurpose): Promise<CrudResult<AttachedFile>> {
   if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };

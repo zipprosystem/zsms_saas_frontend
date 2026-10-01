@@ -73,6 +73,24 @@ export function useSearchIndex(): SearchGroup[] {
       ),
     };
 
-    return [navigation, settings, setup];
+    // First real use of the "PHASE 2 SEAM" from searchTypes.ts — a module
+    // beyond Navigation/Settings/Setup gets its own small group. Just one
+    // static quick-action entry for now; a future per-student search (by
+    // name/admission number) plugs in here as additional entries with no
+    // change needed elsewhere.
+    const students: SearchGroup = {
+      key: "students",
+      label: t("search.groups.students"),
+      entries: [
+        {
+          id: "students-add",
+          title: t("search.students.addStudent"),
+          href: "/admin/students?new=1",
+          keywords: ["enroll", "admission", "new student", "register"],
+        },
+      ],
+    };
+
+    return [navigation, settings, setup, students];
   }, [t]);
 }

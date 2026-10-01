@@ -176,7 +176,11 @@
     "groups": {
       "navigation": "Navigation",
       "settings": "Settings",
-      "setup": "Setup"
+      "setup": "Setup",
+      "students": "Students"
+    },
+    "students": {
+      "addStudent": "Add Student"
     }
   },
   "tenant": {
@@ -192,6 +196,8 @@
   },
   "files": {
     "uploading": "Uploading…",
+    "change": "Change",
+    "choosePhoto": "Choose photo",
     "uploadFailed": "Something went wrong uploading the file. Please try again.",
     "downloadFailed": "Couldn't get a download link for this file. Please try again.",
     "attachedFile": "Attached file"
@@ -901,6 +907,403 @@
       "includeAll": "Include all rows (ignore filters)",
       "asExcel": "Export as Excel",
       "asPdf": "Export as PDF"
+    }
+  },
+  "students": {
+    "title": "Students",
+    "header": {
+      "title": "Students",
+      "subtitle": "Manage, view and set everything related to students here"
+    },
+    "tabs": {
+      "list": "Student List",
+      "admissions": "Admissions",
+      "subjectEnrollment": "Subject Enrollment",
+      "classEnrollment": "Class Enrollment",
+      "notes": "Student Notes",
+      "withdrawn": "Withdrawn",
+      "graduate": "Graduate"
+    },
+    "tabComingSoon": "This tab is coming in a later update.",
+    "stats": {
+      "all": "All Students",
+      "newlyEnrolled": "Newly Enrolled",
+      "day": "Day Students",
+      "boarding": "Boarding Students",
+      "withdrawn": "Withdrawn"
+    },
+    "searchPlaceholder": "Search by name or admission no…",
+    "addNew": "Add New Student",
+    "empty": "No students yet — add your first one to get started.",
+    "export": {
+      "label": "Export List"
+    },
+    "more": {
+      "label": "More",
+      "importStudent": "Import Student",
+      "exportPassports": "Export Passports",
+      "bulkUpload": "Bulk Upload",
+      "bulkGraduation": "Bulk Graduation",
+      "bulkActivateDeactivate": "Bulk Activate/Deactivate"
+    },
+    "filters": {
+      "class": "Class",
+      "allClasses": "All Classes",
+      "arm": "Class-arm",
+      "allArms": "All Class-arms",
+      "boardingHouse": "Boarding House",
+      "allBoardingHouses": "All Houses",
+      "studentType": "Student Type",
+      "allTypes": "All Types"
+    },
+    "columns": {
+      "sn": "S/N",
+      "photo": "Passport",
+      "admissionNumber": "Admission No",
+      "lastName": "Last Name",
+      "firstName": "First Name",
+      "otherNames": "Other Names",
+      "class": "Class",
+      "arm": "Class-arm",
+      "boardingHouse": "Boarding House",
+      "gender": "Gender",
+      "status": "Status",
+      "dob": "Date of Birth",
+      "mode": "Mode",
+      "siblings": "Siblings",
+      "actions": "Actions",
+      "guardianPhone": "Guardian/Primary Contact Phone"
+    },
+    "status": {
+      "active": "Active",
+      "graduated": "Graduated",
+      "withdrawn": "Withdrawn",
+      "suspended": "Suspended",
+      "expelled": "Expelled",
+      "draft": "Draft",
+      "inactive": "Inactive"
+    },
+    "mode": {
+      "day": "Day",
+      "boarding": "Boarding"
+    },
+    "gender": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "actions": {
+      "menuLabel": "Actions for {name}",
+      "view": "View",
+      "edit": "Edit",
+      "resume": "Resume",
+      "sendMail": "Send Mail to Parent",
+      "loginAs": "Login as Student",
+      "suspend": "Suspend",
+      "graduate": "Graduate",
+      "expel": "Expel",
+      "withdraw": "Withdraw",
+      "comingSoon": "This action is coming in the next update",
+      "withdrawSucceeded": "{name} has been withdrawn",
+      "withdrawFailed": "Something went wrong withdrawing this student. Please try again.",
+      "confirmWithdraw": {
+        "title": "Withdraw student?",
+        "message": "This will withdraw {name} and move them to the Withdrawn list."
+      }
+    },
+    "badges": {
+      "draft": "Draft"
+    },
+    "list": {
+      "loadError": "Couldn't load students. Please try again."
+    },
+    "wizard": {
+      "titleCreate": "Add New Student",
+      "titleEdit": "Edit Student",
+      "subtitle": "Step {step} of {total}",
+      "noYear": {
+        "message": "No academic years have been set up yet. Create one to enroll students.",
+        "linkLabel": "Go to Academic Years"
+      },
+      "stepOfTotal": "Step {step} of {total} — {title}",
+      "devBypassNotice": "Live data isn't available in local dev — this works normally on the deployed tenant.",
+      "stepError": {
+        "title": "This step hit a problem",
+        "message": "Something went wrong loading this step's content. Your progress on other steps is still here — try a different step, or close and reopen the wizard."
+      },
+      "steps": {
+        "classDetails": "Class Details",
+        "studentDetails": "Student Details",
+        "parentGuardian": "Parent/Guardian",
+        "address": "Address",
+        "agent": "Agent",
+        "siblings": "Siblings",
+        "pastRecords": "Past Records"
+      },
+      "footer": {
+        "back": "Back",
+        "saveDraft": "Save Draft",
+        "saveDraftShort": "Draft",
+        "next": "Next",
+        "addStudent": "Add Student",
+        "saveChanges": "Save Changes",
+        "draftSaved": "Draft saved",
+        "studentCreated": "Student added",
+        "studentUpdated": "Changes saved",
+        "saveFailed": "Something went wrong saving. Please try again."
+      },
+      "fields": {
+        "schoolType": {
+          "label": "School Type",
+          "placeholder": "Select a school type"
+        },
+        "class": {
+          "label": "Class",
+          "placeholder": "Select a class"
+        },
+        "classArm": {
+          "label": "Class-arm",
+          "placeholder": "Select a class-arm",
+          "empty": "No active class-arms for this class yet"
+        },
+        "classTerm": {
+          "label": "Class Term",
+          "placeholder": "Select a class term",
+          "empty": "No terms set up for this class yet"
+        },
+        "academicHouse": {
+          "label": "Academic House",
+          "none": "None"
+        },
+        "boardingHouse": {
+          "label": "Boarding House",
+          "placeholder": "Select a boarding house"
+        },
+        "mode": {
+          "label": "Mode"
+        },
+        "extraCurricular": {
+          "label": "Extra-curricular"
+        },
+        "fee": {
+          "label": "Fee",
+          "pending": "Pending the Fees module — not available yet"
+        },
+        "photo": {
+          "label": "Passport Photo",
+          "errors": {
+            "unsupportedType": "Please upload a JPG, PNG, or WEBP image",
+            "tooLarge": "Image must be 2MB or smaller"
+          }
+        },
+        "firstName": {
+          "label": "First Name"
+        },
+        "otherNames": {
+          "label": "Other Names"
+        },
+        "lastName": {
+          "label": "Last Name"
+        },
+        "admissionNumber": {
+          "label": "Admission Number",
+          "placeholder": "Leave blank to auto-generate later"
+        },
+        "email": {
+          "label": "Email"
+        },
+        "gender": {
+          "label": "Gender"
+        },
+        "religion": {
+          "label": "Religion",
+          "placeholder": "Select a religion",
+          "christianity": "Christianity",
+          "islam": "Islam",
+          "other": "Other",
+          "otherLabel": "Please specify"
+        },
+        "nationality": {
+          "label": "Nationality"
+        },
+        "dob": {
+          "label": "Date of Birth"
+        },
+        "age": {
+          "label": "Age",
+          "years": "{age} years"
+        },
+        "height": {
+          "label": "Height",
+          "placeholder": "e.g. 140cm"
+        },
+        "weight": {
+          "label": "Weight",
+          "placeholder": "e.g. 35kg"
+        },
+        "medical": {
+          "sectionTitle": "Medical Details (optional)"
+        },
+        "bloodGroup": {
+          "label": "Blood Group",
+          "placeholder": "Select blood group"
+        },
+        "genotype": {
+          "label": "Genotype",
+          "placeholder": "Select genotype"
+        },
+        "allergies": {
+          "label": "Allergies"
+        },
+        "medicalConditions": {
+          "label": "Medical Conditions"
+        },
+        "medications": {
+          "label": "Medications"
+        },
+        "specialNeeds": {
+          "label": "Special Needs / Notes"
+        },
+        "relationshipType": {
+          "label": "Relationship Type",
+          "parent": "Parent",
+          "guardian": "Guardian"
+        },
+        "fatherBlock": {
+          "title": "Father"
+        },
+        "motherBlock": {
+          "title": "Mother"
+        },
+        "guardianBlock": {
+          "title": "Guardian"
+        },
+        "personFirstName": {
+          "label": "First Name"
+        },
+        "personMiddleName": {
+          "label": "Middle Name"
+        },
+        "personLastName": {
+          "label": "Last Name"
+        },
+        "personPhone": {
+          "label": "Phone"
+        },
+        "personEmail": {
+          "label": "Email"
+        },
+        "personOccupation": {
+          "label": "Occupation"
+        },
+        "primaryContact": {
+          "label": "Primary Contact",
+          "placeholder": "Select the primary contact"
+        },
+        "homeAddress": {
+          "title": "Home Address"
+        },
+        "otherAddressSame": {
+          "label": "Other (permanent) address same as home"
+        },
+        "otherAddress": {
+          "title": "Other (Permanent) Address"
+        },
+        "street": {
+          "label": "Street Address"
+        },
+        "country": {
+          "label": "Country",
+          "placeholder": "Search for a country"
+        },
+        "state": {
+          "label": "State",
+          "placeholder": "e.g. Lagos",
+          "searchPlaceholder": "Search for a state"
+        },
+        "city": {
+          "label": "City",
+          "placeholder": "e.g. Ikeja",
+          "searchPlaceholder": "Search for a city"
+        },
+        "lgaOrArea": {
+          "label": "LGA / Area",
+          "placeholder": "e.g. Ikeja LGA"
+        },
+        "postalCode": {
+          "label": "Postal Code"
+        },
+        "emergencyContacts": {
+          "title": "Emergency Contacts (optional)",
+          "hint": "For when primary guardians are unreachable.",
+          "nameLabel": "Contact {number} Name",
+          "phoneLabel": "Contact {number} Phone"
+        },
+        "agent": {
+          "label": "Agent",
+          "placeholder": "Search for an agent"
+        },
+        "agentCommission": {
+          "label": "Has agent / pays commission"
+        },
+        "siblings": {
+          "label": "Siblings",
+          "placeholder": "Search students by name or admission number"
+        },
+        "pastRecords": {
+          "empty": "No past records added yet.",
+          "entryTitle": "Record {number}",
+          "school": "School",
+          "class": "Class",
+          "grade": "Grade",
+          "rank": "Rank",
+          "year": "Year",
+          "attachment": "Attachment",
+          "chooseAttachment": "Choose file",
+          "add": "+ Add Past Record",
+          "errors": {
+            "unsupportedType": "Please upload a PDF, JPG, or PNG",
+            "tooLarge": "File must be 5MB or smaller"
+          }
+        }
+      },
+      "login": {
+        "sectionTitle": "Login Details",
+        "username": {
+          "label": "Username"
+        },
+        "password": {
+          "label": "Password"
+        },
+        "regenerate": "Regenerate",
+        "twoFactor": {
+          "label": "Enable 2-Factor Authentication",
+          "helper": "Admin-controlled, applies to this student's login."
+        },
+        "activate": {
+          "label": "Activate Login",
+          "helper": "Turns the student's portal login on or off."
+        }
+      },
+      "errors": {
+        "schoolTypeRequired": "Select a school type",
+        "classRequired": "Select a class",
+        "classArmRequired": "Select a class-arm",
+        "classTermRequired": "Select a class term",
+        "modeRequired": "Select Day or Boarding",
+        "firstNameRequired": "First name is required",
+        "lastNameRequired": "Last name is required",
+        "genderRequired": "Select a gender",
+        "religionRequired": "Select a religion",
+        "religionOtherRequired": "Please specify the religion",
+        "nationalityRequired": "Nationality is required",
+        "dobRequired": "Date of birth is required",
+        "personNameRequired": "First and last name are required",
+        "personPhoneRequired": "Phone number is required",
+        "streetRequired": "Street address is required",
+        "countryRequired": "Select a country",
+        "usernameRequired": "Username is required",
+        "passwordRequired": "Password is required"
+      }
     }
   },
   "onboarding": {

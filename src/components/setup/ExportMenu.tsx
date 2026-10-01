@@ -7,6 +7,8 @@ import type { ExportConfig } from "@/lib/export/exportTypes";
 
 type ExportMenuProps<T> = {
   config: ExportConfig<T>;
+  /** Overrides the trigger button's text (default: setup.export.label, "Export") — e.g. Students uses "Export List". */
+  label?: string;
 };
 
 /**
@@ -17,7 +19,7 @@ type ExportMenuProps<T> = {
  * clicks one of these buttons (same lazy-loading principle as Subject
  * Master's TipTap editor).
  */
-export function ExportMenu<T>({ config }: ExportMenuProps<T>) {
+export function ExportMenu<T>({ config, label }: ExportMenuProps<T>) {
   const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [includeAll, setIncludeAll] = useState(false);
@@ -59,7 +61,7 @@ export function ExportMenu<T>({ config }: ExportMenuProps<T>) {
         aria-expanded={isOpen}
         className="flex h-11 w-full items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 text-sm font-medium text-text-primary transition-colors hover:bg-background focus:outline-none focus:ring-2 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
       >
-        {t("setup.export.label")}
+        {label ?? t("setup.export.label")}
         <ChevronDownIcon
           className={`h-4 w-4 shrink-0 text-text-muted transition-transform duration-150 ${isOpen ? "rotate-180" : ""}`}
         />

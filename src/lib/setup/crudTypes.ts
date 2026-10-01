@@ -13,7 +13,8 @@ import type { ExportConfig } from "@/lib/export/exportTypes";
 export type ColumnDef<T> = {
   key: string;
   header: string;
-  render: (row: T) => ReactNode;
+  /** `index` is the row's position in the currently rendered page — most columns ignore it; it exists for e.g. an "S/N" column. */
+  render: (row: T, index: number) => ReactNode;
   className?: string;
 };
 
@@ -119,6 +120,21 @@ export function throwIfTransient<T>(result: CrudResult<T>): CrudResult<T> {
 }
 
 /**
+ * True when a query's result is the DEV_AUTH_BYPASS short-circuit (every
+ * real ERP/Settings service returns `{ok:false, kind:"devBypassUnavailable"}`
+ * instead of calling the real API when the local dev-bypass token is
+ * active — see e.g. schoolTypesApi.ts / settingsApi.ts). Distinct from
+ * "genuinely empty" (a school with no classes yet), so a caller that
+ * depends on live data (the Add Student wizard's Step 1, for one) can show
+ * an explicit "not available in local dev" notice instead of a misleading
+ * plain empty state. Loosely typed so it also accepts SettingsResult<T>,
+ * which has the identical {ok,kind} shape but isn't a CrudResult.
+ */
+export function isDevBypassUnavailable(result: { ok: boolean; kind?: string } | undefined): boolean {
+  return !!result && result.ok === false && result.kind === "devBypassUnavailable";
+}
+
+/**
  * Everything DataTable and CardGrid have in common — both are just a
  * presentation of the same useCrudTable state, wrapped in the same
  * SetupToolbar/SetupPagination. Each extends this with only its own
@@ -138,6 +154,8 @@ export type SetupListBaseProps<T> = {
   onAddNew?: () => void;
   addNewLabel?: string;
   exportConfig?: ExportConfig<T>;
+  /** Extra toolbar buttons beyond Export/Add New — e.g. Students' "More" bulk-actions menu. Rendered between them. */
+  extraActions?: ReactNode;
 
   isLoading: boolean;
   errorMessage: string | null;

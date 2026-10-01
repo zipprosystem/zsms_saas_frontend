@@ -24,6 +24,7 @@ export function DataTable<T>({
   onAddNew,
   addNewLabel,
   exportConfig,
+  extraActions,
   isLoading,
   errorMessage,
   onRetry,
@@ -47,6 +48,7 @@ export function DataTable<T>({
         onAddNew={onAddNew}
         addNewLabel={addNewLabel}
         exportConfig={exportConfig}
+        extraActions={extraActions}
       />
 
       <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
@@ -96,11 +98,11 @@ export function DataTable<T>({
                   </td>
                 </tr>
               ) : (
-                rows.map((row) => (
+                rows.map((row, index) => (
                   <tr key={getRowId(row)} className="border-b border-border last:border-b-0 hover:bg-background">
                     {columns.map((column) => (
                       <td key={column.key} className={`px-4 py-3.5 text-text-primary ${column.className ?? ""}`}>
-                        {column.render(row)}
+                        {column.render(row, index)}
                       </td>
                     ))}
                     {hasActions ? (

@@ -1,5 +1,5 @@
-import { ModuleStub } from "@/components/layout/ModuleStub";
+import { StudentsScreen } from "@/components/students/StudentsScreen";
 
 export default function Page() {
-  return <ModuleStub titleKey="nav.students" />;
+  return <StudentsScreen />;
 }

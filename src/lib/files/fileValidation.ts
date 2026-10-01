@@ -1,9 +1,10 @@
 // Generic client-side validation, shared by every entity's optional
 // file-attachment field (Subject Master's PDF, Class Subjects'
-// PDF/DOC/DOCX/PPT/PPTX, and whatever comes next). Each entity keeps its
-// own thin file declaring its allowed types/size limit and wrapping
-// validateFile() under its own name. The backend validates too — this is
-// just the fast, friendly first line.
+// PDF/DOC/DOCX/PPT/PPTX, Students' passport photo and past-record
+// attachments, and whatever comes next). Each entity keeps its own thin
+// file declaring its allowed types/size limit and wrapping validateFile()
+// under its own name. The backend validates too — this is just the fast,
+// friendly first line.
 
 export type FileValidation = { ok: true } | { ok: false; reason: "unsupportedType" | "tooLarge" };
 

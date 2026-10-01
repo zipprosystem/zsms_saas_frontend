@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-const PAGE_SIZE = 10;
+/** Exported so a caller needing a global row number (e.g. an "S/N" column) can compute `(page - 1) * PAGE_SIZE + index + 1`. */
+export const PAGE_SIZE = 10;
 
 type UsePaginatedViewOptions<T> = {
   matchesSearch?: (row: T, query: string) => boolean;
