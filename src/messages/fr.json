@@ -190,6 +190,11 @@
     "student": { "title": "Espace élève" },
     "parent": { "title": "Espace parent" }
   },
+  "files": {
+    "uploading": "Téléversement…",
+    "change": "Changer",
+    "choosePhoto": "Choisir une photo"
+  },
   "setup": {
     "header": {
       "title": "Terminez la configuration de votre école",
@@ -1002,6 +1007,289 @@
     },
     "list": {
       "loadError": "Impossible de charger les élèves. Veuillez réessayer."
+    },
+    "wizard": {
+      "titleCreate": "Ajouter un élève",
+      "titleEdit": "Modifier l'élève",
+      "subtitle": "Étape {step} sur {total}",
+      "noYear": {
+        "message": "Aucune année académique n'a encore été configurée. Créez-en une pour inscrire des élèves.",
+        "linkLabel": "Aller aux années académiques"
+      },
+      "stepOfTotal": "Étape {step} sur {total} — {title}",
+      "devBypassNotice": "Les données réelles ne sont pas disponibles en local — cela fonctionne normalement sur le tenant déployé.",
+      "stepError": {
+        "title": "Un problème est survenu sur cette étape",
+        "message": "Le chargement du contenu de cette étape a échoué. Vos données sur les autres étapes sont toujours là — essayez une autre étape, ou fermez et rouvrez l'assistant."
+      },
+      "steps": {
+        "classDetails": "Détails de la classe",
+        "studentDetails": "Détails de l'élève",
+        "parentGuardian": "Parent/Tuteur",
+        "address": "Adresse",
+        "agent": "Agent",
+        "siblings": "Fratrie",
+        "pastRecords": "Antécédents scolaires"
+      },
+      "footer": {
+        "back": "Retour",
+        "saveDraft": "Enregistrer le brouillon",
+        "saveDraftShort": "Brouillon",
+        "next": "Suivant",
+        "addStudent": "Ajouter l'élève",
+        "saveChanges": "Enregistrer les modifications",
+        "saveDraftComingSoon": "L'enregistrement de brouillon arrive dans la prochaine mise à jour",
+        "submitComingSoon": "Toutes les étapes sont validées — l'enregistrement sera activé dans la prochaine mise à jour"
+      },
+      "fields": {
+        "schoolType": {
+          "label": "Type d'établissement",
+          "placeholder": "Sélectionnez un type d'établissement"
+        },
+        "class": {
+          "label": "Classe",
+          "placeholder": "Sélectionnez une classe"
+        },
+        "classArm": {
+          "label": "Section",
+          "placeholder": "Sélectionnez une section",
+          "empty": "Aucune section active pour cette classe"
+        },
+        "classTerm": {
+          "label": "Trimestre",
+          "placeholder": "Sélectionnez un trimestre",
+          "empty": "Aucun trimestre configuré pour cette classe"
+        },
+        "academicHouse": {
+          "label": "Maison académique",
+          "none": "Aucune"
+        },
+        "mode": {
+          "label": "Mode"
+        },
+        "extraCurricular": {
+          "label": "Activités parascolaires"
+        },
+        "fee": {
+          "label": "Frais",
+          "pending": "En attente du module Frais — pas encore disponible"
+        },
+        "photo": {
+          "label": "Photo d'identité",
+          "errors": {
+            "unsupportedType": "Veuillez téléverser une image JPG, PNG ou WEBP",
+            "tooLarge": "L'image doit faire 2 Mo maximum"
+          }
+        },
+        "firstName": {
+          "label": "Prénom"
+        },
+        "otherNames": {
+          "label": "Autres prénoms"
+        },
+        "lastName": {
+          "label": "Nom"
+        },
+        "admissionNumber": {
+          "label": "Numéro d'admission",
+          "placeholder": "Laissez vide pour générer automatiquement"
+        },
+        "email": {
+          "label": "E-mail"
+        },
+        "gender": {
+          "label": "Sexe"
+        },
+        "religion": {
+          "label": "Religion",
+          "placeholder": "Sélectionnez une religion",
+          "christianity": "Christianisme",
+          "islam": "Islam",
+          "other": "Autre",
+          "otherLabel": "Veuillez préciser"
+        },
+        "nationality": {
+          "label": "Nationalité"
+        },
+        "dob": {
+          "label": "Date de naissance"
+        },
+        "age": {
+          "label": "Âge",
+          "years": "{age} ans"
+        },
+        "height": {
+          "label": "Taille",
+          "placeholder": "ex. 140cm"
+        },
+        "weight": {
+          "label": "Poids",
+          "placeholder": "ex. 35kg"
+        },
+        "medical": {
+          "sectionTitle": "Détails médicaux (facultatif)"
+        },
+        "bloodGroup": {
+          "label": "Groupe sanguin",
+          "placeholder": "Sélectionnez le groupe sanguin"
+        },
+        "genotype": {
+          "label": "Génotype",
+          "placeholder": "Sélectionnez le génotype"
+        },
+        "allergies": {
+          "label": "Allergies"
+        },
+        "medicalConditions": {
+          "label": "Conditions médicales"
+        },
+        "medications": {
+          "label": "Médicaments"
+        },
+        "specialNeeds": {
+          "label": "Besoins particuliers / Notes"
+        },
+        "relationshipType": {
+          "label": "Type de lien",
+          "parent": "Parent",
+          "guardian": "Tuteur"
+        },
+        "fatherBlock": {
+          "title": "Père"
+        },
+        "motherBlock": {
+          "title": "Mère"
+        },
+        "guardianBlock": {
+          "title": "Tuteur"
+        },
+        "personFirstName": {
+          "label": "Prénom"
+        },
+        "personMiddleName": {
+          "label": "Deuxième prénom"
+        },
+        "personLastName": {
+          "label": "Nom"
+        },
+        "personPhone": {
+          "label": "Téléphone"
+        },
+        "personEmail": {
+          "label": "E-mail"
+        },
+        "personOccupation": {
+          "label": "Profession"
+        },
+        "primaryContact": {
+          "label": "Contact principal",
+          "placeholder": "Sélectionnez le contact principal"
+        },
+        "homeAddress": {
+          "title": "Adresse actuelle"
+        },
+        "otherAddressSame": {
+          "label": "Autre adresse (permanente) identique à l'adresse actuelle"
+        },
+        "otherAddress": {
+          "title": "Autre adresse (permanente)"
+        },
+        "street": {
+          "label": "Adresse (rue)"
+        },
+        "country": {
+          "label": "Pays",
+          "placeholder": "Rechercher un pays"
+        },
+        "state": {
+          "label": "État/Région",
+          "placeholder": "ex. Lagos",
+          "searchPlaceholder": "Rechercher un état"
+        },
+        "city": {
+          "label": "Ville",
+          "placeholder": "ex. Ikeja",
+          "searchPlaceholder": "Rechercher une ville"
+        },
+        "lgaOrArea": {
+          "label": "LGA / Zone",
+          "placeholder": "ex. LGA d'Ikeja"
+        },
+        "postalCode": {
+          "label": "Code postal"
+        },
+        "emergencyContacts": {
+          "title": "Contacts d'urgence (facultatif)",
+          "hint": "Pour les cas où les tuteurs principaux sont injoignables.",
+          "nameLabel": "Nom du contact {number}",
+          "phoneLabel": "Téléphone du contact {number}"
+        },
+        "agent": {
+          "label": "Agent",
+          "placeholder": "Rechercher un agent"
+        },
+        "agentCommission": {
+          "label": "A un agent / verse une commission"
+        },
+        "siblings": {
+          "label": "Fratrie",
+          "placeholder": "Rechercher des élèves par nom ou numéro d'admission"
+        },
+        "pastRecords": {
+          "empty": "Aucun antécédent ajouté pour le moment.",
+          "entryTitle": "Antécédent {number}",
+          "school": "École",
+          "class": "Classe",
+          "grade": "Note",
+          "rank": "Rang",
+          "year": "Année",
+          "attachment": "Pièce jointe",
+          "chooseAttachment": "Choisir un fichier",
+          "add": "+ Ajouter un antécédent",
+          "errors": {
+            "unsupportedType": "Veuillez téléverser un PDF, JPG ou PNG",
+            "tooLarge": "Le fichier doit faire 5 Mo maximum"
+          }
+        }
+      },
+      "login": {
+        "sectionTitle": "Identifiants de connexion",
+        "username": {
+          "label": "Nom d'utilisateur"
+        },
+        "password": {
+          "label": "Mot de passe"
+        },
+        "regenerate": "Régénérer",
+        "twoFactor": {
+          "label": "Activer l'authentification à deux facteurs",
+          "helper": "Contrôlé par l'administrateur, s'applique à la connexion de cet élève."
+        },
+        "activate": {
+          "label": "Activer la connexion",
+          "helper": "Active ou désactive l'accès au portail de l'élève."
+        }
+      },
+      "errors": {
+        "schoolTypeRequired": "Sélectionnez un type d'établissement",
+        "classRequired": "Sélectionnez une classe",
+        "classArmRequired": "Sélectionnez une section",
+        "classTermRequired": "Sélectionnez un trimestre",
+        "modeRequired": "Sélectionnez Externat ou Internat",
+        "firstNameRequired": "Le prénom est requis",
+        "lastNameRequired": "Le nom est requis",
+        "genderRequired": "Sélectionnez un sexe",
+        "religionRequired": "Sélectionnez une religion",
+        "religionOtherRequired": "Veuillez préciser la religion",
+        "nationalityRequired": "La nationalité est requise",
+        "dobRequired": "La date de naissance est requise",
+        "personNameRequired": "Le prénom et le nom sont requis",
+        "personPhoneRequired": "Le numéro de téléphone est requis",
+        "streetRequired": "L'adresse (rue) est requise",
+        "countryRequired": "Sélectionnez un pays",
+        "usernameRequired": "Le nom d'utilisateur est requis",
+        "passwordRequired": "Le mot de passe est requis"
+      }
     }
   },
   "onboarding": {

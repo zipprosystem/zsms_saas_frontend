@@ -1,6 +1,19 @@
 import type { Agent, Student, StudentGender, StudentMode, StudentStatus } from "@/lib/students/studentTypes";
 
 /**
+ * MOCK — "school_mode" (day|boarding|both) is a real Settings field we've
+ * flagged to Muntajir but isn't built yet (it only ever existed inside the
+ * onboarding payload, never persisted anywhere readable post-signup — not
+ * in Settings, not on useAuth()'s `school` object). The Add Student
+ * wizard's Step 1 Mode field needs SOME default, so this hardcodes "day"
+ * until Settings grows a real field. If school_mode is "both", the wizard
+ * should default to NO selection (force the user to pick) — not modeled
+ * here since there's no real "both" to detect yet; revisit once this is
+ * un-mocked.
+ */
+export const MOCK_SCHOOL_MODE: StudentMode = "day";
+
+/**
  * Illustrative-only reference data for the Students MOCK module's seed
  * rows and table display (Commit 1, before the wizard exists). These are
  * NOT the real academic-structure records — once the Add Student wizard

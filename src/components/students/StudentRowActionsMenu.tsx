@@ -12,15 +12,24 @@ import type { Student } from "@/lib/students/studentTypes";
  * unified status-change flow (category + reason + date — see
  * studentTypes.ts's StudentStatus doc) landing in a later commit.
  */
-export function StudentRowActionsMenu({ student, onComingSoon }: { student: Student; onComingSoon: () => void }) {
+export function StudentRowActionsMenu({
+  student,
+  onEdit,
+  onComingSoon,
+}: {
+  student: Student;
+  /** View and Edit both open the wizard in edit mode — Commit 2 has no separate read-only view, so "View" is functionally identical to "Edit" for now. */
+  onEdit: () => void;
+  onComingSoon: () => void;
+}) {
   const t = useTranslations();
 
   return (
     <ActionsMenu
       menuLabel={t("students.actions.menuLabel", { name: student.first_name })}
       items={[
-        { key: "view", label: t("students.actions.view"), onClick: onComingSoon },
-        { key: "edit", label: t("students.actions.edit"), onClick: onComingSoon },
+        { key: "view", label: t("students.actions.view"), onClick: onEdit },
+        { key: "edit", label: t("students.actions.edit"), onClick: onEdit },
         { key: "sendMail", label: t("students.actions.sendMail"), onClick: onComingSoon },
         { key: "loginAs", label: t("students.actions.loginAs"), onClick: onComingSoon },
         { key: "suspend", label: t("students.actions.suspend"), onClick: onComingSoon },

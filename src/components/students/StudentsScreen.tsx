@@ -30,6 +30,7 @@ import { StudentsTabs, type StudentsTabKey } from "@/components/students/Student
 import { StudentsComingSoonTab } from "@/components/students/StudentsComingSoonTab";
 import { MoreActionsMenu } from "@/components/students/MoreActionsMenu";
 import { StudentRowActionsMenu } from "@/components/students/StudentRowActionsMenu";
+import { StudentWizard } from "@/components/students/wizard/StudentWizard";
 
 /** Small initials circle — the Add Student wizard's real photo upload (Commit 2) replaces this per-row once a student has photo_file_id set. */
 function StudentAvatar({ student }: { student: Student }) {
@@ -67,6 +68,7 @@ export function StudentsScreen() {
   const { school } = useAuth();
   const { selectedYear } = useAcademicYear();
   const [activeTab, setActiveTab] = useState<StudentsTabKey>("list");
+  const [wizardState, setWizardState] = useState<{ mode: "create" } | { mode: "edit"; student: Student } | null>(null);
 
   const query = useQuery({
     queryKey: studentsQueryKey,
@@ -165,7 +167,9 @@ export function StudentsScreen() {
     {
       key: "actions",
       header: t("students.columns.actions"),
-      render: (row) => <StudentRowActionsMenu student={row} onComingSoon={comingSoon} />,
+      render: (row) => (
+        <StudentRowActionsMenu student={row} onEdit={() => setWizardState({ mode: "edit", student: row })} onComingSoon={comingSoon} />
+      ),
     },
   ];
 
@@ -216,7 +220,7 @@ export function StudentsScreen() {
             onSearchChange={view.setSearch}
             searchPlaceholder={t("students.searchPlaceholder")}
             filters={filters}
-            onAddNew={comingSoon}
+            onAddNew={() => setWizardState({ mode: "create" })}
             addNewLabel={t("students.addNew")}
             extraActions={
               <>
@@ -237,6 +241,14 @@ export function StudentsScreen() {
       ) : (
         <StudentsComingSoonTab titleKey={comingSoonTitleKey ?? "students.tabs.list"} />
       )}
+
+      {wizardState ? (
+        <StudentWizard
+          mode={wizardState.mode}
+          initialStudent={wizardState.mode === "edit" ? wizardState.student : undefined}
+          onClose={() => setWizardState(null)}
+        />
+      ) : null}
     </div>
   );
 }
