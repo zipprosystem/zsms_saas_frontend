@@ -8,12 +8,16 @@ import type { CrudResult } from "@/lib/setup/crudTypes";
  * Any entity with an attachment (Subject Master, Class Subjects, ...)
  * uploads here first, then stores only the returned file_id on itself.
  *
- *   POST {API_BASE}/erp/files  (multipart/form-data, single part "file")
+ *   POST {API_BASE}/erp/files  (multipart/form-data, parts "file" + "purpose")
  *     -> { success: true, data: { file_id, ...metadata } }
- *     FLAGGED, UNCONFIRMED: the multipart part name ("file") and the exact
- *     metadata key names. readUploadedFile() accepts file_id or id, and
- *     original_name/name, size/size_bytes, mime_type/type — reconcile to
- *     the real shape from DevTools on deploy.
+ *     `purpose` is REQUIRED — confirmed via real 422 ("purpose must be one
+ *     of subject_master, class_subject"). Every caller must say what the
+ *     attachment is for; there's no default. FLAG: if a future entity
+ *     attaches files too, it needs its own purpose value confirmed with
+ *     Muntajir before reusing either of these two.
+ *     FLAGGED, UNCONFIRMED: the exact metadata key names. readUploadedFile()
+ *     accepts file_id or id, and original_name/name, size/size_bytes,
+ *     mime_type/type — reconcile to the real shape from DevTools on deploy.
  *   GET {API_BASE}/erp/files/:id/download-url
  *     -> { success: true, data: { url, ... } } — a short-lived signed URL
  *     (TTL 300s). FLAGGED, UNCONFIRMED: the key name — readDownloadUrl()
@@ -103,11 +107,15 @@ function readDownloadUrl(body: unknown): string | null {
   return asString(record.url) ?? asString(record.download_url) ?? asString(record.signed_url);
 }
 
-export async function uploadFile(file: File): Promise<CrudResult<AttachedFile>> {
+/** Entities that can own an uploaded file — extend when a new one is confirmed with Muntajir. */
+export type FileUploadPurpose = "subject_master" | "class_subject";
+
+export async function uploadFile(file: File, purpose: FileUploadPurpose): Promise<CrudResult<AttachedFile>> {
   if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
 
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("purpose", purpose);
 
   let response: Response;
   try {

@@ -20,10 +20,15 @@ import type { CrudResult } from "@/lib/setup/crudTypes";
  *     (classes × subjects), so fetchClassSubjectsForYear() follows
  *     has_more until done.
  *   POST {API_BASE}/erp/class-subjects/bulk
- *     { class_ids[], subject_master_ids[], subject_group, unit?, room_id?,
- *       file_id? }
+ *     { academic_year_id, class_ids[], subject_master_ids[], subject_group,
+ *       unit?, room_id?, file_id? }
  *     -> Cartesian product; pairs that already exist are SKIPPED, not
  *     failed: { created_count, existing_count, created[], existing[] }.
+ *     academic_year_id is REQUIRED — confirmed via real 422
+ *     ("academic_year_id: Required"); the single POST /erp/class-subjects
+ *     needs it too, by the same validator. Sent as the screen's selected
+ *     year (useAcademicYear().selectedYearId) — a bulk call only ever
+ *     targets one year at a time.
  *     Max 100 classes × 100 subjects (backend-enforced; its message is
  *     surfaced as-is). The single POST /erp/class-subjects also exists but
  *     isn't used — a 1×1 bulk call gives the same "created N, M already
@@ -32,9 +37,11 @@ import type { CrudResult } from "@/lib/setup/crudTypes";
  *     file_id } — class/subject master/year aren't reassignable via edit.
  *   DELETE {API_BASE}/erp/class-subjects/:id
  *
- * Field names: class_id / subject_master_id / academic_year_id / file_id
- * are INFERRED from the bulk body's class_ids / subject_master_ids /
- * file_id — reconcile against the real row shape on deploy. No hours.
+ * Field names: class_id / subject_master_id / file_id are INFERRED from
+ * the bulk body's class_ids / subject_master_ids / file_id — reconcile
+ * against the real row shape on deploy. No hours. academic_year_id is
+ * CONFIRMED (see above) and matches the name subject-groups' API already
+ * uses (classSubjectGroupingApi.ts), so this isn't a new name to guess.
  * subject_group: sent as "Core" | "Elective" (FLAGGED: casing to confirm);
  * responses are normalized to that casing either way.
  * room_id: rooms are still MOCK (facilitiesApi.ts) — FLAGGED: if the
@@ -59,6 +66,7 @@ export type ClassSubject = {
 };
 
 export type ClassSubjectBulkCreateInput = {
+  academic_year_id: string;
   class_ids: string[];
   subject_master_ids: string[];
   subject_group: SubjectGroup;
@@ -165,6 +173,7 @@ export async function bulkCreateClassSubjects(
   // unit/room_id/file_id are optional in the bulk contract — omitted
   // rather than sent as null when empty.
   const payload: Record<string, unknown> = {
+    academic_year_id: input.academic_year_id,
     class_ids: input.class_ids,
     subject_master_ids: input.subject_master_ids,
     subject_group: input.subject_group,

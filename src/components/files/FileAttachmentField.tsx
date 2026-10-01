@@ -3,7 +3,7 @@
 import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { FileDownloadLink } from "@/components/files/FileDownloadLink";
-import { uploadFile, type AttachedFile } from "@/lib/files/filesApi";
+import { uploadFile, type AttachedFile, type FileUploadPurpose } from "@/lib/files/filesApi";
 import { formatFileSize, type FileValidation } from "@/lib/files/fileValidation";
 
 /**
@@ -22,6 +22,7 @@ export function FileAttachmentField({
   value,
   onChange,
   chooseIcon,
+  purpose,
 }: {
   label: string;
   chooseLabel: string;
@@ -31,6 +32,7 @@ export function FileAttachmentField({
   value: AttachedFile | null;
   onChange: (file: AttachedFile | null) => void;
   chooseIcon?: ReactNode;
+  purpose: FileUploadPurpose;
 }) {
   const t = useTranslations();
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +52,7 @@ export function FileAttachmentField({
 
     setError(null);
     setIsUploading(true);
-    const result = await uploadFile(file);
+    const result = await uploadFile(file, purpose);
     setIsUploading(false);
 
     if (result.ok) {
