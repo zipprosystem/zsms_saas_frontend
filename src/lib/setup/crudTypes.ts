@@ -13,7 +13,8 @@ import type { ExportConfig } from "@/lib/export/exportTypes";
 export type ColumnDef<T> = {
   key: string;
   header: string;
-  render: (row: T) => ReactNode;
+  /** `index` is the row's position in the currently rendered page — most columns ignore it; it exists for e.g. an "S/N" column. */
+  render: (row: T, index: number) => ReactNode;
   className?: string;
 };
 
@@ -131,6 +132,8 @@ export type SetupListBaseProps<T> = {
   onAddNew?: () => void;
   addNewLabel?: string;
   exportConfig?: ExportConfig<T>;
+  /** Extra toolbar buttons beyond Export/Add New — e.g. Students' "More" bulk-actions menu. Rendered between them. */
+  extraActions?: ReactNode;
 
   isLoading: boolean;
   errorMessage: string | null;

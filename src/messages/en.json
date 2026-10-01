@@ -898,6 +898,104 @@
       "asPdf": "Export as PDF"
     }
   },
+  "students": {
+    "title": "Students",
+    "header": {
+      "title": "Students",
+      "subtitle": "Manage, view and set everything related to students here"
+    },
+    "tabs": {
+      "list": "Student List",
+      "admissions": "Admissions",
+      "subjectEnrollment": "Subject Enrollment",
+      "classEnrollment": "Class Enrollment",
+      "notes": "Student Notes",
+      "withdrawn": "Withdrawn",
+      "graduate": "Graduate"
+    },
+    "tabComingSoon": "This tab is coming in a later update.",
+    "stats": {
+      "all": "All Students",
+      "newlyEnrolled": "Newly Enrolled",
+      "day": "Day Students",
+      "boarding": "Boarding Students",
+      "withdrawn": "Withdrawn"
+    },
+    "searchPlaceholder": "Search by name or admission no…",
+    "addNew": "Add New Student",
+    "empty": "No students yet — add your first one to get started.",
+    "export": {
+      "label": "Export List"
+    },
+    "more": {
+      "label": "More",
+      "importStudent": "Import Student",
+      "exportPassports": "Export Passports",
+      "bulkUpload": "Bulk Upload",
+      "bulkGraduation": "Bulk Graduation",
+      "bulkActivateDeactivate": "Bulk Activate/Deactivate"
+    },
+    "filters": {
+      "class": "Class",
+      "allClasses": "All Classes",
+      "arm": "Class-arm",
+      "allArms": "All Class-arms",
+      "boardingHouse": "Boarding House",
+      "allBoardingHouses": "All Houses",
+      "studentType": "Student Type",
+      "allTypes": "All Types"
+    },
+    "columns": {
+      "sn": "S/N",
+      "photo": "Passport",
+      "admissionNumber": "Admission No",
+      "lastName": "Last Name",
+      "firstName": "First Name",
+      "otherNames": "Other Names",
+      "class": "Class",
+      "arm": "Class-arm",
+      "boardingHouse": "Boarding House",
+      "gender": "Gender",
+      "status": "Status",
+      "dob": "Date of Birth",
+      "mode": "Mode",
+      "siblings": "Siblings",
+      "actions": "Actions",
+      "guardianPhone": "Guardian/Primary Contact Phone"
+    },
+    "status": {
+      "active": "Active",
+      "graduated": "Graduated",
+      "withdrawn": "Withdrawn",
+      "suspended": "Suspended",
+      "expelled": "Expelled",
+      "draft": "Draft",
+      "inactive": "Inactive"
+    },
+    "mode": {
+      "day": "Day",
+      "boarding": "Boarding"
+    },
+    "gender": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "actions": {
+      "menuLabel": "Actions for {name}",
+      "view": "View",
+      "edit": "Edit",
+      "sendMail": "Send Mail to Parent",
+      "loginAs": "Login as Student",
+      "suspend": "Suspend",
+      "graduate": "Graduate",
+      "expel": "Expel",
+      "withdraw": "Withdraw",
+      "comingSoon": "This action is coming in the next update"
+    },
+    "list": {
+      "loadError": "Couldn't load students. Please try again."
+    }
+  },
   "onboarding": {
     "common": {
       "loading": "Loading…",

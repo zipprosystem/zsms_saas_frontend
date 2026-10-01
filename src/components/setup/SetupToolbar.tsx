@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { SearchIcon } from "@/components/icons/header/SearchIcon";
 import { ChevronDownIcon } from "@/components/icons/sidebar/ChevronDownIcon";
 import { PlusIcon } from "@/components/icons/PlusIcon";
@@ -20,6 +20,8 @@ export type SetupToolbarProps = {
   addNewLabel?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- toolbar is generic-free; each screen supplies its own row type when building the config.
   exportConfig?: ExportConfig<any>;
+  /** Extra toolbar buttons beyond Export/Add New — e.g. Students' "More" bulk-actions menu. Rendered between them. */
+  extraActions?: ReactNode;
 };
 
 /**
@@ -37,6 +39,7 @@ export function SetupToolbar({
   onAddNew,
   addNewLabel,
   exportConfig,
+  extraActions,
 }: SetupToolbarProps) {
   return (
     <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
@@ -55,9 +58,10 @@ export function SetupToolbar({
         <FilterDropdown key={def.key} def={def} value={value} onChange={onChange} />
       ))}
 
-      {exportConfig || onAddNew ? (
+      {exportConfig || extraActions || onAddNew ? (
         <div className="flex w-full flex-col gap-3 sm:ml-auto sm:w-auto sm:flex-row sm:items-center">
           {exportConfig ? <ExportMenu config={exportConfig} /> : null}
+          {extraActions}
           {onAddNew ? (
             <Button
               type="button"

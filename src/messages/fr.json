@@ -906,6 +906,104 @@
       "asPdf": "Exporter en PDF"
     }
   },
+  "students": {
+    "title": "Élèves",
+    "header": {
+      "title": "Élèves",
+      "subtitle": "Gérez, consultez et configurez tout ce qui concerne les élèves ici"
+    },
+    "tabs": {
+      "list": "Liste des élèves",
+      "admissions": "Admissions",
+      "subjectEnrollment": "Inscription aux matières",
+      "classEnrollment": "Inscription en classe",
+      "notes": "Notes sur l'élève",
+      "withdrawn": "Retirés",
+      "graduate": "Diplômés"
+    },
+    "tabComingSoon": "Cet onglet arrive dans une prochaine mise à jour.",
+    "stats": {
+      "all": "Tous les élèves",
+      "newlyEnrolled": "Nouvellement inscrits",
+      "day": "Élèves externes",
+      "boarding": "Élèves internes",
+      "withdrawn": "Retirés"
+    },
+    "searchPlaceholder": "Rechercher par nom ou numéro d'admission…",
+    "addNew": "Ajouter un élève",
+    "empty": "Aucun élève pour le moment — ajoutez le premier pour commencer.",
+    "export": {
+      "label": "Exporter la liste"
+    },
+    "more": {
+      "label": "Plus",
+      "importStudent": "Importer un élève",
+      "exportPassports": "Exporter les photos d'identité",
+      "bulkUpload": "Téléversement groupé",
+      "bulkGraduation": "Diplomation groupée",
+      "bulkActivateDeactivate": "Activer/Désactiver en masse"
+    },
+    "filters": {
+      "class": "Classe",
+      "allClasses": "Toutes les classes",
+      "arm": "Section",
+      "allArms": "Toutes les sections",
+      "boardingHouse": "Maison d'internat",
+      "allBoardingHouses": "Toutes les maisons",
+      "studentType": "Type d'élève",
+      "allTypes": "Tous les types"
+    },
+    "columns": {
+      "sn": "N°",
+      "photo": "Photo d'identité",
+      "admissionNumber": "N° d'admission",
+      "lastName": "Nom",
+      "firstName": "Prénom",
+      "otherNames": "Autres prénoms",
+      "class": "Classe",
+      "arm": "Section",
+      "boardingHouse": "Maison d'internat",
+      "gender": "Sexe",
+      "status": "Statut",
+      "dob": "Date de naissance",
+      "mode": "Mode",
+      "siblings": "Fratrie",
+      "actions": "Actions",
+      "guardianPhone": "Téléphone du tuteur/contact principal"
+    },
+    "status": {
+      "active": "Actif",
+      "graduated": "Diplômé",
+      "withdrawn": "Retiré",
+      "suspended": "Suspendu",
+      "expelled": "Exclu",
+      "draft": "Brouillon",
+      "inactive": "Inactif"
+    },
+    "mode": {
+      "day": "Externat",
+      "boarding": "Internat"
+    },
+    "gender": {
+      "male": "Masculin",
+      "female": "Féminin"
+    },
+    "actions": {
+      "menuLabel": "Actions pour {name}",
+      "view": "Voir",
+      "edit": "Modifier",
+      "sendMail": "Envoyer un e-mail au parent",
+      "loginAs": "Se connecter en tant qu'élève",
+      "suspend": "Suspendre",
+      "graduate": "Diplômer",
+      "expel": "Exclure",
+      "withdraw": "Retirer",
+      "comingSoon": "Cette action arrive dans la prochaine mise à jour"
+    },
+    "list": {
+      "loadError": "Impossible de charger les élèves. Veuillez réessayer."
+    }
+  },
   "onboarding": {
     "common": {
       "loading": "Chargement…",

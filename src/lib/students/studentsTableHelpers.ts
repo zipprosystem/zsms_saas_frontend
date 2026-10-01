@@ -1,0 +1,87 @@
+import { MOCK_BOARDING_HOUSES, MOCK_CLASSES, MOCK_CLASS_ARMS, MOCK_HOUSES } from "@/lib/students/studentsMockData";
+import type { Student, StudentStatus } from "@/lib/students/studentTypes";
+
+export function studentFullName(student: Student): string {
+  return [student.first_name, student.other_names, student.last_name].filter(Boolean).join(" ");
+}
+
+export function resolveClassName(classId: string): string {
+  return MOCK_CLASSES.find((cls) => cls.id === classId)?.name ?? "—";
+}
+
+export function resolveArmName(classArmId: string): string {
+  return MOCK_CLASS_ARMS.find((arm) => arm.id === classArmId)?.name ?? "—";
+}
+
+export function resolveHouseName(houseId: string | null): string {
+  if (!houseId) return "—";
+  return MOCK_HOUSES.find((house) => house.id === houseId)?.name ?? "—";
+}
+
+export function resolveBoardingHouseName(boardingHouseId: string | null): string {
+  if (!boardingHouseId) return "—";
+  return MOCK_BOARDING_HOUSES.find((house) => house.id === boardingHouseId)?.name ?? "—";
+}
+
+/** i18n key under students.status.* (top-level "students" namespace — this is a module, not a Setup item) — component calls t(`students.status.${student.status}`). */
+export function statusLabelKey(student: Student): string {
+  return `students.status.${student.status}`;
+}
+
+export function modeLabelKey(student: Student): string {
+  return `students.mode.${student.mode}`;
+}
+
+export function genderLabelKey(student: Student): string {
+  return `students.gender.${student.gender}`;
+}
+
+/** Statuses combined on the Withdrawn tab/stat card — one admin flow (Withdraw/Suspend/Expel), distinguished later by a Status column. */
+const WITHDRAWN_GROUP_STATUSES: readonly StudentStatus[] = ["withdrawn", "suspended", "expelled"];
+
+export function isWithdrawnGroup(student: Student): boolean {
+  return (WITHDRAWN_GROUP_STATUSES as readonly string[]).includes(student.status);
+}
+
+const NEWLY_ENROLLED_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * "Newly Enrolled" stat card definition — created_at within the last 30
+ * days. Flagged as my interpretation (the brief said "define sensibly,
+ * e.g. enrolled this term/year"); this mock module has no academic-term
+ * context of its own to compute "this term" against, so a rolling window
+ * off created_at is the self-contained choice. Revisit once the real API
+ * (and a concrete "this term" definition) exists.
+ */
+export function isNewlyEnrolled(student: Student, now: Date = new Date()): boolean {
+  return now.getTime() - new Date(student.created_at).getTime() <= NEWLY_ENROLLED_WINDOW_MS;
+}
+
+export function matchesStudentSearch(student: Student, query: string): boolean {
+  const needle = query.toLowerCase();
+  return (
+    studentFullName(student).toLowerCase().includes(needle) ||
+    (student.admission_number?.toLowerCase().includes(needle) ?? false)
+  );
+}
+
+/**
+ * "Arm" filters by arm NAME (e.g. "Gold"), not class_arm_id — the same arm
+ * name exists per-class (MOCK_CLASS_ARMS, same as real Sections), so
+ * filtering by id would only ever match one specific class's arm. Matching
+ * by resolved name lets "Arm = Gold" narrow across every class at once,
+ * same as Class-arms' own "armName" filter (ClassArmsScreen.tsx).
+ *
+ * No "status" filter here by design — the Student List tab is always
+ * active-only (filtered upstream in StudentsScreen.tsx before this ever
+ * runs); status segmentation is a Withdrawn-tab concern, not a filter on
+ * this table.
+ */
+export function matchesStudentFilters(student: Student, filters: Record<string, string>): boolean {
+  return (
+    (!filters.class || student.class_id === filters.class) &&
+    (!filters.arm || resolveArmName(student.class_arm_id) === filters.arm) &&
+    (!filters.boardingHouse || student.boarding_house_id === filters.boardingHouse) &&
+    (!filters.mode || student.mode === filters.mode)
+  );
+}
