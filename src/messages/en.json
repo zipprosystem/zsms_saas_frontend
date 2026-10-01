@@ -869,22 +869,21 @@
         "name": { "label": "Group Name", "placeholder": "e.g. Science Group" },
         "schoolType": { "label": "School Type (optional, narrows the class list)", "all": "All school types" },
         "classes": {
-          "label": "Classes",
-          "selectAll": "Select All",
+          "label": "Class",
           "emptyHint": "No active classes yet for this academic year.",
           "emptyHintLink": "Add one first"
         },
         "classSubjects": {
           "label": "Class Subjects",
           "selectAll": "Select All",
-          "selectClassesFirst": "Select at least one class above to choose its subjects.",
-          "emptyHint": "The selected classes have no subjects assigned yet.",
+          "selectClassesFirst": "Select a class above to choose its subjects.",
+          "emptyHint": "The selected class has no subjects assigned yet.",
           "emptyHintLink": "Set up Class Subjects first"
         }
       },
       "errors": {
         "nameRequired": "Enter a name for this group",
-        "classesRequired": "Select at least one class",
+        "classRequired": "Select a class",
         "classSubjectsRequired": "Select at least one class subject"
       },
       "confirmDelete": {
