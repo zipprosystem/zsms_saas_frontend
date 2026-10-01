@@ -52,12 +52,15 @@ export function UserMenu() {
         aria-label={t("header.userMenu")}
         aria-expanded={isOpen}
         onClick={() => setIsOpen((current) => !current)}
-        className="flex h-14 w-48 items-center gap-3 rounded-[20px] border border-brand-tint bg-background px-4 py-3 text-left transition-colors hover:bg-brand-tint/40"
+        // Below md: just the avatar circle, no fixed width — leaves room
+        // for the session (academic year) pill next to it. md and up:
+        // the full name+role block, same as before.
+        className="flex h-11 w-11 shrink-0 items-center justify-center gap-3 rounded-full border border-brand-tint bg-background transition-colors hover:bg-brand-tint/40 md:h-14 md:w-48 md:justify-start md:rounded-[20px] md:px-4 md:py-3 md:text-left"
       >
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-tint text-accent">
           <UserIcon className="h-5 w-5" />
         </span>
-        <span className="flex min-w-0 flex-1 flex-col">
+        <span className="hidden min-w-0 flex-1 flex-col md:flex">
           <span className="truncate text-sm text-text-primary">
             {t("header.defaultUserName")}
           </span>

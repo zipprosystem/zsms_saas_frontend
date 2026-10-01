@@ -88,6 +88,13 @@ export type CrudResult<T> =
  */
 export type CrudService<T, CreateInput, UpdateInput> = {
   queryKey: readonly unknown[];
+  /**
+   * Other entities' cache keys whose data a mutation here changes
+   * server-side — e.g. a Subject Master create/delete changes that
+   * department's backend-calculated subject_count. CrudScreen invalidates
+   * these alongside queryKey on every successful mutation.
+   */
+  relatedQueryKeys?: ReadonlyArray<readonly unknown[]>;
   list: () => Promise<CrudResult<T[]>>;
   create: (data: CreateInput) => Promise<CrudResult<T>>;
   update: (id: string, data: UpdateInput) => Promise<CrudResult<T>>;

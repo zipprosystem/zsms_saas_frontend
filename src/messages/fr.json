@@ -195,9 +195,12 @@
     "parent": { "title": "Espace parent" }
   },
   "files": {
-    "uploading": "Téléversement…",
+    "uploading": "Envoi en cours…",
     "change": "Changer",
-    "choosePhoto": "Choisir une photo"
+    "choosePhoto": "Choisir une photo",
+    "uploadFailed": "Une erreur est survenue lors de l'envoi du fichier. Veuillez réessayer.",
+    "downloadFailed": "Impossible d'obtenir un lien de téléchargement pour ce fichier. Veuillez réessayer.",
+    "attachedFile": "Fichier joint"
   },
   "setup": {
     "header": {
@@ -880,22 +883,21 @@
         "name": { "label": "Nom du groupe", "placeholder": "ex. Groupe Sciences" },
         "schoolType": { "label": "Type d'établissement (facultatif, filtre les classes)", "all": "Tous les types" },
         "classes": {
-          "label": "Classes",
-          "selectAll": "Tout sélectionner",
+          "label": "Classe",
           "emptyHint": "Aucune classe active pour le moment cette année.",
           "emptyHintLink": "En ajouter une d'abord"
         },
         "classSubjects": {
           "label": "Matières de classe",
           "selectAll": "Tout sélectionner",
-          "selectClassesFirst": "Sélectionnez au moins une classe ci-dessus pour choisir ses matières.",
-          "emptyHint": "Les classes sélectionnées n'ont pas encore de matières assignées.",
+          "selectClassesFirst": "Sélectionnez une classe ci-dessus pour choisir ses matières.",
+          "emptyHint": "La classe sélectionnée n'a pas encore de matières assignées.",
           "emptyHintLink": "Configurer d'abord les matières par classe"
         }
       },
       "errors": {
         "nameRequired": "Saisissez un nom pour ce groupe",
-        "classesRequired": "Sélectionnez au moins une classe",
+        "classRequired": "Sélectionnez une classe",
         "classSubjectsRequired": "Sélectionnez au moins une matière de classe"
       },
       "confirmDelete": {

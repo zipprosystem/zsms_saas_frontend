@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,48 +12,49 @@ import { SlideOverPanel } from "@/components/ui/SlideOverPanel";
 import { DataTable } from "@/components/setup/DataTable";
 import { CheckboxList, type CheckboxListOption } from "@/components/setup/CheckboxList";
 import { resultErrorMessage } from "@/components/setup/CrudScreen";
+import { FileAttachmentField } from "@/components/files/FileAttachmentField";
+import { FileDownloadLink } from "@/components/files/FileDownloadLink";
 import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import { throwIfTransient, type ColumnDef, type FilterDef, type RowAction } from "@/lib/setup/crudTypes";
 import type { ExportColumn, ExportConfig } from "@/lib/export/exportTypes";
 import { usePaginatedView } from "@/lib/setup/usePaginatedView";
-import { formatFileSize } from "@/lib/upload/mockFileUpload";
+import type { AttachedFile } from "@/lib/files/filesApi";
 import { createClassesService, type SchoolClass } from "@/lib/setup/academicStructure/classesApi";
 import { schoolTypesService, type SchoolType } from "@/lib/setup/academicStructure/schoolTypesApi";
 import { subjectsMasterService, type SubjectMaster } from "@/lib/setup/academicStructure/subjectsMasterApi";
 import { classroomsService, classroomsQueryKey, type Classroom } from "@/lib/setup/academicStructure/facilitiesApi";
-import {
-  validateClassSubjectFile,
-  mockUploadClassSubjectFile,
-  type ClassSubjectFile,
-} from "@/lib/setup/academicStructure/classSubjectFileUpload";
+import { validateClassSubjectFile } from "@/lib/setup/academicStructure/classSubjectFileUpload";
 import {
   classSubjectsQueryKey,
   fetchClassSubjectsForYear,
-  createClassSubjects,
+  bulkCreateClassSubjects,
   updateClassSubject,
   removeClassSubject,
   type ClassSubject,
   type SubjectGroup,
 } from "@/lib/setup/academicStructure/classSubjectsApi";
 
-const SUBJECT_GROUPS: SubjectGroup[] = ["core", "elective"];
+const SUBJECT_GROUPS: SubjectGroup[] = ["Core", "Elective"];
+
+// The API's casing ("Core"/"Elective") -> this screen's i18n key segment.
+const SUBJECT_GROUP_I18N_KEY: Record<SubjectGroup, "core" | "elective"> = { Core: "core", Elective: "elective" };
 
 type FormState = {
   school_type_id: string;
   class_ids: string[];
-  subject_ids: string[];
+  subject_master_ids: string[];
   subject_group: SubjectGroup | "";
   unit: string;
   room_id: string;
-  file: ClassSubjectFile | null;
+  file: AttachedFile | null;
 };
 
 const EMPTY_FORM: FormState = {
   school_type_id: "",
   class_ids: [],
-  subject_ids: [],
+  subject_master_ids: [],
   subject_group: "",
   unit: "",
   room_id: "",
@@ -61,82 +62,6 @@ const EMPTY_FORM: FormState = {
 };
 
 type PanelState = { mode: "closed" } | { mode: "create" } | { mode: "edit"; row: ClassSubject };
-
-function ClassSubjectFileField({
-  value,
-  onChange,
-  t,
-}: {
-  value: ClassSubjectFile | null;
-  onChange: (file: ClassSubjectFile | null) => void;
-  t: ReturnType<typeof useTranslations>;
-}) {
-  const [error, setError] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-
-    const validation = validateClassSubjectFile(file);
-    if (!validation.ok) {
-      setError(
-        validation.reason === "unsupportedType"
-          ? t("setup.classSubjects.fields.file.errors.unsupportedType")
-          : t("setup.classSubjects.fields.file.errors.tooLarge"),
-      );
-      return;
-    }
-    setError(null);
-    onChange(mockUploadClassSubjectFile(file));
-  };
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium text-text-primary">{t("setup.classSubjects.fields.file.label")}</span>
-      {value ? (
-        <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-surface px-4 py-3">
-          <div className="min-w-0">
-            <a
-              href={value.url}
-              download={value.name}
-              target="_blank"
-              rel="noreferrer"
-              className="block truncate text-sm font-semibold text-accent hover:underline"
-            >
-              {value.name}
-            </a>
-            <p className="text-xs text-text-muted">{formatFileSize(value.size)}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => onChange(null)}
-            className="shrink-0 text-sm font-semibold text-error hover:underline"
-          >
-            {t("common.delete")}
-          </button>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="flex h-12 items-center justify-center rounded-md border border-dashed border-border text-sm font-medium text-text-secondary transition-colors hover:border-accent hover:text-accent"
-        >
-          {t("setup.classSubjects.fields.file.choose")}
-        </button>
-      )}
-      <input
-        ref={inputRef}
-        type="file"
-        accept=".pdf,.doc,.docx,.ppt,.pptx"
-        className="hidden"
-        onChange={handleFileSelect}
-      />
-      {error ? <p className="text-sm text-error">{error}</p> : null}
-    </div>
-  );
-}
 
 /**
  * Outer guard — Class Subjects is year-scoped (a class always belongs to a
@@ -219,19 +144,20 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
   const subjectById = (id: string): SubjectMaster | null => subjects.find((subject) => subject.id === id) ?? null;
   const roomName = (id: string | null): string | null =>
     id ? (rooms.find((room) => room.id === id)?.name ?? null) : null;
-  const subjectGroupLabel = (group: SubjectGroup) => t(`setup.classSubjects.subjectGroup.${group}`);
+  const subjectGroupLabel = (group: SubjectGroup) =>
+    t(`setup.classSubjects.subjectGroup.${SUBJECT_GROUP_I18N_KEY[group]}`);
 
   const view = usePaginatedView(allItems, {
     matchesSearch: (row, query) => {
       const needle = query.toLowerCase();
       return (
         (classById(row.class_id)?.name.toLowerCase().includes(needle) ?? false) ||
-        (subjectById(row.subject_id)?.name.toLowerCase().includes(needle) ?? false)
+        (subjectById(row.subject_master_id)?.name.toLowerCase().includes(needle) ?? false)
       );
     },
     matchesFilters: (row, filters) =>
       (!filters.class || row.class_id === filters.class) &&
-      (!filters.subject || row.subject_id === filters.subject) &&
+      (!filters.subject || row.subject_master_id === filters.subject) &&
       (!filters.group || row.subject_group === filters.group),
   });
 
@@ -241,7 +167,7 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
       key: "subject",
       header: t("setup.classSubjects.columns.subject"),
       render: (row) => {
-        const subject = subjectById(row.subject_id);
+        const subject = subjectById(row.subject_master_id);
         return subject ? (
           <span className="inline-flex items-center gap-2">
             <span
@@ -262,7 +188,7 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
       render: (row) => (
         <span
           className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-            row.subject_group === "core"
+            row.subject_group === "Core"
               ? "bg-category-blue-tint text-accent"
               : "bg-category-amber-tint text-warning"
           }`}
@@ -278,15 +204,9 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
       header: t("setup.classSubjects.columns.file"),
       render: (row) =>
         row.file ? (
-          <a
-            href={row.file.url}
-            download={row.file.name}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm font-semibold text-accent hover:underline"
-          >
+          <FileDownloadLink fileId={row.file.file_id} className="text-sm font-semibold text-accent hover:underline">
             {t("setup.classSubjects.columns.fileDownload")}
-          </a>
+          </FileDownloadLink>
         ) : (
           <span className="text-text-muted">—</span>
         ),
@@ -334,7 +254,7 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
 
   const exportColumns: ExportColumn<ClassSubject>[] = [
     { header: t("setup.classSubjects.columns.class"), value: (row) => classById(row.class_id)?.name ?? "" },
-    { header: t("setup.classSubjects.columns.subject"), value: (row) => subjectById(row.subject_id)?.name ?? "" },
+    { header: t("setup.classSubjects.columns.subject"), value: (row) => subjectById(row.subject_master_id)?.name ?? "" },
     { header: t("setup.classSubjects.columns.group"), value: (row) => subjectGroupLabel(row.subject_group) },
     { header: t("setup.classSubjects.columns.unit"), value: (row) => row.unit ?? "" },
     { header: t("setup.classSubjects.columns.room"), value: (row) => roomName(row.room_id) ?? "" },
@@ -375,7 +295,7 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
     setFormData({
       school_type_id: "",
       class_ids: [row.class_id],
-      subject_ids: [row.subject_id],
+      subject_master_ids: [row.subject_master_id],
       subject_group: row.subject_group,
       unit: row.unit !== null ? String(row.unit) : "",
       room_id: row.room_id ?? "",
@@ -393,7 +313,7 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
     const errors: Record<string, string> = {};
     if (panel.mode === "create") {
       if (data.class_ids.length === 0) errors.class_ids = t("setup.classSubjects.errors.classesRequired");
-      if (data.subject_ids.length === 0) errors.subject_ids = t("setup.classSubjects.errors.subjectsRequired");
+      if (data.subject_master_ids.length === 0) errors.subject_master_ids = t("setup.classSubjects.errors.subjectsRequired");
     }
     if (!data.subject_group) errors.subject_group = t("setup.classSubjects.errors.groupRequired");
     if (data.unit.trim()) {
@@ -417,21 +337,26 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
     setIsSaving(true);
 
     if (panel.mode === "create") {
-      const result = await createClassSubjects({
+      const result = await bulkCreateClassSubjects({
         academic_year_id: yearId,
         class_ids: formData.class_ids,
-        subject_ids: formData.subject_ids,
+        subject_master_ids: formData.subject_master_ids,
         subject_group: formData.subject_group as SubjectGroup,
         unit,
         room_id: formData.room_id || null,
-        file: formData.file,
+        file_id: formData.file?.file_id ?? null,
       });
       setIsSaving(false);
 
       if (result.ok) {
         closePanel();
         await invalidate();
-        showToast(t("setup.classSubjects.toast.created", { created: result.data.created.length, skipped: result.data.skipped }));
+        showToast(
+          t("setup.classSubjects.toast.created", {
+            created: result.data.created_count,
+            skipped: result.data.existing_count,
+          }),
+        );
         return;
       }
       setGeneralError(resultErrorMessage(result, t));
@@ -442,7 +367,7 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
       subject_group: formData.subject_group as SubjectGroup,
       unit,
       room_id: formData.room_id || null,
-      file: formData.file,
+      file_id: formData.file?.file_id ?? null,
     });
     setIsSaving(false);
 
@@ -476,7 +401,7 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
         title: t("setup.classSubjects.confirmDelete.title"),
         message: t("setup.classSubjects.confirmDelete.message", {
           class: classById(row.class_id)?.name ?? "",
-          subject: subjectById(row.subject_id)?.name ?? "",
+          subject: subjectById(row.subject_master_id)?.name ?? "",
         }),
       },
     },
@@ -550,7 +475,7 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
                   <p className="mt-1">
                     {t("setup.classSubjects.fields.subject.label")}:{" "}
                     <span className="font-medium text-text-primary">
-                      {subjectById(panel.row.subject_id)?.name ?? "—"}
+                      {subjectById(panel.row.subject_master_id)?.name ?? "—"}
                     </span>
                   </p>
                 </div>
@@ -612,12 +537,14 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
                     ) : (
                       <CheckboxList
                         options={subjectOptions}
-                        selectedIds={formData.subject_ids}
-                        onChange={(subject_ids) => setFormData((current) => ({ ...current, subject_ids }))}
+                        selectedIds={formData.subject_master_ids}
+                        onChange={(subject_master_ids) => setFormData((current) => ({ ...current, subject_master_ids }))}
                         selectAllLabel={t("setup.classSubjects.fields.subjects.selectAll")}
                       />
                     )}
-                    {formErrors.subject_ids ? <p className="text-xs text-error">{formErrors.subject_ids}</p> : null}
+                    {formErrors.subject_master_ids ? (
+                      <p className="text-xs text-error">{formErrors.subject_master_ids}</p>
+                    ) : null}
                   </div>
                 </>
               )}
@@ -668,10 +595,18 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
                 )}
               </SelectField>
 
-              <ClassSubjectFileField
+              <FileAttachmentField
+                label={t("setup.classSubjects.fields.file.label")}
+                chooseLabel={t("setup.classSubjects.fields.file.choose")}
+                accept=".pdf,.doc,.docx,.ppt,.pptx"
+                purpose="class_subject"
+                validate={validateClassSubjectFile}
+                validationMessages={{
+                  unsupportedType: t("setup.classSubjects.fields.file.errors.unsupportedType"),
+                  tooLarge: t("setup.classSubjects.fields.file.errors.tooLarge"),
+                }}
                 value={formData.file}
                 onChange={(file) => setFormData((current) => ({ ...current, file }))}
-                t={t}
               />
             </>
           ) : null}

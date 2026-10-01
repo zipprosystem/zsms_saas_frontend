@@ -63,23 +63,25 @@ export function SessionPill() {
     return (
       <Link
         href="/admin/setup/academic-structure/academic-years"
-        className="hidden h-14 w-[165px] shrink-0 flex-col justify-center gap-1 rounded-[32px] border border-brand-tint bg-background px-4 py-2 text-left transition-colors hover:bg-brand-tint/40 sm:flex"
+        className="flex h-11 w-[92px] shrink-0 flex-col justify-center gap-1 rounded-[24px] border border-brand-tint bg-background px-3 py-1.5 text-left transition-colors hover:bg-brand-tint/40 sm:h-14 sm:w-[165px] sm:rounded-[32px] sm:px-4 sm:py-2"
       >
-        <span className="text-[8px] uppercase tracking-wide text-text-muted">
+        <span className="hidden text-[8px] uppercase tracking-wide text-text-muted sm:block">
           {t("header.session")}
         </span>
-        <span className="text-sm font-medium text-accent">{t("header.sessionPicker.noYears")}</span>
+        <span className="truncate text-xs font-medium text-accent sm:text-sm">
+          {t("header.sessionPicker.noYears")}
+        </span>
       </Link>
     );
   }
 
   if (isLoading || error || !selectedYear) {
     return (
-      <div className="hidden h-14 w-[165px] shrink-0 flex-col justify-center gap-1 rounded-[32px] border border-brand-tint bg-background px-4 py-2 sm:flex">
-        <span className="text-[8px] uppercase tracking-wide text-text-muted">
+      <div className="flex h-11 w-[92px] shrink-0 flex-col justify-center gap-1 rounded-[24px] border border-brand-tint bg-background px-3 py-1.5 sm:h-14 sm:w-[165px] sm:rounded-[32px] sm:px-4 sm:py-2">
+        <span className="hidden text-[8px] uppercase tracking-wide text-text-muted sm:block">
           {t("header.session")}
         </span>
-        <span className="text-sm text-text-muted">
+        <span className="truncate text-xs text-text-muted sm:text-sm">
           {isLoading ? t("header.sessionPicker.loading") : "—"}
         </span>
       </div>
@@ -87,15 +89,18 @@ export function SessionPill() {
   }
 
   return (
-    <div ref={menuRef} className="relative hidden shrink-0 sm:block">
+    <div ref={menuRef} className="relative shrink-0">
       <button
         type="button"
         aria-label={t("header.sessionPicker.openLabel")}
         aria-expanded={isOpen}
         onClick={() => setIsOpen((current) => !current)}
-        className="flex h-14 w-[165px] flex-col justify-center gap-1 rounded-[32px] border border-brand-tint bg-background px-4 py-2 text-left transition-colors hover:bg-brand-tint/40"
+        // Below sm: a compact single-line pill (just the year name + chevron)
+        // — the SESSION label and date-range badge only earn their space
+        // once the header has room, from sm up.
+        className="flex h-11 w-[92px] flex-col justify-center gap-1 rounded-[24px] border border-brand-tint bg-background px-3 py-1.5 text-left transition-colors hover:bg-brand-tint/40 sm:h-14 sm:w-[165px] sm:rounded-[32px] sm:px-4 sm:py-2"
       >
-        <div className="flex items-center justify-between">
+        <div className="hidden items-center justify-between sm:flex">
           <span className="text-[8px] uppercase tracking-wide text-text-muted">
             {t("header.session")}
           </span>
@@ -103,8 +108,8 @@ export function SessionPill() {
             {formatDateRange(locale, selectedYear.start_date, selectedYear.end_date)}
           </span>
         </div>
-        <div className="flex items-center justify-between gap-2">
-          <span className="truncate text-sm text-text-primary">{selectedYear.name}</span>
+        <div className="flex items-center justify-between gap-1 sm:gap-2">
+          <span className="truncate text-xs text-text-primary sm:text-sm">{selectedYear.name}</span>
           <ChevronDownIcon
             className={`h-4 w-4 shrink-0 text-text-secondary transition-transform duration-150 ${
               isOpen ? "rotate-180" : ""

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ChangeEvent } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -11,6 +11,8 @@ import { Toggle } from "@/components/ui/Toggle";
 import { ColorPicker, getNextUnusedColor } from "@/components/ui/ColorPicker";
 import { UploadIcon } from "@/components/icons/UploadIcon";
 import { CrudScreen } from "@/components/setup/CrudScreen";
+import { FileAttachmentField } from "@/components/files/FileAttachmentField";
+import { FileDownloadLink } from "@/components/files/FileDownloadLink";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import { throwIfTransient } from "@/lib/setup/crudTypes";
 import type { ColumnDef, FilterDef } from "@/lib/setup/crudTypes";
@@ -21,11 +23,8 @@ import {
   type SubjectMasterInput,
 } from "@/lib/setup/academicStructure/subjectsMasterApi";
 import { departmentsService, type Department } from "@/lib/setup/academicStructure/departmentsApi";
-import {
-  validateSubjectFile,
-  mockUploadSubjectFile,
-  type SubjectFile,
-} from "@/lib/setup/academicStructure/subjectFileUpload";
+import { validateSubjectFile } from "@/lib/setup/academicStructure/subjectFileUpload";
+import type { AttachedFile } from "@/lib/files/filesApi";
 
 // Lazy-loaded — only enters the bundle once the Subject form actually
 // opens. See SubjectDescriptionEditor.tsx's own header comment for why
@@ -41,91 +40,13 @@ type FormState = {
   shortNameTouched: boolean;
   color: string;
   department_id: string;
-  file: SubjectFile | null;
+  file: AttachedFile | null;
   description_json: Record<string, unknown> | null;
-  description_html: string | null;
   show_on_frontend: boolean;
 };
 
 function deriveShortName(name: string): string {
   return name.trim().slice(0, 4).toUpperCase();
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function SubjectFileField({
-  value,
-  onChange,
-  t,
-}: {
-  value: SubjectFile | null;
-  onChange: (file: SubjectFile | null) => void;
-  t: ReturnType<typeof useTranslations>;
-}) {
-  const [error, setError] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-
-    const validation = validateSubjectFile(file);
-    if (!validation.ok) {
-      setError(
-        validation.reason === "unsupportedType"
-          ? t("setup.subjectsMaster.fields.file.errors.unsupportedType")
-          : t("setup.subjectsMaster.fields.file.errors.tooLarge"),
-      );
-      return;
-    }
-    setError(null);
-    onChange(mockUploadSubjectFile(file));
-  };
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium text-text-primary">{t("setup.subjectsMaster.fields.file.label")}</span>
-      {value ? (
-        <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-surface px-4 py-3">
-          <div className="min-w-0">
-            <a
-              href={value.url}
-              download={value.name}
-              target="_blank"
-              rel="noreferrer"
-              className="block truncate text-sm font-semibold text-accent hover:underline"
-            >
-              {value.name}
-            </a>
-            <p className="text-xs text-text-muted">{formatFileSize(value.size)}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => onChange(null)}
-            className="shrink-0 text-sm font-semibold text-error hover:underline"
-          >
-            {t("common.delete")}
-          </button>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="flex h-12 items-center justify-center gap-2 rounded-md border border-dashed border-border text-sm font-medium text-text-secondary transition-colors hover:border-accent hover:text-accent"
-        >
-          <UploadIcon className="h-4 w-4" />
-          {t("setup.subjectsMaster.fields.file.choose")}
-        </button>
-      )}
-      <input ref={inputRef} type="file" accept="application/pdf" className="hidden" onChange={handleFileSelect} />
-      {error ? <p className="text-sm text-error">{error}</p> : null}
-    </div>
-  );
 }
 
 export function SubjectsMasterScreen() {
@@ -158,7 +79,6 @@ export function SubjectsMasterScreen() {
     department_id: "",
     file: null,
     description_json: null,
-    description_html: null,
     show_on_frontend: false,
   };
 
@@ -189,15 +109,9 @@ export function SubjectsMasterScreen() {
       header: t("setup.subjectsMaster.columns.file"),
       render: (row) =>
         row.file ? (
-          <a
-            href={row.file.url}
-            download={row.file.name}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm font-semibold text-accent hover:underline"
-          >
+          <FileDownloadLink fileId={row.file.file_id} className="text-sm font-semibold text-accent hover:underline">
             {t("setup.subjectsMaster.columns.fileDownload")}
-          </a>
+          </FileDownloadLink>
         ) : (
           <span className="text-text-muted">—</span>
         ),
@@ -283,7 +197,6 @@ export function SubjectsMasterScreen() {
         department_id: row.department_id,
         file: row.file,
         description_json: row.description_json,
-        description_html: row.description_html,
         show_on_frontend: row.show_on_frontend,
       })}
       validate={(data) => {
@@ -298,9 +211,8 @@ export function SubjectsMasterScreen() {
         short_name: data.short_name.trim().toUpperCase(),
         color: data.color,
         department_id: data.department_id,
-        file: data.file,
+        file_id: data.file?.file_id ?? null,
         description_json: data.description_json,
-        description_html: data.description_html,
         show_on_frontend: data.show_on_frontend,
       })}
       toUpdateInput={(data) => ({
@@ -308,9 +220,8 @@ export function SubjectsMasterScreen() {
         short_name: data.short_name.trim().toUpperCase(),
         color: data.color,
         department_id: data.department_id,
-        file: data.file,
+        file_id: data.file?.file_id ?? null,
         description_json: data.description_json,
-        description_html: data.description_html,
         show_on_frontend: data.show_on_frontend,
       })}
       renderFields={({ data, onChange, errors }) => (
@@ -393,11 +304,25 @@ export function SubjectsMasterScreen() {
             ) : null}
           </div>
 
-          <SubjectFileField value={data.file} onChange={(file) => onChange({ file })} t={t} />
+          <FileAttachmentField
+            label={t("setup.subjectsMaster.fields.file.label")}
+            chooseLabel={t("setup.subjectsMaster.fields.file.choose")}
+            chooseIcon={<UploadIcon className="h-4 w-4" />}
+            accept="application/pdf"
+            purpose="subject_master"
+            validate={validateSubjectFile}
+            validationMessages={{
+              unsupportedType: t("setup.subjectsMaster.fields.file.errors.unsupportedType"),
+              tooLarge: t("setup.subjectsMaster.fields.file.errors.tooLarge"),
+            }}
+            value={data.file}
+            onChange={(file) => onChange({ file })}
+          />
 
+          {/* JSON only — the backend renders description_html itself (see subjectsMasterApi.ts). */}
           <SubjectDescriptionEditor
             contentJson={data.description_json}
-            onChange={(json, html) => onChange({ description_json: json, description_html: html })}
+            onChange={(json) => onChange({ description_json: json })}
           />
 
           <Toggle

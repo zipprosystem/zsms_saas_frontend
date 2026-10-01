@@ -1,52 +1,155 @@
-import { mockDelay } from "@/lib/onboarding/mockDelay";
+import { apiFetch } from "@/lib/api/client";
+import { DEV_AUTH_BYPASS } from "@/lib/auth/authBridge";
+import { extractErpError } from "@/lib/setup/erpError";
+import type { CrudResult } from "@/lib/setup/crudTypes";
 
 /**
- * MOCK — the real Students API/file endpoint doesn't exist yet (Muntajir
- * hasn't built it), and the Students module as a whole is frontend-ahead/
- * mock-backed for Phase 1 (see studentsApi.ts). This deliberately does NOT
- * call a real backend (no apiFetch) — NEXT_PUBLIC_API_BASE in this repo's
- * .env.local points at the real deployed API
- * (https://api.zsmsapp.com/api/v1), and a mock wizard must never send a
- * file there. Uploads just read the File locally and hand back an object
- * URL for preview — nothing leaves the browser.
+ * Reusable file upload/download utility — finalized contract per Muntajir.
+ * Any entity with an attachment (Subject Master, Class Subjects, ...)
+ * uploads here first, then stores only the returned file_id on itself.
  *
- * Intended real contract once Muntajir confirms it (same shape CrudResult
- * consumers expect elsewhere): POST {API_BASE}/erp/files (multipart,
- * "file" + "purpose") -> { success, data: { file_id, ...metadata } }.
- * `purpose` is REQUIRED per every other file-upload consumer in this app —
- * `student_photo`/`past_record_attachment` are NOT confirmed values,
- * they're this module's best guess; reconcile with Muntajir before this
- * is de-mocked.
+ *   POST {API_BASE}/erp/files  (multipart/form-data, parts "file" + "purpose")
+ *     -> { success: true, data: { file_id, ...metadata } }
+ *     `purpose` is REQUIRED — confirmed via real 422 ("purpose must be one
+ *     of subject_master, class_subject"). Every caller must say what the
+ *     attachment is for; there's no default. `student_photo` and
+ *     `past_record_attachment` (Students' passport photo and past-record
+ *     attachments) are NOT confirmed values the same way — reconcile with
+ *     Muntajir before relying on them; widen further only once a new
+ *     entity's purpose is similarly confirmed.
+ *     FLAGGED, UNCONFIRMED: the exact metadata key names. readUploadedFile()
+ *     accepts file_id or id, and original_name/name, size/size_bytes,
+ *     mime_type/type — reconcile to the real shape from DevTools on deploy.
+ *   GET {API_BASE}/erp/files/:id/download-url
+ *     -> { success: true, data: { url, ... } } — a short-lived signed URL
+ *     (TTL 300s). FLAGGED, UNCONFIRMED: the key name — readDownloadUrl()
+ *     accepts url / download_url / signed_url / a bare string.
+ *     NEVER cached anywhere (not in react-query, not on the entity):
+ *     fetched fresh on every click via FileDownloadLink, so an expired
+ *     URL can't be handed out.
+ *
+ * The backend validates type/size too; fileValidation.ts is only the
+ * client-side first line.
  */
 
-export type FileUploadPurpose = "student_photo" | "past_record_attachment";
-
+/** What an entity stores/shows for its attachment. name/size/type are display-only and may be null if the entity's response only carries file_id. */
 export type AttachedFile = {
   file_id: string;
-  name: string;
-  size: number;
-  type: string;
-  /**
-   * MOCK-ONLY field — a browser object URL for local preview this session.
-   * The real API has no equivalent; previews there would come from a
-   * signed download-url endpoint instead (see every other *Api.ts's
-   * FLAGGED download-url note). Never persisted — studentsStorage.ts
-   * (Commit 3) must not round-trip this through localStorage, since
-   * object URLs don't survive a reload anyway.
-   */
-  previewUrl: string;
+  name: string | null;
+  size: number | null;
+  type: string | null;
 };
 
-let mockFileCounter = 0;
+const BASE_PATH = "erp/files";
 
-export async function uploadFile(file: File, purpose: FileUploadPurpose): Promise<AttachedFile> {
-  await mockDelay(400);
-  mockFileCounter += 1;
+async function parseBody(response: Response): Promise<unknown> {
+  return response.json().catch(() => null);
+}
+
+function toResult<T>(response: Response, body: unknown): CrudResult<T> {
+  const { code, message } = extractErpError(body);
+
+  if (code === "FORBIDDEN" || code === "UNAUTHORIZED" || response.status === 403) {
+    return { ok: false, kind: "forbidden", message: message ?? undefined };
+  }
+  if (response.status === 404) return { ok: false, kind: "conflict", message: message ?? undefined };
+  // 401 isn't handled here: apiFetch already retries once via /auth/refresh
+  // and force-logs-out + redirects to /login on failure.
+  return { ok: false, kind: "server", message: message ?? undefined };
+}
+
+function asString(value: unknown): string | null {
+  return typeof value === "string" && value ? value : null;
+}
+
+function asNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/**
+ * Reads an entity's attachment off its raw API row — tolerant of either a
+ * nested `file: {...}` object or a flat `file_id` (+ optional file_name/
+ * file_size/file_type) until the entity responses are confirmed. Returns
+ * null when there's no attachment.
+ */
+export function readAttachedFile(row: Record<string, unknown>): AttachedFile | null {
+  const nested = row.file && typeof row.file === "object" ? (row.file as Record<string, unknown>) : null;
+  const fileId = asString(nested?.file_id) ?? asString(nested?.id) ?? asString(row.file_id);
+  if (!fileId) return null;
   return {
-    file_id: `mock-file-${purpose}-${mockFileCounter}`,
-    name: file.name,
-    size: file.size,
-    type: file.type,
-    previewUrl: URL.createObjectURL(file),
+    file_id: fileId,
+    name:
+      asString(nested?.original_name) ?? asString(nested?.name) ?? asString(nested?.file_name) ?? asString(row.file_name),
+    size: asNumber(nested?.size) ?? asNumber(nested?.size_bytes) ?? asNumber(row.file_size),
+    type: asString(nested?.mime_type) ?? asString(nested?.type) ?? asString(row.file_type),
   };
+}
+
+function readUploadedFile(body: unknown, localFile: File): AttachedFile | null {
+  const data = (body as { data?: unknown } | null)?.data;
+  if (!data || typeof data !== "object") return null;
+  const record = data as Record<string, unknown>;
+  const fileId = asString(record.file_id) ?? asString(record.id);
+  if (!fileId) return null;
+  // Metadata falls back to the local File itself — it's what was just
+  // uploaded, so it's accurate even if the response omits it.
+  return {
+    file_id: fileId,
+    name: asString(record.original_name) ?? asString(record.name) ?? localFile.name,
+    size: asNumber(record.size) ?? asNumber(record.size_bytes) ?? localFile.size,
+    type: asString(record.mime_type) ?? asString(record.type) ?? localFile.type,
+  };
+}
+
+function readDownloadUrl(body: unknown): string | null {
+  const data = (body as { data?: unknown } | null)?.data;
+  if (typeof data === "string") return data || null;
+  if (!data || typeof data !== "object") return null;
+  const record = data as Record<string, unknown>;
+  return asString(record.url) ?? asString(record.download_url) ?? asString(record.signed_url);
+}
+
+/** Entities that can own an uploaded file — extend when a new one is confirmed with Muntajir. */
+export type FileUploadPurpose = "subject_master" | "class_subject" | "student_photo" | "past_record_attachment";
+
+export async function uploadFile(file: File, purpose: FileUploadPurpose): Promise<CrudResult<AttachedFile>> {
+  if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("purpose", purpose);
+
+  let response: Response;
+  try {
+    response = await apiFetch(BASE_PATH, { method: "POST", body: formData });
+  } catch {
+    return { ok: false, kind: "network" };
+  }
+
+  const body = await parseBody(response);
+  if (response.ok) {
+    const uploaded = readUploadedFile(body, file);
+    if (uploaded) return { ok: true, data: uploaded };
+    return { ok: false, kind: "server" };
+  }
+  return toResult(response, body);
+}
+
+export async function getDownloadUrl(fileId: string): Promise<CrudResult<string>> {
+  if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
+
+  let response: Response;
+  try {
+    response = await apiFetch(`${BASE_PATH}/${encodeURIComponent(fileId)}/download-url`, { method: "GET" });
+  } catch {
+    return { ok: false, kind: "network" };
+  }
+
+  const body = await parseBody(response);
+  if (response.ok) {
+    const url = readDownloadUrl(body);
+    if (url) return { ok: true, data: url };
+    return { ok: false, kind: "server" };
+  }
+  return toResult(response, body);
 }

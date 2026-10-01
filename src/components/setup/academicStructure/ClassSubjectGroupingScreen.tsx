@@ -8,6 +8,7 @@ import { InputField } from "@/components/ui/Input";
 import { SelectField } from "@/components/ui/Select";
 import { CrudScreen } from "@/components/setup/CrudScreen";
 import { CheckboxList, type CheckboxListOption } from "@/components/setup/CheckboxList";
+import { RadioList, type RadioListOption } from "@/components/setup/RadioList";
 import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import { throwIfTransient, type ColumnDef } from "@/lib/setup/crudTypes";
@@ -24,13 +25,28 @@ import {
 
 type FormState = {
   name: string;
-  /** Filter only, narrows the Classes checklist — never sent to the service. */
+  /** Filter only, narrows the Class radio list — never sent to the service. */
   school_type_id: string;
-  class_ids: string[];
+  /**
+   * Filter only, narrows the Class Subjects checklist to one class — a
+   * group has no class_ids in the API (see classSubjectGroupingApi.ts),
+   * it's derived entirely from class_subject_ids. Single class per product
+   * owner: a group's class-subjects all come from one class, picked via
+   * radio, not a multi-class checklist.
+   */
+  class_id: string;
   class_subject_ids: string[];
+  /** The membership the edit form was seeded with — the service diffs against it to add/remove members. */
+  previous_class_subject_ids: string[];
 };
 
-const EMPTY_FORM: FormState = { name: "", school_type_id: "", class_ids: [], class_subject_ids: [] };
+const EMPTY_FORM: FormState = {
+  name: "",
+  school_type_id: "",
+  class_id: "",
+  class_subject_ids: [],
+  previous_class_subject_ids: [],
+};
 
 /**
  * Outer guard — a group always belongs to an academic year (same shape as
@@ -105,7 +121,15 @@ function ClassSubjectGroupingTable({ yearId }: { yearId: string }) {
   const classById = (id: string): SchoolClass | null => classes.find((cls) => cls.id === id) ?? null;
   const subjectById = (id: string): SubjectMaster | null => subjects.find((subject) => subject.id === id) ?? null;
   const classSubjectLabel = (row: ClassSubject): string =>
-    `${classById(row.class_id)?.name ?? "—"} — ${subjectById(row.subject_id)?.name ?? "—"}`;
+    `${classById(row.class_id)?.name ?? "—"} — ${subjectById(row.subject_master_id)?.name ?? "—"}`;
+  // A group's classes aren't stored — they're whichever classes its member
+  // class-subjects belong to.
+  const groupClassIds = (group: ClassSubjectGroup): string[] => {
+    const members = new Set(group.class_subject_ids);
+    return Array.from(
+      new Set(classSubjects.filter((row) => members.has(row.id)).map((row) => row.class_id)),
+    );
+  };
 
   const groupService = useMemo(() => createClassSubjectGroupService(yearId), [yearId]);
 
@@ -115,7 +139,7 @@ function ClassSubjectGroupingTable({ yearId }: { yearId: string }) {
       key: "classes",
       header: t("setup.classSubjectGrouping.columns.classes"),
       render: (row) => {
-        const names = row.class_ids.map((id) => classById(id)?.name).filter((name): name is string => !!name);
+        const names = groupClassIds(row).map((id) => classById(id)?.name).filter((name): name is string => !!name);
         if (names.length === 0) return "—";
         return names.length <= 2 ? names.join(", ") : `${names.slice(0, 2).join(", ")} +${names.length - 2}`;
       },
@@ -135,7 +159,7 @@ function ClassSubjectGroupingTable({ yearId }: { yearId: string }) {
     { header: t("setup.classSubjectGrouping.columns.name"), value: (row) => row.name },
     {
       header: t("setup.classSubjectGrouping.columns.classes"),
-      value: (row) => row.class_ids.map((id) => classById(id)?.name).filter(Boolean).join(", "),
+      value: (row) => groupClassIds(row).map((id) => classById(id)?.name).filter(Boolean).join(", "),
     },
     { header: t("setup.classSubjectGrouping.columns.subjects"), value: (row) => row.class_subject_ids.length },
   ];
@@ -171,19 +195,24 @@ function ClassSubjectGroupingTable({ yearId }: { yearId: string }) {
         },
       ]}
       emptyFormState={EMPTY_FORM}
-      toFormState={(row) => ({
-        name: row.name,
-        // Best-effort: nothing enforces a group's classes share one school
-        // type, so this just seeds the filter from the first class — the
-        // full class_ids list itself is always the source of truth.
-        school_type_id: classById(row.class_ids[0])?.school_type_id ?? "",
-        class_ids: row.class_ids,
-        class_subject_ids: row.class_subject_ids,
-      })}
+      toFormState={(row) => {
+        const classIds = groupClassIds(row);
+        return {
+          name: row.name,
+          // Best-effort: a group created before this single-class rule (or
+          // with manually mixed members) could span more than one class —
+          // the form seeds the first and editing re-narrows to it;
+          // class_subject_ids is always the source of truth either way.
+          school_type_id: classById(classIds[0])?.school_type_id ?? "",
+          class_id: classIds[0] ?? "",
+          class_subject_ids: row.class_subject_ids,
+          previous_class_subject_ids: row.class_subject_ids,
+        };
+      }}
       validate={(data) => {
         const errors: Record<string, string> = {};
         if (!data.name.trim()) errors.name = t("setup.classSubjectGrouping.errors.nameRequired");
-        if (data.class_ids.length === 0) errors.class_ids = t("setup.classSubjectGrouping.errors.classesRequired");
+        if (!data.class_id) errors.class_id = t("setup.classSubjectGrouping.errors.classRequired");
         if (data.class_subject_ids.length === 0) {
           errors.class_subject_ids = t("setup.classSubjectGrouping.errors.classSubjectsRequired");
         }
@@ -191,21 +220,21 @@ function ClassSubjectGroupingTable({ yearId }: { yearId: string }) {
       }}
       toCreateInput={(data) => ({
         name: data.name.trim(),
-        class_ids: data.class_ids,
         class_subject_ids: data.class_subject_ids,
+        previous_class_subject_ids: [],
       })}
       toUpdateInput={(data) => ({
         name: data.name.trim(),
-        class_ids: data.class_ids,
         class_subject_ids: data.class_subject_ids,
+        previous_class_subject_ids: data.previous_class_subject_ids,
       })}
       renderFields={({ data, onChange, errors }) => {
         const classesOfType = (
           data.school_type_id ? activeClasses.filter((cls) => cls.school_type_id === data.school_type_id) : activeClasses
-        ).map((cls): CheckboxListOption => ({ id: cls.id, label: cls.name }));
+        ).map((cls): RadioListOption => ({ id: cls.id, label: cls.name }));
 
-        const classSubjectsForChosenClasses = classSubjects.filter((row) => data.class_ids.includes(row.class_id));
-        const classSubjectOptions: CheckboxListOption[] = classSubjectsForChosenClasses.map((row) => ({
+        const classSubjectsForChosenClass = classSubjects.filter((row) => row.class_id === data.class_id);
+        const classSubjectOptions: CheckboxListOption[] = classSubjectsForChosenClass.map((row) => ({
           id: row.id,
           label: classSubjectLabel(row),
         }));
@@ -227,7 +256,7 @@ function ClassSubjectGroupingTable({ yearId }: { yearId: string }) {
               label={t("setup.classSubjectGrouping.fields.schoolType.label")}
               value={data.school_type_id}
               onChange={(event) =>
-                onChange({ school_type_id: event.target.value, class_ids: [], class_subject_ids: [] })
+                onChange({ school_type_id: event.target.value, class_id: "", class_subject_ids: [] })
               }
             >
               <option value="">{t("setup.classSubjectGrouping.fields.schoolType.all")}</option>
@@ -253,29 +282,29 @@ function ClassSubjectGroupingTable({ yearId }: { yearId: string }) {
                   </Link>
                 </p>
               ) : (
-                <CheckboxList
+                <RadioList
+                  name="class-subject-group-class"
                   options={classesOfType}
-                  selectedIds={data.class_ids}
-                  onChange={(class_ids) => {
+                  selectedId={data.class_id}
+                  onChange={(class_id) => {
                     const stillValidIds = new Set(
-                      classSubjects.filter((row) => class_ids.includes(row.class_id)).map((row) => row.id),
+                      classSubjects.filter((row) => row.class_id === class_id).map((row) => row.id),
                     );
                     onChange({
-                      class_ids,
+                      class_id,
                       class_subject_ids: data.class_subject_ids.filter((id) => stillValidIds.has(id)),
                     });
                   }}
-                  selectAllLabel={t("setup.classSubjectGrouping.fields.classes.selectAll")}
                 />
               )}
-              {errors.class_ids ? <p className="text-xs text-error">{errors.class_ids}</p> : null}
+              {errors.class_id ? <p className="text-xs text-error">{errors.class_id}</p> : null}
             </div>
 
             <div className="flex flex-col gap-1.5">
               <span className="text-sm font-medium text-text-primary">
                 {t("setup.classSubjectGrouping.fields.classSubjects.label")}
               </span>
-              {data.class_ids.length === 0 ? (
+              {!data.class_id ? (
                 <p className="text-xs text-text-muted">{t("setup.classSubjectGrouping.fields.classSubjects.selectClassesFirst")}</p>
               ) : classSubjectOptions.length === 0 ? (
                 <p className="text-xs text-text-muted">

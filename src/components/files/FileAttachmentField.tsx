@@ -2,15 +2,16 @@
 
 import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
+import { FileDownloadLink } from "@/components/files/FileDownloadLink";
 import { uploadFile, type AttachedFile, type FileUploadPurpose } from "@/lib/files/filesApi";
 import { formatFileSize, type FileValidation } from "@/lib/files/fileValidation";
 
 /**
- * Optional single-file attachment field — used by Past Records (Step 7)
- * for its per-entry document. Validates client-side, "uploads" (mock, see
- * filesApi.ts) immediately, and hands the parent an AttachedFile. No
- * download link — the mock has no real download endpoint to link to; the
- * attached file's name is shown as plain text.
+ * Optional single-file attachment field, shared by Subject Master, Class
+ * Subjects, and Students' Past Records. Validates client-side, uploads
+ * immediately via filesApi.uploadFile(), and hands the parent an
+ * AttachedFile (whose file_id is what the entity saves). The attached
+ * file's name is a FileDownloadLink — the signed URL is fetched on click.
  */
 export function FileAttachmentField({
   label,
@@ -51,9 +52,18 @@ export function FileAttachmentField({
 
     setError(null);
     setIsUploading(true);
-    const uploaded = await uploadFile(file, purpose);
+    const result = await uploadFile(file, purpose);
     setIsUploading(false);
-    onChange(uploaded);
+
+    if (result.ok) {
+      onChange(result.data);
+      return;
+    }
+    setError(
+      result.kind === "devBypassUnavailable"
+        ? t("setup.crudScreen.errors.devBypassUnavailable")
+        : ("message" in result && result.message) || t("files.uploadFailed"),
+    );
   };
 
   return (
@@ -62,8 +72,13 @@ export function FileAttachmentField({
       {value ? (
         <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-surface px-4 py-3">
           <div className="min-w-0">
-            <p className="block max-w-full truncate text-sm font-semibold text-text-primary">{value.name}</p>
-            <p className="text-xs text-text-muted">{formatFileSize(value.size)}</p>
+            <FileDownloadLink
+              fileId={value.file_id}
+              className="block max-w-full truncate text-sm font-semibold text-accent hover:underline"
+            >
+              {value.name ?? t("files.attachedFile")}
+            </FileDownloadLink>
+            {value.size !== null ? <p className="text-xs text-text-muted">{formatFileSize(value.size)}</p> : null}
           </div>
           <button
             type="button"
