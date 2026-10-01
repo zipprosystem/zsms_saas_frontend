@@ -11,9 +11,10 @@ type WizardFooterProps = {
   onSaveDraft: () => void;
   onNext: () => void;
   isSubmitting: boolean;
+  isSavingDraft: boolean;
 };
 
-export function WizardFooter({ step, mode, onBack, onSaveDraft, onNext, isSubmitting }: WizardFooterProps) {
+export function WizardFooter({ step, mode, onBack, onSaveDraft, onNext, isSubmitting, isSavingDraft }: WizardFooterProps) {
   const t = useTranslations();
   const isLastStep = step === 7;
 
@@ -27,9 +28,9 @@ export function WizardFooter({ step, mode, onBack, onSaveDraft, onNext, isSubmit
         ) : null}
       </div>
       <div className="flex items-center gap-3">
-        <Button type="button" variant="secondary" onClick={onSaveDraft} className="px-4 text-sm">
-          <span className="hidden sm:inline">{t("students.wizard.footer.saveDraft")}</span>
-          <span className="sm:hidden">{t("students.wizard.footer.saveDraftShort")}</span>
+        <Button type="button" variant="secondary" onClick={onSaveDraft} disabled={isSavingDraft} className="px-4 text-sm">
+          <span className="hidden sm:inline">{isSavingDraft ? t("common.saving") : t("students.wizard.footer.saveDraft")}</span>
+          <span className="sm:hidden">{isSavingDraft ? t("common.saving") : t("students.wizard.footer.saveDraftShort")}</span>
         </Button>
         <Button type="button" onClick={onNext} disabled={isSubmitting} className="px-4 text-sm">
           {isLastStep

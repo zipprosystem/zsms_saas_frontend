@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DataTable } from "@/components/setup/DataTable";
 import { ExportMenu } from "@/components/setup/ExportMenu";
+import { ConfirmDialog } from "@/components/setup/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
@@ -12,8 +13,9 @@ import { STRUCTURAL_STALE_TIME_MS, TransientQueryError } from "@/lib/queryClient
 import { PAGE_SIZE, usePaginatedView } from "@/lib/setup/usePaginatedView";
 import type { ColumnDef, FilterDef } from "@/lib/setup/crudTypes";
 import type { ExportColumn, ExportConfig } from "@/lib/export/exportTypes";
-import { listStudents, studentsQueryKey } from "@/lib/students/studentsApi";
+import { listStudents, setStudentStatus, studentsQueryKey } from "@/lib/students/studentsApi";
 import type { Student } from "@/lib/students/studentTypes";
+import { clampToWizardStep, type WizardStep } from "@/components/students/wizard/WizardStepper";
 import { MOCK_BOARDING_HOUSES, MOCK_CLASSES, MOCK_CLASS_ARMS } from "@/lib/students/studentsMockData";
 import {
   genderLabelKey,
@@ -67,8 +69,13 @@ export function StudentsScreen() {
   const { showToast } = useToast();
   const { school } = useAuth();
   const { selectedYear } = useAcademicYear();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<StudentsTabKey>("list");
-  const [wizardState, setWizardState] = useState<{ mode: "create" } | { mode: "edit"; student: Student } | null>(null);
+  const [wizardState, setWizardState] = useState<
+    { mode: "create" } | { mode: "edit"; student: Student; initialStep?: WizardStep } | null
+  >(null);
+  const [withdrawTarget, setWithdrawTarget] = useState<Student | null>(null);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
 
   const query = useQuery({
     queryKey: studentsQueryKey,
@@ -81,21 +88,43 @@ export function StudentsScreen() {
   });
 
   const allItems: Student[] = query.data?.ok ? query.data.data : [];
-  // Student List tab is always active-only — withdrawn/suspended/expelled/
-  // graduated/draft students live on the Withdrawn/Graduate tabs instead
-  // (both placeholders in this commit; see COMING_SOON_TAB_TITLE_KEYS).
-  const activeStudents = allItems.filter((student) => student.status === "active");
+  // Student List tab is active + draft — withdrawn/suspended/expelled/
+  // graduated students live on the Withdrawn/Graduate tabs instead (both
+  // placeholders in this commit; see COMING_SOON_TAB_TITLE_KEYS). Drafts
+  // have nowhere else to surface (no "Drafts" tab exists), so they stay
+  // visible here, marked with a small badge, with a Resume-only action
+  // replacing the normal menu for that row — see the "actions" column and
+  // the Last Name column below.
+  const visibleStudents = allItems.filter((student) => student.status === "active" || student.status === "draft");
 
   const isLoading = query.isPending;
   const errorMessage = query.isError ? t("students.list.loadError") : null;
 
-  const view = usePaginatedView(activeStudents, {
+  const view = usePaginatedView(visibleStudents, {
     matchesSearch: matchesStudentSearch,
     matchesFilters: matchesStudentFilters,
   });
 
   const armNames = Array.from(new Set(MOCK_CLASS_ARMS.map((arm) => arm.name))).sort();
   const comingSoon = () => showToast(t("students.actions.comingSoon"));
+
+  const handleResume = (student: Student) => {
+    setWizardState({ mode: "edit", student, initialStep: clampToWizardStep(student.draft_last_step) });
+  };
+
+  const handleConfirmWithdraw = async () => {
+    if (!withdrawTarget) return;
+    setIsWithdrawing(true);
+    const result = await setStudentStatus(withdrawTarget.id, "withdrawn");
+    setIsWithdrawing(false);
+    setWithdrawTarget(null);
+    if (!result.ok) {
+      showToast(t("students.actions.withdrawFailed"));
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: studentsQueryKey });
+    showToast(t("students.actions.withdrawSucceeded", { name: result.data.first_name }));
+  };
 
   const filterDefs: FilterDef[] = [
     {
@@ -153,7 +182,21 @@ export function StudentsScreen() {
     },
     { key: "admissionNumber", header: t("students.columns.admissionNumber"), render: (row) => row.admission_number ?? "—" },
     { key: "photo", header: t("students.columns.photo"), render: (row) => <StudentAvatar student={row} /> },
-    { key: "lastName", header: t("students.columns.lastName"), render: (row) => row.last_name },
+    {
+      key: "lastName",
+      header: t("students.columns.lastName"),
+      render: (row) =>
+        row.status === "draft" ? (
+          <span className="flex items-center gap-2">
+            {row.last_name || "—"}
+            <span className="rounded-full bg-accent-2 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent">
+              {t("students.badges.draft")}
+            </span>
+          </span>
+        ) : (
+          row.last_name
+        ),
+    },
     { key: "firstName", header: t("students.columns.firstName"), render: (row) => row.first_name },
     { key: "otherNames", header: t("students.columns.otherNames"), render: (row) => row.other_names ?? "—" },
     { key: "gender", header: t("students.columns.gender"), render: (row) => t(genderLabelKey(row)) },
@@ -167,9 +210,19 @@ export function StudentsScreen() {
     {
       key: "actions",
       header: t("students.columns.actions"),
-      render: (row) => (
-        <StudentRowActionsMenu student={row} onEdit={() => setWizardState({ mode: "edit", student: row })} onComingSoon={comingSoon} />
-      ),
+      render: (row) =>
+        row.status === "draft" ? (
+          <button type="button" onClick={() => handleResume(row)} className="text-sm font-semibold text-accent hover:underline">
+            {t("students.actions.resume")}
+          </button>
+        ) : (
+          <StudentRowActionsMenu
+            student={row}
+            onEdit={() => setWizardState({ mode: "edit", student: row })}
+            onWithdraw={() => setWithdrawTarget(row)}
+            onComingSoon={comingSoon}
+          />
+        ),
     },
   ];
 
@@ -194,7 +247,7 @@ export function StudentsScreen() {
   ];
   const exportConfig: ExportConfig<Student> = {
     filteredRows: view.filteredItems,
-    allRows: activeStudents,
+    allRows: visibleStudents,
     columns: exportColumns,
     title: t("students.tabs.list"),
     filenamePrefix: "students",
@@ -246,9 +299,20 @@ export function StudentsScreen() {
         <StudentWizard
           mode={wizardState.mode}
           initialStudent={wizardState.mode === "edit" ? wizardState.student : undefined}
+          initialStep={wizardState.mode === "edit" ? wizardState.initialStep : undefined}
           onClose={() => setWizardState(null)}
         />
       ) : null}
+
+      <ConfirmDialog
+        isOpen={!!withdrawTarget}
+        title={t("students.actions.confirmWithdraw.title")}
+        message={t("students.actions.confirmWithdraw.message", { name: withdrawTarget ? `${withdrawTarget.first_name} ${withdrawTarget.last_name}` : "" })}
+        isDangerous
+        isConfirming={isWithdrawing}
+        onConfirm={() => void handleConfirmWithdraw()}
+        onCancel={() => setWithdrawTarget(null)}
+      />
     </div>
   );
 }

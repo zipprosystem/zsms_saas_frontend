@@ -989,13 +989,23 @@
       "menuLabel": "Actions for {name}",
       "view": "View",
       "edit": "Edit",
+      "resume": "Resume",
       "sendMail": "Send Mail to Parent",
       "loginAs": "Login as Student",
       "suspend": "Suspend",
       "graduate": "Graduate",
       "expel": "Expel",
       "withdraw": "Withdraw",
-      "comingSoon": "This action is coming in the next update"
+      "comingSoon": "This action is coming in the next update",
+      "withdrawSucceeded": "{name} has been withdrawn",
+      "withdrawFailed": "Something went wrong withdrawing this student. Please try again.",
+      "confirmWithdraw": {
+        "title": "Withdraw student?",
+        "message": "This will withdraw {name} and move them to the Withdrawn list."
+      }
+    },
+    "badges": {
+      "draft": "Draft"
     },
     "list": {
       "loadError": "Couldn't load students. Please try again."
@@ -1030,8 +1040,10 @@
         "next": "Next",
         "addStudent": "Add Student",
         "saveChanges": "Save Changes",
-        "saveDraftComingSoon": "Draft saving is coming in the next update",
-        "submitComingSoon": "All steps validated — saving will be wired up in the next update"
+        "draftSaved": "Draft saved",
+        "studentCreated": "Student added",
+        "studentUpdated": "Changes saved",
+        "saveFailed": "Something went wrong saving. Please try again."
       },
       "fields": {
         "schoolType": {
@@ -1055,6 +1067,10 @@
         "academicHouse": {
           "label": "Academic House",
           "none": "None"
+        },
+        "boardingHouse": {
+          "label": "Boarding House",
+          "placeholder": "Select a boarding house"
         },
         "mode": {
           "label": "Mode"

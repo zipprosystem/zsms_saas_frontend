@@ -17,6 +17,8 @@ export type ClassDetailsForm = {
   class_term_id: string;
   academic_house_id: string;
   mode: StudentMode | "";
+  /** Only meaningful/shown when mode is "boarding" — the dormitory a boarder lives in, distinct from academic_house_id (inter-house competitions). */
+  boarding_house_id: string;
   extra_curricular_ids: string[];
 };
 
@@ -147,6 +149,7 @@ export function emptyStudentFormData(defaultMode: StudentMode | ""): StudentForm
       class_term_id: "",
       academic_house_id: "",
       mode: defaultMode,
+      boarding_house_id: "",
       extra_curricular_ids: [],
     },
     studentDetails: {

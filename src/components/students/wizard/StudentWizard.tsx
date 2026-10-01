@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 import { WideModal } from "@/components/ui/WideModal";
 import { useToast } from "@/components/ui/Toast";
 import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
-import { mockDelay } from "@/lib/onboarding/mockDelay";
 import { WizardStepper, WIZARD_STEP_NUMBERS, type WizardStep } from "@/components/students/wizard/WizardStepper";
 import { WizardFooter } from "@/components/students/wizard/WizardFooter";
 import { StepErrorBoundary } from "@/components/students/wizard/StepErrorBoundary";
@@ -32,7 +32,8 @@ import {
   validateStudentDetails,
 } from "@/lib/students/wizardValidation";
 import { MOCK_SCHOOL_MODE } from "@/lib/students/studentsMockData";
-import { studentToFormData } from "@/lib/students/studentFormMapping";
+import { formDataToStudentUpsertInput, studentToFormData } from "@/lib/students/studentFormMapping";
+import { createStudent, saveDraftStudent, studentsQueryKey } from "@/lib/students/studentsApi";
 import type { Student } from "@/lib/students/studentTypes";
 
 const STEP_VALIDATORS: Record<WizardStep, (data: StudentFormData) => FieldErrors> = {
@@ -57,21 +58,34 @@ function stepForErrorField(field: string): WizardStep {
 export type StudentWizardProps = {
   mode: "create" | "edit";
   initialStudent?: Student;
+  /** Reopens at the step a draft was last saved from (Resume), with every step up to it marked reached so the user can move freely across what they'd already filled. Defaults to 1. */
+  initialStep?: WizardStep;
   onClose: () => void;
 };
 
-export function StudentWizard({ mode, initialStudent, onClose }: StudentWizardProps) {
+function reachedStepsUpTo(step: WizardStep): Set<WizardStep> {
+  return new Set(WIZARD_STEP_NUMBERS.filter((n) => n <= step));
+}
+
+export function StudentWizard({ mode, initialStudent, initialStep, onClose }: StudentWizardProps) {
   const t = useTranslations();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
   const { selectedYearId, isLoading: isYearLoading } = useAcademicYear();
 
-  const [step, setStep] = useState<WizardStep>(1);
-  const [reachedSteps, setReachedSteps] = useState<Set<WizardStep>>(new Set<WizardStep>([1]));
+  const [step, setStep] = useState<WizardStep>(initialStep ?? 1);
+  const [reachedSteps, setReachedSteps] = useState<Set<WizardStep>>(() => reachedStepsUpTo(initialStep ?? 1));
   const [data, setData] = useState<StudentFormData>(() =>
     initialStudent ? studentToFormData(initialStudent) : emptyStudentFormData(MOCK_SCHOOL_MODE),
   );
+  // Tracks the record a Save Draft call created, across subsequent saves in
+  // the SAME wizard session, so the second+ Save Draft (and the eventual
+  // final submit) upserts that exact row instead of creating a duplicate.
+  // Starts at initialStudent's id when editing/resuming.
+  const [studentId, setStudentId] = useState<string | null>(initialStudent?.id ?? null);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
 
   const updateGroup = <K extends keyof StudentFormData>(key: K, patch: Partial<StudentFormData[K]>) => {
     setData((current) => ({ ...current, [key]: { ...current[key], ...patch } }));
@@ -88,8 +102,18 @@ export function StudentWizard({ mode, initialStudent, onClose }: StudentWizardPr
     goToStep((step - 1) as WizardStep);
   };
 
-  const handleSaveDraft = () => {
-    showToast(t("students.wizard.footer.saveDraftComingSoon"));
+  const handleSaveDraft = async () => {
+    setIsSavingDraft(true);
+    const result = await saveDraftStudent(studentId, formDataToStudentUpsertInput(data), step);
+    setIsSavingDraft(false);
+
+    if (!result.ok) {
+      showToast(t("students.wizard.footer.saveFailed"));
+      return;
+    }
+    setStudentId(result.data.id);
+    queryClient.invalidateQueries({ queryKey: studentsQueryKey });
+    showToast(t("students.wizard.footer.draftSaved"));
   };
 
   const handleSubmit = async () => {
@@ -107,9 +131,15 @@ export function StudentWizard({ mode, initialStudent, onClose }: StudentWizardPr
     }
 
     setIsSubmitting(true);
-    await mockDelay(500);
+    const result = await createStudent(formDataToStudentUpsertInput(data), studentId ?? undefined);
     setIsSubmitting(false);
-    showToast(t("students.wizard.footer.submitComingSoon"));
+
+    if (!result.ok) {
+      showToast(t("students.wizard.footer.saveFailed"));
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: studentsQueryKey });
+    showToast(mode === "edit" ? t("students.wizard.footer.studentUpdated") : t("students.wizard.footer.studentCreated"));
     onClose();
   };
 
@@ -138,9 +168,10 @@ export function StudentWizard({ mode, initialStudent, onClose }: StudentWizardPr
           step={step}
           mode={mode}
           onBack={handleBack}
-          onSaveDraft={handleSaveDraft}
+          onSaveDraft={() => void handleSaveDraft()}
           onNext={handleNext}
           isSubmitting={isSubmitting}
+          isSavingDraft={isSavingDraft}
         />
       }
     >

@@ -6,20 +6,24 @@ import { ActionsMenu } from "@/components/ui/ActionsMenu";
 import type { Student } from "@/lib/students/studentTypes";
 
 /**
- * Per-row "⋮" menu. Every item is "coming in the next update" for now
- * (Commit 1) — View/Edit opens the wizard (Commit 2); Send Mail/Login As
- * are their own future pages; Suspend/Graduate/Expel/Withdraw are ONE
- * unified status-change flow (category + reason + date — see
- * studentTypes.ts's StudentStatus doc) landing in a later commit.
+ * Per-row "⋮" menu. View/Edit opens the wizard; Withdraw sets the
+ * student's status for real (Commit 3). Send Mail/Login As are their own
+ * future pages; Suspend/Graduate/Expel still show "coming soon" — those
+ * three plus Withdraw are meant to be ONE unified status-change flow
+ * (category + reason + date — see studentTypes.ts's StudentStatus doc)
+ * once built; Withdraw alone, without that flow, is the explicitly-scoped
+ * piece for this commit.
  */
 export function StudentRowActionsMenu({
   student,
   onEdit,
+  onWithdraw,
   onComingSoon,
 }: {
   student: Student;
-  /** View and Edit both open the wizard in edit mode — Commit 2 has no separate read-only view, so "View" is functionally identical to "Edit" for now. */
+  /** View and Edit both open the wizard in edit mode — there's no separate read-only view, so "View" is functionally identical to "Edit". */
   onEdit: () => void;
+  onWithdraw: () => void;
   onComingSoon: () => void;
 }) {
   const t = useTranslations();
@@ -35,7 +39,7 @@ export function StudentRowActionsMenu({
         { key: "suspend", label: t("students.actions.suspend"), onClick: onComingSoon },
         { key: "graduate", label: t("students.actions.graduate"), onClick: onComingSoon },
         { key: "expel", label: t("students.actions.expel"), onClick: onComingSoon, variant: "danger" },
-        { key: "withdraw", label: t("students.actions.withdraw"), onClick: onComingSoon, variant: "danger" },
+        { key: "withdraw", label: t("students.actions.withdraw"), onClick: onWithdraw, variant: "danger" },
       ]}
       trigger={({ isOpen, toggle }) => (
         <button

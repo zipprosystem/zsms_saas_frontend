@@ -11,7 +11,7 @@ import { schoolTypesService, type SchoolType } from "@/lib/setup/academicStructu
 import { createClassesService, type SchoolClass } from "@/lib/setup/academicStructure/classesApi";
 import { fetchSectionsForClass, sectionsQueryKey, type Section } from "@/lib/setup/academicStructure/sectionsApi";
 import { classTermsQueryKey, fetchTermsForClass, type ClassTerm } from "@/lib/setup/academicStructure/classTermsApi";
-import { MOCK_HOUSES, MOCK_EXTRA_CURRICULAR } from "@/lib/students/studentsMockData";
+import { MOCK_HOUSES, MOCK_BOARDING_HOUSES, MOCK_EXTRA_CURRICULAR } from "@/lib/students/studentsMockData";
 import { DevBypassNotice } from "@/components/students/wizard/DevBypassNotice";
 import type { ClassDetailsForm } from "@/components/students/wizard/studentFormTypes";
 import type { FieldErrors } from "@/components/students/wizard/studentFormTypes";
@@ -195,11 +195,29 @@ export function ClassDetailsStep({
             { value: "boarding", label: t("students.mode.boarding") },
           ]}
           value={data.mode ? [data.mode] : []}
-          onChange={(values) => onChange({ mode: (values[0] as ClassDetailsForm["mode"]) ?? "" })}
+          onChange={(values) =>
+            onChange({ mode: (values[0] as ClassDetailsForm["mode"]) ?? "", boarding_house_id: values[0] === "boarding" ? data.boarding_house_id : "" })
+          }
           hasError={!!errors.mode}
           error={errors.mode ? t(errors.mode) : undefined}
         />
       </div>
+
+      {data.mode === "boarding" ? (
+        <SelectField
+          id="wizard-boarding-house"
+          label={t("students.wizard.fields.boardingHouse.label")}
+          value={data.boarding_house_id}
+          onChange={(event) => onChange({ boarding_house_id: event.target.value })}
+        >
+          <option value="">{t("students.wizard.fields.boardingHouse.placeholder")}</option>
+          {MOCK_BOARDING_HOUSES.map((house) => (
+            <option key={house.id} value={house.id}>
+              {house.name}
+            </option>
+          ))}
+        </SelectField>
+      ) : null}
 
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-text-primary">{t("students.wizard.fields.extraCurricular.label")}</span>

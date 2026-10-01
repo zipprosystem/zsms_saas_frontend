@@ -7,6 +7,12 @@ import { CheckIcon } from "@/components/icons/CheckIcon";
 export const WIZARD_STEP_NUMBERS = [1, 2, 3, 4, 5, 6, 7] as const;
 export type WizardStep = (typeof WIZARD_STEP_NUMBERS)[number];
 
+/** Clamps a stored draft_last_step (number | null, no upper bound guaranteed) into a valid WizardStep — used when Resume reopens a draft. */
+export function clampToWizardStep(step: number | null | undefined): WizardStep {
+  const n = step ?? 1;
+  return Math.min(Math.max(Math.round(n), 1), WIZARD_STEP_NUMBERS.length) as WizardStep;
+}
+
 const STEP_TITLE_KEYS: Record<WizardStep, string> = {
   1: "students.wizard.steps.classDetails",
   2: "students.wizard.steps.studentDetails",

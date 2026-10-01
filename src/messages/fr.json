@@ -997,13 +997,23 @@
       "menuLabel": "Actions pour {name}",
       "view": "Voir",
       "edit": "Modifier",
+      "resume": "Reprendre",
       "sendMail": "Envoyer un e-mail au parent",
       "loginAs": "Se connecter en tant qu'élève",
       "suspend": "Suspendre",
       "graduate": "Diplômer",
       "expel": "Exclure",
       "withdraw": "Retirer",
-      "comingSoon": "Cette action arrive dans la prochaine mise à jour"
+      "comingSoon": "Cette action arrive dans la prochaine mise à jour",
+      "withdrawSucceeded": "{name} a été retiré(e)",
+      "withdrawFailed": "Une erreur est survenue lors du retrait de cet élève. Veuillez réessayer.",
+      "confirmWithdraw": {
+        "title": "Retirer l'élève ?",
+        "message": "Cela retirera {name} et le/la déplacera vers la liste des retirés."
+      }
+    },
+    "badges": {
+      "draft": "Brouillon"
     },
     "list": {
       "loadError": "Impossible de charger les élèves. Veuillez réessayer."
@@ -1038,8 +1048,10 @@
         "next": "Suivant",
         "addStudent": "Ajouter l'élève",
         "saveChanges": "Enregistrer les modifications",
-        "saveDraftComingSoon": "L'enregistrement de brouillon arrive dans la prochaine mise à jour",
-        "submitComingSoon": "Toutes les étapes sont validées — l'enregistrement sera activé dans la prochaine mise à jour"
+        "draftSaved": "Brouillon enregistré",
+        "studentCreated": "Élève ajouté",
+        "studentUpdated": "Modifications enregistrées",
+        "saveFailed": "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer."
       },
       "fields": {
         "schoolType": {
@@ -1063,6 +1075,10 @@
         "academicHouse": {
           "label": "Maison académique",
           "none": "Aucune"
+        },
+        "boardingHouse": {
+          "label": "Maison d'internat",
+          "placeholder": "Sélectionnez une maison d'internat"
         },
         "mode": {
           "label": "Mode"
