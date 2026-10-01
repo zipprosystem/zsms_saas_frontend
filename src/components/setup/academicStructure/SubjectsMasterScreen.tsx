@@ -309,6 +309,7 @@ export function SubjectsMasterScreen() {
             chooseLabel={t("setup.subjectsMaster.fields.file.choose")}
             chooseIcon={<UploadIcon className="h-4 w-4" />}
             accept="application/pdf"
+            purpose="subject_master"
             validate={validateSubjectFile}
             validationMessages={{
               unsupportedType: t("setup.subjectsMaster.fields.file.errors.unsupportedType"),

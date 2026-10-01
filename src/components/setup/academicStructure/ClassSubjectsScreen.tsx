@@ -338,6 +338,7 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
 
     if (panel.mode === "create") {
       const result = await bulkCreateClassSubjects({
+        academic_year_id: yearId,
         class_ids: formData.class_ids,
         subject_master_ids: formData.subject_master_ids,
         subject_group: formData.subject_group as SubjectGroup,
@@ -598,6 +599,7 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
                 label={t("setup.classSubjects.fields.file.label")}
                 chooseLabel={t("setup.classSubjects.fields.file.choose")}
                 accept=".pdf,.doc,.docx,.ppt,.pptx"
+                purpose="class_subject"
                 validate={validateClassSubjectFile}
                 validationMessages={{
                   unsupportedType: t("setup.classSubjects.fields.file.errors.unsupportedType"),
