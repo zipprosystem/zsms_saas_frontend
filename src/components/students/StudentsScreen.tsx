@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DataTable } from "@/components/setup/DataTable";
@@ -32,7 +34,25 @@ import { StudentsTabs, type StudentsTabKey } from "@/components/students/Student
 import { StudentsComingSoonTab } from "@/components/students/StudentsComingSoonTab";
 import { MoreActionsMenu } from "@/components/students/MoreActionsMenu";
 import { StudentRowActionsMenu } from "@/components/students/StudentRowActionsMenu";
-import { StudentWizard } from "@/components/students/wizard/StudentWizard";
+
+// Lazy-loaded — the wizard (7 steps + Login Details) is the largest chunk
+// in this module and only needed once "Add New Student"/a row/a draft is
+// actually clicked; most visits to this page (browsing/searching/
+// filtering the list) never touch it. ssr:false since it's pure client
+// interaction (modal, file upload, localStorage-backed drafts) with
+// nothing meaningful to server-render — same justification as
+// CommandPalette (Header.tsx).
+const StudentWizard = dynamic(
+  () => import("@/components/students/wizard/StudentWizard").then((mod) => ({ default: mod.StudentWizard })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="h-[80vh] w-full max-w-4xl animate-pulse rounded-2xl bg-surface" />
+      </div>
+    ),
+  },
+);
 
 /** Small initials circle — the Add Student wizard's real photo upload (Commit 2) replaces this per-row once a student has photo_file_id set. */
 function StudentAvatar({ student }: { student: Student }) {
@@ -70,12 +90,27 @@ export function StudentsScreen() {
   const { school } = useAuth();
   const { selectedYear } = useAcademicYear();
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<StudentsTabKey>("list");
   const [wizardState, setWizardState] = useState<
     { mode: "create" } | { mode: "edit"; student: Student; initialStep?: WizardStep } | null
   >(null);
   const [withdrawTarget, setWithdrawTarget] = useState<Student | null>(null);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+
+  // Command palette's "Add Student" quick action lands here with ?new=1
+  // (useSearchIndex.ts) — auto-open the create wizard once, then strip the
+  // param so a refresh doesn't re-trigger it (same pattern admin/settings/
+  // page.tsx uses for its own ?edit= deep link).
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      setWizardState({ mode: "create" });
+      router.replace("/admin/students", { scroll: false });
+    }
+    // Only meant to run once, off the URL present at mount — the deep link.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const query = useQuery({
     queryKey: studentsQueryKey,

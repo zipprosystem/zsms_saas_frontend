@@ -176,7 +176,11 @@
     "groups": {
       "navigation": "Navigation",
       "settings": "Paramètres",
-      "setup": "Configuration"
+      "setup": "Configuration",
+      "students": "Élèves"
+    },
+    "students": {
+      "addStudent": "Ajouter un élève"
     }
   },
   "tenant": {

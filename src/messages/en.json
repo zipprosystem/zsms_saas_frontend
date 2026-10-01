@@ -176,7 +176,11 @@
     "groups": {
       "navigation": "Navigation",
       "settings": "Settings",
-      "setup": "Setup"
+      "setup": "Setup",
+      "students": "Students"
+    },
+    "students": {
+      "addStudent": "Add Student"
     }
   },
   "tenant": {
