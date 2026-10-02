@@ -10,14 +10,9 @@ import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
 import { WizardStepper, WIZARD_STEP_NUMBERS, type WizardStep } from "@/components/students/wizard/WizardStepper";
 import { WizardFooter } from "@/components/students/wizard/WizardFooter";
 import { StepErrorBoundary } from "@/components/students/wizard/StepErrorBoundary";
-import { ClassDetailsStep } from "@/components/students/wizard/steps/ClassDetailsStep";
-import { StudentDetailsStep } from "@/components/students/wizard/steps/StudentDetailsStep";
-import { ParentGuardianStep } from "@/components/students/wizard/steps/ParentGuardianStep";
-import { AddressStep } from "@/components/students/wizard/steps/AddressStep";
-import { AgentStep } from "@/components/students/wizard/steps/AgentStep";
-import { SiblingsStep } from "@/components/students/wizard/steps/SiblingsStep";
-import { PastRecordsStep } from "@/components/students/wizard/steps/PastRecordsStep";
-import { LoginDetailsSection } from "@/components/students/wizard/LoginDetailsSection";
+import { EnrolmentStep } from "@/components/students/wizard/steps/EnrolmentStep";
+import { GuardianAddressStep } from "@/components/students/wizard/steps/GuardianAddressStep";
+import { AdditionalStep } from "@/components/students/wizard/steps/AdditionalStep";
 import {
   emptyStudentFormData,
   type FieldErrors,
@@ -36,23 +31,26 @@ import { formDataToStudentUpsertInput, studentToFormData } from "@/lib/students/
 import { createStudent, saveDraftStudent, studentsQueryKey } from "@/lib/students/studentsApi";
 import type { Student } from "@/lib/students/studentTypes";
 
+// 3 steps, each a regroup of the original 7 — see WizardStepper.tsx's
+// STEP_TITLE_KEYS doc comment for exactly which original step landed where.
 const STEP_VALIDATORS: Record<WizardStep, (data: StudentFormData) => FieldErrors> = {
-  1: (data) => validateClassDetails(data.classDetails),
-  2: (data) => validateStudentDetails(data.studentDetails),
-  3: (data) => validateParentGuardian(data.parentGuardian),
-  4: (data) => validateAddress(data.address),
-  5: () => ({}),
-  6: () => ({}),
-  7: (data) => validateLoginDetails(data.loginDetails),
+  1: (data) => ({
+    ...validateClassDetails(data.classDetails),
+    ...validateStudentDetails(data.studentDetails),
+    ...validateLoginDetails(data.loginDetails),
+  }),
+  2: (data) => ({
+    ...validateParentGuardian(data.parentGuardian),
+    ...validateAddress(data.address),
+  }),
+  3: () => ({}), // Agent/Siblings/Past Records are all optional
 };
 
 /** Routes a final-submit validation error back to the step that owns it, so the user lands on something they can actually fix. */
 function stepForErrorField(field: string): WizardStep {
-  if (field.startsWith("father.") || field.startsWith("mother.") || field.startsWith("guardian.")) return 3;
-  if (field.startsWith("home.") || field.startsWith("other.")) return 4;
-  if (field === "username" || field === "password") return 7;
-  if (["school_type_id", "class_id", "class_arm_id", "class_term_id", "mode"].includes(field)) return 1;
-  return 2;
+  if (field.startsWith("father.") || field.startsWith("mother.") || field.startsWith("guardian.")) return 2;
+  if (field.startsWith("home.") || field.startsWith("other.")) return 2;
+  return 1; // class details, student details, username/password all live on step 1
 }
 
 export type StudentWizardProps = {
@@ -144,7 +142,7 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
   };
 
   const handleNext = () => {
-    if (step === 7) {
+    if (step === WIZARD_STEP_NUMBERS[WIZARD_STEP_NUMBERS.length - 1]) {
       void handleSubmit();
       return;
     }
@@ -163,6 +161,7 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
       onClose={onClose}
       title={title}
       subtitle={t("students.wizard.subtitle", { step, total: WIZARD_STEP_NUMBERS.length })}
+      size="2xl"
       footer={
         <WizardFooter
           step={step}
@@ -197,11 +196,15 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
               // dev-bypass short-circuit, which also resolves to zero years
               // — expected locally, see crudTypes.ts's
               // isDevBypassUnavailable) falls through to the prompt below.
-              <ClassDetailsStep
+              <EnrolmentStep
                 yearId={selectedYearId}
-                data={data.classDetails}
+                classDetails={data.classDetails}
+                studentDetails={data.studentDetails}
+                loginDetails={data.loginDetails}
                 errors={errors}
-                onChange={(patch) => updateGroup("classDetails", patch)}
+                onClassDetailsChange={(patch) => updateGroup("classDetails", patch)}
+                onStudentDetailsChange={(patch) => updateGroup("studentDetails", patch)}
+                onLoginDetailsChange={(patch) => updateGroup("loginDetails", patch)}
               />
             ) : (
               <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-surface px-4 py-10 text-center">
@@ -216,30 +219,24 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
             )
           ) : null}
           {step === 2 ? (
-            <StudentDetailsStep data={data.studentDetails} errors={errors} onChange={(patch) => updateGroup("studentDetails", patch)} />
-          ) : null}
-          {step === 3 ? (
-            <ParentGuardianStep data={data.parentGuardian} errors={errors} onChange={(patch) => updateGroup("parentGuardian", patch)} />
-          ) : null}
-          {step === 4 ? <AddressStep data={data.address} errors={errors} onChange={(patch) => updateGroup("address", patch)} /> : null}
-          {step === 5 ? <AgentStep data={data.agent} onChange={(patch) => updateGroup("agent", patch)} /> : null}
-          {step === 6 ? (
-            <SiblingsStep
-              data={data.siblings}
-              onChange={(patch) => updateGroup("siblings", patch)}
-              excludeStudentId={initialStudent?.id}
+            <GuardianAddressStep
+              parentGuardian={data.parentGuardian}
+              address={data.address}
+              errors={errors}
+              onParentGuardianChange={(patch) => updateGroup("parentGuardian", patch)}
+              onAddressChange={(patch) => updateGroup("address", patch)}
             />
           ) : null}
-          {step === 7 ? (
-            <>
-              <PastRecordsStep data={data.pastRecords} onChange={(patch) => updateGroup("pastRecords", patch)} />
-              <LoginDetailsSection
-                data={data.loginDetails}
-                errors={errors}
-                admissionNumber={data.studentDetails.admission_number}
-                onChange={(patch) => updateGroup("loginDetails", patch)}
-              />
-            </>
+          {step === 3 ? (
+            <AdditionalStep
+              agent={data.agent}
+              siblings={data.siblings}
+              pastRecords={data.pastRecords}
+              excludeStudentId={initialStudent?.id}
+              onAgentChange={(patch) => updateGroup("agent", patch)}
+              onSiblingsChange={(patch) => updateGroup("siblings", patch)}
+              onPastRecordsChange={(patch) => updateGroup("pastRecords", patch)}
+            />
           ) : null}
         </StepErrorBoundary>
       </div>

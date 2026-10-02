@@ -142,3 +142,23 @@ export async function setStudentStatus(id: string, status: StudentStatus): Promi
   // would overwrite the existing cursor with undefined (the key is present either way), not leave it alone.
   return updateStudent(id, status === "draft" ? { status } : { status, draft_last_step: null });
 }
+
+/**
+ * Hard delete — draft rows ONLY. A real student is never hard-deleted from
+ * the UI (Withdraw/Suspend/Expel are status changes, not removal); a draft
+ * is an incomplete throwaway with nothing worth keeping a record of, so
+ * Delete here actually removes the row rather than changing its status.
+ * Guarded server-side-style (status checked before removing) so a stray
+ * call against a non-draft id can't accidentally destroy a real student.
+ */
+export async function deleteDraftStudent(id: string): Promise<CrudResult<void>> {
+  await mockDelay(300);
+  const store = getStore();
+  const target = store.find((student) => student.id === id);
+  if (!target) return { ok: true, data: undefined }; // already gone — deleting a missing draft is a no-op success
+  if (target.status !== "draft") {
+    return { ok: false, kind: "conflict", message: "Only draft students can be deleted this way." };
+  }
+  saveStore(store.filter((student) => student.id !== id));
+  return { ok: true, data: undefined };
+}

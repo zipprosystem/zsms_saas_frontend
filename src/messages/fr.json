@@ -371,13 +371,20 @@
       "fields": {
         "name": { "label": "Nom de l'année", "placeholder": "ex. 2025/2026" },
         "startDate": { "label": "Date de début" },
-        "endDate": { "label": "Date de fin" }
+        "endDate": { "label": "Date de fin" },
+        "schoolMode": {
+          "label": "Mode de l'établissement",
+          "day": "Externat",
+          "boarding": "Internat",
+          "both": "Les deux"
+        }
       },
       "errors": {
         "nameRequired": "Saisissez un nom pour cette année académique",
         "startDateRequired": "Sélectionnez une date de début",
         "endDateRequired": "Sélectionnez une date de fin",
-        "endBeforeStart": "La date de fin doit être postérieure à la date de début"
+        "endBeforeStart": "La date de fin doit être postérieure à la date de début",
+        "schoolModeRequired": "Sélectionnez un mode d'établissement"
       },
       "toast": {
         "created": "Année académique créée",
@@ -1016,6 +1023,12 @@
       "confirmWithdraw": {
         "title": "Retirer l'élève ?",
         "message": "Cela retirera {name} et le/la déplacera vers la liste des retirés."
+      },
+      "deleteDraftSucceeded": "Brouillon supprimé",
+      "deleteDraftFailed": "Une erreur est survenue lors de la suppression de ce brouillon. Veuillez réessayer.",
+      "confirmDeleteDraft": {
+        "title": "Supprimer le brouillon ?",
+        "message": "Cela supprimera définitivement cet élève brouillon. Cette action est irréversible."
       }
     },
     "badges": {
@@ -1039,13 +1052,18 @@
         "message": "Le chargement du contenu de cette étape a échoué. Vos données sur les autres étapes sont toujours là — essayez une autre étape, ou fermez et rouvrez l'assistant."
       },
       "steps": {
+        "enrolment": "Inscription et détails de l'élève",
+        "guardianAddress": "Parent/Tuteur et adresse",
+        "additional": "Complémentaire"
+      },
+      "sections": {
         "classDetails": "Détails de la classe",
         "studentDetails": "Détails de l'élève",
-        "parentGuardian": "Parent/Tuteur",
+        "parentGuardian": "Détails du parent/tuteur",
         "address": "Adresse",
-        "agent": "Agent",
-        "siblings": "Fratrie",
-        "pastRecords": "Antécédents scolaires"
+        "agent": "Agent (facultatif)",
+        "siblings": "Fratrie (facultatif)",
+        "pastRecords": "Antécédents scolaires (facultatif)"
       },
       "footer": {
         "back": "Retour",
@@ -1053,7 +1071,7 @@
         "saveDraftShort": "Brouillon",
         "next": "Suivant",
         "addStudent": "Ajouter l'élève",
-        "saveChanges": "Enregistrer les modifications",
+        "update": "Mettre à jour",
         "draftSaved": "Brouillon enregistré",
         "studentCreated": "Élève ajouté",
         "studentUpdated": "Modifications enregistrées",

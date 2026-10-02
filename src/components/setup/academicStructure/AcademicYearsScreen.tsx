@@ -2,11 +2,13 @@
 
 import { useTranslations } from "next-intl";
 import { InputField } from "@/components/ui/Input";
+import { ChipGroup } from "@/components/ui/ChipGroup";
 import { CrudScreen } from "@/components/setup/CrudScreen";
 import {
   academicYearsService,
   type AcademicYear,
   type AcademicYearInput,
+  type SchoolMode,
 } from "@/lib/setup/academicStructure/academicYearsApi";
 import {
   deriveAcademicYearStatus,
@@ -19,9 +21,10 @@ type FormState = {
   name: string;
   start_date: string;
   end_date: string;
+  school_mode: SchoolMode | "";
 };
 
-const EMPTY_FORM: FormState = { name: "", start_date: "", end_date: "" };
+const EMPTY_FORM: FormState = { name: "", start_date: "", end_date: "", school_mode: "" };
 
 export function AcademicYearsScreen() {
   const t = useTranslations();
@@ -98,7 +101,7 @@ export function AcademicYearsScreen() {
         },
       ]}
       emptyFormState={EMPTY_FORM}
-      toFormState={(row) => ({ name: row.name, start_date: row.start_date, end_date: row.end_date })}
+      toFormState={(row) => ({ name: row.name, start_date: row.start_date, end_date: row.end_date, school_mode: row.school_mode })}
       validate={(data) => {
         const errors: Record<string, string> = {};
         if (!data.name.trim()) errors.name = t("setup.academicYears.errors.nameRequired");
@@ -107,17 +110,20 @@ export function AcademicYearsScreen() {
         if (data.start_date && data.end_date && data.end_date <= data.start_date) {
           errors.end_date = t("setup.academicYears.errors.endBeforeStart");
         }
+        if (!data.school_mode) errors.school_mode = t("setup.academicYears.errors.schoolModeRequired");
         return errors;
       }}
       toCreateInput={(data) => ({
         name: data.name.trim(),
         start_date: data.start_date,
         end_date: data.end_date,
+        school_mode: data.school_mode as SchoolMode,
       })}
       toUpdateInput={(data) => ({
         name: data.name.trim(),
         start_date: data.start_date,
         end_date: data.end_date,
+        school_mode: data.school_mode as SchoolMode,
       })}
       renderFields={({ data, onChange, errors }) => (
         <>
@@ -148,6 +154,21 @@ export function AcademicYearsScreen() {
             hasError={!!errors.end_date}
             error={errors.end_date}
           />
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-text-primary">{t("setup.academicYears.fields.schoolMode.label")}</span>
+            <ChipGroup
+              multiple={false}
+              options={[
+                { value: "day", label: t("setup.academicYears.fields.schoolMode.day") },
+                { value: "boarding", label: t("setup.academicYears.fields.schoolMode.boarding") },
+                { value: "both", label: t("setup.academicYears.fields.schoolMode.both") },
+              ]}
+              value={data.school_mode ? [data.school_mode] : []}
+              onChange={(values) => onChange({ school_mode: (values[0] as SchoolMode) ?? "" })}
+              hasError={!!errors.school_mode}
+              error={errors.school_mode}
+            />
+          </div>
         </>
       )}
       emptyMessage={t("setup.academicYears.empty")}

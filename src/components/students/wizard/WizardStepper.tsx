@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { CheckIcon } from "@/components/icons/CheckIcon";
 
-export const WIZARD_STEP_NUMBERS = [1, 2, 3, 4, 5, 6, 7] as const;
+export const WIZARD_STEP_NUMBERS = [1, 2, 3] as const;
 export type WizardStep = (typeof WIZARD_STEP_NUMBERS)[number];
 
 /** Clamps a stored draft_last_step (number | null, no upper bound guaranteed) into a valid WizardStep — used when Resume reopens a draft. */
@@ -13,14 +13,20 @@ export function clampToWizardStep(step: number | null | undefined): WizardStep {
   return Math.min(Math.max(Math.round(n), 1), WIZARD_STEP_NUMBERS.length) as WizardStep;
 }
 
+/**
+ * 3 steps, each a regroup of the original 7 (field logic unchanged, just
+ * which step renders which existing step component — see
+ * EnrolmentStep/GuardianAddressStep/AdditionalStep):
+ *   1. Enrolment & Student Details — Class Details + Student Details +
+ *      Login Details. Everything the admin touches most, including the
+ *      account, lands on the first screen instead of the last.
+ *   2. Parent/Guardian & Address.
+ *   3. Additional — Agent + Siblings + Past Records (all optional).
+ */
 const STEP_TITLE_KEYS: Record<WizardStep, string> = {
-  1: "students.wizard.steps.classDetails",
-  2: "students.wizard.steps.studentDetails",
-  3: "students.wizard.steps.parentGuardian",
-  4: "students.wizard.steps.address",
-  5: "students.wizard.steps.agent",
-  6: "students.wizard.steps.siblings",
-  7: "students.wizard.steps.pastRecords",
+  1: "students.wizard.steps.enrolment",
+  2: "students.wizard.steps.guardianAddress",
+  3: "students.wizard.steps.additional",
 };
 
 type WizardStepperProps = {
@@ -77,7 +83,7 @@ export function WizardStepper({ activeStep, reachedSteps, onStepClick }: WizardS
                   {isComplete ? <CheckIcon className="h-4 w-4" /> : number}
                 </button>
                 <span
-                  className={`hidden max-w-[88px] truncate text-center text-xs font-medium sm:block ${
+                  className={`hidden max-w-[140px] truncate text-center text-xs font-medium sm:block ${
                     isActive ? "text-text-primary" : "text-text-muted"
                   }`}
                 >
