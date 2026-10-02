@@ -69,13 +69,13 @@ function toResult<T>(response: Response, body: unknown): CrudResult<T> {
   return { ok: false, kind: "server" };
 }
 
-// FLAGGED, UNCONFIRMED: school_mode is a field Muntajir is adding to the
-// Academic Year API; it may not exist in the real response yet. Every
-// entity read in this file goes through this so a missing/invalid value
-// never crashes or silently hides a mode — it defaults to "both" (the
-// least-restrictive choice: nothing gets hidden) until the real field is
-// confirmed live. Remove this fallback once Muntajir confirms it's always
-// present.
+// CONFIRMED: school_mode is live on /erp/academic-years (Muntajir shipped
+// it) — this is no longer masking a field that might not exist yet. Every
+// entity read in this file still goes through this, but now purely as a
+// defensive null/invalid-value guard (a genuinely missing or malformed
+// value defaults to "both", the least-restrictive choice: nothing gets
+// hidden) rather than an everyday fallback the real data is expected to
+// need.
 function normalizeSchoolMode(value: unknown): SchoolMode {
   return value === "day" || value === "boarding" || value === "both" ? value : "both";
 }

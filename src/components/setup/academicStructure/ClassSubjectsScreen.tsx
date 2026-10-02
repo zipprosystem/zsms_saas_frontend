@@ -24,7 +24,8 @@ import type { AttachedFile } from "@/lib/files/filesApi";
 import { createClassesService, type SchoolClass } from "@/lib/setup/academicStructure/classesApi";
 import { schoolTypesService, type SchoolType } from "@/lib/setup/academicStructure/schoolTypesApi";
 import { subjectsMasterService, type SubjectMaster } from "@/lib/setup/academicStructure/subjectsMasterApi";
-import { classroomsService, classroomsQueryKey, type Classroom } from "@/lib/setup/academicStructure/facilitiesApi";
+import { buildingsService, type Building } from "@/lib/setup/academicStructure/buildingsApi";
+import { buildingRoomsService, buildingRoomsQueryKey, type BuildingRoom } from "@/lib/setup/academicStructure/buildingRoomsApi";
 import { validateClassSubjectFile } from "@/lib/setup/academicStructure/classSubjectFileUpload";
 import {
   classSubjectsQueryKey,
@@ -126,12 +127,19 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
   });
   const subjects: SubjectMaster[] = subjectsQuery.data?.ok ? subjectsQuery.data.data : [];
 
-  const roomsQuery = useQuery({
-    queryKey: classroomsQueryKey,
-    queryFn: classroomsService.list,
+  const buildingsQuery = useQuery({
+    queryKey: buildingsService.queryKey,
+    queryFn: () => buildingsService.list().then(throwIfTransient),
     staleTime: STRUCTURAL_STALE_TIME_MS,
   });
-  const rooms: Classroom[] = roomsQuery.data ?? [];
+  const buildings: Building[] = buildingsQuery.data?.ok ? buildingsQuery.data.data : [];
+
+  const roomsQuery = useQuery({
+    queryKey: buildingRoomsQueryKey,
+    queryFn: () => buildingRoomsService.list().then(throwIfTransient),
+    staleTime: STRUCTURAL_STALE_TIME_MS,
+  });
+  const rooms: BuildingRoom[] = roomsQuery.data?.ok ? roomsQuery.data.data : [];
 
   const classSubjectsQuery = useQuery({
     queryKey: classSubjectsQueryKey(yearId),
@@ -142,8 +150,16 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
 
   const classById = (id: string): SchoolClass | null => classes.find((cls) => cls.id === id) ?? null;
   const subjectById = (id: string): SubjectMaster | null => subjects.find((subject) => subject.id === id) ?? null;
-  const roomName = (id: string | null): string | null =>
-    id ? (rooms.find((room) => room.id === id)?.name ?? null) : null;
+  // Room names are only unique PER BUILDING now (real Building Rooms API,
+  // buildingRoomsApi.ts), not globally like the old 3-room mock — suffix
+  // with the building name so e.g. two different buildings' "Room 101"
+  // aren't indistinguishable in this dropdown/column.
+  const roomName = (id: string | null): string | null => {
+    const room = id ? (rooms.find((r) => r.id === id) ?? null) : null;
+    if (!room) return null;
+    const building = buildings.find((b) => b.id === room.building_id)?.name;
+    return building ? `${room.name} — ${building}` : room.name;
+  };
   const subjectGroupLabel = (group: SubjectGroup) =>
     t(`setup.classSubjects.subjectGroup.${SUBJECT_GROUP_I18N_KEY[group]}`);
 
@@ -588,7 +604,7 @@ function ClassSubjectsTable({ yearId }: { yearId: string }) {
                     <option value="">{t("setup.classSubjects.fields.room.none")}</option>
                     {rooms.map((room) => (
                       <option key={room.id} value={room.id}>
-                        {room.name}
+                        {roomName(room.id)}
                       </option>
                     ))}
                   </>

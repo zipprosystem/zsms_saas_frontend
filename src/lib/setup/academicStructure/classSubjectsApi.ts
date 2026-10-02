@@ -44,9 +44,8 @@ import type { CrudResult } from "@/lib/setup/crudTypes";
  * uses (classSubjectGroupingApi.ts), so this isn't a new name to guess.
  * subject_group: sent as "Core" | "Elective" (FLAGGED: casing to confirm);
  * responses are normalized to that casing either way.
- * room_id: rooms are still MOCK (facilitiesApi.ts) — FLAGGED: if the
- * backend FK-checks room_id, picking a mock room will be rejected until
- * the Physical Space module ships; "None" always works.
+ * room_id: rooms are now REAL (buildingRoomsApi.ts — Physical Space
+ * shipped) — a picked room_id is a real Building Room id, FK-safe.
  *
  * Error codes: CLASS_SUBJECT_NOT_FOUND (GUESSED) -> conflict (stale row).
  * VALIDATION_ERROR -> general banner. Any other/missing code falls back to
