@@ -214,6 +214,43 @@ export async function removeStudentTermDetail(id: string): Promise<CrudResult<vo
   return { ok: true, data: undefined };
 }
 
+/**
+ * AUTO-POPULATE ON STUDENT CREATION — business rule, BACKEND-OWNED (spec
+ * for Muntajir): saving a student as active with a class/arm/term already
+ * set (Add Student wizard Step 1) automatically creates their first
+ * Student Term Details record for that term — they appear on this screen
+ * without the admin ever using "Add Student Term" manually. Called from
+ * studentsApi.ts's createStudent() right after a student is finalized to
+ * status:"active". Idempotent via the ONE-TERM RULE's own uniqueness check
+ * above (createStudentTermDetail rejects a duplicate (student, term) pair
+ * as a conflict, which this treats as "already exists" rather than an
+ * error) — safe to call on every save, including re-saving an
+ * already-enrolled student in edit mode.
+ */
+export async function ensureStudentTermDetailFromStudent(
+  yearId: string,
+  student: {
+    id: string;
+    class_id: string;
+    class_arm_id: string;
+    class_term_id: string | null;
+    academic_house_id: string | null;
+  },
+): Promise<void> {
+  if (!student.class_term_id) return;
+  await createStudentTermDetail({
+    academic_year_id: yearId,
+    class_term_id: student.class_term_id,
+    class_id: student.class_id,
+    section_id: student.class_arm_id,
+    student_id: student.id,
+    house_id: student.academic_house_id,
+    seat_number: null,
+    roll_no: null,
+    remark: null,
+  });
+}
+
 export function createStudentTermDetailService(
   yearId: string,
 ): CrudService<StudentTermDetail, StudentTermDetailInput, StudentTermDetailInput> {

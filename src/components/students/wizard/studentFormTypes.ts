@@ -52,6 +52,8 @@ export type PersonBlockForm = {
   phone: string;
   email: string;
   occupation: string;
+  /** Last Name auto-fill tracking (same "prefill then stop on manual edit" pattern as Subject Master's short-name) — once the admin directly edits this block's Last Name, the student's own Last Name stops overwriting it. See StudentWizard.tsx's handleStudentDetailsChange(). */
+  lastNameTouched: boolean;
 };
 
 export const EMPTY_PERSON_BLOCK: PersonBlockForm = {
@@ -61,6 +63,7 @@ export const EMPTY_PERSON_BLOCK: PersonBlockForm = {
   phone: "",
   email: "",
   occupation: "",
+  lastNameTouched: false,
 };
 
 export type ParentGuardianForm = {

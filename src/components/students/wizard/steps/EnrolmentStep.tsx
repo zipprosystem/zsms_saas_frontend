@@ -21,6 +21,7 @@ import type {
  */
 export function EnrolmentStep({
   yearId,
+  mode,
   classDetails,
   studentDetails,
   loginDetails,
@@ -30,6 +31,7 @@ export function EnrolmentStep({
   onLoginDetailsChange,
 }: {
   yearId: string;
+  mode: "create" | "edit";
   classDetails: ClassDetailsForm;
   studentDetails: StudentDetailsForm;
   loginDetails: LoginDetailsForm;
@@ -44,7 +46,7 @@ export function EnrolmentStep({
     <div className="flex flex-col gap-8">
       <section>
         <p className="mb-3 text-sm font-semibold text-text-primary">{t("students.wizard.sections.classDetails")}</p>
-        <ClassDetailsStep yearId={yearId} data={classDetails} errors={errors} onChange={onClassDetailsChange} />
+        <ClassDetailsStep yearId={yearId} mode={mode} data={classDetails} errors={errors} onChange={onClassDetailsChange} />
       </section>
 
       <section className="border-t border-border pt-6">

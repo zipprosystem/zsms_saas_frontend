@@ -247,6 +247,7 @@ function StudentTermDetailsTable({ yearId }: { yearId: string }) {
         create: t("setup.studentTermDetails.panel.createTitle"),
         edit: t("setup.studentTermDetails.panel.editTitle"),
       }}
+      panelSubtitle={t("setup.studentTermDetails.panel.subtitle")}
       service={service}
       display={{ mode: "table", columns }}
       exportColumns={exportColumns}

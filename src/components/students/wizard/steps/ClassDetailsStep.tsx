@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
+import { InputField } from "@/components/ui/Input";
 import { SelectField } from "@/components/ui/Select";
 import { ChipGroup } from "@/components/ui/ChipGroup";
 import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
@@ -20,11 +22,14 @@ import type { FieldErrors } from "@/components/students/wizard/studentFormTypes"
 
 export function ClassDetailsStep({
   yearId,
+  mode,
   data,
   errors,
   onChange,
 }: {
   yearId: string;
+  /** EDIT: class/arm/term enrolment fields lock to read-only (see the file-level note below) — everything else here stays editable either way. */
+  mode: "create" | "edit";
   data: ClassDetailsForm;
   errors: FieldErrors;
   onChange: (patch: Partial<ClassDetailsForm>) => void;
@@ -61,7 +66,11 @@ export function ClassDetailsStep({
     enabled: !!data.class_id,
     staleTime: STRUCTURAL_STALE_TIME_MS,
   });
-  const sections: Section[] = data.class_id && sectionsQuery.data?.ok ? sectionsQuery.data.data.filter((s) => s.is_active) : [];
+  // Unfiltered — needed to resolve the read-only EDIT display's arm name
+  // even if that section has since been deactivated; `sections` (active
+  // only) is what the CREATE-mode dropdown's options are drawn from.
+  const allSections: Section[] = data.class_id && sectionsQuery.data?.ok ? sectionsQuery.data.data : [];
+  const sections: Section[] = allSections.filter((s) => s.is_active);
   const sectionsDevBypass = isDevBypassUnavailable(sectionsQuery.data);
 
   const termsQuery = useQuery({
@@ -76,9 +85,12 @@ export function ClassDetailsStep({
   // Default to the active term by date (ClassTerm has no is_active flag) —
   // committed into form state via onChange, not just shown as the select's
   // visual value, so it actually satisfies validateClassDetails() if the
-  // user never touches this field themselves.
+  // user never touches this field themselves. Skipped entirely in EDIT
+  // mode: these fields are read-only there (CLASS DETAILS READ-ONLY AFTER
+  // SAVE, below), so this effect has no field to write into and must not
+  // silently mutate a saved student's enrolment out from under them.
   useEffect(() => {
-    if (!data.class_id || data.class_term_id || terms.length === 0) return;
+    if (mode === "edit" || !data.class_id || data.class_term_id || terms.length === 0) return;
     const activeTerm = findActiveClassTerm(terms);
     if (activeTerm) onChange({ class_term_id: activeTerm.id });
     // onChange intentionally omitted — StudentWizard hands down a fresh
@@ -86,6 +98,98 @@ export function ClassDetailsStep({
     // elsewhere in the form, which is harmless here but needless churn.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.class_id, data.class_term_id, terms]);
+
+  // CLASS DETAILS READ-ONLY AFTER SAVE: once a student is saved, their
+  // class/arm/term placement belongs to the Student Term Details
+  // enrolment record (single source of truth) — the profile only DISPLAYS
+  // it from then on; changing it happens on that screen instead, not here.
+  // Only applies to these 4 fields; House/Mode/Boarding House/Extra-
+  // curricular/Login stay editable in edit mode same as always.
+  if (mode === "edit") {
+    const schoolTypeName = schoolTypes.find((type) => type.id === data.school_type_id)?.name ?? "—";
+    const className = classes.find((cls) => cls.id === data.class_id)?.name ?? "—";
+    const armName = allSections.find((section) => section.id === data.class_arm_id)?.name ?? "—";
+    const termName = terms.find((term) => term.id === data.class_term_id)?.term_name ?? "—";
+
+    return (
+      <div className="flex flex-col gap-5">
+        <InputField id="wizard-school-type" label={t("students.wizard.fields.schoolType.label")} value={schoolTypeName} disabled readOnly />
+        <InputField id="wizard-class" label={t("students.wizard.fields.class.label")} value={className} disabled readOnly />
+        <InputField id="wizard-class-arm" label={t("students.wizard.fields.classArm.label")} value={armName} disabled readOnly />
+        <InputField id="wizard-class-term" label={t("students.wizard.fields.classTerm.label")} value={termName} disabled readOnly />
+        <p className="text-xs text-text-muted">
+          {t("students.wizard.classDetails.readOnlyNote")}{" "}
+          <Link href="/admin/setup/academic-structure/student-term-details" className="font-semibold text-accent hover:underline">
+            {t("students.wizard.classDetails.readOnlyLink")}
+          </Link>
+        </p>
+
+        <SelectField
+          id="wizard-academic-house"
+          label={t("students.wizard.fields.academicHouse.label")}
+          value={data.academic_house_id}
+          onChange={(event) => onChange({ academic_house_id: event.target.value })}
+        >
+          <option value="">{t("students.wizard.fields.academicHouse.none")}</option>
+          {MOCK_HOUSES.map((house) => (
+            <option key={house.id} value={house.id}>
+              {house.name}
+            </option>
+          ))}
+        </SelectField>
+
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-text-primary">{t("students.wizard.fields.mode.label")}</span>
+          <ChipGroup
+            multiple={false}
+            options={[
+              { value: "day", label: t("students.mode.day") },
+              { value: "boarding", label: t("students.mode.boarding") },
+            ]}
+            value={data.mode ? [data.mode] : []}
+            onChange={(values) =>
+              onChange({ mode: (values[0] as ClassDetailsForm["mode"]) ?? "", boarding_house_id: values[0] === "boarding" ? data.boarding_house_id : "" })
+            }
+            hasError={!!errors.mode}
+            error={errors.mode ? t(errors.mode) : undefined}
+          />
+        </div>
+
+        {boardingHouseAllowed && data.mode === "boarding" ? (
+          <SelectField
+            id="wizard-boarding-house"
+            label={t("students.wizard.fields.boardingHouse.label")}
+            value={data.boarding_house_id}
+            onChange={(event) => onChange({ boarding_house_id: event.target.value })}
+          >
+            <option value="">{t("students.wizard.fields.boardingHouse.placeholder")}</option>
+            {MOCK_BOARDING_HOUSES.map((house) => (
+              <option key={house.id} value={house.id}>
+                {house.name}
+              </option>
+            ))}
+          </SelectField>
+        ) : null}
+
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-text-primary">{t("students.wizard.fields.extraCurricular.label")}</span>
+          <ChipGroup
+            multiple
+            options={MOCK_EXTRA_CURRICULAR.map((activity) => ({ value: activity.id, label: activity.name }))}
+            value={data.extra_curricular_ids}
+            onChange={(values) => onChange({ extra_curricular_ids: values })}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-text-primary">{t("students.wizard.fields.fee.label")}</span>
+          <p className="rounded-md border border-border bg-background px-4 py-3 text-sm text-text-muted">
+            {t("students.wizard.fields.fee.pending")}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-5">

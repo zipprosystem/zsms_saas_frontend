@@ -29,6 +29,7 @@ import {
 import { MOCK_SCHOOL_MODE } from "@/lib/students/studentsMockData";
 import { formDataToStudentUpsertInput, studentToFormData } from "@/lib/students/studentFormMapping";
 import { createStudent, saveDraftStudent, studentsQueryKey } from "@/lib/students/studentsApi";
+import { studentTermDetailsQueryKey } from "@/lib/setup/academicStructure/studentTermDetailsApi";
 import type { Student } from "@/lib/students/studentTypes";
 
 // 3 steps, each a regroup of the original 7 — see WizardStepper.tsx's
@@ -89,6 +90,32 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
     setData((current) => ({ ...current, [key]: { ...current[key], ...patch } }));
   };
 
+  // SURNAME AUTO-FILL: editing the student's own Last Name pre-fills
+  // Father's/Mother's/Guardian's Last Name with the same value — same
+  // "prefill then stop on manual edit" pattern as Subject Master's
+  // short-name (SubjectsMasterScreen.tsx). Each block tracks its own
+  // lastNameTouched independently, so e.g. overriding Mother's surname
+  // doesn't stop Father's from continuing to sync.
+  const handleStudentDetailsChange = (patch: Partial<StudentFormData["studentDetails"]>) => {
+    setData((current) => {
+      const studentDetails = { ...current.studentDetails, ...patch };
+      if (patch.last_name === undefined) return { ...current, studentDetails };
+      const lastName = patch.last_name;
+      const syncBlock = (block: StudentFormData["parentGuardian"]["father"]) =>
+        block.lastNameTouched ? block : { ...block, last_name: lastName };
+      return {
+        ...current,
+        studentDetails,
+        parentGuardian: {
+          ...current.parentGuardian,
+          father: syncBlock(current.parentGuardian.father),
+          mother: syncBlock(current.parentGuardian.mother),
+          guardian: syncBlock(current.parentGuardian.guardian),
+        },
+      };
+    });
+  };
+
   const goToStep = (next: WizardStep) => {
     setStep(next);
     setReachedSteps((current) => new Set(current).add(next));
@@ -129,7 +156,7 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
     }
 
     setIsSubmitting(true);
-    const result = await createStudent(formDataToStudentUpsertInput(data), studentId ?? undefined);
+    const result = await createStudent(formDataToStudentUpsertInput(data), studentId ?? undefined, selectedYearId ?? undefined);
     setIsSubmitting(false);
 
     if (!result.ok) {
@@ -137,6 +164,10 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
       return;
     }
     queryClient.invalidateQueries({ queryKey: studentsQueryKey });
+    // AUTO-POPULATE: createStudent() may have just created a Student Term
+    // Details row as a side effect (studentTermDetailsApi.ts) — invalidate
+    // so that screen (if cached/visited) reflects it immediately.
+    if (selectedYearId) queryClient.invalidateQueries({ queryKey: studentTermDetailsQueryKey(selectedYearId) });
     showToast(mode === "edit" ? t("students.wizard.footer.studentUpdated") : t("students.wizard.footer.studentCreated"));
     onClose();
   };
@@ -198,12 +229,13 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
               // isDevBypassUnavailable) falls through to the prompt below.
               <EnrolmentStep
                 yearId={selectedYearId}
+                mode={mode}
                 classDetails={data.classDetails}
                 studentDetails={data.studentDetails}
                 loginDetails={data.loginDetails}
                 errors={errors}
                 onClassDetailsChange={(patch) => updateGroup("classDetails", patch)}
-                onStudentDetailsChange={(patch) => updateGroup("studentDetails", patch)}
+                onStudentDetailsChange={handleStudentDetailsChange}
                 onLoginDetailsChange={(patch) => updateGroup("loginDetails", patch)}
               />
             ) : (
