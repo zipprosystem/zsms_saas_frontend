@@ -954,6 +954,8 @@
       "bulkActivateDeactivate": "Bulk Activate/Deactivate"
     },
     "filters": {
+      "status": "Status",
+      "allStatuses": "All Statuses",
       "class": "Class",
       "allClasses": "All Classes",
       "arm": "Class-arm",

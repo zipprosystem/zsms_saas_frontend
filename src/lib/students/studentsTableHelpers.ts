@@ -84,13 +84,14 @@ export function matchesStudentSearch(student: Student, query: string): boolean {
  * by resolved name lets "Arm = Gold" narrow across every class at once,
  * same as Class-arms' own "armName" filter (ClassArmsScreen.tsx).
  *
- * No "status" filter here by design — the Student List tab is always
- * active-only (filtered upstream in StudentsScreen.tsx before this ever
- * runs); status segmentation is a Withdrawn-tab concern, not a filter on
- * this table.
+ * "Status" here only ever has to distinguish Active vs Draft — the Student
+ * List tab is prefiltered upstream in StudentsScreen.tsx to just those two
+ * statuses (withdrawn/suspended/expelled/graduated live on other tabs), so
+ * this filter's "All Statuses" option already means "active + draft."
  */
 export function matchesStudentFilters(student: Student, filters: Record<string, string>): boolean {
   return (
+    (!filters.status || student.status === filters.status) &&
     (!filters.class || student.class_id === filters.class) &&
     (!filters.arm || resolveArmName(student.class_arm_id) === filters.arm) &&
     (!filters.boardingHouse || student.boarding_house_id === filters.boardingHouse) &&
