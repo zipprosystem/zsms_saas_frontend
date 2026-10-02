@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
-import type { WizardStep } from "@/components/students/wizard/WizardStepper";
+import { WIZARD_STEP_NUMBERS, type WizardStep } from "@/components/students/wizard/WizardStepper";
 
 type WizardFooterProps = {
   step: WizardStep;
@@ -14,9 +14,10 @@ type WizardFooterProps = {
   isSavingDraft: boolean;
 };
 
+/** Edit mode has no Save Draft — drafts only exist for incomplete NEW records; an existing student is updated, not drafted. */
 export function WizardFooter({ step, mode, onBack, onSaveDraft, onNext, isSubmitting, isSavingDraft }: WizardFooterProps) {
   const t = useTranslations();
-  const isLastStep = step === 7;
+  const isLastStep = step === WIZARD_STEP_NUMBERS[WIZARD_STEP_NUMBERS.length - 1];
 
   return (
     <>
@@ -28,16 +29,18 @@ export function WizardFooter({ step, mode, onBack, onSaveDraft, onNext, isSubmit
         ) : null}
       </div>
       <div className="flex items-center gap-3">
-        <Button type="button" variant="secondary" onClick={onSaveDraft} disabled={isSavingDraft} className="px-4 text-sm">
-          <span className="hidden sm:inline">{isSavingDraft ? t("common.saving") : t("students.wizard.footer.saveDraft")}</span>
-          <span className="sm:hidden">{isSavingDraft ? t("common.saving") : t("students.wizard.footer.saveDraftShort")}</span>
-        </Button>
+        {mode === "create" ? (
+          <Button type="button" variant="secondary" onClick={onSaveDraft} disabled={isSavingDraft} className="px-4 text-sm">
+            <span className="hidden sm:inline">{isSavingDraft ? t("common.saving") : t("students.wizard.footer.saveDraft")}</span>
+            <span className="sm:hidden">{isSavingDraft ? t("common.saving") : t("students.wizard.footer.saveDraftShort")}</span>
+          </Button>
+        ) : null}
         <Button type="button" onClick={onNext} disabled={isSubmitting} className="px-4 text-sm">
           {isLastStep
             ? isSubmitting
               ? t("common.saving")
               : mode === "edit"
-                ? t("students.wizard.footer.saveChanges")
+                ? t("students.wizard.footer.update")
                 : t("students.wizard.footer.addStudent")
             : t("students.wizard.footer.next")}
         </Button>

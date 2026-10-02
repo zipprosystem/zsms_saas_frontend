@@ -15,12 +15,13 @@ import { STRUCTURAL_STALE_TIME_MS, TransientQueryError } from "@/lib/queryClient
 import { PAGE_SIZE, usePaginatedView } from "@/lib/setup/usePaginatedView";
 import type { ColumnDef, FilterDef } from "@/lib/setup/crudTypes";
 import type { ExportColumn, ExportConfig } from "@/lib/export/exportTypes";
-import { listStudents, setStudentStatus, studentsQueryKey } from "@/lib/students/studentsApi";
+import { deleteDraftStudent, listStudents, setStudentStatus, studentsQueryKey } from "@/lib/students/studentsApi";
 import type { Student } from "@/lib/students/studentTypes";
 import { clampToWizardStep, type WizardStep } from "@/components/students/wizard/WizardStepper";
 import { MOCK_BOARDING_HOUSES, MOCK_CLASSES, MOCK_CLASS_ARMS } from "@/lib/students/studentsMockData";
 import {
   genderLabelKey,
+  isBoardingHouseVisible,
   matchesStudentFilters,
   matchesStudentSearch,
   modeLabelKey,
@@ -88,7 +89,10 @@ export function StudentsScreen() {
   const t = useTranslations();
   const { showToast } = useToast();
   const { school } = useAuth();
-  const { selectedYear } = useAcademicYear();
+  const { selectedYear, activeYear } = useAcademicYear();
+  // Defaults to "both" (nothing hidden) while loading or if the real API
+  // doesn't send school_mode yet — see academicYearsApi.ts's normalization.
+  const boardingHouseVisible = isBoardingHouseVisible(activeYear?.school_mode ?? "both");
   const queryClient = useQueryClient();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -98,6 +102,8 @@ export function StudentsScreen() {
   >(null);
   const [withdrawTarget, setWithdrawTarget] = useState<Student | null>(null);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [deleteDraftTarget, setDeleteDraftTarget] = useState<Student | null>(null);
+  const [isDeletingDraft, setIsDeletingDraft] = useState(false);
 
   // Command palette's "Add Student" quick action lands here with ?new=1
   // (useSearchIndex.ts) — auto-open the create wizard once, then strip the
@@ -161,6 +167,20 @@ export function StudentsScreen() {
     showToast(t("students.actions.withdrawSucceeded", { name: result.data.first_name }));
   };
 
+  const handleConfirmDeleteDraft = async () => {
+    if (!deleteDraftTarget) return;
+    setIsDeletingDraft(true);
+    const result = await deleteDraftStudent(deleteDraftTarget.id);
+    setIsDeletingDraft(false);
+    setDeleteDraftTarget(null);
+    if (!result.ok) {
+      showToast(t("students.actions.deleteDraftFailed"));
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: studentsQueryKey });
+    showToast(t("students.actions.deleteDraftSucceeded"));
+  };
+
   const filterDefs: FilterDef[] = [
     {
       key: "class",
@@ -178,14 +198,18 @@ export function StudentsScreen() {
         ...armNames.map((name) => ({ value: name, label: name })),
       ],
     },
-    {
-      key: "boardingHouse",
-      label: t("students.filters.boardingHouse"),
-      options: [
-        { value: "", label: t("students.filters.allBoardingHouses") },
-        ...MOCK_BOARDING_HOUSES.map((house) => ({ value: house.id, label: house.name })),
-      ],
-    },
+    ...(boardingHouseVisible
+      ? [
+          {
+            key: "boardingHouse",
+            label: t("students.filters.boardingHouse"),
+            options: [
+              { value: "", label: t("students.filters.allBoardingHouses") },
+              ...MOCK_BOARDING_HOUSES.map((house) => ({ value: house.id, label: house.name })),
+            ],
+          },
+        ]
+      : []),
     {
       key: "mode",
       label: t("students.filters.studentType"),
@@ -236,20 +260,33 @@ export function StudentsScreen() {
     { key: "otherNames", header: t("students.columns.otherNames"), render: (row) => row.other_names ?? "—" },
     { key: "gender", header: t("students.columns.gender"), render: (row) => t(genderLabelKey(row)) },
     { key: "arm", header: t("students.columns.arm"), render: (row) => resolveArmName(row.class_arm_id) },
-    {
-      key: "boardingHouse",
-      header: t("students.columns.boardingHouse"),
-      render: (row) => resolveBoardingHouseName(row.boarding_house_id),
-    },
+    ...(boardingHouseVisible
+      ? [
+          {
+            key: "boardingHouse",
+            header: t("students.columns.boardingHouse"),
+            render: (row: Student) => resolveBoardingHouseName(row.boarding_house_id),
+          },
+        ]
+      : []),
     { key: "siblings", header: t("students.columns.siblings"), render: (row) => row.sibling_student_ids.length },
     {
       key: "actions",
       header: t("students.columns.actions"),
       render: (row) =>
         row.status === "draft" ? (
-          <button type="button" onClick={() => handleResume(row)} className="text-sm font-semibold text-accent hover:underline">
-            {t("students.actions.resume")}
-          </button>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => handleResume(row)} className="text-sm font-semibold text-accent hover:underline">
+              {t("students.actions.resume")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeleteDraftTarget(row)}
+              className="text-sm font-semibold text-error hover:underline"
+            >
+              {t("common.delete")}
+            </button>
+          </div>
         ) : (
           <StudentRowActionsMenu
             student={row}
@@ -269,7 +306,9 @@ export function StudentsScreen() {
     { header: t("students.columns.gender"), value: (row) => t(genderLabelKey(row)) },
     { header: t("students.columns.class"), value: (row) => resolveClassName(row.class_id) },
     { header: t("students.columns.arm"), value: (row) => resolveArmName(row.class_arm_id) },
-    { header: t("students.columns.boardingHouse"), value: (row) => resolveBoardingHouseName(row.boarding_house_id) },
+    ...(boardingHouseVisible
+      ? [{ header: t("students.columns.boardingHouse"), value: (row: Student) => resolveBoardingHouseName(row.boarding_house_id) }]
+      : []),
     { header: t("students.columns.mode"), value: (row) => t(modeLabelKey(row)) },
     { header: t("students.columns.siblings"), value: (row) => row.sibling_student_ids.length },
     {
@@ -347,6 +386,16 @@ export function StudentsScreen() {
         isConfirming={isWithdrawing}
         onConfirm={() => void handleConfirmWithdraw()}
         onCancel={() => setWithdrawTarget(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={!!deleteDraftTarget}
+        title={t("students.actions.confirmDeleteDraft.title")}
+        message={t("students.actions.confirmDeleteDraft.message")}
+        isDangerous
+        isConfirming={isDeletingDraft}
+        onConfirm={() => void handleConfirmDeleteDraft()}
+        onCancel={() => setDeleteDraftTarget(null)}
       />
     </div>
   );

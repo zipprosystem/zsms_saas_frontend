@@ -25,18 +25,28 @@ import type { CrudResult, CrudService } from "@/lib/setup/crudTypes";
  * and useCrudTable would need extending to accept and forward page/limit
  * and read total/has_more back, rather than fetching everything at once.
  */
+
+/**
+ * Day = every student is a day student; Boarding = every student boards;
+ * Both = mixed (per-student mode applies). Drives whether the Students
+ * wizard/list even offer a Boarding House field/column for this year.
+ */
+export type SchoolMode = "day" | "boarding" | "both";
+
 export type AcademicYear = {
   id: string;
   name: string;
   start_date: string;
   end_date: string;
   is_active: boolean;
+  school_mode: SchoolMode;
 };
 
 export type AcademicYearInput = {
   name: string;
   start_date: string;
   end_date: string;
+  school_mode: SchoolMode;
 };
 
 const BASE_PATH = "erp/academic-years";
@@ -59,12 +69,27 @@ function toResult<T>(response: Response, body: unknown): CrudResult<T> {
   return { ok: false, kind: "server" };
 }
 
+// FLAGGED, UNCONFIRMED: school_mode is a field Muntajir is adding to the
+// Academic Year API; it may not exist in the real response yet. Every
+// entity read in this file goes through this so a missing/invalid value
+// never crashes or silently hides a mode — it defaults to "both" (the
+// least-restrictive choice: nothing gets hidden) until the real field is
+// confirmed live. Remove this fallback once Muntajir confirms it's always
+// present.
+function normalizeSchoolMode(value: unknown): SchoolMode {
+  return value === "day" || value === "boarding" || value === "both" ? value : "both";
+}
+
+function normalizeAcademicYear(raw: AcademicYear): AcademicYear {
+  return { ...raw, school_mode: normalizeSchoolMode((raw as { school_mode?: unknown }).school_mode) };
+}
+
 // Confirmed shape: data.items. Still falls back to [] rather than crashing
 // if items is ever missing/malformed (e.g. an unexpected error body) —
 // cheap safety net, not a sign this is still guessed.
 function extractYearList(body: unknown): AcademicYear[] {
   const items = (body as { data?: { items?: unknown } } | null)?.data?.items;
-  return Array.isArray(items) ? (items as AcademicYear[]) : [];
+  return Array.isArray(items) ? (items as AcademicYear[]).map(normalizeAcademicYear) : [];
 }
 
 async function list(): Promise<CrudResult<AcademicYear[]>> {
@@ -97,7 +122,7 @@ async function create(data: AcademicYearInput): Promise<CrudResult<AcademicYear>
   const body = await parseBody(response);
   if (response.ok) {
     const created = (body as { data?: AcademicYear } | null)?.data;
-    if (created) return { ok: true, data: created };
+    if (created) return { ok: true, data: normalizeAcademicYear(created) };
     return { ok: false, kind: "server" };
   }
   return toResult(response, body);
@@ -119,7 +144,7 @@ async function update(id: string, data: AcademicYearInput): Promise<CrudResult<A
   const body = await parseBody(response);
   if (response.ok) {
     const updated = (body as { data?: AcademicYear } | null)?.data;
-    if (updated) return { ok: true, data: updated };
+    if (updated) return { ok: true, data: normalizeAcademicYear(updated) };
     return { ok: false, kind: "server" };
   }
   return toResult(response, body);
@@ -153,7 +178,7 @@ async function activate(id: string): Promise<CrudResult<AcademicYear>> {
   const body = await parseBody(response);
   if (response.ok) {
     const activated = (body as { data?: AcademicYear } | null)?.data;
-    if (activated) return { ok: true, data: activated };
+    if (activated) return { ok: true, data: normalizeAcademicYear(activated) };
     return { ok: false, kind: "server" };
   }
   return toResult(response, body);

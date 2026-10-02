@@ -371,13 +371,20 @@
       "fields": {
         "name": { "label": "Year Name", "placeholder": "e.g. 2025/2026" },
         "startDate": { "label": "Start Date" },
-        "endDate": { "label": "End Date" }
+        "endDate": { "label": "End Date" },
+        "schoolMode": {
+          "label": "School Mode",
+          "day": "Day",
+          "boarding": "Boarding",
+          "both": "Both"
+        }
       },
       "errors": {
         "nameRequired": "Enter a name for this academic year",
         "startDateRequired": "Select a start date",
         "endDateRequired": "Select an end date",
-        "endBeforeStart": "End date must be after the start date"
+        "endBeforeStart": "End date must be after the start date",
+        "schoolModeRequired": "Select a school mode"
       },
       "toast": {
         "created": "Academic year created",
@@ -1008,6 +1015,12 @@
       "confirmWithdraw": {
         "title": "Withdraw student?",
         "message": "This will withdraw {name} and move them to the Withdrawn list."
+      },
+      "deleteDraftSucceeded": "Draft deleted",
+      "deleteDraftFailed": "Something went wrong deleting this draft. Please try again.",
+      "confirmDeleteDraft": {
+        "title": "Delete draft?",
+        "message": "This permanently deletes this draft student. This can't be undone."
       }
     },
     "badges": {
@@ -1031,13 +1044,18 @@
         "message": "Something went wrong loading this step's content. Your progress on other steps is still here — try a different step, or close and reopen the wizard."
       },
       "steps": {
+        "enrolment": "Enrolment & Student Details",
+        "guardianAddress": "Parent/Guardian & Address",
+        "additional": "Additional"
+      },
+      "sections": {
         "classDetails": "Class Details",
         "studentDetails": "Student Details",
-        "parentGuardian": "Parent/Guardian",
+        "parentGuardian": "Parent/Guardian Details",
         "address": "Address",
-        "agent": "Agent",
-        "siblings": "Siblings",
-        "pastRecords": "Past Records"
+        "agent": "Agent (optional)",
+        "siblings": "Siblings (optional)",
+        "pastRecords": "Past Records (optional)"
       },
       "footer": {
         "back": "Back",
@@ -1045,7 +1063,7 @@
         "saveDraftShort": "Draft",
         "next": "Next",
         "addStudent": "Add Student",
-        "saveChanges": "Save Changes",
+        "update": "Update",
         "draftSaved": "Draft saved",
         "studentCreated": "Student added",
         "studentUpdated": "Changes saved",

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { SelectField } from "@/components/ui/Select";
 import { ChipGroup } from "@/components/ui/ChipGroup";
+import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import { isDevBypassUnavailable, throwIfTransient } from "@/lib/setup/crudTypes";
 import { schoolTypesService, type SchoolType } from "@/lib/setup/academicStructure/schoolTypesApi";
@@ -12,6 +13,7 @@ import { createClassesService, type SchoolClass } from "@/lib/setup/academicStru
 import { fetchSectionsForClass, sectionsQueryKey, type Section } from "@/lib/setup/academicStructure/sectionsApi";
 import { classTermsQueryKey, fetchTermsForClass, type ClassTerm } from "@/lib/setup/academicStructure/classTermsApi";
 import { MOCK_HOUSES, MOCK_BOARDING_HOUSES, MOCK_EXTRA_CURRICULAR } from "@/lib/students/studentsMockData";
+import { isBoardingHouseVisible } from "@/lib/students/studentsTableHelpers";
 import { DevBypassNotice } from "@/components/students/wizard/DevBypassNotice";
 import type { ClassDetailsForm } from "@/components/students/wizard/studentFormTypes";
 import type { FieldErrors } from "@/components/students/wizard/studentFormTypes";
@@ -34,6 +36,10 @@ export function ClassDetailsStep({
   onChange: (patch: Partial<ClassDetailsForm>) => void;
 }) {
   const t = useTranslations();
+  const { activeYear } = useAcademicYear();
+  // Defaults to "both" (nothing hidden) while loading or if the real API
+  // doesn't send school_mode yet — see academicYearsApi.ts's normalization.
+  const boardingHouseAllowed = isBoardingHouseVisible(activeYear?.school_mode ?? "both");
 
   const schoolTypesQuery = useQuery({
     queryKey: schoolTypesService.queryKey,
@@ -203,7 +209,7 @@ export function ClassDetailsStep({
         />
       </div>
 
-      {data.mode === "boarding" ? (
+      {boardingHouseAllowed && data.mode === "boarding" ? (
         <SelectField
           id="wizard-boarding-house"
           label={t("students.wizard.fields.boardingHouse.label")}

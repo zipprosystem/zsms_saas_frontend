@@ -1,5 +1,17 @@
 import { MOCK_BOARDING_HOUSES, MOCK_CLASSES, MOCK_CLASS_ARMS, MOCK_HOUSES } from "@/lib/students/studentsMockData";
 import type { Student, StudentStatus } from "@/lib/students/studentTypes";
+import type { SchoolMode } from "@/lib/setup/academicStructure/academicYearsApi";
+
+/**
+ * Boarding House only matters for a year that has boarding students at
+ * all — a purely "day" year hides the field/column everywhere (wizard
+ * Step 1, the list column, the export column). `schoolMode` should come
+ * from useAcademicYear().activeYear — the school's real current mode, not
+ * necessarily whichever year the admin happens to be viewing.
+ */
+export function isBoardingHouseVisible(schoolMode: SchoolMode): boolean {
+  return schoolMode !== "day";
+}
 
 export function studentFullName(student: Student): string {
   return [student.first_name, student.other_names, student.last_name].filter(Boolean).join(" ");
