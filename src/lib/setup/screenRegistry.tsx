@@ -9,6 +9,7 @@ import { DepartmentsScreen } from "@/components/setup/academicStructure/Departme
 import { SubjectsMasterScreen } from "@/components/setup/academicStructure/SubjectsMasterScreen";
 import { ClassSubjectsScreen } from "@/components/setup/academicStructure/ClassSubjectsScreen";
 import { ClassSubjectGroupingScreen } from "@/components/setup/academicStructure/ClassSubjectGroupingScreen";
+import { StudentTermDetailsScreen } from "@/components/setup/academicStructure/StudentTermDetailsScreen";
 
 /**
  * Keyed by "{categorySlug}/{screenSlug}". A screen not listed here falls
@@ -40,4 +41,8 @@ export const setupScreenRegistry: Record<string, ComponentType> = {
   "academic-structure/class-subjects": ClassSubjectsScreen,
   // Grouping's form depends on Classes + Class Subjects existing.
   "academic-structure/class-subject-grouping": ClassSubjectGroupingScreen,
+  // Student Term Details' form depends on Classes + Class-arms + Class
+  // Terms existing (and the mock Students module having at least one
+  // active student to place).
+  "academic-structure/student-term-details": StudentTermDetailsScreen,
 };

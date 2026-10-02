@@ -909,6 +909,79 @@
         "deleted": "Group deleted"
       }
     },
+    "studentTermDetails": {
+      "title": "Student Term Details",
+      "subtitle": "Which class/arm each student is placed in for a given term",
+      "addNew": "Add Student Term",
+      "searchPlaceholder": "Search by student name or admission no…",
+      "empty": "No students placed into a term yet — add the first one to get started.",
+      "devBypassNotice": "Not available in local dev (real class data is required) — this works once deployed.",
+      "noYear": {
+        "message": "Select or create an academic year to manage student term details.",
+        "linkLabel": "Go to Academic Years"
+      },
+      "panel": { "createTitle": "Add Student Term", "editTitle": "Edit Student Term" },
+      "columns": {
+        "student": "Student",
+        "schoolType": "School Type",
+        "classTerm": "Class Term",
+        "class": "Class",
+        "arm": "Class-arm",
+        "house": "Academic House"
+      },
+      "filters": {
+        "term": "Term",
+        "allTerms": "All Terms",
+        "class": "Class",
+        "allClasses": "All Classes",
+        "arm": "Class-arm",
+        "allArms": "All Class-arms"
+      },
+      "fields": {
+        "class": {
+          "label": "Class",
+          "placeholder": "Select a class",
+          "emptyHint": "No active classes yet for this academic year.",
+          "emptyHintLink": "Add one first"
+        },
+        "classTerm": {
+          "label": "Class Term",
+          "placeholder": "Select a class term",
+          "emptyHint": "The selected class has no terms yet.",
+          "emptyHintLink": "Set up Class Terms first"
+        },
+        "arm": {
+          "label": "Class-arm",
+          "placeholder": "Select a class-arm",
+          "emptyHint": "The selected class has no class-arms yet.",
+          "emptyHintLink": "Set up Class-arms first"
+        },
+        "student": {
+          "label": "Student",
+          "placeholder": "Search by name or admission no…",
+          "emptyHint": "No eligible active students for this term."
+        },
+        "house": { "label": "Academic House (optional)", "none": "No house" },
+        "seatNumber": { "label": "Seat Number (optional)" },
+        "rollNo": { "label": "Roll No (optional)" },
+        "remark": { "label": "Remark (optional)" }
+      },
+      "errors": {
+        "classRequired": "Select a class",
+        "classTermRequired": "Select a class term",
+        "armRequired": "Select a class-arm",
+        "studentRequired": "Select a student"
+      },
+      "confirmDelete": {
+        "title": "Remove student term detail?",
+        "message": "This will remove {name} from this term. This can't be undone."
+      },
+      "toast": {
+        "created": "Student placed into term",
+        "updated": "Student term detail updated",
+        "deleted": "Student term detail removed"
+      }
+    },
     "export": {
       "label": "Export",
       "includeAll": "Include all rows (ignore filters)",

@@ -11,18 +11,12 @@ import { isDevBypassUnavailable, throwIfTransient } from "@/lib/setup/crudTypes"
 import { schoolTypesService, type SchoolType } from "@/lib/setup/academicStructure/schoolTypesApi";
 import { createClassesService, type SchoolClass } from "@/lib/setup/academicStructure/classesApi";
 import { fetchSectionsForClass, sectionsQueryKey, type Section } from "@/lib/setup/academicStructure/sectionsApi";
-import { classTermsQueryKey, fetchTermsForClass, type ClassTerm } from "@/lib/setup/academicStructure/classTermsApi";
+import { classTermsQueryKey, fetchTermsForClass, findActiveClassTerm, type ClassTerm } from "@/lib/setup/academicStructure/classTermsApi";
 import { MOCK_HOUSES, MOCK_BOARDING_HOUSES, MOCK_EXTRA_CURRICULAR } from "@/lib/students/studentsMockData";
 import { isBoardingHouseVisible } from "@/lib/students/studentsTableHelpers";
 import { DevBypassNotice } from "@/components/students/wizard/DevBypassNotice";
 import type { ClassDetailsForm } from "@/components/students/wizard/studentFormTypes";
 import type { FieldErrors } from "@/components/students/wizard/studentFormTypes";
-
-/** Today's date is compared against each term's [start_date, end_date] — ClassTerm has no is_active/is_current flag. */
-function findActiveTermId(terms: ClassTerm[]): string {
-  const today = new Date().toISOString().slice(0, 10);
-  return terms.find((term) => term.start_date <= today && today <= term.end_date)?.id ?? "";
-}
 
 export function ClassDetailsStep({
   yearId,
@@ -85,8 +79,8 @@ export function ClassDetailsStep({
   // user never touches this field themselves.
   useEffect(() => {
     if (!data.class_id || data.class_term_id || terms.length === 0) return;
-    const activeId = findActiveTermId(terms);
-    if (activeId) onChange({ class_term_id: activeId });
+    const activeTerm = findActiveClassTerm(terms);
+    if (activeTerm) onChange({ class_term_id: activeTerm.id });
     // onChange intentionally omitted — StudentWizard hands down a fresh
     // closure each render; including it would re-run this every keystroke
     // elsewhere in the form, which is harmless here but needless churn.

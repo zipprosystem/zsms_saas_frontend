@@ -12,6 +12,7 @@ import { departmentsService } from "@/lib/setup/academicStructure/departmentsApi
 import { subjectsMasterService } from "@/lib/setup/academicStructure/subjectsMasterApi";
 import { classSubjectsQueryKey, fetchClassSubjectsForYear } from "@/lib/setup/academicStructure/classSubjectsApi";
 import { createClassSubjectGroupService } from "@/lib/setup/academicStructure/classSubjectGroupingApi";
+import { createStudentTermDetailService } from "@/lib/setup/academicStructure/studentTermDetailsApi";
 import type { SetupItem } from "@/lib/setup/setupConfig";
 
 /**
@@ -53,6 +54,7 @@ const ITEMS_WITH_LIVE_CHECK = new Set([
   "subjectsMaster",
   "classSubjects",
   "classSubjectGrouping",
+  "studentTermDetails",
 ]);
 
 export type SetupProgressState =
@@ -168,6 +170,18 @@ export function useSetupProgress(): SetupProgressState {
     staleTime: PROGRESS_STALE_TIME_MS,
   });
 
+  // Student Term Details — year-scoped, single list() call (its own
+  // internal auto-roll fetch doesn't need a dependent useQueries fan-out
+  // here, same shape as Class Subjects/Grouping above).
+  const studentTermDetailService = yearId ? createStudentTermDetailService(yearId) : null;
+  const studentTermDetailsQuery = useQuery({
+    queryKey: studentTermDetailService?.queryKey ?? ["setup", "studentTermDetails", "none"],
+    queryFn: () => studentTermDetailService!.list().then(throwIfTransient),
+    enabled: !!studentTermDetailService,
+    select: (result) => result.ok && result.data.length > 0,
+    staleTime: PROGRESS_STALE_TIME_MS,
+  });
+
   const sectionsStillLoading = activeClassIds.length > 0 && sectionQueries.some((query) => query.isPending);
   const classTermsStillLoading = allClassIds.length > 0 && classTermQueries.some((query) => query.isPending);
   const isLoading =
@@ -181,7 +195,8 @@ export function useSetupProgress(): SetupProgressState {
         sectionsStillLoading ||
         classTermsStillLoading ||
         classSubjectsForYearQuery.isPending ||
-        classSubjectGroupsQuery.isPending));
+        classSubjectGroupsQuery.isPending ||
+        studentTermDetailsQuery.isPending));
 
   if (isLoading) return { status: "loading" };
 
@@ -196,6 +211,7 @@ export function useSetupProgress(): SetupProgressState {
   if (subjectsMasterQuery.data) completedKeys.add("subjectsMaster");
   if (classSubjectsForYearQuery.data) completedKeys.add("classSubjects");
   if (classSubjectGroupsQuery.data) completedKeys.add("classSubjectGrouping");
+  if (studentTermDetailsQuery.data) completedKeys.add("studentTermDetails");
 
   return { status: "loaded", completedKeys };
 }

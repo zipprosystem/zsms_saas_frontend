@@ -917,6 +917,79 @@
         "deleted": "Groupe supprimé"
       }
     },
+    "studentTermDetails": {
+      "title": "Détails du trimestre des élèves",
+      "subtitle": "Dans quelle classe/section chaque élève est placé pour un trimestre donné",
+      "addNew": "Ajouter un trimestre élève",
+      "searchPlaceholder": "Rechercher par nom ou n° d'admission…",
+      "empty": "Aucun élève placé dans un trimestre pour le moment — ajoutez le premier pour commencer.",
+      "devBypassNotice": "Non disponible en local (les données de classe réelles sont requises) — fonctionne une fois déployé.",
+      "noYear": {
+        "message": "Sélectionnez ou créez une année académique pour gérer les détails du trimestre des élèves.",
+        "linkLabel": "Aller aux années académiques"
+      },
+      "panel": { "createTitle": "Ajouter un trimestre élève", "editTitle": "Modifier le trimestre élève" },
+      "columns": {
+        "student": "Élève",
+        "schoolType": "Type d'établissement",
+        "classTerm": "Trimestre de classe",
+        "class": "Classe",
+        "arm": "Section",
+        "house": "Maison académique"
+      },
+      "filters": {
+        "term": "Trimestre",
+        "allTerms": "Tous les trimestres",
+        "class": "Classe",
+        "allClasses": "Toutes les classes",
+        "arm": "Section",
+        "allArms": "Toutes les sections"
+      },
+      "fields": {
+        "class": {
+          "label": "Classe",
+          "placeholder": "Sélectionnez une classe",
+          "emptyHint": "Aucune classe active pour le moment cette année.",
+          "emptyHintLink": "En ajouter une d'abord"
+        },
+        "classTerm": {
+          "label": "Trimestre de classe",
+          "placeholder": "Sélectionnez un trimestre de classe",
+          "emptyHint": "La classe sélectionnée n'a pas encore de trimestre.",
+          "emptyHintLink": "Configurer d'abord les trimestres de classe"
+        },
+        "arm": {
+          "label": "Section",
+          "placeholder": "Sélectionnez une section",
+          "emptyHint": "La classe sélectionnée n'a pas encore de section.",
+          "emptyHintLink": "Configurer d'abord les sections"
+        },
+        "student": {
+          "label": "Élève",
+          "placeholder": "Rechercher par nom ou n° d'admission…",
+          "emptyHint": "Aucun élève actif éligible pour ce trimestre."
+        },
+        "house": { "label": "Maison académique (facultatif)", "none": "Aucune maison" },
+        "seatNumber": { "label": "Numéro de place (facultatif)" },
+        "rollNo": { "label": "Numéro de liste (facultatif)" },
+        "remark": { "label": "Remarque (facultatif)" }
+      },
+      "errors": {
+        "classRequired": "Sélectionnez une classe",
+        "classTermRequired": "Sélectionnez un trimestre de classe",
+        "armRequired": "Sélectionnez une section",
+        "studentRequired": "Sélectionnez un élève"
+      },
+      "confirmDelete": {
+        "title": "Retirer ce trimestre élève ?",
+        "message": "Cela retirera {name} de ce trimestre. Cette action est irréversible."
+      },
+      "toast": {
+        "created": "Élève placé dans le trimestre",
+        "updated": "Trimestre élève mis à jour",
+        "deleted": "Trimestre élève retiré"
+      }
+    },
     "export": {
       "label": "Exporter",
       "includeAll": "Inclure toutes les lignes (ignorer les filtres)",
