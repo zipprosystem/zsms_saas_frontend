@@ -11,4 +11,6 @@ export const SETUP_ITEM_KEYWORDS: Record<string, string[]> = {
   schoolTypes: ["Creche", "Nursery", "Primary", "JSS", "SSS", "Junior Secondary", "Senior Secondary"],
   departments: ["HOD", "head of department", "line manager"],
   classSubjects: ["core", "elective"],
+  studentTermDetails: ["roll number", "roll no", "promotion", "auto-roll", "class placement"],
+  subjectEnrolment: ["enrol", "enrollment", "enroll", "core subjects", "elective subjects"],
 };

@@ -917,6 +917,151 @@
         "deleted": "Groupe supprimé"
       }
     },
+    "studentTermDetails": {
+      "title": "Détails du trimestre des élèves",
+      "subtitle": "Dans quelle classe/section chaque élève est placé pour un trimestre donné",
+      "addNew": "Ajouter un trimestre élève",
+      "searchPlaceholder": "Rechercher par nom ou n° d'admission…",
+      "empty": "Aucun élève placé dans un trimestre pour le moment — ajoutez le premier pour commencer.",
+      "devBypassNotice": "Non disponible en local (les données de classe réelles sont requises) — fonctionne une fois déployé.",
+      "noYear": {
+        "message": "Sélectionnez ou créez une année académique pour gérer les détails du trimestre des élèves.",
+        "linkLabel": "Aller aux années académiques"
+      },
+      "panel": { "createTitle": "Ajouter un trimestre élève", "editTitle": "Modifier le trimestre élève" },
+      "columns": {
+        "student": "Élève",
+        "schoolType": "Type d'établissement",
+        "classTerm": "Trimestre de classe",
+        "class": "Classe",
+        "arm": "Section",
+        "house": "Maison académique"
+      },
+      "filters": {
+        "term": "Trimestre",
+        "allTerms": "Tous les trimestres",
+        "class": "Classe",
+        "allClasses": "Toutes les classes",
+        "arm": "Section",
+        "allArms": "Toutes les sections"
+      },
+      "fields": {
+        "class": {
+          "label": "Classe",
+          "placeholder": "Sélectionnez une classe",
+          "emptyHint": "Aucune classe active pour le moment cette année.",
+          "emptyHintLink": "En ajouter une d'abord"
+        },
+        "classTerm": {
+          "label": "Trimestre de classe",
+          "placeholder": "Sélectionnez un trimestre de classe",
+          "emptyHint": "La classe sélectionnée n'a pas encore de trimestre.",
+          "emptyHintLink": "Configurer d'abord les trimestres de classe"
+        },
+        "arm": {
+          "label": "Section",
+          "placeholder": "Sélectionnez une section",
+          "emptyHint": "La classe sélectionnée n'a pas encore de section.",
+          "emptyHintLink": "Configurer d'abord les sections"
+        },
+        "student": {
+          "label": "Élève",
+          "placeholder": "Rechercher par nom ou n° d'admission…",
+          "emptyHint": "Aucun élève actif éligible pour ce trimestre."
+        },
+        "house": { "label": "Maison académique (facultatif)", "none": "Aucune maison" },
+        "seatNumber": { "label": "Numéro de place (facultatif)" },
+        "rollNo": { "label": "Numéro de liste (facultatif)" },
+        "remark": { "label": "Remarque (facultatif)" }
+      },
+      "errors": {
+        "classRequired": "Sélectionnez une classe",
+        "classTermRequired": "Sélectionnez un trimestre de classe",
+        "armRequired": "Sélectionnez une section",
+        "studentRequired": "Sélectionnez un élève"
+      },
+      "confirmDelete": {
+        "title": "Retirer ce trimestre élève ?",
+        "message": "Cela retirera {name} de ce trimestre. Cette action est irréversible."
+      },
+      "toast": {
+        "created": "Élève placé dans le trimestre",
+        "updated": "Trimestre élève mis à jour",
+        "deleted": "Trimestre élève retiré"
+      }
+    },
+    "subjectEnrolment": {
+      "title": "Inscription aux matières",
+      "subtitle": "Les matières suivies par chaque élève, par trimestre — les matières principales sont automatiques, les options sont inscrites ici",
+      "enrolNew": "Nouvelle inscription",
+      "viewDetails": "Voir les détails",
+      "backToGrid": "Retour à la grille des classes",
+      "backToList": "Retour à la liste",
+      "empty": "Rien à afficher pour ce trimestre.",
+      "emptyDetails": "Aucun élève placé ici pour ce trimestre.",
+      "devBypassNotice": "Non disponible en local (les données de classe réelles sont requises) — fonctionne une fois déployé.",
+      "core": "Principale",
+      "elective": "Option",
+      "corePillTitle": "Matière principale — incluse automatiquement, ne peut pas être retirée",
+      "coreReadOnlyNote": "Les matières principales sont automatiques pour tous les élèves de cette classe et ne peuvent pas être retirées ici.",
+      "toggleFailed": "Impossible de mettre à jour cette inscription. Réessayez.",
+      "cardStats": "{students, plural, one {# élève} other {# élèves}} · {subjects, plural, one {# matière} other {# matières}}",
+      "subjectSearchPlaceholder": "Rechercher par matière ou classe…",
+      "studentSearchPlaceholder": "Rechercher par nom ou n° d'admission…",
+      "noYear": {
+        "message": "Sélectionnez ou créez une année académique pour gérer l'inscription aux matières.",
+        "linkLabel": "Aller aux années académiques"
+      },
+      "tabs": {
+        "perClass": "Par Classe",
+        "perSubject": "Par Matière",
+        "perStudent": "Par Élève"
+      },
+      "columns": {
+        "class": "Classe",
+        "arm": "Section",
+        "schoolType": "Type d'établissement",
+        "subject": "Matière",
+        "group": "Groupe",
+        "student": "Élève",
+        "studentCount": "Élèves",
+        "subjectCount": "Matières",
+        "enrolledCount": "Inscrits"
+      },
+      "enrolModal": {
+        "title": "Nouvelle inscription",
+        "subtitle": "Inscrivez des élèves à leurs matières principales et optionnelles pour le trimestre en cours",
+        "submit": "Inscrire",
+        "submitting": "Inscription…",
+        "success": "{count, plural, one {# option inscrite} other {# options inscrites}}",
+        "failed": "Impossible d'inscrire ces élèves. Réessayez.",
+        "fields": {
+          "class": "Classe",
+          "classPlaceholder": "Sélectionnez une classe",
+          "arms": "Section(s)",
+          "armsEmptyHint": "Cette classe n'a pas encore de section.",
+          "armsEmptyHintLink": "Configurer d'abord les sections",
+          "selectAllArms": "Tout sélectionner",
+          "coreSubjects": "Matières principales (automatique)",
+          "coreEmptyHint": "Cette classe n'a pas encore de matières principales configurées.",
+          "coreNote": "Chaque élève sélectionné les reçoit automatiquement — elles ne peuvent pas être désélectionnées.",
+          "electiveSubjects": "Matières optionnelles",
+          "electiveEmptyHint": "Cette classe n'a pas encore de matières optionnelles configurées.",
+          "selectAllElectives": "Tout sélectionner",
+          "students": "Élèves",
+          "noTermHint": "Cette classe n'a pas encore de trimestre pour le type de trimestre actuellement sélectionné.",
+          "noTermHintLink": "Configurer d'abord les trimestres de classe",
+          "studentsEmptyHint": "Aucun élève actif n'est placé dans ces sections pour ce trimestre.",
+          "studentsEmptyHintLink": "Placez les élèves via Détails du trimestre des élèves",
+          "selectAllStudents": "Tout sélectionner"
+        },
+        "errors": {
+          "classRequired": "Sélectionnez une classe",
+          "armsRequired": "Sélectionnez au moins une section",
+          "studentsRequired": "Sélectionnez au moins un élève"
+        }
+      }
+    },
     "export": {
       "label": "Exporter",
       "includeAll": "Inclure toutes les lignes (ignorer les filtres)",

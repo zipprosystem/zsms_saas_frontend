@@ -97,6 +97,18 @@ export function classTermsQueryKey(classId: string): readonly unknown[] {
   return ["setup", "classTerms", "class", classId];
 }
 
+/**
+ * ClassTerm has no is_active/is_current flag — "the active term" is always
+ * computed client-side as whichever term's [start_date, end_date] window
+ * contains today. Shared by the Add Student wizard's Step 1 default, the
+ * Student Term Details create form's default, and the auto-roll check
+ * (studentTermDetailsApi.ts) — one definition so all three can't drift.
+ */
+export function findActiveClassTerm(terms: ClassTerm[]): ClassTerm | null {
+  const today = new Date().toISOString().slice(0, 10);
+  return terms.find((term) => term.start_date <= today && today <= term.end_date) ?? null;
+}
+
 const CLASS_TERMS_PATH = "erp/class-terms";
 
 function classTermsForClassPath(classId: string): string {
