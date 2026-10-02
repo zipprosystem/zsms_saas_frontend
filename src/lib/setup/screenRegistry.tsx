@@ -10,6 +10,7 @@ import { SubjectsMasterScreen } from "@/components/setup/academicStructure/Subje
 import { ClassSubjectsScreen } from "@/components/setup/academicStructure/ClassSubjectsScreen";
 import { ClassSubjectGroupingScreen } from "@/components/setup/academicStructure/ClassSubjectGroupingScreen";
 import { StudentTermDetailsScreen } from "@/components/setup/academicStructure/StudentTermDetailsScreen";
+import { SubjectEnrolmentScreen } from "@/components/setup/academicStructure/SubjectEnrolmentScreen";
 
 /**
  * Keyed by "{categorySlug}/{screenSlug}". A screen not listed here falls
@@ -45,4 +46,10 @@ export const setupScreenRegistry: Record<string, ComponentType> = {
   // Terms existing (and the mock Students module having at least one
   // active student to place).
   "academic-structure/student-term-details": StudentTermDetailsScreen,
+  // Subject Enrolment's Per Class/Per Subject/Per Student views and its
+  // Enrol New wizard all depend on Classes + Class-arms + Class Terms +
+  // Class Subjects existing, plus Student Term Details (a student must
+  // already be placed in a class/arm for a term before subjects can be
+  // enrolled for them).
+  "academic-structure/subject-enrolment": SubjectEnrolmentScreen,
 };

@@ -13,6 +13,7 @@ import { subjectsMasterService } from "@/lib/setup/academicStructure/subjectsMas
 import { classSubjectsQueryKey, fetchClassSubjectsForYear } from "@/lib/setup/academicStructure/classSubjectsApi";
 import { createClassSubjectGroupService } from "@/lib/setup/academicStructure/classSubjectGroupingApi";
 import { createStudentTermDetailService } from "@/lib/setup/academicStructure/studentTermDetailsApi";
+import { listSubjectEnrolments, subjectEnrolmentsQueryKey } from "@/lib/setup/academicStructure/subjectEnrolmentApi";
 import type { SetupItem } from "@/lib/setup/setupConfig";
 
 /**
@@ -55,6 +56,7 @@ const ITEMS_WITH_LIVE_CHECK = new Set([
   "classSubjects",
   "classSubjectGrouping",
   "studentTermDetails",
+  "subjectEnrolment",
 ]);
 
 export type SetupProgressState =
@@ -182,6 +184,22 @@ export function useSetupProgress(): SetupProgressState {
     staleTime: PROGRESS_STALE_TIME_MS,
   });
 
+  // Subject Enrolment — year-scoped, single list() call. Note: a school
+  // with zero ELECTIVE enrolments but students correctly receiving core
+  // subjects (derive-at-read, never stored — see subjectEnrolmentApi.ts)
+  // would show this as "not configured" even though core is working fine.
+  // Accepted: "at least one record exists" is this app's one universal
+  // completion signal, and core auto-inherit needs no explicit action to
+  // work, so there's nothing a checklist item could meaningfully confirm
+  // about it anyway.
+  const subjectEnrolmentsQuery = useQuery({
+    queryKey: yearId ? subjectEnrolmentsQueryKey(yearId) : ["setup", "subjectEnrolments", "none"],
+    queryFn: () => listSubjectEnrolments(yearId!),
+    enabled: !!yearId,
+    select: (result) => result.ok && result.data.length > 0,
+    staleTime: PROGRESS_STALE_TIME_MS,
+  });
+
   const sectionsStillLoading = activeClassIds.length > 0 && sectionQueries.some((query) => query.isPending);
   const classTermsStillLoading = allClassIds.length > 0 && classTermQueries.some((query) => query.isPending);
   const isLoading =
@@ -196,7 +214,8 @@ export function useSetupProgress(): SetupProgressState {
         classTermsStillLoading ||
         classSubjectsForYearQuery.isPending ||
         classSubjectGroupsQuery.isPending ||
-        studentTermDetailsQuery.isPending));
+        studentTermDetailsQuery.isPending ||
+        subjectEnrolmentsQuery.isPending));
 
   if (isLoading) return { status: "loading" };
 
@@ -212,6 +231,7 @@ export function useSetupProgress(): SetupProgressState {
   if (classSubjectsForYearQuery.data) completedKeys.add("classSubjects");
   if (classSubjectGroupsQuery.data) completedKeys.add("classSubjectGrouping");
   if (studentTermDetailsQuery.data) completedKeys.add("studentTermDetails");
+  if (subjectEnrolmentsQuery.data) completedKeys.add("subjectEnrolment");
 
   return { status: "loaded", completedKeys };
 }

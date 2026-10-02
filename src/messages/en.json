@@ -982,6 +982,78 @@
         "deleted": "Student term detail removed"
       }
     },
+    "subjectEnrolment": {
+      "title": "Subject Enrolment",
+      "subtitle": "Which subjects each student takes, per term — core subjects are automatic, electives are enrolled here",
+      "enrolNew": "Enrol New",
+      "viewDetails": "View Details",
+      "backToGrid": "Back to class grid",
+      "backToList": "Back to list",
+      "empty": "Nothing to show for this term yet.",
+      "emptyDetails": "No students placed here for this term yet.",
+      "devBypassNotice": "Not available in local dev (real class data is required) — this works once deployed.",
+      "core": "Core",
+      "elective": "Elective",
+      "corePillTitle": "Core subject — automatically included, can't be removed",
+      "coreReadOnlyNote": "Core subjects are automatic for every student in this class and can't be removed here.",
+      "toggleFailed": "Couldn't update this enrolment. Try again.",
+      "cardStats": "{students, plural, one {# student} other {# students}} · {subjects, plural, one {# subject} other {# subjects}}",
+      "subjectSearchPlaceholder": "Search by subject or class…",
+      "studentSearchPlaceholder": "Search by student name or admission no…",
+      "noYear": {
+        "message": "Select or create an academic year to manage subject enrolment.",
+        "linkLabel": "Go to Academic Years"
+      },
+      "tabs": {
+        "perClass": "Per Class",
+        "perSubject": "Per Subject",
+        "perStudent": "Per Student"
+      },
+      "columns": {
+        "class": "Class",
+        "arm": "Class-arm",
+        "schoolType": "School Type",
+        "subject": "Subject",
+        "group": "Group",
+        "student": "Student",
+        "studentCount": "Students",
+        "subjectCount": "Subjects",
+        "enrolledCount": "Enrolled"
+      },
+      "enrolModal": {
+        "title": "Enrol New",
+        "subtitle": "Enrol students into their core and elective subjects for the current term",
+        "submit": "Enrol",
+        "submitting": "Enrolling…",
+        "success": "{count, plural, one {# elective enrolled} other {# electives enrolled}}",
+        "failed": "Couldn't enrol these students. Try again.",
+        "fields": {
+          "class": "Class",
+          "classPlaceholder": "Select a class",
+          "arms": "Class-arm(s)",
+          "armsEmptyHint": "This class has no class-arms yet.",
+          "armsEmptyHintLink": "Set up Class-arms first",
+          "selectAllArms": "Select All",
+          "coreSubjects": "Core Subjects (automatic)",
+          "coreEmptyHint": "This class has no core subjects configured yet.",
+          "coreNote": "Every selected student automatically gets these — they can't be unselected.",
+          "electiveSubjects": "Elective Subjects",
+          "electiveEmptyHint": "This class has no elective subjects configured yet.",
+          "selectAllElectives": "Select All",
+          "students": "Students",
+          "noTermHint": "This class has no term for the currently selected term type yet.",
+          "noTermHintLink": "Set up Class Terms first",
+          "studentsEmptyHint": "No active students are placed in these class-arms for this term yet.",
+          "studentsEmptyHintLink": "Place students via Student Term Details",
+          "selectAllStudents": "Select All"
+        },
+        "errors": {
+          "classRequired": "Select a class",
+          "armsRequired": "Select at least one class-arm",
+          "studentsRequired": "Select at least one student"
+        }
+      }
+    },
     "export": {
       "label": "Export",
       "includeAll": "Include all rows (ignore filters)",

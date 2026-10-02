@@ -1,6 +1,7 @@
 import { mockDelay } from "@/lib/onboarding/mockDelay";
 import { createClassesService } from "@/lib/setup/academicStructure/classesApi";
 import { fetchTermsForClass, findActiveClassTerm } from "@/lib/setup/academicStructure/classTermsApi";
+import { carryForwardElectivesForTerm } from "@/lib/setup/academicStructure/subjectEnrolmentApi";
 import {
   loadStudentTermDetails,
   persistStudentTermDetails,
@@ -102,6 +103,7 @@ async function runAutoRollForYear(yearId: string): Promise<void> {
 
   const store = getStore();
   const additions: StudentTermDetail[] = [];
+  const carryForwards: Array<{ studentId: string; fromClassTermId: string; toClassTermId: string; toSectionId: string }> = [];
   const today = todayIso();
 
   for (const cls of classesResult.data) {
@@ -124,17 +126,34 @@ async function runAutoRollForYear(yearId: string): Promise<void> {
         additions.some((pending) => pending.student_id === row.student_id && pending.class_term_id === currentTerm.id);
       if (alreadyRolled) continue;
 
-      additions.push({
+      const newRow: StudentTermDetail = {
         ...row,
         id: newId(),
         class_term_id: currentTerm.id,
         created_at: nowIso(),
         updated_at: nowIso(),
+      };
+      additions.push(newRow);
+      carryForwards.push({
+        studentId: row.student_id,
+        fromClassTermId: row.class_term_id,
+        toClassTermId: currentTerm.id,
+        toSectionId: newRow.section_id,
       });
     }
   }
 
   if (additions.length > 0) saveStore([...store, ...additions]);
+
+  // Part 2 coupling point (the one deliberate link between the two mock
+  // modules): a rolled student's ELECTIVE subject enrolments carry forward
+  // into their new term row too — see subjectEnrolmentApi.ts's
+  // carryForwardElectivesForTerm() for why this is a safe straight copy
+  // (same class/arm, never promotion) and why core needs no equivalent call
+  // at all (it's derived fresh, never stored).
+  for (const carry of carryForwards) {
+    await carryForwardElectivesForTerm(carry.studentId, carry.fromClassTermId, carry.toClassTermId, carry.toSectionId);
+  }
 }
 
 export async function listStudentTermDetails(yearId: string): Promise<CrudResult<StudentTermDetail[]>> {

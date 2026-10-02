@@ -12,4 +12,5 @@ export const SETUP_ITEM_KEYWORDS: Record<string, string[]> = {
   departments: ["HOD", "head of department", "line manager"],
   classSubjects: ["core", "elective"],
   studentTermDetails: ["roll number", "roll no", "promotion", "auto-roll", "class placement"],
+  subjectEnrolment: ["enrol", "enrollment", "enroll", "core subjects", "elective subjects"],
 };
