@@ -586,7 +586,8 @@
         "classroom": {
           "label": "Salle de classe (optionnel)",
           "none": "Aucune",
-          "loading": "Chargement des salles…"
+          "loading": "Chargement des salles…",
+          "selectBuildingFirst": "Sélectionnez d'abord un bâtiment"
         },
         "classTimeStart": { "label": "Heure de début (optionnel)" },
         "classTimeEnd": { "label": "Heure de fin (optionnel)" },

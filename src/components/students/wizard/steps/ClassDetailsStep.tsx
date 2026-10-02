@@ -36,8 +36,9 @@ export function ClassDetailsStep({
 }) {
   const t = useTranslations();
   const { activeYear } = useAcademicYear();
-  // Defaults to "both" (nothing hidden) while loading or if the real API
-  // doesn't send school_mode yet — see academicYearsApi.ts's normalization.
+  // school_mode is real/confirmed (academicYearsApi.ts) — this only
+  // defaults to "both" while activeYear itself is still null (loading, or
+  // no active year yet), never because the field might be missing.
   const boardingHouseAllowed = isBoardingHouseVisible(activeYear?.school_mode ?? "both");
 
   const schoolTypesQuery = useQuery({

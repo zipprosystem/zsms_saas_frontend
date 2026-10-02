@@ -586,7 +586,8 @@
         "classroom": {
           "label": "Class Room (optional)",
           "none": "None",
-          "loading": "Loading classrooms…"
+          "loading": "Loading classrooms…",
+          "selectBuildingFirst": "Select a building first"
         },
         "classTimeStart": { "label": "Class Time Start (optional)" },
         "classTimeEnd": { "label": "Class Time End (optional)" },

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DataTable } from "@/components/setup/DataTable";
 import { ExportMenu } from "@/components/setup/ExportMenu";
 import { ConfirmDialog } from "@/components/setup/ConfirmDialog";
@@ -14,12 +14,14 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
 import { STRUCTURAL_STALE_TIME_MS, TransientQueryError } from "@/lib/queryClient";
 import { PAGE_SIZE, usePaginatedView } from "@/lib/setup/usePaginatedView";
-import type { ColumnDef, FilterDef } from "@/lib/setup/crudTypes";
+import { throwIfTransient, type ColumnDef, type FilterDef } from "@/lib/setup/crudTypes";
 import type { ExportColumn, ExportConfig } from "@/lib/export/exportTypes";
+import { createClassesService, type SchoolClass } from "@/lib/setup/academicStructure/classesApi";
+import { fetchSectionsForClass, sectionsQueryKey, type Section } from "@/lib/setup/academicStructure/sectionsApi";
 import { deleteDraftStudent, listStudents, setStudentStatus, studentsQueryKey } from "@/lib/students/studentsApi";
 import type { Student } from "@/lib/students/studentTypes";
 import { clampToWizardStep, type WizardStep } from "@/components/students/wizard/WizardStepper";
-import { MOCK_BOARDING_HOUSES, MOCK_CLASSES, MOCK_CLASS_ARMS } from "@/lib/students/studentsMockData";
+import { MOCK_BOARDING_HOUSES } from "@/lib/students/studentsMockData";
 import {
   genderLabelKey,
   isBoardingHouseVisible,
@@ -91,11 +93,42 @@ export function StudentsScreen() {
   const t = useTranslations();
   const { showToast } = useToast();
   const { school } = useAuth();
-  const { selectedYear, activeYear } = useAcademicYear();
-  // Defaults to "both" (nothing hidden) while loading or if the real API
-  // doesn't send school_mode yet — see academicYearsApi.ts's normalization.
+  const { selectedYear, selectedYearId, activeYear } = useAcademicYear();
+  // school_mode is real/confirmed (academicYearsApi.ts) — this only
+  // defaults to "both" while activeYear itself is still null (loading, or
+  // no active year yet), never because the field might be missing.
   const boardingHouseVisible = isBoardingHouseVisible(activeYear?.school_mode ?? "both");
   const queryClient = useQueryClient();
+
+  // REAL Classes/Sections for the student list's Class/Arm resolution and
+  // filters — the Add Student wizard's Step 1 already writes real
+  // class_id/class_arm_id (classesApi/sectionsApi), not mock ids, so this
+  // list must resolve against the same source to show real names instead
+  // of "—". Mirrors the exact fan-out pattern ClassArmsScreen.tsx and the
+  // enrolment screens already use: one classes query, one sections query
+  // per class via useQueries (react-query's own per-key cache — visiting
+  // Setup's own Classes/Class-arms screens shares this same cache, no
+  // duplicate fetch). Gated by DEV_AUTH_BYPASS same as every other real
+  // ERP read — locally this resolves to empty arrays (every name shows
+  // "—", same degraded-gracefully behavior Setup screens already have),
+  // only meaningfully testable on deploy.
+  const classesService = selectedYearId ? createClassesService(selectedYearId) : null;
+  const classesQuery = useQuery({
+    queryKey: classesService?.queryKey ?? ["setup", "classes", "none"],
+    queryFn: () => classesService!.list().then(throwIfTransient),
+    enabled: !!classesService,
+    staleTime: STRUCTURAL_STALE_TIME_MS,
+  });
+  const classes: SchoolClass[] = classesQuery.data?.ok ? classesQuery.data.data : [];
+
+  const sectionQueries = useQueries({
+    queries: classes.map((cls) => ({
+      queryKey: sectionsQueryKey(cls.id),
+      queryFn: () => fetchSectionsForClass(cls.id).then(throwIfTransient),
+      staleTime: STRUCTURAL_STALE_TIME_MS,
+    })),
+  });
+  const sections: Section[] = sectionQueries.flatMap((query) => (query.data?.ok ? query.data.data : []));
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<StudentsTabKey>("list");
@@ -150,10 +183,10 @@ export function StudentsScreen() {
 
   const view = usePaginatedView(visibleStudents, {
     matchesSearch: matchesStudentSearch,
-    matchesFilters: matchesStudentFilters,
+    matchesFilters: (student, filters) => matchesStudentFilters(student, filters, sections),
   });
 
-  const armNames = Array.from(new Set(MOCK_CLASS_ARMS.map((arm) => arm.name))).sort();
+  const armNames = Array.from(new Set(sections.map((section) => section.name))).sort();
   const comingSoon = () => showToast(t("students.actions.comingSoon"));
 
   const handleResume = (student: Student) => {
@@ -203,7 +236,7 @@ export function StudentsScreen() {
       label: t("students.filters.class"),
       options: [
         { value: "", label: t("students.filters.allClasses") },
-        ...MOCK_CLASSES.map((cls) => ({ value: cls.id, label: cls.name })),
+        ...classes.map((cls) => ({ value: cls.id, label: cls.name })),
       ],
     },
     {
@@ -275,7 +308,7 @@ export function StudentsScreen() {
     { key: "firstName", header: t("students.columns.firstName"), render: (row) => row.first_name },
     { key: "otherNames", header: t("students.columns.otherNames"), render: (row) => row.other_names ?? "—" },
     { key: "gender", header: t("students.columns.gender"), render: (row) => t(genderLabelKey(row)) },
-    { key: "arm", header: t("students.columns.arm"), render: (row) => resolveArmName(row.class_arm_id) },
+    { key: "arm", header: t("students.columns.arm"), render: (row) => resolveArmName(row.class_arm_id, sections) },
     ...(boardingHouseVisible
       ? [
           {
@@ -300,7 +333,7 @@ export function StudentsScreen() {
                   return (
                     <li key={siblingId}>
                       {sibling
-                        ? `${studentFullName(sibling) || "—"} — ${resolveClassName(sibling.class_id)}`
+                        ? `${studentFullName(sibling) || "—"} — ${resolveClassName(sibling.class_id, classes)}`
                         : t("students.siblingsTooltip.unknown")}
                     </li>
                   );
@@ -346,8 +379,8 @@ export function StudentsScreen() {
     { header: t("students.columns.firstName"), value: (row) => row.first_name },
     { header: t("students.columns.otherNames"), value: (row) => row.other_names ?? "" },
     { header: t("students.columns.gender"), value: (row) => t(genderLabelKey(row)) },
-    { header: t("students.columns.class"), value: (row) => resolveClassName(row.class_id) },
-    { header: t("students.columns.arm"), value: (row) => resolveArmName(row.class_arm_id) },
+    { header: t("students.columns.class"), value: (row) => resolveClassName(row.class_id, classes) },
+    { header: t("students.columns.arm"), value: (row) => resolveArmName(row.class_arm_id, sections) },
     ...(boardingHouseVisible
       ? [{ header: t("students.columns.boardingHouse"), value: (row: Student) => resolveBoardingHouseName(row.boarding_house_id) }]
       : []),

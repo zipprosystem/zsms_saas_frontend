@@ -19,12 +19,8 @@ import { throwIfTransient } from "@/lib/setup/crudTypes";
 import { usePaginatedView } from "@/lib/setup/usePaginatedView";
 import { createClassesService, type SchoolClass } from "@/lib/setup/academicStructure/classesApi";
 import { schoolTypesService, type SchoolType } from "@/lib/setup/academicStructure/schoolTypesApi";
-import {
-  buildingsService,
-  classroomsService,
-  type Building,
-  type Classroom,
-} from "@/lib/setup/academicStructure/facilitiesApi";
+import { buildingsService, type Building } from "@/lib/setup/academicStructure/buildingsApi";
+import { buildingRoomsService, type BuildingRoom } from "@/lib/setup/academicStructure/buildingRoomsApi";
 import {
   createSection,
   deactivateSection,
@@ -238,15 +234,21 @@ function ClassArmsTable({
   const { school } = useAuth();
 
   const [buildings, setBuildings] = useState<ReferenceListState<Building>>({ status: "loading" });
-  const [classrooms, setClassrooms] = useState<ReferenceListState<Classroom>>({ status: "loading" });
+  const [classrooms, setClassrooms] = useState<ReferenceListState<BuildingRoom>>({ status: "loading" });
 
+  // Both are now REAL (Muntajir shipped Physical Space) — CrudResult, not
+  // a bare array like the old facilitiesApi.ts mock. A failure (including
+  // DEV_AUTH_BYPASS locally) degrades to an empty list rather than a new
+  // error state — same "resolve to '—'/no options" graceful-degradation
+  // every other reference dropdown in this app already uses; this screen
+  // still fully works, it just can't offer building/room choices locally.
   useEffect(() => {
     let cancelled = false;
-    buildingsService.list().then((items) => {
-      if (!cancelled) setBuildings({ status: "loaded", items });
+    buildingsService.list().then((result) => {
+      if (!cancelled) setBuildings({ status: "loaded", items: result.ok ? result.data : [] });
     });
-    classroomsService.list().then((items) => {
-      if (!cancelled) setClassrooms({ status: "loaded", items });
+    buildingRoomsService.list().then((result) => {
+      if (!cancelled) setClassrooms({ status: "loaded", items: result.ok ? result.data : [] });
     });
     return () => {
       cancelled = true;
@@ -692,7 +694,12 @@ function ClassArmsTable({
                   id="section-building"
                   label={t("setup.classArms.fields.building.label")}
                   value={formData.building_id}
-                  onChange={(event) => setFormData((current) => ({ ...current, building_id: event.target.value }))}
+                  onChange={(event) =>
+                    // Rooms are building-scoped now (real Building Rooms API) —
+                    // a previously-chosen room from a different building is no
+                    // longer valid once the building changes.
+                    setFormData((current) => ({ ...current, building_id: event.target.value, classroom_id: "" }))
+                  }
                   disabled={buildings.status === "loading"}
                 >
                   {buildings.status === "loading" ? (
@@ -714,14 +721,18 @@ function ClassArmsTable({
                   label={t("setup.classArms.fields.classroom.label")}
                   value={formData.classroom_id}
                   onChange={(event) => setFormData((current) => ({ ...current, classroom_id: event.target.value }))}
-                  disabled={classrooms.status === "loading"}
+                  disabled={classrooms.status === "loading" || !formData.building_id}
                 >
                   {classrooms.status === "loading" ? (
                     <option value="">{t("setup.classArms.fields.classroom.loading")}</option>
+                  ) : !formData.building_id ? (
+                    <option value="">{t("setup.classArms.fields.classroom.selectBuildingFirst")}</option>
                   ) : (
                     <>
                       <option value="">{t("setup.classArms.fields.classroom.none")}</option>
-                      {classrooms.items.map((classroom) => (
+                      {classrooms.items
+                        .filter((room) => room.building_id === formData.building_id)
+                        .map((classroom) => (
                         <option key={classroom.id} value={classroom.id}>
                           {classroom.name}
                         </option>
