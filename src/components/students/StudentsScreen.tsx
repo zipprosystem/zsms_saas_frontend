@@ -136,7 +136,12 @@ export function StudentsScreen() {
   // visible here, marked with a small badge, with a Resume-only action
   // replacing the normal menu for that row — see the "actions" column and
   // the Last Name column below.
-  const visibleStudents = allItems.filter((student) => student.status === "active" || student.status === "draft");
+  // No sortable columns exist on this table (DataTable has no column-sort
+  // mechanism), so "most recently added at the top" is simply the list's
+  // one and only order — newest created_at first.
+  const visibleStudents = allItems
+    .filter((student) => student.status === "active" || student.status === "draft")
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const isLoading = query.isPending;
   const errorMessage = query.isError ? t("students.list.loadError") : null;
@@ -182,6 +187,15 @@ export function StudentsScreen() {
   };
 
   const filterDefs: FilterDef[] = [
+    {
+      key: "status",
+      label: t("students.filters.status"),
+      options: [
+        { value: "", label: t("students.filters.allStatuses") },
+        { value: "active", label: t("students.status.active") },
+        { value: "draft", label: t("students.status.draft") },
+      ],
+    },
     {
       key: "class",
       label: t("students.filters.class"),
@@ -248,7 +262,7 @@ export function StudentsScreen() {
         row.status === "draft" ? (
           <span className="flex items-center gap-2">
             {row.last_name || "—"}
-            <span className="rounded-full bg-accent-2 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent">
+            <span className="rounded-full bg-category-amber-tint px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-warning">
               {t("students.badges.draft")}
             </span>
           </span>

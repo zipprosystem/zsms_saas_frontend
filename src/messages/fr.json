@@ -962,6 +962,8 @@
       "bulkActivateDeactivate": "Activer/Désactiver en masse"
     },
     "filters": {
+      "status": "Statut",
+      "allStatuses": "Tous les statuts",
       "class": "Classe",
       "allClasses": "Toutes les classes",
       "arm": "Section",
