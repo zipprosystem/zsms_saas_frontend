@@ -3,8 +3,16 @@ import type { StudentFormData, PersonBlockForm, AddressBlockForm } from "@/compo
 import { EMPTY_ADDRESS_BLOCK, EMPTY_PERSON_BLOCK } from "@/components/students/wizard/studentFormTypes";
 import type { StudentUpsertInput } from "@/lib/students/studentsApi";
 
-/** Wire (Student) -> UI form shape, for seeding the wizard in edit mode. */
-function toPersonBlockForm(block: Student["father"]): PersonBlockForm {
+/**
+ * Wire (Student) -> UI form shape, for seeding the wizard in edit mode.
+ * `studentLastName` seeds `lastNameTouched` the same way SubjectsMasterScreen
+ * seeds `shortNameTouched`: if this block's saved last name already equals
+ * the student's, treat it as untouched (so future edits to the student's
+ * Last Name keep auto-syncing it); if it's already different (e.g. a
+ * guardian's own surname), treat it as touched so re-opening the wizard
+ * never silently overwrites an intentional override.
+ */
+function toPersonBlockForm(block: Student["father"], studentLastName: string): PersonBlockForm {
   if (!block) return { ...EMPTY_PERSON_BLOCK };
   return {
     first_name: block.first_name,
@@ -13,6 +21,7 @@ function toPersonBlockForm(block: Student["father"]): PersonBlockForm {
     phone: block.phone,
     email: block.email ?? "",
     occupation: block.occupation ?? "",
+    lastNameTouched: block.last_name !== "" && block.last_name !== studentLastName,
   };
 }
 
@@ -64,9 +73,9 @@ export function studentToFormData(student: Student): StudentFormData {
     },
     parentGuardian: {
       relationship_type: student.relationship_type,
-      father: toPersonBlockForm(student.father),
-      mother: toPersonBlockForm(student.mother),
-      guardian: toPersonBlockForm(student.guardian),
+      father: toPersonBlockForm(student.father, student.last_name),
+      mother: toPersonBlockForm(student.mother, student.last_name),
+      guardian: toPersonBlockForm(student.guardian, student.last_name),
       primary_contact: student.primary_contact ?? "",
     },
     address: {

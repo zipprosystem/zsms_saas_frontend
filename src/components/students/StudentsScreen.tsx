@@ -9,6 +9,7 @@ import { DataTable } from "@/components/setup/DataTable";
 import { ExportMenu } from "@/components/setup/ExportMenu";
 import { ConfirmDialog } from "@/components/setup/ConfirmDialog";
 import { useToast } from "@/components/ui/Toast";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
 import { STRUCTURAL_STALE_TIME_MS, TransientQueryError } from "@/lib/queryClient";
@@ -28,6 +29,7 @@ import {
   resolveArmName,
   resolveBoardingHouseName,
   resolveClassName,
+  studentFullName,
 } from "@/lib/students/studentsTableHelpers";
 import { StudentsHeader } from "@/components/students/StudentsHeader";
 import { StudentsStatCards } from "@/components/students/StudentsStatCards";
@@ -283,7 +285,33 @@ export function StudentsScreen() {
           },
         ]
       : []),
-    { key: "siblings", header: t("students.columns.siblings"), render: (row) => row.sibling_student_ids.length },
+    {
+      key: "siblings",
+      header: t("students.columns.siblings"),
+      render: (row) =>
+        row.sibling_student_ids.length === 0 ? (
+          row.sibling_student_ids.length
+        ) : (
+          <Tooltip
+            content={
+              <ul className="flex flex-col gap-1">
+                {row.sibling_student_ids.map((siblingId) => {
+                  const sibling = allItems.find((item) => item.id === siblingId);
+                  return (
+                    <li key={siblingId}>
+                      {sibling
+                        ? `${studentFullName(sibling) || "—"} — ${resolveClassName(sibling.class_id)}`
+                        : t("students.siblingsTooltip.unknown")}
+                    </li>
+                  );
+                })}
+              </ul>
+            }
+          >
+            <span className="underline decoration-dotted underline-offset-2">{row.sibling_student_ids.length}</span>
+          </Tooltip>
+        ),
+    },
     {
       key: "actions",
       header: t("students.columns.actions"),

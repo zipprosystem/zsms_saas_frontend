@@ -911,16 +911,20 @@
     },
     "studentTermDetails": {
       "title": "Student Term Details",
-      "subtitle": "Which class/arm each student is placed in for a given term",
-      "addNew": "Add Student Term",
+      "subtitle": "Automatically populated as students are created and placed into a class/arm/term, and kept up to date as terms roll over. Add Student Term is for corrections or edge cases only.",
+      "addNew": "Add Student Term (Correction)",
       "searchPlaceholder": "Search by student name or admission no…",
-      "empty": "No students placed into a term yet — add the first one to get started.",
+      "empty": "No students placed into a term yet — they'll appear here automatically once added via the Students page.",
       "devBypassNotice": "Not available in local dev (real class data is required) — this works once deployed.",
       "noYear": {
         "message": "Select or create an academic year to manage student term details.",
         "linkLabel": "Go to Academic Years"
       },
-      "panel": { "createTitle": "Add Student Term", "editTitle": "Edit Student Term" },
+      "panel": {
+        "createTitle": "Add Student Term",
+        "editTitle": "Edit Student Term",
+        "subtitle": "Manual correction — most students are placed here automatically when they're created or when a term rolls over."
+      },
       "columns": {
         "student": "Student",
         "schoolType": "School Type",
@@ -1173,6 +1177,9 @@
     "badges": {
       "draft": "Draft"
     },
+    "siblingsTooltip": {
+      "unknown": "Unknown student"
+    },
     "list": {
       "loadError": "Couldn't load students. Please try again."
     },
@@ -1203,6 +1210,10 @@
         "agent": "Agent (optional)",
         "siblings": "Siblings (optional)",
         "pastRecords": "Past Records (optional)"
+      },
+      "classDetails": {
+        "readOnlyNote": "Class enrolment is managed in Student Term Details.",
+        "readOnlyLink": "Go to Student Term Details"
       },
       "footer": {
         "back": "Back",

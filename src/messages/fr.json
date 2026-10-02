@@ -919,16 +919,20 @@
     },
     "studentTermDetails": {
       "title": "Détails du trimestre des élèves",
-      "subtitle": "Dans quelle classe/section chaque élève est placé pour un trimestre donné",
-      "addNew": "Ajouter un trimestre élève",
+      "subtitle": "Automatiquement renseigné à mesure que les élèves sont créés et placés dans une classe/section/trimestre, et tenu à jour au changement de trimestre. « Ajouter un trimestre élève » sert uniquement aux corrections ou cas particuliers.",
+      "addNew": "Ajouter un trimestre élève (correction)",
       "searchPlaceholder": "Rechercher par nom ou n° d'admission…",
-      "empty": "Aucun élève placé dans un trimestre pour le moment — ajoutez le premier pour commencer.",
+      "empty": "Aucun élève placé dans un trimestre pour le moment — ils apparaîtront ici automatiquement une fois ajoutés depuis la page Élèves.",
       "devBypassNotice": "Non disponible en local (les données de classe réelles sont requises) — fonctionne une fois déployé.",
       "noYear": {
         "message": "Sélectionnez ou créez une année académique pour gérer les détails du trimestre des élèves.",
         "linkLabel": "Aller aux années académiques"
       },
-      "panel": { "createTitle": "Ajouter un trimestre élève", "editTitle": "Modifier le trimestre élève" },
+      "panel": {
+        "createTitle": "Ajouter un trimestre élève",
+        "editTitle": "Modifier le trimestre élève",
+        "subtitle": "Correction manuelle — la plupart des élèves sont placés ici automatiquement lors de leur création ou au changement de trimestre."
+      },
       "columns": {
         "student": "Élève",
         "schoolType": "Type d'établissement",
@@ -1181,6 +1185,9 @@
     "badges": {
       "draft": "Brouillon"
     },
+    "siblingsTooltip": {
+      "unknown": "Élève inconnu"
+    },
     "list": {
       "loadError": "Impossible de charger les élèves. Veuillez réessayer."
     },
@@ -1211,6 +1218,10 @@
         "agent": "Agent (facultatif)",
         "siblings": "Fratrie (facultatif)",
         "pastRecords": "Antécédents scolaires (facultatif)"
+      },
+      "classDetails": {
+        "readOnlyNote": "L'inscription en classe est gérée dans Détails du trimestre des élèves.",
+        "readOnlyLink": "Aller aux Détails du trimestre des élèves"
       },
       "footer": {
         "back": "Retour",

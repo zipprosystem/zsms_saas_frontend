@@ -45,7 +45,7 @@ function PersonBlockFields({
           id={`${idPrefix}-last-name`}
           label={t("students.wizard.fields.personLastName.label")}
           value={value.last_name}
-          onChange={(event) => onChange({ last_name: event.target.value })}
+          onChange={(event) => onChange({ last_name: event.target.value, lastNameTouched: true })}
           hasError={!!errors[`${errorPrefix}.name`]}
           error={errors[`${errorPrefix}.name`] ? t(errors[`${errorPrefix}.name`]) : undefined}
         />

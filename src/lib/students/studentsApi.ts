@@ -3,6 +3,7 @@ import { buildSeedStudents } from "@/lib/students/studentsMockData";
 import { loadStudents, persistStudents } from "@/lib/students/studentsStorage";
 import type { Student, StudentStatus } from "@/lib/students/studentTypes";
 import type { CrudResult } from "@/lib/setup/crudTypes";
+import { ensureStudentTermDetailFromStudent } from "@/lib/setup/academicStructure/studentTermDetailsApi";
 
 /**
  * MOCK — the real Students API doesn't exist yet (Muntajir hasn't built
@@ -63,8 +64,20 @@ export async function getStudent(id: string): Promise<CrudResult<Student>> {
   return { ok: true, data: found };
 }
 
-/** Finishing the wizard (step 7 submit) — always status:"active", whether this was a brand-new student or a draft being completed. */
-export async function createStudent(input: StudentUpsertInput, draftId?: string): Promise<CrudResult<Student>> {
+/**
+ * Finishing the wizard (step 7 submit) — always status:"active", whether
+ * this was a brand-new student or a draft being completed (and also what
+ * runs on an edit-mode re-save of an already-active student, since the
+ * wizard's final submit always goes through this same path regardless of
+ * mode — see StudentWizard.tsx's handleSubmit).
+ *
+ * `yearId` — the session's active academic year, needed only for the
+ * AUTO-POPULATE side effect below (ensureStudentTermDetailFromStudent);
+ * never stored on Student itself, this mock's store isn't year-scoped.
+ * Optional/best-effort: omitted, the student still saves fine, just
+ * without the automatic Student Term Details row.
+ */
+export async function createStudent(input: StudentUpsertInput, draftId?: string, yearId?: string): Promise<CrudResult<Student>> {
   await mockDelay(400);
   const store = getStore();
   const now = nowIso();
@@ -76,11 +89,13 @@ export async function createStudent(input: StudentUpsertInput, draftId?: string)
     const next = [...store];
     next[index] = finalized;
     saveStore(next);
+    if (yearId) await ensureStudentTermDetailFromStudent(yearId, finalized);
     return { ok: true, data: finalized };
   }
 
   const created: Student = { ...input, id: newStudentId(), status: "active", draft_last_step: null, created_at: now, updated_at: now };
   saveStore([...store, created]);
+  if (yearId) await ensureStudentTermDetailFromStudent(yearId, created);
   return { ok: true, data: created };
 }
 
