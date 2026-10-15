@@ -2,45 +2,58 @@
 
 import { useTranslations } from "next-intl";
 import { MoreVerticalIcon } from "@/components/icons/students/MoreVerticalIcon";
-import { ActionsMenu } from "@/components/ui/ActionsMenu";
+import { ActionsMenu, type ActionsMenuItem } from "@/components/ui/ActionsMenu";
+import { isWithdrawnGroup } from "@/lib/students/studentsTableHelpers";
+import type { StudentStatusPanelAction } from "@/components/students/StudentStatusActionPanel";
 import type { Student } from "@/lib/students/studentTypes";
 
 /**
- * Per-row "⋮" menu. View/Edit opens the wizard; Withdraw sets the
- * student's status for real (Commit 3). Send Mail/Login As are their own
- * future pages; Suspend/Graduate/Expel still show "coming soon" — those
- * three plus Withdraw are meant to be ONE unified status-change flow
- * (category + reason + date — see studentTypes.ts's StudentStatus doc)
- * once built; Withdraw alone, without that flow, is the explicitly-scoped
- * piece for this commit.
+ * Per-row "⋮" menu — the items depend on the student's status:
+ *   active:                         View, Edit, Send Mail*, Login as Student*, Graduate, Withdraw
+ *   withdrawn/suspended/expelled:   View, Reactivate
+ *   graduated:                      View, Restore
+ * (* coming soon.) Suspend/Expel are NOT menu items — they're categories
+ * inside the one Withdraw form (StudentStatusActionPanel). Drafts never
+ * reach this menu (Resume/Delete replace it — see StudentsScreen.tsx).
  */
 export function StudentRowActionsMenu({
   student,
+  onView,
   onEdit,
-  onWithdraw,
+  onStatusAction,
   onComingSoon,
 }: {
   student: Student;
-  /** View and Edit both open the wizard in edit mode — there's no separate read-only view, so "View" is functionally identical to "Edit". */
+  onView: () => void;
   onEdit: () => void;
-  onWithdraw: () => void;
+  onStatusAction: (action: StudentStatusPanelAction) => void;
   onComingSoon: () => void;
 }) {
   const t = useTranslations();
 
+  const view: ActionsMenuItem = { key: "view", label: t("students.actions.view"), onClick: onView };
+  let items: ActionsMenuItem[];
+  if (student.status === "active") {
+    items = [
+      view,
+      { key: "edit", label: t("students.actions.edit"), onClick: onEdit },
+      { key: "sendMail", label: t("students.actions.sendMail"), onClick: onComingSoon },
+      { key: "loginAs", label: t("students.actions.loginAs"), onClick: onComingSoon },
+      { key: "graduate", label: t("students.actions.graduate"), onClick: () => onStatusAction("graduate") },
+      { key: "withdraw", label: t("students.actions.withdraw"), onClick: () => onStatusAction("withdraw"), variant: "danger" },
+    ];
+  } else if (isWithdrawnGroup(student)) {
+    items = [view, { key: "reactivate", label: t("students.actions.reactivate"), onClick: () => onStatusAction("reactivate") }];
+  } else if (student.status === "graduated") {
+    items = [view, { key: "restore", label: t("students.actions.restore"), onClick: () => onStatusAction("restore") }];
+  } else {
+    items = [view];
+  }
+
   return (
     <ActionsMenu
       menuLabel={t("students.actions.menuLabel", { name: student.first_name })}
-      items={[
-        { key: "view", label: t("students.actions.view"), onClick: onEdit },
-        { key: "edit", label: t("students.actions.edit"), onClick: onEdit },
-        { key: "sendMail", label: t("students.actions.sendMail"), onClick: onComingSoon },
-        { key: "loginAs", label: t("students.actions.loginAs"), onClick: onComingSoon },
-        { key: "suspend", label: t("students.actions.suspend"), onClick: onComingSoon },
-        { key: "graduate", label: t("students.actions.graduate"), onClick: onComingSoon },
-        { key: "expel", label: t("students.actions.expel"), onClick: onComingSoon, variant: "danger" },
-        { key: "withdraw", label: t("students.actions.withdraw"), onClick: onWithdraw, variant: "danger" },
-      ]}
+      items={items}
       trigger={({ isOpen, toggle }) => (
         <button
           type="button"

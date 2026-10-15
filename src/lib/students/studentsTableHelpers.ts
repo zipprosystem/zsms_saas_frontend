@@ -58,7 +58,7 @@ export function genderLabelKey(student: Student): string {
   return `students.gender.${student.gender}`;
 }
 
-/** Statuses combined on the Withdrawn tab/stat card — one admin flow (Withdraw/Suspend/Expel), distinguished later by a Status column. */
+/** Statuses combined on the Withdrawn tab/stat card — one admin flow (the Withdraw form's three categories), told apart by the tab's Status column. */
 const WITHDRAWN_GROUP_STATUSES: readonly StudentStatus[] = ["withdrawn", "suspended", "expelled"];
 
 export function isWithdrawnGroup(student: Student): boolean {
@@ -96,10 +96,10 @@ export function matchesStudentSearch(student: Student, query: string): boolean {
  * passed in for the same reason resolveArmName takes it — a plain helper,
  * not a hook.
  *
- * "Status" here only ever has to distinguish Active vs Draft — the Student
- * List tab is prefiltered upstream in StudentsScreen.tsx to just those two
- * statuses (withdrawn/suspended/expelled/graduated live on other tabs), so
- * this filter's "All Statuses" option already means "active + draft."
+ * "Status" only distinguishes statuses WITHIN the current tab — each list
+ * tab is prefiltered upstream to its own slice (StudentsScreen.tsx's
+ * TAB_ROW_FILTERS: active+draft / withdrawn+suspended+expelled /
+ * graduated), so "All Statuses" means "all of this tab's statuses."
  */
 export function matchesStudentFilters(student: Student, filters: Record<string, string>, sections: Section[]): boolean {
   return (

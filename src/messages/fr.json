@@ -1100,6 +1100,8 @@
     "searchPlaceholder": "Rechercher par nom ou numéro d'admission…",
     "addNew": "Ajouter un élève",
     "empty": "Aucun élève pour le moment — ajoutez le premier pour commencer.",
+    "emptyWithdrawn": "Aucun élève retiré, suspendu ou exclu.",
+    "emptyGraduate": "Aucun élève diplômé pour l'instant.",
     "export": {
       "label": "Exporter la liste"
     },
@@ -1158,6 +1160,56 @@
       "male": "Masculin",
       "female": "Féminin"
     },
+    "statusActions": {
+      "titles": {
+        "withdraw": "Retirer l'élève",
+        "graduate": "Diplômer l'élève",
+        "reactivate": "Réactiver l'élève",
+        "restore": "Restaurer l'élève"
+      },
+      "descriptions": {
+        "withdraw": "Indiquez pourquoi l'élève part. Il passe dans l'onglet Retirés.",
+        "graduate": "L'élève passe dans l'onglet Diplômés.",
+        "reactivate": "L'élève revient dans la liste active des élèves.",
+        "restore": "Annule la diplomation et remet l'élève dans la liste active des élèves."
+      },
+      "expelledWarning": "Cet élève a été exclu. Ne le réactivez que si l'exclusion était une erreur ou a été annulée.",
+      "confirm": {
+        "withdrawn": "Retirer",
+        "suspended": "Suspendre",
+        "expelled": "Exclure",
+        "graduate": "Diplômer",
+        "reactivate": "Réactiver",
+        "restore": "Restaurer"
+      },
+      "fields": {
+        "category": "Catégorie",
+        "reason": "Motif",
+        "reasonOptional": "Motif (facultatif)",
+        "effectiveOn": "Date d'effet (facultative)"
+      },
+      "errors": {
+        "reasonRequired": "Saisissez un motif",
+        "reasonTooLong": "Le motif doit comporter {max} caractères au maximum",
+        "failed": "Une erreur est survenue. Veuillez réessayer."
+      },
+      "success": {
+        "withdrawn": "{name} a été retiré(e)",
+        "suspended": "{name} a été suspendu(e)",
+        "expelled": "{name} a été exclu(e)",
+        "reactivated": "{name} a été réactivé(e)",
+        "graduated": "{name} est diplômé(e)",
+        "restored": "{name} a été restauré(e)"
+      }
+    },
+    "view": {
+      "history": {
+        "title": "Historique des statuts",
+        "empty": "Aucun changement de statut pour le moment.",
+        "loadError": "Impossible de charger l'historique des statuts.",
+        "by": "par {name}"
+      }
+    },
     "actions": {
       "menuLabel": "Actions pour {name}",
       "view": "Voir",
@@ -1165,17 +1217,11 @@
       "resume": "Reprendre",
       "sendMail": "Envoyer un e-mail au parent",
       "loginAs": "Se connecter en tant qu'élève",
-      "suspend": "Suspendre",
       "graduate": "Diplômer",
-      "expel": "Exclure",
       "withdraw": "Retirer",
+      "reactivate": "Réactiver",
+      "restore": "Restaurer",
       "comingSoon": "Cette action arrive dans la prochaine mise à jour",
-      "withdrawSucceeded": "{name} a été retiré(e)",
-      "withdrawFailed": "Une erreur est survenue lors du retrait de cet élève. Veuillez réessayer.",
-      "confirmWithdraw": {
-        "title": "Retirer l'élève ?",
-        "message": "Cela retirera {name} et le/la déplacera vers la liste des retirés."
-      },
       "deleteDraftSucceeded": "Brouillon supprimé",
       "deleteDraftFailed": "Une erreur est survenue lors de la suppression de ce brouillon. Veuillez réessayer.",
       "loadFailed": "Impossible de charger cet élève. Veuillez réessayer.",
