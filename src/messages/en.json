@@ -912,7 +912,7 @@
     },
     "studentTermDetails": {
       "title": "Student Term Details",
-      "subtitle": "Automatically populated as students are created and placed into a class/arm/term, and kept up to date as terms roll over. Add Student Term is for corrections or edge cases only.",
+      "subtitle": "Automatically populated when a student is created and placed into a class/arm/term. Students aren't moved to later terms automatically — use Add Student Term for that and for corrections.",
       "addNew": "Add Student Term (Correction)",
       "searchPlaceholder": "Search by student name or admission no…",
       "empty": "No students placed into a term yet — they'll appear here automatically once added via the Students page.",
@@ -924,15 +924,14 @@
       "panel": {
         "createTitle": "Add Student Term",
         "editTitle": "Edit Student Term",
-        "subtitle": "Manual correction — most students are placed here automatically when they're created or when a term rolls over."
+        "subtitle": "Manual placement or correction — a student's first term is added automatically when they're created."
       },
       "columns": {
         "student": "Student",
         "schoolType": "School Type",
         "classTerm": "Class Term",
         "class": "Class",
-        "arm": "Class-arm",
-        "house": "Academic House"
+        "arm": "Class-arm"
       },
       "filters": {
         "term": "Term",
@@ -966,7 +965,6 @@
           "placeholder": "Search by name or admission no…",
           "emptyHint": "No eligible active students for this term."
         },
-        "house": { "label": "Academic House (optional)", "none": "No house" },
         "seatNumber": { "label": "Seat Number (optional)" },
         "rollNo": { "label": "Roll No (optional)" },
         "remark": { "label": "Remark (optional)" }

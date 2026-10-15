@@ -3,8 +3,8 @@ import type { SubjectEnrolment } from "@/lib/setup/academicStructure/subjectEnro
 /**
  * Persistence mechanism, isolated from the CRUD surface (subjectEnrolmentApi.ts)
  * so it can be swapped independently once the real API exists. Flat key, not
- * per-school scoped — mock-only data, same justification as studentsStorage.ts
- * / studentTermDetailsStorage.ts.
+ * per-school scoped — mock-only data (Subject Enrolment is still a
+ * frontend-ahead mock; Students and Student Term Details are real now).
  */
 const STORAGE_KEY = "zsms.mockSubjectEnrolments";
 

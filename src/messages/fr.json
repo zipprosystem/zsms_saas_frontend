@@ -920,7 +920,7 @@
     },
     "studentTermDetails": {
       "title": "Détails du trimestre des élèves",
-      "subtitle": "Automatiquement renseigné à mesure que les élèves sont créés et placés dans une classe/section/trimestre, et tenu à jour au changement de trimestre. « Ajouter un trimestre élève » sert uniquement aux corrections ou cas particuliers.",
+      "subtitle": "Automatiquement renseigné lorsqu'un élève est créé et placé dans une classe/section/trimestre. Les élèves ne passent pas automatiquement aux trimestres suivants — utilisez « Ajouter un trimestre élève » pour cela et pour les corrections.",
       "addNew": "Ajouter un trimestre élève (correction)",
       "searchPlaceholder": "Rechercher par nom ou n° d'admission…",
       "empty": "Aucun élève placé dans un trimestre pour le moment — ils apparaîtront ici automatiquement une fois ajoutés depuis la page Élèves.",
@@ -932,15 +932,14 @@
       "panel": {
         "createTitle": "Ajouter un trimestre élève",
         "editTitle": "Modifier le trimestre élève",
-        "subtitle": "Correction manuelle — la plupart des élèves sont placés ici automatiquement lors de leur création ou au changement de trimestre."
+        "subtitle": "Placement ou correction manuels — le premier trimestre d'un élève est ajouté automatiquement lors de sa création."
       },
       "columns": {
         "student": "Élève",
         "schoolType": "Type d'établissement",
         "classTerm": "Trimestre de classe",
         "class": "Classe",
-        "arm": "Section",
-        "house": "Maison académique"
+        "arm": "Section"
       },
       "filters": {
         "term": "Trimestre",
@@ -974,7 +973,6 @@
           "placeholder": "Rechercher par nom ou n° d'admission…",
           "emptyHint": "Aucun élève actif éligible pour ce trimestre."
         },
-        "house": { "label": "Maison académique (facultatif)", "none": "Aucune maison" },
         "seatNumber": { "label": "Numéro de place (facultatif)" },
         "rollNo": { "label": "Numéro de liste (facultatif)" },
         "remark": { "label": "Remarque (facultatif)" }

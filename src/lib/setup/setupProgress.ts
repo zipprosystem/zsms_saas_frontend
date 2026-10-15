@@ -172,9 +172,9 @@ export function useSetupProgress(): SetupProgressState {
     staleTime: PROGRESS_STALE_TIME_MS,
   });
 
-  // Student Term Details — year-scoped, single list() call (its own
-  // internal auto-roll fetch doesn't need a dependent useQueries fan-out
-  // here, same shape as Class Subjects/Grouping above).
+  // Student Term Details — year-scoped, single list() call (one
+  // per-year endpoint, no dependent useQueries fan-out needed — same shape
+  // as Class Subjects/Grouping above).
   const studentTermDetailService = yearId ? createStudentTermDetailService(yearId) : null;
   const studentTermDetailsQuery = useQuery({
     queryKey: studentTermDetailService?.queryKey ?? ["setup", "studentTermDetails", "none"],
