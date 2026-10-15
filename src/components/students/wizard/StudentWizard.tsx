@@ -32,7 +32,7 @@ import {
   createStudent,
   createStudentDraft,
   saveStudentDraft,
-  studentsQueryKey,
+  studentsListQueryKeyRoot,
   submitStudentDraft,
   updateStudent,
 } from "@/lib/students/studentsApi";
@@ -192,7 +192,7 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
       return;
     }
     setStudentId(result.data.id);
-    queryClient.invalidateQueries({ queryKey: studentsQueryKey });
+    queryClient.invalidateQueries({ queryKey: studentsListQueryKeyRoot });
     showToast(t("students.wizard.footer.draftSaved"));
   };
 
@@ -228,7 +228,7 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
       handleSaveFailure(result);
       return;
     }
-    queryClient.invalidateQueries({ queryKey: studentsQueryKey });
+    queryClient.invalidateQueries({ queryKey: studentsListQueryKeyRoot });
     // AUTO-POPULATE: submit/create creates the student's initial Student
     // Term Details record server-side (same transaction) when placement is
     // complete — invalidate so that screen reflects it immediately.

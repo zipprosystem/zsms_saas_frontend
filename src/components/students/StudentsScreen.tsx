@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,7 +13,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
-import { STRUCTURAL_STALE_TIME_MS, TransientQueryError } from "@/lib/queryClient";
+import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import { PAGE_SIZE, usePaginatedView } from "@/lib/setup/usePaginatedView";
 import { throwIfTransient, type ColumnDef, type FilterDef } from "@/lib/setup/crudTypes";
 import type { ExportColumn, ExportConfig } from "@/lib/export/exportTypes";
@@ -23,6 +24,7 @@ import {
   getStudent,
   listStudents,
   studentStatusEventsQueryKey,
+  studentsListQueryKeyRoot,
   studentsQueryKey,
 } from "@/lib/students/studentsApi";
 import type { Student } from "@/lib/students/studentTypes";
@@ -133,7 +135,7 @@ export function StudentsScreen() {
   const t = useTranslations();
   const { showToast } = useToast();
   const { school } = useAuth();
-  const { selectedYear, selectedYearId, activeYear } = useAcademicYear();
+  const { selectedYear, selectedYearId, activeYear, isLoading: isYearLoading } = useAcademicYear();
   // school_mode is real/confirmed (academicYearsApi.ts) — this only
   // defaults to "both" while activeYear itself is still null (loading, or
   // no active year yet), never because the field might be missing.
@@ -196,15 +198,18 @@ export function StudentsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Per-academic-year: every tab (List/Withdrawn/Graduate) is scoped to the
+  // header's selected year. Never fired without one — the backend 422s on a
+  // missing academic_year_id; the no-year state below renders instead.
   const query = useQuery({
-    queryKey: studentsQueryKey,
-    queryFn: async () => {
-      const result = await listStudents();
-      if (!result.ok) throw new TransientQueryError();
-      return result;
-    },
+    queryKey: studentsQueryKey(selectedYearId ?? ""),
+    // throwIfTransient: only network/5xx failures are retried — a 4xx
+    // (like the 422 a missing year used to cause) settles immediately.
+    queryFn: () => listStudents(selectedYearId ?? "").then(throwIfTransient),
+    enabled: !!selectedYearId,
     staleTime: STRUCTURAL_STALE_TIME_MS,
   });
+  const hasNoYear = !isYearLoading && !selectedYearId;
 
   const allItems: Student[] = query.data?.ok ? query.data.data : [];
   const listTab: StudentListTabKey = isStudentListTab(activeTab) ? activeTab : "list";
@@ -216,8 +221,10 @@ export function StudentsScreen() {
     .filter(TAB_ROW_FILTERS[listTab])
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-  const isLoading = query.isPending;
-  const errorMessage = query.isError ? t("students.list.loadError") : null;
+  // A disabled query stays "pending" forever — only count it as loading
+  // once there's a year to load for.
+  const isLoading = isYearLoading || (!!selectedYearId && query.isPending);
+  const errorMessage = query.isError || (query.data && !query.data.ok) ? t("students.list.loadError") : null;
 
   const view = usePaginatedView(visibleStudents, {
     matchesSearch: matchesStudentSearch,
@@ -262,7 +269,7 @@ export function StudentsScreen() {
   const handleStatusDone = (message: string) => {
     const studentId = statusTarget?.student.id;
     setStatusTarget(null);
-    queryClient.invalidateQueries({ queryKey: studentsQueryKey });
+    queryClient.invalidateQueries({ queryKey: studentsListQueryKeyRoot });
     if (studentId) queryClient.invalidateQueries({ queryKey: studentStatusEventsQueryKey(studentId) });
     showToast(message);
   };
@@ -277,7 +284,7 @@ export function StudentsScreen() {
       showToast(("message" in result && result.message) || t("students.actions.deleteDraftFailed"));
       return;
     }
-    queryClient.invalidateQueries({ queryKey: studentsQueryKey });
+    queryClient.invalidateQueries({ queryKey: studentsListQueryKeyRoot });
     showToast(t("students.actions.deleteDraftSucceeded"));
   };
 
@@ -485,7 +492,14 @@ export function StudentsScreen() {
       <StudentsHeader />
       <StudentsTabs activeTab={activeTab} onChange={handleTabChange} />
 
-      {isStudentListTab(activeTab) ? (
+      {isStudentListTab(activeTab) && hasNoYear ? (
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-surface px-4 py-10 text-center">
+          <p className="text-sm text-text-secondary">{t("students.noYear.message")}</p>
+          <Link href="/admin/setup/academic-structure/academic-years" className="text-sm font-semibold text-accent hover:underline">
+            {t("students.noYear.linkLabel")}
+          </Link>
+        </div>
+      ) : isStudentListTab(activeTab) ? (
         <>
           {activeTab === "list" ? <StudentsStatCards students={allItems} /> : null}
           <DataTable<Student>

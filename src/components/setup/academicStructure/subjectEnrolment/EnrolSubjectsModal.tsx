@@ -102,8 +102,8 @@ export function EnrolSubjectsModal({ yearId, termType, onClose }: EnrolSubjectsM
   const termDetails: StudentTermDetail[] = termDetailsQuery.data?.ok ? termDetailsQuery.data.data : [];
 
   const studentsQuery = useQuery({
-    queryKey: studentsQueryKey,
-    queryFn: () => listStudents(),
+    queryKey: studentsQueryKey(yearId),
+    queryFn: () => listStudents(yearId),
     staleTime: STRUCTURAL_STALE_TIME_MS,
   });
   const students: Student[] = studentsQuery.data?.ok ? studentsQuery.data.data : [];

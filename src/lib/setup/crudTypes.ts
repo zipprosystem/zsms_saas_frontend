@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { TransientQueryError } from "@/lib/queryClient";
+import { isClientErrorStatus, TransientQueryError } from "@/lib/queryClient";
 import type { ExportConfig } from "@/lib/export/exportTypes";
 
 /**
@@ -67,7 +67,10 @@ export type CrudResult<T> =
   | { ok: false; kind: "validation"; errors: Array<{ field: string; message?: string }> }
   | { ok: false; kind: "conflict"; message?: string }
   | { ok: false; kind: "network" }
-  | { ok: false; kind: "server"; message?: string }
+  // `status`: the HTTP status, when the service reports it — lets
+  // throwIfTransient() tell a 4xx (never retried) from a 5xx. Services that
+  // don't set it yet keep the old "server = retryable" behavior.
+  | { ok: false; kind: "server"; message?: string; status?: number }
   // DEV-ONLY: same guard as settingsApi.ts — the local dev-auth-bypass
   // token must never reach a real endpoint.
   | { ok: false; kind: "devBypassUnavailable" };
@@ -104,18 +107,22 @@ export type CrudService<T, CreateInput, UpdateInput> = {
 
 /**
  * Every retrofitted queryFn runs its service's CrudResult through this
- * before handing it to react-query. Only `network`/`server` are genuinely
- * worth retrying — those throw a TransientQueryError so the QueryClient's
- * retry+backoff (see queryClient.tsx) kicks in. Every other failure kind
- * (forbidden, devBypassUnavailable, validation, conflict) is a
+ * before handing it to react-query. Only `network` and a non-4xx `server`
+ * failure are genuinely worth retrying — those throw a TransientQueryError
+ * so the QueryClient's retry+backoff (see queryClient.tsx) kicks in. Every
+ * other failure (forbidden, devBypassUnavailable, validation, conflict, or
+ * a `server` result carrying a 4xx status) is a
  * deterministic outcome no retry can fix, so it resolves normally instead
  * — the query settles immediately, and useCrudTable maps it to the same
  * TableLoadState it always has.
  */
 export function throwIfTransient<T>(result: CrudResult<T>): CrudResult<T> {
-  if (!result.ok && (result.kind === "network" || result.kind === "server")) {
-    throw new TransientQueryError();
-  }
+  if (result.ok) return result;
+  if (result.kind === "network") throw new TransientQueryError();
+  // A "server" failure is only transient when it isn't a 4xx — e.g. the
+  // backend's 422 VALIDATION_ERROR maps to "server" (banner message) but
+  // will fail identically on every retry.
+  if (result.kind === "server" && !isClientErrorStatus(result.status)) throw new TransientQueryError(result.status);
   return result;
 }
 
