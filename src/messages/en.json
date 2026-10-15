@@ -1479,7 +1479,10 @@
         "streetRequired": "Street address is required",
         "countryRequired": "Select a country",
         "usernameRequired": "Username is required",
-        "passwordRequired": "Password is required"
+        "passwordRequired": "Password is required",
+        "usernameRejected": "This username is taken or invalid — choose another",
+        "emailRejected": "Enter a valid email address",
+        "placementRejected": "This selection isn't valid for the chosen class or year"
       }
     }
   },

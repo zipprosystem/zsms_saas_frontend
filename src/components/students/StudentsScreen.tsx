@@ -18,7 +18,7 @@ import { throwIfTransient, type ColumnDef, type FilterDef } from "@/lib/setup/cr
 import type { ExportColumn, ExportConfig } from "@/lib/export/exportTypes";
 import { createClassesService, type SchoolClass } from "@/lib/setup/academicStructure/classesApi";
 import { fetchSectionsForClass, sectionsQueryKey, type Section } from "@/lib/setup/academicStructure/sectionsApi";
-import { deleteDraftStudent, listStudents, setStudentStatus, studentsQueryKey } from "@/lib/students/studentsApi";
+import { changeStudentStatus, deleteDraftStudent, listStudents, studentsQueryKey } from "@/lib/students/studentsApi";
 import type { Student } from "@/lib/students/studentTypes";
 import { clampToWizardStep, type WizardStep } from "@/components/students/wizard/WizardStepper";
 import { MOCK_BOARDING_HOUSES } from "@/lib/students/studentsMockData";
@@ -195,16 +195,19 @@ export function StudentsScreen() {
 
   const handleConfirmWithdraw = async () => {
     if (!withdrawTarget) return;
+    const target = withdrawTarget;
     setIsWithdrawing(true);
-    const result = await setStudentStatus(withdrawTarget.id, "withdrawn");
+    // Interim: a bare confirm -> POST /withdraw with no reason/date ({} is
+    // valid). Commit 3 replaces this with the category + reason + date form.
+    const result = await changeStudentStatus(target.id, "withdraw", {});
     setIsWithdrawing(false);
     setWithdrawTarget(null);
     if (!result.ok) {
-      showToast(t("students.actions.withdrawFailed"));
+      showToast(("message" in result && result.message) || t("students.actions.withdrawFailed"));
       return;
     }
     queryClient.invalidateQueries({ queryKey: studentsQueryKey });
-    showToast(t("students.actions.withdrawSucceeded", { name: result.data.first_name }));
+    showToast(t("students.actions.withdrawSucceeded", { name: target.first_name }));
   };
 
   const handleConfirmDeleteDraft = async () => {
@@ -214,7 +217,7 @@ export function StudentsScreen() {
     setIsDeletingDraft(false);
     setDeleteDraftTarget(null);
     if (!result.ok) {
-      showToast(t("students.actions.deleteDraftFailed"));
+      showToast(("message" in result && result.message) || t("students.actions.deleteDraftFailed"));
       return;
     }
     queryClient.invalidateQueries({ queryKey: studentsQueryKey });

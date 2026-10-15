@@ -1487,7 +1487,10 @@
         "streetRequired": "L'adresse (rue) est requise",
         "countryRequired": "Sélectionnez un pays",
         "usernameRequired": "Le nom d'utilisateur est requis",
-        "passwordRequired": "Le mot de passe est requis"
+        "passwordRequired": "Le mot de passe est requis",
+        "usernameRejected": "Ce nom d'utilisateur est déjà pris ou invalide — choisissez-en un autre",
+        "emailRejected": "Saisissez une adresse e-mail valide",
+        "placementRejected": "Cette sélection n'est pas valide pour la classe ou l'année choisie"
       }
     }
   },
