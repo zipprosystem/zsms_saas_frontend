@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { MultiSearchableSelect } from "@/components/ui/MultiSearchableSelect";
+import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
 import { listStudents, studentsQueryKey } from "@/lib/students/studentsApi";
 import { studentFullName } from "@/lib/students/studentsTableHelpers";
 import type { SiblingsForm } from "@/components/students/wizard/studentFormTypes";
@@ -18,10 +19,14 @@ export function SiblingsStep({
   excludeStudentId?: string;
 }) {
   const t = useTranslations();
+  // Same selected year the wizard enrols into — sibling candidates are that
+  // year's students (the list endpoint is per-year).
+  const { selectedYearId } = useAcademicYear();
 
   const studentsQuery = useQuery({
-    queryKey: studentsQueryKey,
-    queryFn: () => listStudents(),
+    queryKey: studentsQueryKey(selectedYearId ?? ""),
+    queryFn: () => listStudents(selectedYearId ?? ""),
+    enabled: !!selectedYearId,
     staleTime: 0,
   });
   const students = studentsQuery.data?.ok ? studentsQuery.data.data : [];

@@ -23,23 +23,36 @@ const DEFAULT_STALE_TIME_MS = 2 * 60 * 1000;
 const GC_TIME_MS = 10 * 60 * 1000;
 
 /**
- * Thrown by a query's fetch wrapper for the two CrudResult failure kinds
- * that are genuinely worth retrying (network/server) — every other kind
- * (forbidden, devBypassUnavailable, validation, conflict) is a
- * deterministic outcome retrying can't fix, so those resolve normally
- * instead of throwing, and the query settles immediately with that result.
+ * Thrown by a query's fetch wrapper for failures genuinely worth retrying:
+ * network errors and 5xx. Every other outcome (forbidden,
+ * devBypassUnavailable, validation, conflict — and ANY 4xx) is
+ * deterministic: retrying the identical request can't fix it, so those
+ * resolve normally instead of throwing and the query settles immediately.
  * See crudTypes.ts's throwIfTransient(), which every retrofitted queryFn
  * runs its CrudResult through.
+ *
+ * `status` is the HTTP status when the failure came from a response
+ * (undefined for a network error, or from a service that doesn't report
+ * it yet). isRetryableError() refuses any 4xx even if one gets thrown, so
+ * the shared client is the backstop regardless of which wrapper threw.
  */
 export class TransientQueryError extends Error {
-  constructor() {
+  readonly status: number | undefined;
+
+  constructor(status?: number) {
     super("Transient fetch failure — retry-worthy");
     this.name = "TransientQueryError";
+    this.status = status;
   }
 }
 
+/** True for a 4xx — a client error the same request will always reproduce. */
+export function isClientErrorStatus(status: number | undefined): boolean {
+  return status !== undefined && status >= 400 && status < 500;
+}
+
 function isRetryableError(error: unknown): boolean {
-  return error instanceof TransientQueryError;
+  return error instanceof TransientQueryError && !isClientErrorStatus(error.status);
 }
 
 function retryDelay(attemptIndex: number): number {

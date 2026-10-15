@@ -1092,6 +1092,10 @@
     "empty": "No students yet — add your first one to get started.",
     "emptyWithdrawn": "No withdrawn, suspended or expelled students.",
     "emptyGraduate": "No graduated students yet.",
+    "noYear": {
+      "message": "Select or create an academic year to view students.",
+      "linkLabel": "Go to Academic Years"
+    },
     "export": {
       "label": "Export List"
     },

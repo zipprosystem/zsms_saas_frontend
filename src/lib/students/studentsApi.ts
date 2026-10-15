@@ -23,7 +23,10 @@ import type {
  * staging/deploy (DEV_AUTH_BYPASS short-circuits every call locally, same
  * as every other real ERP service).
  *
- *   GET    erp/students?page=&limit=   -> { items, total, page, limit, has_more }
+ *   GET    erp/students?academic_year_id=&page=&limit=
+ *                                      -> { items, total, page, limit, has_more }
+ *                                      academic_year_id is REQUIRED (422
+ *                                      otherwise) unless all_years=true
  *   GET    erp/students/:id            -> Student
  *   POST   erp/students/drafts         body + current_step (1|2|3)
  *   PUT    erp/students/:id/draft      body + current_step
@@ -58,7 +61,13 @@ import type {
  * documented as "422"; harmless if it never fires.) Anything else falls
  * back to plain status-code classification, same as every other service.
  */
-export const studentsQueryKey = ["students", "list"] as const;
+/** Prefix shared by every year's list — pass to invalidateQueries after a mutation to refresh whichever year(s) are cached. */
+export const studentsListQueryKeyRoot = ["students", "list"] as const;
+
+/** The list is per academic year (see listStudents), so the cache key is too — switching year never shows another year's students. */
+export function studentsQueryKey(academicYearId: string): readonly unknown[] {
+  return [...studentsListQueryKeyRoot, academicYearId];
+}
 
 const BASE_PATH = "erp/students";
 /** Page size for listStudents()' fetch-all loop. FLAGGED: the backend's max limit isn't confirmed — 100 is a conservative guess. */
@@ -319,8 +328,13 @@ async function send<T>(
   }
 
   const body = await parseBody(response);
-  if (!response.ok) return toResult(response, body);
+  if (!response.ok) return withStatus(toResult<T>(response, body), response.status);
   return onSuccess(body);
+}
+
+/** Stamps the HTTP status onto a "server" result so throwIfTransient() never retries a 4xx (e.g. a 422 VALIDATION_ERROR). */
+function withStatus<T>(result: CrudResult<T>, status: number): CrudResult<T> {
+  return !result.ok && result.kind === "server" ? { ...result, status } : result;
 }
 
 function studentResult(body: unknown): CrudResult<Student> {
@@ -329,22 +343,29 @@ function studentResult(body: unknown): CrudResult<Student> {
 }
 
 /**
- * ALL students, every status (drafts included — FLAGGED: assumed the list
- * returns drafts by default with no filter param; reconcile on staging).
+ * Every student in ONE academic year, every status (drafts included —
+ * FLAGGED: assumed the list returns drafts by default with no filter
+ * param; reconcile on staging). The Students module is per-academic-year,
+ * so this always sends academic_year_id (the backend 422s without it) and
+ * deliberately never uses all_years=true. Callers must gate their query on
+ * having a year (`enabled: !!yearId`) — an empty id short-circuits to an
+ * empty list here rather than firing the request that 422s.
+ *
  * Pages through the server endpoint until has_more is false, so every
- * existing caller (Students screen, Siblings, Student Term Details,
- * Subject Enrolment) keeps its "whole list" contract.
+ * caller (Students screen, Siblings, Student Term Details, Subject
+ * Enrolment) gets the year's whole list.
  *
  * REQUIRED FOLLOW-UP (Matthew, 2026-10-15 — not optional): move the
  * Students screen to server-side pagination/search/filter. Fetch-all is a
  * stopgap for this increment only; it doesn't scale for large schools or
  * low-bandwidth connections.
  */
-export async function listStudents(): Promise<CrudResult<Student[]>> {
+export async function listStudents(academicYearId: string): Promise<CrudResult<Student[]>> {
+  if (!academicYearId) return { ok: true, data: [] };
   const all: Student[] = [];
   for (let page = 1; page <= LIST_MAX_PAGES; page += 1) {
     const result = await send<StudentPage>(
-      `${BASE_PATH}?page=${page}&limit=${LIST_PAGE_SIZE}`,
+      `${BASE_PATH}?academic_year_id=${encodeURIComponent(academicYearId)}&page=${page}&limit=${LIST_PAGE_SIZE}`,
       { method: "GET" },
       (body) => ({ ok: true, data: readStudentPage(body, page) }),
     );

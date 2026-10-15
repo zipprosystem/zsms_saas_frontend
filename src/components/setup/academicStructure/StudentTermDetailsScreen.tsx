@@ -138,8 +138,8 @@ function StudentTermDetailsTable({ yearId }: { yearId: string }) {
   const termsDevBypass = classes.length > 0 && termQueries.some((query) => isDevBypassUnavailable(query.data));
 
   const studentsQuery = useQuery({
-    queryKey: studentsQueryKey,
-    queryFn: () => listStudents(),
+    queryKey: studentsQueryKey(yearId),
+    queryFn: () => listStudents(yearId),
     staleTime: STRUCTURAL_STALE_TIME_MS,
   });
   const students: Student[] = studentsQuery.data?.ok ? studentsQuery.data.data : [];

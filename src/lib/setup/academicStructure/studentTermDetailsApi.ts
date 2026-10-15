@@ -138,8 +138,13 @@ async function send<T>(
   }
 
   const body = await parseBody(response);
-  if (!response.ok) return toResult(response, body);
+  if (!response.ok) return withStatus(toResult<T>(response, body), response.status);
   return onSuccess(body);
+}
+
+/** Stamps the HTTP status onto a "server" result so throwIfTransient() never retries a 4xx (e.g. a 422 VALIDATION_ERROR). */
+function withStatus<T>(result: CrudResult<T>, status: number): CrudResult<T> {
+  return !result.ok && result.kind === "server" ? { ...result, status } : result;
 }
 
 function rowResult(body: unknown): CrudResult<StudentTermDetail> {

@@ -1100,6 +1100,10 @@
     "empty": "Aucun élève pour le moment — ajoutez le premier pour commencer.",
     "emptyWithdrawn": "Aucun élève retiré, suspendu ou exclu.",
     "emptyGraduate": "Aucun élève diplômé pour l'instant.",
+    "noYear": {
+      "message": "Sélectionnez ou créez une année académique pour afficher les élèves.",
+      "linkLabel": "Aller aux années académiques"
+    },
     "export": {
       "label": "Exporter la liste"
     },
