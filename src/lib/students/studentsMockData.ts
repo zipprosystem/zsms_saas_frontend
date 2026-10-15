@@ -1,4 +1,4 @@
-import type { Agent, StudentMode } from "@/lib/students/studentTypes";
+import type { StudentMode } from "@/lib/students/studentTypes";
 
 /**
  * MOCK — "school_mode" (day|boarding|both) is a real Settings field we've
@@ -15,8 +15,10 @@ export const MOCK_SCHOOL_MODE: StudentMode = "day";
 
 /**
  * Illustrative-only reference data for the parts of the Students UI whose
- * backing entities don't exist backend-side yet: Academic Houses, Boarding
- * Houses, Extra-curricular activities, Agents. Students themselves are
+ * backing entities don't exist backend-side yet: Academic Houses (Student
+ * Term Details, table helpers) and Boarding Houses (Students list column/
+ * filter). The wizard itself shows these as "Coming soon" (ComingSoonField)
+ * rather than offering mock options. Students themselves are
  * REAL now (studentsApi.ts) and none of these ids are ever sent to it —
  * they're UI-only fields (see studentTypes.ts). Ids are prefixed "mock-"
  * so they can never be confused with real ones.
@@ -35,16 +37,4 @@ export const MOCK_BOARDING_HOUSES: MockRef[] = [
   { id: "mock-boarding-unity", name: "Unity Hall" },
   { id: "mock-boarding-peace", name: "Peace Hall" },
   { id: "mock-boarding-harmony", name: "Harmony Hall" },
-];
-
-export const MOCK_EXTRA_CURRICULAR: MockRef[] = [
-  { id: "mock-activity-football", name: "Football" },
-  { id: "mock-activity-choir", name: "Choir" },
-  { id: "mock-activity-debate", name: "Debate" },
-];
-
-export const MOCK_AGENTS: Agent[] = [
-  { id: "mock-agent-1", name: "Chidi Okafor", agency: "Bright Futures Agency" },
-  { id: "mock-agent-2", name: "Amina Bello", agency: "EduLink Partners" },
-  { id: "mock-agent-3", name: "Grace Adeyemi", agency: null },
 ];

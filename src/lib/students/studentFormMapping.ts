@@ -120,7 +120,10 @@ export function studentToFormData(student: Student): StudentFormData {
     },
     loginDetails: {
       username: student.username,
-      password: "",
+      // Same seeding rule as lastNameTouched above: a username that already
+      // equals the lowercased email is still "following" it; anything else
+      // is an intentional choice that later email edits mustn't overwrite.
+      usernameTouched: student.username !== "" && student.username !== (student.email ?? "").toLowerCase(),
       two_factor_enabled: student.two_factor_enabled,
       login_activated: student.login_activated,
     },

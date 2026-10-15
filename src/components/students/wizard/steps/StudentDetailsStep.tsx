@@ -29,10 +29,13 @@ function computeAge(dateOfBirth: string): number | null {
 
 export function StudentDetailsStep({
   data,
+  studentDisplayId,
   errors,
   onChange,
 }: {
   data: StudentDetailsForm;
+  /** Backend-assigned student_id — read-only display, shown only once one exists (never generated client-side). */
+  studentDisplayId: string | null;
   errors: FieldErrors;
   onChange: (patch: Partial<StudentDetailsForm>) => void;
 }) {
@@ -77,6 +80,16 @@ export function StudentDetailsStep({
         />
       </div>
 
+      {studentDisplayId ? (
+        <InputField
+          id="wizard-student-id"
+          label={t("students.wizard.fields.studentId.label")}
+          value={studentDisplayId}
+          disabled
+          readOnly
+        />
+      ) : null}
+
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <InputField
           id="wizard-admission-number"
@@ -90,7 +103,10 @@ export function StudentDetailsStep({
           type="email"
           label={t("students.wizard.fields.email.label")}
           value={data.email}
+          autoCapitalize="none"
           onChange={(event) => onChange({ email: event.target.value })}
+          hasError={!!errors.email}
+          error={errors.email ? t(errors.email) : undefined}
         />
       </div>
 

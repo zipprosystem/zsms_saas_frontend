@@ -18,7 +18,7 @@ import { throwIfTransient, type ColumnDef, type FilterDef } from "@/lib/setup/cr
 import type { ExportColumn, ExportConfig } from "@/lib/export/exportTypes";
 import { createClassesService, type SchoolClass } from "@/lib/setup/academicStructure/classesApi";
 import { fetchSectionsForClass, sectionsQueryKey, type Section } from "@/lib/setup/academicStructure/sectionsApi";
-import { changeStudentStatus, deleteDraftStudent, listStudents, studentsQueryKey } from "@/lib/students/studentsApi";
+import { changeStudentStatus, deleteDraftStudent, getStudent, listStudents, studentsQueryKey } from "@/lib/students/studentsApi";
 import type { Student } from "@/lib/students/studentTypes";
 import { clampToWizardStep, type WizardStep } from "@/components/students/wizard/WizardStepper";
 import { MOCK_BOARDING_HOUSES } from "@/lib/students/studentsMockData";
@@ -132,9 +132,12 @@ export function StudentsScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<StudentsTabKey>("list");
+  // "create" with a student = resuming a draft (still an unfinished
+  // admission — see StudentWizardProps.mode); "edit" = an active student.
   const [wizardState, setWizardState] = useState<
-    { mode: "create" } | { mode: "edit"; student: Student; initialStep?: WizardStep } | null
+    { mode: "create"; student?: Student; initialStep?: WizardStep } | { mode: "edit"; student: Student } | null
   >(null);
+  const [openingStudentId, setOpeningStudentId] = useState<string | null>(null);
   const [withdrawTarget, setWithdrawTarget] = useState<Student | null>(null);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [deleteDraftTarget, setDeleteDraftTarget] = useState<Student | null>(null);
@@ -189,8 +192,26 @@ export function StudentsScreen() {
   const armNames = Array.from(new Set(sections.map((section) => section.name))).sort();
   const comingSoon = () => showToast(t("students.actions.comingSoon"));
 
-  const handleResume = (student: Student) => {
-    setWizardState({ mode: "edit", student, initialStep: clampToWizardStep(student.draft_last_step) });
+  // Resume/Edit always re-fetch the full record (GET /:id) rather than
+  // trusting the list row — it's the authoritative copy, and the wizard
+  // sends the COMPLETE document back on save, so a stale or partial row
+  // would silently overwrite newer data.
+  const openStudent = async (row: Student, intent: "resume" | "edit") => {
+    if (openingStudentId) return;
+    setOpeningStudentId(row.id);
+    const result = await getStudent(row.id);
+    setOpeningStudentId(null);
+    if (!result.ok) {
+      showToast(("message" in result && result.message) || t("students.actions.loadFailed"));
+      return;
+    }
+    if (intent === "resume") {
+      // draft_last_step is the cursor the last Save Draft recorded; null
+      // (or anything out of range) falls back to step 1.
+      setWizardState({ mode: "create", student: result.data, initialStep: clampToWizardStep(result.data.draft_last_step) });
+    } else {
+      setWizardState({ mode: "edit", student: result.data });
+    }
   };
 
   const handleConfirmWithdraw = async () => {
@@ -354,7 +375,12 @@ export function StudentsScreen() {
       render: (row) =>
         row.status === "draft" ? (
           <div className="flex items-center gap-3">
-            <button type="button" onClick={() => handleResume(row)} className="text-sm font-semibold text-accent hover:underline">
+            <button
+              type="button"
+              onClick={() => void openStudent(row, "resume")}
+              disabled={openingStudentId === row.id}
+              className="text-sm font-semibold text-accent hover:underline disabled:opacity-50"
+            >
               {t("students.actions.resume")}
             </button>
             <button
@@ -368,7 +394,7 @@ export function StudentsScreen() {
         ) : (
           <StudentRowActionsMenu
             student={row}
-            onEdit={() => setWizardState({ mode: "edit", student: row })}
+            onEdit={() => void openStudent(row, "edit")}
             onWithdraw={() => setWithdrawTarget(row)}
             onComingSoon={comingSoon}
           />
@@ -450,8 +476,8 @@ export function StudentsScreen() {
       {wizardState ? (
         <StudentWizard
           mode={wizardState.mode}
-          initialStudent={wizardState.mode === "edit" ? wizardState.student : undefined}
-          initialStep={wizardState.mode === "edit" ? wizardState.initialStep : undefined}
+          initialStudent={wizardState.student}
+          initialStep={wizardState.mode === "create" ? wizardState.initialStep : undefined}
           onClose={() => setWizardState(null)}
         />
       ) : null}

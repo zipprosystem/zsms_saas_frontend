@@ -73,7 +73,14 @@ function stepForErrorField(field: string): WizardStep {
 }
 
 export type StudentWizardProps = {
+  /**
+   * "edit" = an already-ACTIVE student (PUT /:id, placement read-only, no
+   * Save Draft). "create" = a new student OR a resumed draft — a draft is
+   * still an unfinished admission, so it keeps editable placement, Save
+   * Draft, and finishes via POST /:id/submit.
+   */
   mode: "create" | "edit";
+  /** Edit: the active student. Create: the draft being resumed (fetched fresh via GET /:id), or absent for a brand-new admission. */
   initialStudent?: Student;
   /** Reopens at the step a draft was last saved from (Resume), with every step up to it marked reached so the user can move freely across what they'd already filled. Defaults to 1. */
   initialStep?: WizardStep;
@@ -114,16 +121,25 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
   // short-name (SubjectsMasterScreen.tsx). Each block tracks its own
   // lastNameTouched independently, so e.g. overriding Mother's surname
   // doesn't stop Father's from continuing to sync.
+  //
+  // USERNAME AUTO-FILL: same pattern — the student's Email pre-fills
+  // Username (lowercased, matching the backend's own blank-username
+  // default) until the admin types a username of their own.
   const handleStudentDetailsChange = (patch: Partial<StudentFormData["studentDetails"]>) => {
     setData((current) => {
       const studentDetails = { ...current.studentDetails, ...patch };
-      if (patch.last_name === undefined) return { ...current, studentDetails };
+      const loginDetails =
+        patch.email !== undefined && !current.loginDetails.usernameTouched
+          ? { ...current.loginDetails, username: patch.email.trim().toLowerCase() }
+          : current.loginDetails;
+      if (patch.last_name === undefined) return { ...current, studentDetails, loginDetails };
       const lastName = patch.last_name;
       const syncBlock = (block: StudentFormData["parentGuardian"]["father"]) =>
         block.lastNameTouched ? block : { ...block, last_name: lastName };
       return {
         ...current,
         studentDetails,
+        loginDetails,
         parentGuardian: {
           ...current.parentGuardian,
           father: syncBlock(current.parentGuardian.father),
@@ -200,12 +216,12 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
     // (PUT /:id); a draft — resumed, or created by Save Draft earlier in this
     // same session — is submitted (POST /:id/submit); otherwise it's a
     // straight create (POST /students).
-    const isEditingActive = !!initialStudent && initialStudent.status !== "draft";
-    const result = isEditingActive
-      ? await updateStudent(initialStudent.id, body)
-      : studentId
-        ? await submitStudentDraft(studentId, body)
-        : await createStudent(body);
+    const result =
+      mode === "edit" && initialStudent
+        ? await updateStudent(initialStudent.id, body)
+        : studentId
+          ? await submitStudentDraft(studentId, body)
+          : await createStudent(body);
     setIsSubmitting(false);
 
     if (!result.ok) {
@@ -282,6 +298,7 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
                 classDetails={data.classDetails}
                 studentDetails={data.studentDetails}
                 loginDetails={data.loginDetails}
+                studentDisplayId={initialStudent?.student_id ?? null}
                 errors={errors}
                 onClassDetailsChange={(patch) => updateGroup("classDetails", patch)}
                 onStudentDetailsChange={handleStudentDetailsChange}

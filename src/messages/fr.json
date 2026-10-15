@@ -1178,6 +1178,7 @@
       },
       "deleteDraftSucceeded": "Brouillon supprimé",
       "deleteDraftFailed": "Une erreur est survenue lors de la suppression de ce brouillon. Veuillez réessayer.",
+      "loadFailed": "Impossible de charger cet élève. Veuillez réessayer.",
       "confirmDeleteDraft": {
         "title": "Supprimer le brouillon ?",
         "message": "Cela supprimera définitivement cet élève brouillon. Cette action est irréversible."
@@ -1256,12 +1257,10 @@
           "empty": "Aucun trimestre configuré pour cette classe"
         },
         "academicHouse": {
-          "label": "Maison académique",
-          "none": "Aucune"
+          "label": "Maison académique"
         },
         "boardingHouse": {
-          "label": "Maison d'internat",
-          "placeholder": "Sélectionnez une maison d'internat"
+          "label": "Maison d'internat"
         },
         "mode": {
           "label": "Mode"
@@ -1289,9 +1288,12 @@
         "lastName": {
           "label": "Nom"
         },
+        "studentId": {
+          "label": "ID de l'élève"
+        },
         "admissionNumber": {
           "label": "Numéro d'admission",
-          "placeholder": "Laissez vide pour générer automatiquement"
+          "placeholder": "Laisser vide pour utiliser l'ID de l'élève"
         },
         "email": {
           "label": "E-mail"
@@ -1424,8 +1426,7 @@
           "phoneLabel": "Téléphone du contact {number}"
         },
         "agent": {
-          "label": "Agent",
-          "placeholder": "Rechercher un agent"
+          "label": "Agent"
         },
         "agentCommission": {
           "label": "A un agent / verse une commission"
@@ -1454,12 +1455,10 @@
       "login": {
         "sectionTitle": "Identifiants de connexion",
         "username": {
-          "label": "Nom d'utilisateur"
+          "label": "Nom d'utilisateur",
+          "helper": "Par défaut, l'e-mail de l'élève. Vous pouvez le remplacer par n'importe quelle valeur sans espaces."
         },
-        "password": {
-          "label": "Mot de passe"
-        },
-        "regenerate": "Régénérer",
+        "passwordNote": "L'élève reçoit un mot de passe temporaire du système et doit le changer lors de sa première connexion.",
         "twoFactor": {
           "label": "Activer l'authentification à deux facteurs",
           "helper": "Contrôlé par l'administrateur, s'applique à la connexion de cet élève."
@@ -1486,8 +1485,9 @@
         "personPhoneRequired": "Le numéro de téléphone est requis",
         "streetRequired": "L'adresse (rue) est requise",
         "countryRequired": "Sélectionnez un pays",
-        "usernameRequired": "Le nom d'utilisateur est requis",
-        "passwordRequired": "Le mot de passe est requis",
+        "emailRequired": "L'e-mail est requis pour ajouter l'élève",
+        "emailInvalid": "Saisissez une adresse e-mail valide",
+        "usernameInvalid": "Le nom d'utilisateur doit comporter de 1 à 100 caractères, sans espaces",
         "usernameRejected": "Ce nom d'utilisateur est déjà pris ou invalide — choisissez-en un autre",
         "emailRejected": "Saisissez une adresse e-mail valide",
         "placementRejected": "Cette sélection n'est pas valide pour la classe ou l'année choisie"

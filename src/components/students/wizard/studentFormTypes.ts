@@ -125,9 +125,11 @@ export type PastRecordsForm = {
   records: PastRecordEntryForm[];
 };
 
+/** No password: the backend assigns the initial one and forces a change at first login. */
 export type LoginDetailsForm = {
   username: string;
-  password: string;
+  /** Username auto-fill tracking — same "prefill then stop on manual edit" pattern as the parent blocks' lastNameTouched: until the admin types their own username, it follows the student's email (lowercased). Clearing the field resets it to untouched. See StudentWizard.tsx's handleStudentDetailsChange(). */
+  usernameTouched: boolean;
   two_factor_enabled: boolean;
   login_activated: boolean;
 };
@@ -205,7 +207,7 @@ export function emptyStudentFormData(defaultMode: StudentMode | ""): StudentForm
     },
     loginDetails: {
       username: "",
-      password: "",
+      usernameTouched: false,
       two_factor_enabled: false,
       login_activated: true,
     },
