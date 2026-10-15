@@ -18,13 +18,20 @@ import { throwIfTransient, type ColumnDef, type FilterDef } from "@/lib/setup/cr
 import type { ExportColumn, ExportConfig } from "@/lib/export/exportTypes";
 import { createClassesService, type SchoolClass } from "@/lib/setup/academicStructure/classesApi";
 import { fetchSectionsForClass, sectionsQueryKey, type Section } from "@/lib/setup/academicStructure/sectionsApi";
-import { deleteDraftStudent, listStudents, setStudentStatus, studentsQueryKey } from "@/lib/students/studentsApi";
+import {
+  deleteDraftStudent,
+  getStudent,
+  listStudents,
+  studentStatusEventsQueryKey,
+  studentsQueryKey,
+} from "@/lib/students/studentsApi";
 import type { Student } from "@/lib/students/studentTypes";
 import { clampToWizardStep, type WizardStep } from "@/components/students/wizard/WizardStepper";
 import { MOCK_BOARDING_HOUSES } from "@/lib/students/studentsMockData";
 import {
   genderLabelKey,
   isBoardingHouseVisible,
+  isWithdrawnGroup,
   matchesStudentFilters,
   matchesStudentSearch,
   modeLabelKey,
@@ -39,6 +46,9 @@ import { StudentsTabs, type StudentsTabKey } from "@/components/students/Student
 import { StudentsComingSoonTab } from "@/components/students/StudentsComingSoonTab";
 import { MoreActionsMenu } from "@/components/students/MoreActionsMenu";
 import { StudentRowActionsMenu } from "@/components/students/StudentRowActionsMenu";
+import { StudentStatusBadge } from "@/components/students/StudentStatusBadge";
+import { StudentViewPanel } from "@/components/students/StudentViewPanel";
+import { StudentStatusActionPanel, type StudentStatusPanelAction } from "@/components/students/StudentStatusActionPanel";
 
 // Lazy-loaded — the wizard (7 steps + Login Details) is the largest chunk
 // in this module and only needed once "Add New Student"/a row/a draft is
@@ -74,8 +84,38 @@ const COMING_SOON_TAB_TITLE_KEYS: Partial<Record<StudentsTabKey, string>> = {
   subjectEnrollment: "students.tabs.subjectEnrollment",
   classEnrollment: "students.tabs.classEnrollment",
   notes: "students.tabs.notes",
-  withdrawn: "students.tabs.withdrawn",
-  graduate: "students.tabs.graduate",
+};
+
+/** The three tabs that are real lists over the same loaded student set, each its own slice by status. */
+type StudentListTabKey = "list" | "withdrawn" | "graduate";
+
+function isStudentListTab(tab: StudentsTabKey): tab is StudentListTabKey {
+  return tab === "list" || tab === "withdrawn" || tab === "graduate";
+}
+
+/**
+ * Student List = active + draft (drafts have no tab of their own, so they
+ * surface here with a badge and Resume/Delete instead of the menu).
+ * Withdrawn = withdrawn + suspended + expelled (one Withdraw flow, told
+ * apart by the Status column). Graduate = graduated.
+ */
+const TAB_ROW_FILTERS: Record<StudentListTabKey, (student: Student) => boolean> = {
+  list: (student) => student.status === "active" || student.status === "draft",
+  withdrawn: isWithdrawnGroup,
+  graduate: (student) => student.status === "graduated",
+};
+
+/** Status filter choices per tab — Graduate has a single status, so no filter. */
+const TAB_STATUS_FILTER_OPTIONS: Record<StudentListTabKey, Student["status"][]> = {
+  list: ["active", "draft"],
+  withdrawn: ["withdrawn", "suspended", "expelled"],
+  graduate: [],
+};
+
+const TAB_EMPTY_KEYS: Record<StudentListTabKey, string> = {
+  list: "students.empty",
+  withdrawn: "students.emptyWithdrawn",
+  graduate: "students.emptyGraduate",
 };
 
 /**
@@ -132,11 +172,14 @@ export function StudentsScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<StudentsTabKey>("list");
+  // "create" with a student = resuming a draft (still an unfinished
+  // admission — see StudentWizardProps.mode); "edit" = an active student.
   const [wizardState, setWizardState] = useState<
-    { mode: "create" } | { mode: "edit"; student: Student; initialStep?: WizardStep } | null
+    { mode: "create"; student?: Student; initialStep?: WizardStep } | { mode: "edit"; student: Student } | null
   >(null);
-  const [withdrawTarget, setWithdrawTarget] = useState<Student | null>(null);
-  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [openingStudentId, setOpeningStudentId] = useState<string | null>(null);
+  const [viewStudent, setViewStudent] = useState<Student | null>(null);
+  const [statusTarget, setStatusTarget] = useState<{ student: Student; action: StudentStatusPanelAction } | null>(null);
   const [deleteDraftTarget, setDeleteDraftTarget] = useState<Student | null>(null);
   const [isDeletingDraft, setIsDeletingDraft] = useState(false);
 
@@ -164,18 +207,13 @@ export function StudentsScreen() {
   });
 
   const allItems: Student[] = query.data?.ok ? query.data.data : [];
-  // Student List tab is active + draft — withdrawn/suspended/expelled/
-  // graduated students live on the Withdrawn/Graduate tabs instead (both
-  // placeholders in this commit; see COMING_SOON_TAB_TITLE_KEYS). Drafts
-  // have nowhere else to surface (no "Drafts" tab exists), so they stay
-  // visible here, marked with a small badge, with a Resume-only action
-  // replacing the normal menu for that row — see the "actions" column and
-  // the Last Name column below.
+  const listTab: StudentListTabKey = isStudentListTab(activeTab) ? activeTab : "list";
+  // Each list tab is a status slice of the same loaded set (TAB_ROW_FILTERS).
   // No sortable columns exist on this table (DataTable has no column-sort
   // mechanism), so "most recently added at the top" is simply the list's
   // one and only order — newest created_at first.
   const visibleStudents = allItems
-    .filter((student) => student.status === "active" || student.status === "draft")
+    .filter(TAB_ROW_FILTERS[listTab])
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const isLoading = query.isPending;
@@ -189,22 +227,44 @@ export function StudentsScreen() {
   const armNames = Array.from(new Set(sections.map((section) => section.name))).sort();
   const comingSoon = () => showToast(t("students.actions.comingSoon"));
 
-  const handleResume = (student: Student) => {
-    setWizardState({ mode: "edit", student, initialStep: clampToWizardStep(student.draft_last_step) });
-  };
-
-  const handleConfirmWithdraw = async () => {
-    if (!withdrawTarget) return;
-    setIsWithdrawing(true);
-    const result = await setStudentStatus(withdrawTarget.id, "withdrawn");
-    setIsWithdrawing(false);
-    setWithdrawTarget(null);
+  // Resume/Edit always re-fetch the full record (GET /:id) rather than
+  // trusting the list row — it's the authoritative copy, and the wizard
+  // sends the COMPLETE document back on save, so a stale or partial row
+  // would silently overwrite newer data.
+  const openStudent = async (row: Student, intent: "resume" | "edit" | "view") => {
+    if (openingStudentId) return;
+    setOpeningStudentId(row.id);
+    const result = await getStudent(row.id);
+    setOpeningStudentId(null);
     if (!result.ok) {
-      showToast(t("students.actions.withdrawFailed"));
+      showToast(("message" in result && result.message) || t("students.actions.loadFailed"));
       return;
     }
+    if (intent === "resume") {
+      // draft_last_step is the cursor the last Save Draft recorded; null
+      // (or anything out of range) falls back to step 1.
+      setWizardState({ mode: "create", student: result.data, initialStep: clampToWizardStep(result.data.draft_last_step) });
+    } else if (intent === "view") {
+      setViewStudent(result.data);
+    } else {
+      setWizardState({ mode: "edit", student: result.data });
+    }
+  };
+
+  // Search/filters are per-tab: the Status filter's options differ by tab,
+  // so a filter carried over from another tab could silently empty the list.
+  const handleTabChange = (tab: StudentsTabKey) => {
+    setActiveTab(tab);
+    view.setSearch("");
+    view.setFilters({});
+  };
+
+  const handleStatusDone = (message: string) => {
+    const studentId = statusTarget?.student.id;
+    setStatusTarget(null);
     queryClient.invalidateQueries({ queryKey: studentsQueryKey });
-    showToast(t("students.actions.withdrawSucceeded", { name: result.data.first_name }));
+    if (studentId) queryClient.invalidateQueries({ queryKey: studentStatusEventsQueryKey(studentId) });
+    showToast(message);
   };
 
   const handleConfirmDeleteDraft = async () => {
@@ -214,23 +274,27 @@ export function StudentsScreen() {
     setIsDeletingDraft(false);
     setDeleteDraftTarget(null);
     if (!result.ok) {
-      showToast(t("students.actions.deleteDraftFailed"));
+      showToast(("message" in result && result.message) || t("students.actions.deleteDraftFailed"));
       return;
     }
     queryClient.invalidateQueries({ queryKey: studentsQueryKey });
     showToast(t("students.actions.deleteDraftSucceeded"));
   };
 
+  const statusFilterOptions = TAB_STATUS_FILTER_OPTIONS[listTab];
   const filterDefs: FilterDef[] = [
-    {
-      key: "status",
-      label: t("students.filters.status"),
-      options: [
-        { value: "", label: t("students.filters.allStatuses") },
-        { value: "active", label: t("students.status.active") },
-        { value: "draft", label: t("students.status.draft") },
-      ],
-    },
+    ...(statusFilterOptions.length > 0
+      ? [
+          {
+            key: "status",
+            label: t("students.filters.status"),
+            options: [
+              { value: "", label: t("students.filters.allStatuses") },
+              ...statusFilterOptions.map((status) => ({ value: status, label: t(`students.status.${status}`) })),
+            ],
+          },
+        ]
+      : []),
     {
       key: "class",
       label: t("students.filters.class"),
@@ -307,6 +371,9 @@ export function StudentsScreen() {
     },
     { key: "firstName", header: t("students.columns.firstName"), render: (row) => row.first_name },
     { key: "otherNames", header: t("students.columns.otherNames"), render: (row) => row.other_names ?? "—" },
+    ...(listTab === "withdrawn"
+      ? [{ key: "status", header: t("students.columns.status"), render: (row: Student) => <StudentStatusBadge status={row.status} /> }]
+      : []),
     { key: "gender", header: t("students.columns.gender"), render: (row) => t(genderLabelKey(row)) },
     { key: "arm", header: t("students.columns.arm"), render: (row) => resolveArmName(row.class_arm_id, sections) },
     ...(boardingHouseVisible
@@ -351,7 +418,12 @@ export function StudentsScreen() {
       render: (row) =>
         row.status === "draft" ? (
           <div className="flex items-center gap-3">
-            <button type="button" onClick={() => handleResume(row)} className="text-sm font-semibold text-accent hover:underline">
+            <button
+              type="button"
+              onClick={() => void openStudent(row, "resume")}
+              disabled={openingStudentId === row.id}
+              className="text-sm font-semibold text-accent hover:underline disabled:opacity-50"
+            >
               {t("students.actions.resume")}
             </button>
             <button
@@ -365,8 +437,9 @@ export function StudentsScreen() {
         ) : (
           <StudentRowActionsMenu
             student={row}
-            onEdit={() => setWizardState({ mode: "edit", student: row })}
-            onWithdraw={() => setWithdrawTarget(row)}
+            onView={() => void openStudent(row, "view")}
+            onEdit={() => void openStudent(row, "edit")}
+            onStatusAction={(action) => setStatusTarget({ student: row, action })}
             onComingSoon={comingSoon}
           />
         ),
@@ -378,6 +451,7 @@ export function StudentsScreen() {
     { header: t("students.columns.lastName"), value: (row) => row.last_name },
     { header: t("students.columns.firstName"), value: (row) => row.first_name },
     { header: t("students.columns.otherNames"), value: (row) => row.other_names ?? "" },
+    ...(listTab === "withdrawn" ? [{ header: t("students.columns.status"), value: (row: Student) => t(`students.status.${row.status}`) }] : []),
     { header: t("students.columns.gender"), value: (row) => t(genderLabelKey(row)) },
     { header: t("students.columns.class"), value: (row) => resolveClassName(row.class_id, classes) },
     { header: t("students.columns.arm"), value: (row) => resolveArmName(row.class_arm_id, sections) },
@@ -398,7 +472,7 @@ export function StudentsScreen() {
     filteredRows: view.filteredItems,
     allRows: visibleStudents,
     columns: exportColumns,
-    title: t("students.tabs.list"),
+    title: t(`students.tabs.${listTab}`),
     filenamePrefix: "students",
     schoolName: typeof school?.name === "string" && school.name.trim() ? school.name.trim() : "ZSMS",
     periodLabel: selectedYear?.name,
@@ -409,11 +483,11 @@ export function StudentsScreen() {
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <StudentsHeader />
-      <StudentsTabs activeTab={activeTab} onChange={setActiveTab} />
+      <StudentsTabs activeTab={activeTab} onChange={handleTabChange} />
 
-      {activeTab === "list" ? (
+      {isStudentListTab(activeTab) ? (
         <>
-          <StudentsStatCards students={allItems} />
+          {activeTab === "list" ? <StudentsStatCards students={allItems} /> : null}
           <DataTable<Student>
             columns={columns}
             rows={view.items}
@@ -422,18 +496,18 @@ export function StudentsScreen() {
             onSearchChange={view.setSearch}
             searchPlaceholder={t("students.searchPlaceholder")}
             filters={filters}
-            onAddNew={() => setWizardState({ mode: "create" })}
+            onAddNew={activeTab === "list" ? () => setWizardState({ mode: "create" }) : undefined}
             addNewLabel={t("students.addNew")}
             extraActions={
               <>
                 <ExportMenu config={exportConfig} label={t("students.export.label")} />
-                <MoreActionsMenu onComingSoon={comingSoon} />
+                {activeTab === "list" ? <MoreActionsMenu onComingSoon={comingSoon} /> : null}
               </>
             }
             isLoading={isLoading}
             errorMessage={errorMessage}
             onRetry={() => query.refetch()}
-            emptyMessage={t("students.empty")}
+            emptyMessage={t(TAB_EMPTY_KEYS[activeTab])}
             page={view.page}
             totalPages={view.totalPages}
             onPreviousPage={() => view.setPage((p) => Math.max(1, p - 1))}
@@ -447,21 +521,35 @@ export function StudentsScreen() {
       {wizardState ? (
         <StudentWizard
           mode={wizardState.mode}
-          initialStudent={wizardState.mode === "edit" ? wizardState.student : undefined}
-          initialStep={wizardState.mode === "edit" ? wizardState.initialStep : undefined}
+          initialStudent={wizardState.student}
+          initialStep={wizardState.mode === "create" ? wizardState.initialStep : undefined}
           onClose={() => setWizardState(null)}
         />
       ) : null}
 
-      <ConfirmDialog
-        isOpen={!!withdrawTarget}
-        title={t("students.actions.confirmWithdraw.title")}
-        message={t("students.actions.confirmWithdraw.message", { name: withdrawTarget ? `${withdrawTarget.first_name} ${withdrawTarget.last_name}` : "" })}
-        isDangerous
-        isConfirming={isWithdrawing}
-        onConfirm={() => void handleConfirmWithdraw()}
-        onCancel={() => setWithdrawTarget(null)}
-      />
+      {viewStudent ? (
+        <StudentViewPanel
+          student={viewStudent}
+          classes={classes}
+          sections={sections}
+          onClose={() => setViewStudent(null)}
+          onEdit={() => {
+            const target = viewStudent;
+            setViewStudent(null);
+            setWizardState({ mode: "edit", student: target });
+          }}
+        />
+      ) : null}
+
+      {statusTarget ? (
+        <StudentStatusActionPanel
+          key={`${statusTarget.student.id}-${statusTarget.action}`}
+          student={statusTarget.student}
+          action={statusTarget.action}
+          onClose={() => setStatusTarget(null)}
+          onDone={handleStatusDone}
+        />
+      ) : null}
 
       <ConfirmDialog
         isOpen={!!deleteDraftTarget}

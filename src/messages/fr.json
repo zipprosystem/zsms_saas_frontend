@@ -920,7 +920,7 @@
     },
     "studentTermDetails": {
       "title": "Détails du trimestre des élèves",
-      "subtitle": "Automatiquement renseigné à mesure que les élèves sont créés et placés dans une classe/section/trimestre, et tenu à jour au changement de trimestre. « Ajouter un trimestre élève » sert uniquement aux corrections ou cas particuliers.",
+      "subtitle": "Automatiquement renseigné lorsqu'un élève est créé et placé dans une classe/section/trimestre. Les élèves ne passent pas automatiquement aux trimestres suivants — utilisez « Ajouter un trimestre élève » pour cela et pour les corrections.",
       "addNew": "Ajouter un trimestre élève (correction)",
       "searchPlaceholder": "Rechercher par nom ou n° d'admission…",
       "empty": "Aucun élève placé dans un trimestre pour le moment — ils apparaîtront ici automatiquement une fois ajoutés depuis la page Élèves.",
@@ -932,15 +932,14 @@
       "panel": {
         "createTitle": "Ajouter un trimestre élève",
         "editTitle": "Modifier le trimestre élève",
-        "subtitle": "Correction manuelle — la plupart des élèves sont placés ici automatiquement lors de leur création ou au changement de trimestre."
+        "subtitle": "Placement ou correction manuels — le premier trimestre d'un élève est ajouté automatiquement lors de sa création."
       },
       "columns": {
         "student": "Élève",
         "schoolType": "Type d'établissement",
         "classTerm": "Trimestre de classe",
         "class": "Classe",
-        "arm": "Section",
-        "house": "Maison académique"
+        "arm": "Section"
       },
       "filters": {
         "term": "Trimestre",
@@ -974,7 +973,6 @@
           "placeholder": "Rechercher par nom ou n° d'admission…",
           "emptyHint": "Aucun élève actif éligible pour ce trimestre."
         },
-        "house": { "label": "Maison académique (facultatif)", "none": "Aucune maison" },
         "seatNumber": { "label": "Numéro de place (facultatif)" },
         "rollNo": { "label": "Numéro de liste (facultatif)" },
         "remark": { "label": "Remarque (facultatif)" }
@@ -1100,6 +1098,8 @@
     "searchPlaceholder": "Rechercher par nom ou numéro d'admission…",
     "addNew": "Ajouter un élève",
     "empty": "Aucun élève pour le moment — ajoutez le premier pour commencer.",
+    "emptyWithdrawn": "Aucun élève retiré, suspendu ou exclu.",
+    "emptyGraduate": "Aucun élève diplômé pour l'instant.",
     "export": {
       "label": "Exporter la liste"
     },
@@ -1158,6 +1158,56 @@
       "male": "Masculin",
       "female": "Féminin"
     },
+    "statusActions": {
+      "titles": {
+        "withdraw": "Retirer l'élève",
+        "graduate": "Diplômer l'élève",
+        "reactivate": "Réactiver l'élève",
+        "restore": "Restaurer l'élève"
+      },
+      "descriptions": {
+        "withdraw": "Indiquez pourquoi l'élève part. Il passe dans l'onglet Retirés.",
+        "graduate": "L'élève passe dans l'onglet Diplômés.",
+        "reactivate": "L'élève revient dans la liste active des élèves.",
+        "restore": "Annule la diplomation et remet l'élève dans la liste active des élèves."
+      },
+      "expelledWarning": "Cet élève a été exclu. Ne le réactivez que si l'exclusion était une erreur ou a été annulée.",
+      "confirm": {
+        "withdrawn": "Retirer",
+        "suspended": "Suspendre",
+        "expelled": "Exclure",
+        "graduate": "Diplômer",
+        "reactivate": "Réactiver",
+        "restore": "Restaurer"
+      },
+      "fields": {
+        "category": "Catégorie",
+        "reason": "Motif",
+        "reasonOptional": "Motif (facultatif)",
+        "effectiveOn": "Date d'effet (facultative)"
+      },
+      "errors": {
+        "reasonRequired": "Saisissez un motif",
+        "reasonTooLong": "Le motif doit comporter {max} caractères au maximum",
+        "failed": "Une erreur est survenue. Veuillez réessayer."
+      },
+      "success": {
+        "withdrawn": "{name} a été retiré(e)",
+        "suspended": "{name} a été suspendu(e)",
+        "expelled": "{name} a été exclu(e)",
+        "reactivated": "{name} a été réactivé(e)",
+        "graduated": "{name} est diplômé(e)",
+        "restored": "{name} a été restauré(e)"
+      }
+    },
+    "view": {
+      "history": {
+        "title": "Historique des statuts",
+        "empty": "Aucun changement de statut pour le moment.",
+        "loadError": "Impossible de charger l'historique des statuts.",
+        "by": "par {name}"
+      }
+    },
     "actions": {
       "menuLabel": "Actions pour {name}",
       "view": "Voir",
@@ -1165,19 +1215,14 @@
       "resume": "Reprendre",
       "sendMail": "Envoyer un e-mail au parent",
       "loginAs": "Se connecter en tant qu'élève",
-      "suspend": "Suspendre",
       "graduate": "Diplômer",
-      "expel": "Exclure",
       "withdraw": "Retirer",
+      "reactivate": "Réactiver",
+      "restore": "Restaurer",
       "comingSoon": "Cette action arrive dans la prochaine mise à jour",
-      "withdrawSucceeded": "{name} a été retiré(e)",
-      "withdrawFailed": "Une erreur est survenue lors du retrait de cet élève. Veuillez réessayer.",
-      "confirmWithdraw": {
-        "title": "Retirer l'élève ?",
-        "message": "Cela retirera {name} et le/la déplacera vers la liste des retirés."
-      },
       "deleteDraftSucceeded": "Brouillon supprimé",
       "deleteDraftFailed": "Une erreur est survenue lors de la suppression de ce brouillon. Veuillez réessayer.",
+      "loadFailed": "Impossible de charger cet élève. Veuillez réessayer.",
       "confirmDeleteDraft": {
         "title": "Supprimer le brouillon ?",
         "message": "Cela supprimera définitivement cet élève brouillon. Cette action est irréversible."
@@ -1256,12 +1301,10 @@
           "empty": "Aucun trimestre configuré pour cette classe"
         },
         "academicHouse": {
-          "label": "Maison académique",
-          "none": "Aucune"
+          "label": "Maison académique"
         },
         "boardingHouse": {
-          "label": "Maison d'internat",
-          "placeholder": "Sélectionnez une maison d'internat"
+          "label": "Maison d'internat"
         },
         "mode": {
           "label": "Mode"
@@ -1289,9 +1332,12 @@
         "lastName": {
           "label": "Nom"
         },
+        "studentId": {
+          "label": "ID de l'élève"
+        },
         "admissionNumber": {
           "label": "Numéro d'admission",
-          "placeholder": "Laissez vide pour générer automatiquement"
+          "placeholder": "Laisser vide pour utiliser l'ID de l'élève"
         },
         "email": {
           "label": "E-mail"
@@ -1424,8 +1470,7 @@
           "phoneLabel": "Téléphone du contact {number}"
         },
         "agent": {
-          "label": "Agent",
-          "placeholder": "Rechercher un agent"
+          "label": "Agent"
         },
         "agentCommission": {
           "label": "A un agent / verse une commission"
@@ -1454,12 +1499,10 @@
       "login": {
         "sectionTitle": "Identifiants de connexion",
         "username": {
-          "label": "Nom d'utilisateur"
+          "label": "Nom d'utilisateur",
+          "helper": "Par défaut, l'e-mail de l'élève. Vous pouvez le remplacer par n'importe quelle valeur sans espaces."
         },
-        "password": {
-          "label": "Mot de passe"
-        },
-        "regenerate": "Régénérer",
+        "passwordNote": "L'élève reçoit un mot de passe temporaire du système et doit le changer lors de sa première connexion.",
         "twoFactor": {
           "label": "Activer l'authentification à deux facteurs",
           "helper": "Contrôlé par l'administrateur, s'applique à la connexion de cet élève."
@@ -1486,8 +1529,12 @@
         "personPhoneRequired": "Le numéro de téléphone est requis",
         "streetRequired": "L'adresse (rue) est requise",
         "countryRequired": "Sélectionnez un pays",
-        "usernameRequired": "Le nom d'utilisateur est requis",
-        "passwordRequired": "Le mot de passe est requis"
+        "emailRequired": "L'e-mail est requis pour ajouter l'élève",
+        "emailInvalid": "Saisissez une adresse e-mail valide",
+        "usernameInvalid": "Le nom d'utilisateur doit comporter de 1 à 100 caractères, sans espaces",
+        "usernameRejected": "Ce nom d'utilisateur est déjà pris ou invalide — choisissez-en un autre",
+        "emailRejected": "Saisissez une adresse e-mail valide",
+        "placementRejected": "Cette sélection n'est pas valide pour la classe ou l'année choisie"
       }
     }
   },

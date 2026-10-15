@@ -1,7 +1,7 @@
-import type { AddressBlock, PersonBlock, Student } from "@/lib/students/studentTypes";
+import type { AddressBlockBody, PersonBlockBody, Student, StudentWriteBody } from "@/lib/students/studentTypes";
 import type { StudentFormData, PersonBlockForm, AddressBlockForm } from "@/components/students/wizard/studentFormTypes";
 import { EMPTY_ADDRESS_BLOCK, EMPTY_PERSON_BLOCK } from "@/components/students/wizard/studentFormTypes";
-import type { StudentUpsertInput } from "@/lib/students/studentsApi";
+import type { AttachedFile } from "@/lib/files/filesApi";
 
 /**
  * Wire (Student) -> UI form shape, for seeding the wizard in edit mode.
@@ -37,6 +37,11 @@ function toAddressBlockForm(block: Student["home_address"] | null): AddressBlock
   };
 }
 
+/** The student response only carries the file id — name/size/type are display-only and stay null (same as filesApi.readAttachedFile's flat-id case). */
+function attachedFromId(fileId: string | null): AttachedFile | null {
+  return fileId ? { file_id: fileId, name: null, size: null, type: null } : null;
+}
+
 export function studentToFormData(student: Student): StudentFormData {
   return {
     classDetails: {
@@ -50,7 +55,9 @@ export function studentToFormData(student: Student): StudentFormData {
       extra_curricular_ids: student.extra_curricular_ids,
     },
     studentDetails: {
-      photo: null,
+      // Seeded from the stored file id so a re-save keeps it — every save
+      // sends the full document, so leaving this null would CLEAR the photo.
+      photo: attachedFromId(student.photo_file_id),
       first_name: student.first_name,
       other_names: student.other_names ?? "",
       last_name: student.last_name,
@@ -108,12 +115,15 @@ export function studentToFormData(student: Student): StudentFormData {
         grade: record.grade ?? "",
         rank: record.rank ?? "",
         year: record.year ?? "",
-        attachment: null,
+        attachment: attachedFromId(record.attachment_file_id),
       })),
     },
     loginDetails: {
       username: student.username,
-      password: "",
+      // Same seeding rule as lastNameTouched above: a username that already
+      // equals the lowercased email is still "following" it; anything else
+      // is an intentional choice that later email edits mustn't overwrite.
+      usernameTouched: student.username !== "" && student.username !== (student.email ?? "").toLowerCase(),
       two_factor_enabled: student.two_factor_enabled,
       login_activated: student.login_activated,
     },
@@ -124,20 +134,27 @@ function orNull(value: string): string | null {
   return value.trim() ? value : null;
 }
 
-function toPersonBlock(form: PersonBlockForm): PersonBlock {
+function isBlank(values: string[]): boolean {
+  return values.every((value) => !value.trim());
+}
+
+/** A block nobody has typed into yet goes out as null rather than an object of nulls — a draft's untouched Father block isn't "a father with no name". */
+function toPersonBlock(form: PersonBlockForm): PersonBlockBody | null {
+  if (isBlank([form.first_name, form.middle_name, form.last_name, form.phone, form.email, form.occupation])) return null;
   return {
-    first_name: form.first_name,
+    first_name: orNull(form.first_name),
     middle_name: orNull(form.middle_name),
-    last_name: form.last_name,
-    phone: form.phone,
+    last_name: orNull(form.last_name),
+    phone: orNull(form.phone),
     email: orNull(form.email),
     occupation: orNull(form.occupation),
   };
 }
 
-function toAddressBlock(form: AddressBlockForm): AddressBlock {
+function toAddressBlock(form: AddressBlockForm): AddressBlockBody | null {
+  if (isBlank([form.street, form.country_code, form.state_code, form.city, form.postal_code, form.lga_or_area])) return null;
   return {
-    street: form.street,
+    street: orNull(form.street),
     country_code: orNull(form.country_code),
     state_code: orNull(form.state_code),
     city: orNull(form.city),
@@ -147,47 +164,41 @@ function toAddressBlock(form: AddressBlockForm): AddressBlock {
 }
 
 /**
- * UI form -> wire (StudentUpsertInput), for create()/update()/saveDraft().
- * A draft legitimately has empty required fields mid-fill — plain string
- * fields tolerate "" fine (the wire type only requires `string`, not
- * non-empty), but `mode`/`gender` are true enum unions that don't accept
- * "". Defaulting those two to a placeholder ONLY when saving a draft is a
- * client-side pragmatism for the mock store, not a stance on what the real
- * API's draft contract should look like (see studentsApi.ts's file header —
- * that's still an open question for Muntajir).
+ * UI form -> wire body (StudentWriteBody) for every draft save, submit,
+ * create and update — always the complete form, with null for anything
+ * not filled yet (a draft legitimately has required fields empty; final
+ * saves are gated by validateAllSteps() before they get here).
+ *
+ * `academicYearId` is the session's selected year — sent on every save
+ * even though the backend can infer it from class_id.
+ *
+ * NEVER sent (UI-only, the backend 422s on them unless null/omitted — see
+ * studentTypes.ts): academic_house_id, boarding_house_id, agent_id,
+ * extra_curricular_ids, fee_display. Nor is any password — the backend
+ * assigns the initial one. `username` is omitted when blank: a final save
+ * then defaults it to the lowercased email, an update keeps the existing.
  */
-export function formDataToStudentUpsertInput(data: StudentFormData): StudentUpsertInput {
+export function formDataToStudentBody(data: StudentFormData, academicYearId: string | null): StudentWriteBody {
   const { classDetails, studentDetails, parentGuardian, address, agent, siblings, pastRecords, loginDetails } = data;
 
   const isGuardian = parentGuardian.relationship_type === "guardian";
   const religion = studentDetails.religion_is_other ? studentDetails.religion_other_text : studentDetails.religion;
+  const username = loginDetails.username.trim();
 
   const emergencyContacts = address.emergency_contacts
     .filter((contact) => contact.name.trim() || contact.phone.trim())
     .map((contact) => ({ name: orNull(contact.name), phone: orNull(contact.phone) }));
 
   return {
-    school_type_id: classDetails.school_type_id,
-    class_id: classDetails.class_id,
-    class_arm_id: classDetails.class_arm_id,
-    class_term_id: orNull(classDetails.class_term_id),
-    academic_house_id: orNull(classDetails.academic_house_id),
-    boarding_house_id: classDetails.mode === "boarding" ? orNull(classDetails.boarding_house_id) : null,
-    mode: classDetails.mode || "day",
-    extra_curricular_ids: classDetails.extra_curricular_ids,
-    fee_display: null,
-
-    photo_file_id: studentDetails.photo?.file_id ?? null,
-    first_name: studentDetails.first_name,
+    mode: classDetails.mode || null,
+    first_name: orNull(studentDetails.first_name),
     other_names: orNull(studentDetails.other_names),
-    last_name: studentDetails.last_name,
-    admission_number: orNull(studentDetails.admission_number),
-    email: orNull(studentDetails.email),
-    gender: studentDetails.gender || "male",
+    last_name: orNull(studentDetails.last_name),
+    gender: studentDetails.gender || null,
     religion: orNull(religion),
     religion_is_other: studentDetails.religion_is_other,
-    nationality: studentDetails.nationality,
-    date_of_birth: studentDetails.date_of_birth,
+    nationality: orNull(studentDetails.nationality),
+    date_of_birth: orNull(studentDetails.date_of_birth),
     height: orNull(studentDetails.height),
     weight: orNull(studentDetails.weight),
     blood_group: orNull(studentDetails.blood_group),
@@ -196,6 +207,13 @@ export function formDataToStudentUpsertInput(data: StudentFormData): StudentUpse
     medical_conditions: orNull(studentDetails.medical_conditions),
     medications: orNull(studentDetails.medications),
     special_needs_notes: orNull(studentDetails.special_needs_notes),
+    photo_file_id: studentDetails.photo?.file_id ?? null,
+    admission_number: orNull(studentDetails.admission_number),
+
+    email: orNull(studentDetails.email),
+    ...(username ? { username } : {}),
+    login_activated: loginDetails.login_activated,
+    two_factor_enabled: loginDetails.two_factor_enabled,
 
     relationship_type: parentGuardian.relationship_type,
     father: isGuardian ? null : toPersonBlock(parentGuardian.father),
@@ -206,15 +224,10 @@ export function formDataToStudentUpsertInput(data: StudentFormData): StudentUpse
     home_address: toAddressBlock(address.home),
     other_address_same_as_home: address.other_same_as_home,
     other_address: address.other_same_as_home ? null : toAddressBlock(address.other),
+
     emergency_contacts: emergencyContacts,
-
-    agent_id: orNull(agent.agent_id),
-    has_agent_commission: agent.has_agent_commission,
-
     sibling_student_ids: siblings.sibling_student_ids,
-
     past_records: pastRecords.records.map((record) => ({
-      id: record.localId,
       school: orNull(record.school),
       class: orNull(record.class),
       grade: orNull(record.grade),
@@ -223,9 +236,12 @@ export function formDataToStudentUpsertInput(data: StudentFormData): StudentUpse
       attachment_file_id: record.attachment?.file_id ?? null,
     })),
 
-    username: loginDetails.username,
-    password_is_set: !!loginDetails.password.trim(),
-    two_factor_enabled: loginDetails.two_factor_enabled,
-    login_activated: loginDetails.login_activated,
+    academic_year_id: academicYearId,
+    school_type_id: orNull(classDetails.school_type_id),
+    class_id: orNull(classDetails.class_id),
+    class_arm_id: orNull(classDetails.class_arm_id),
+    class_term_id: orNull(classDetails.class_term_id),
+
+    has_agent_commission: agent.has_agent_commission,
   };
 }

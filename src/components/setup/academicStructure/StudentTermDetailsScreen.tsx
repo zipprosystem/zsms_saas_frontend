@@ -24,20 +24,20 @@ import {
 } from "@/lib/setup/academicStructure/classTermsApi";
 import {
   createStudentTermDetailService,
+  TERM_DETAIL_CODE_MAX_LENGTH,
+  TERM_DETAIL_REMARK_MAX_LENGTH,
   type StudentTermDetail,
   type StudentTermDetailInput,
 } from "@/lib/setup/academicStructure/studentTermDetailsApi";
 import { listStudents, studentsQueryKey } from "@/lib/students/studentsApi";
 import type { Student } from "@/lib/students/studentTypes";
 import { studentFullName } from "@/lib/students/studentsTableHelpers";
-import { MOCK_HOUSES } from "@/lib/students/studentsMockData";
 
 type FormState = {
   class_id: string;
   class_term_id: string;
   section_id: string;
   student_id: string;
-  house_id: string;
   seat_number: string;
   roll_no: string;
   remark: string;
@@ -48,7 +48,6 @@ const EMPTY_FORM: FormState = {
   class_term_id: "",
   section_id: "",
   student_id: "",
-  house_id: "",
   seat_number: "",
   roll_no: "",
   remark: "",
@@ -164,8 +163,6 @@ function StudentTermDetailsTable({ yearId }: { yearId: string }) {
   const sectionById = (id: string): Section | null => sections.find((section) => section.id === id) ?? null;
   const termById = (id: string): ClassTerm | null => allTerms.find((term) => term.id === id) ?? null;
   const studentById = (id: string): Student | null => students.find((student) => student.id === id) ?? null;
-  const houseById = (id: string | null): { id: string; name: string } | null =>
-    id ? (MOCK_HOUSES.find((house) => house.id === id) ?? null) : null;
 
   const termTypeLabel = (type: TermType) => t(`setup.classTerms.termType.${type.toLowerCase()}`);
   const termLabel = (term: ClassTerm): string => `${term.term_name} · ${termTypeLabel(term.term_type)}`;
@@ -179,6 +176,17 @@ function StudentTermDetailsTable({ yearId }: { yearId: string }) {
   };
 
   const armNames = Array.from(new Set(sections.map((section) => section.name))).sort();
+
+  const toInput = (data: FormState): StudentTermDetailInput => ({
+    academic_year_id: yearId,
+    class_id: data.class_id,
+    class_term_id: data.class_term_id,
+    section_id: data.section_id,
+    student_id: data.student_id,
+    seat_number: data.seat_number.trim() || null,
+    roll_no: data.roll_no.trim() || null,
+    remark: data.remark.trim() || null,
+  });
 
   const filterDefs: FilterDef[] = [
     {
@@ -220,7 +228,6 @@ function StudentTermDetailsTable({ yearId }: { yearId: string }) {
     },
     { key: "class", header: t("setup.studentTermDetails.columns.class"), render: (row) => classById(row.class_id)?.name ?? "—" },
     { key: "arm", header: t("setup.studentTermDetails.columns.arm"), render: (row) => sectionById(row.section_id)?.name ?? "—" },
-    { key: "house", header: t("setup.studentTermDetails.columns.house"), render: (row) => houseById(row.house_id)?.name ?? "—" },
   ];
 
   const exportColumns: ExportColumn<StudentTermDetail>[] = [
@@ -235,7 +242,6 @@ function StudentTermDetailsTable({ yearId }: { yearId: string }) {
     },
     { header: t("setup.studentTermDetails.columns.class"), value: (row) => classById(row.class_id)?.name ?? "" },
     { header: t("setup.studentTermDetails.columns.arm"), value: (row) => sectionById(row.section_id)?.name ?? "" },
-    { header: t("setup.studentTermDetails.columns.house"), value: (row) => houseById(row.house_id)?.name ?? "" },
   ];
 
   return (
@@ -289,7 +295,6 @@ function StudentTermDetailsTable({ yearId }: { yearId: string }) {
         class_term_id: row.class_term_id,
         section_id: row.section_id,
         student_id: row.student_id,
-        house_id: row.house_id ?? "",
         seat_number: row.seat_number ?? "",
         roll_no: row.roll_no ?? "",
         remark: row.remark ?? "",
@@ -302,28 +307,10 @@ function StudentTermDetailsTable({ yearId }: { yearId: string }) {
         if (!data.student_id) errors.student_id = t("setup.studentTermDetails.errors.studentRequired");
         return errors;
       }}
-      toCreateInput={(data) => ({
-        academic_year_id: yearId,
-        class_term_id: data.class_term_id,
-        class_id: data.class_id,
-        section_id: data.section_id,
-        student_id: data.student_id,
-        house_id: data.house_id || null,
-        seat_number: data.seat_number.trim() || null,
-        roll_no: data.roll_no.trim() || null,
-        remark: data.remark.trim() || null,
-      })}
-      toUpdateInput={(data) => ({
-        academic_year_id: yearId,
-        class_term_id: data.class_term_id,
-        class_id: data.class_id,
-        section_id: data.section_id,
-        student_id: data.student_id,
-        house_id: data.house_id || null,
-        seat_number: data.seat_number.trim() || null,
-        roll_no: data.roll_no.trim() || null,
-        remark: data.remark.trim() || null,
-      })}
+      // Create and update take the identical body (all five ids required,
+      // no house_id — any unknown field is a 422).
+      toCreateInput={toInput}
+      toUpdateInput={toInput}
       renderFields={({ data, onChange, errors }) => {
         const termsForClass = allTerms.filter((term) => term.class_id === data.class_id);
         const sectionsForClass = sections.filter((section) => section.class_id === data.class_id && section.is_active);
@@ -442,24 +429,11 @@ function StudentTermDetailsTable({ yearId }: { yearId: string }) {
               error={errors.student_id}
             />
 
-            <SelectField
-              id="student-term-detail-house"
-              label={t("setup.studentTermDetails.fields.house.label")}
-              value={data.house_id}
-              onChange={(event) => onChange({ house_id: event.target.value })}
-            >
-              <option value="">{t("setup.studentTermDetails.fields.house.none")}</option>
-              {MOCK_HOUSES.map((house) => (
-                <option key={house.id} value={house.id}>
-                  {house.name}
-                </option>
-              ))}
-            </SelectField>
-
             <InputField
               id="student-term-detail-seat"
               label={t("setup.studentTermDetails.fields.seatNumber.label")}
               value={data.seat_number}
+              maxLength={TERM_DETAIL_CODE_MAX_LENGTH}
               onChange={(event) => onChange({ seat_number: event.target.value })}
             />
 
@@ -467,6 +441,7 @@ function StudentTermDetailsTable({ yearId }: { yearId: string }) {
               id="student-term-detail-roll"
               label={t("setup.studentTermDetails.fields.rollNo.label")}
               value={data.roll_no}
+              maxLength={TERM_DETAIL_CODE_MAX_LENGTH}
               onChange={(event) => onChange({ roll_no: event.target.value })}
             />
 
@@ -474,6 +449,7 @@ function StudentTermDetailsTable({ yearId }: { yearId: string }) {
               id="student-term-detail-remark"
               label={t("setup.studentTermDetails.fields.remark.label")}
               value={data.remark}
+              maxLength={TERM_DETAIL_REMARK_MAX_LENGTH}
               onChange={(event) => onChange({ remark: event.target.value })}
             />
           </>

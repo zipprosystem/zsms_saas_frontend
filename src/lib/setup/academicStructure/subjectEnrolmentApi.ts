@@ -23,11 +23,10 @@ import type { CrudResult } from "@/lib/setup/crudTypes";
  * class's actual core-subject configuration, and there's nothing to
  * migrate/backfill if that configuration changes later.
  *
- * Term-wise; carries forward on Student Term Details' auto-roll (see
- * carryForwardElectivesForTerm() below, called from
- * studentTermDetailsApi.ts's runAutoRollForYear() for each student it
- * rolls). Only elective rows ever need carrying forward — core is correct
- * automatically, by definition of being derived.
+ * Term-wise. There is no automatic carry-forward of electives into a
+ * later term: Student Term Details no longer auto-rolls students (the
+ * real backend doesn't implement auto-roll), so a student's electives are
+ * enrolled per term. Core needs nothing either way — it's derived.
  */
 export type SubjectEnrolment = {
   id: string;
@@ -174,46 +173,6 @@ export async function setStudentElectives(
 
   saveStore([...kept, ...additions]);
   return { ok: true, data: undefined };
-}
-
-/**
- * Called from studentTermDetailsApi.ts's auto-roll for each student it
- * rolls into a new term — copies that student's ELECTIVE rows from the
- * prior term into the new one. Since Student Term Details' auto-roll is
- * explicitly scoped to the SAME class/arm within one academic year (never
- * class promotion — see studentTermDetailsApi.ts), a class_subject_id from
- * the old term is still valid in the new one: no subject re-matching is
- * needed, just a straight copy onto the new class_term_id/section_id. Core
- * needs no carry-forward at all — it's derived fresh from the (unchanged)
- * class's ClassSubject list every time, by definition.
- */
-export async function carryForwardElectivesForTerm(
-  studentId: string,
-  fromClassTermId: string,
-  toClassTermId: string,
-  toSectionId: string,
-): Promise<void> {
-  const store = getStore();
-  const alreadyInNewTerm = new Set(
-    store.filter((row) => row.student_id === studentId && row.class_term_id === toClassTermId).map((row) => row.class_subject_id),
-  );
-  const toCopy = store.filter(
-    (row) =>
-      row.student_id === studentId &&
-      row.class_term_id === fromClassTermId &&
-      !alreadyInNewTerm.has(row.class_subject_id),
-  );
-  if (toCopy.length === 0) return;
-
-  const now = nowIso();
-  const additions: SubjectEnrolment[] = toCopy.map((row) => ({
-    ...row,
-    id: newId(),
-    class_term_id: toClassTermId,
-    section_id: toSectionId,
-    created_at: now,
-  }));
-  saveStore([...store, ...additions]);
 }
 
 export async function removeSubjectEnrolment(id: string): Promise<CrudResult<void>> {

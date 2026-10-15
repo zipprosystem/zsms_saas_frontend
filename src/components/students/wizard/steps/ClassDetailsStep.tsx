@@ -14,9 +14,9 @@ import { schoolTypesService, type SchoolType } from "@/lib/setup/academicStructu
 import { createClassesService, type SchoolClass } from "@/lib/setup/academicStructure/classesApi";
 import { fetchSectionsForClass, sectionsQueryKey, type Section } from "@/lib/setup/academicStructure/sectionsApi";
 import { classTermsQueryKey, fetchTermsForClass, findActiveClassTerm, type ClassTerm } from "@/lib/setup/academicStructure/classTermsApi";
-import { MOCK_HOUSES, MOCK_BOARDING_HOUSES, MOCK_EXTRA_CURRICULAR } from "@/lib/students/studentsMockData";
 import { isBoardingHouseVisible } from "@/lib/students/studentsTableHelpers";
 import { DevBypassNotice } from "@/components/students/wizard/DevBypassNotice";
+import { ComingSoonField } from "@/components/students/wizard/ComingSoonField";
 import type { ClassDetailsForm } from "@/components/students/wizard/studentFormTypes";
 import type { FieldErrors } from "@/components/students/wizard/studentFormTypes";
 
@@ -105,7 +105,9 @@ export function ClassDetailsStep({
   // enrolment record (single source of truth) — the profile only DISPLAYS
   // it from then on; changing it happens on that screen instead, not here.
   // Only applies to these 4 fields; House/Mode/Boarding House/Extra-
-  // curricular/Login stay editable in edit mode same as always.
+  // curricular/Login render the same in both modes (StudentAttributesFields).
+  // The backend independently enforces this: a placement change on PUT
+  // /:id is rejected 409 ENROLMENT_LOCKED.
   if (mode === "edit") {
     const schoolTypeName = schoolTypes.find((type) => type.id === data.school_type_id)?.name ?? "—";
     const className = classes.find((cls) => cls.id === data.class_id)?.name ?? "—";
@@ -125,69 +127,12 @@ export function ClassDetailsStep({
           </Link>
         </p>
 
-        <SelectField
-          id="wizard-academic-house"
-          label={t("students.wizard.fields.academicHouse.label")}
-          value={data.academic_house_id}
-          onChange={(event) => onChange({ academic_house_id: event.target.value })}
-        >
-          <option value="">{t("students.wizard.fields.academicHouse.none")}</option>
-          {MOCK_HOUSES.map((house) => (
-            <option key={house.id} value={house.id}>
-              {house.name}
-            </option>
-          ))}
-        </SelectField>
-
-        <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text-primary">{t("students.wizard.fields.mode.label")}</span>
-          <ChipGroup
-            multiple={false}
-            options={[
-              { value: "day", label: t("students.mode.day") },
-              { value: "boarding", label: t("students.mode.boarding") },
-            ]}
-            value={data.mode ? [data.mode] : []}
-            onChange={(values) =>
-              onChange({ mode: (values[0] as ClassDetailsForm["mode"]) ?? "", boarding_house_id: values[0] === "boarding" ? data.boarding_house_id : "" })
-            }
-            hasError={!!errors.mode}
-            error={errors.mode ? t(errors.mode) : undefined}
-          />
-        </div>
-
-        {boardingHouseAllowed && data.mode === "boarding" ? (
-          <SelectField
-            id="wizard-boarding-house"
-            label={t("students.wizard.fields.boardingHouse.label")}
-            value={data.boarding_house_id}
-            onChange={(event) => onChange({ boarding_house_id: event.target.value })}
-          >
-            <option value="">{t("students.wizard.fields.boardingHouse.placeholder")}</option>
-            {MOCK_BOARDING_HOUSES.map((house) => (
-              <option key={house.id} value={house.id}>
-                {house.name}
-              </option>
-            ))}
-          </SelectField>
-        ) : null}
-
-        <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text-primary">{t("students.wizard.fields.extraCurricular.label")}</span>
-          <ChipGroup
-            multiple
-            options={MOCK_EXTRA_CURRICULAR.map((activity) => ({ value: activity.id, label: activity.name }))}
-            value={data.extra_curricular_ids}
-            onChange={(values) => onChange({ extra_curricular_ids: values })}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text-primary">{t("students.wizard.fields.fee.label")}</span>
-          <p className="rounded-md border border-border bg-background px-4 py-3 text-sm text-text-muted">
-            {t("students.wizard.fields.fee.pending")}
-          </p>
-        </div>
+        <StudentAttributesFields
+          mode={data.mode}
+          boardingHouseAllowed={boardingHouseAllowed}
+          errors={errors}
+          onModeChange={(studentMode) => onChange({ mode: studentMode })}
+        />
       </div>
     );
   }
@@ -277,19 +222,39 @@ export function ClassDetailsStep({
       </SelectField>
       {termsDevBypass ? <DevBypassNotice /> : null}
 
-      <SelectField
-        id="wizard-academic-house"
-        label={t("students.wizard.fields.academicHouse.label")}
-        value={data.academic_house_id}
-        onChange={(event) => onChange({ academic_house_id: event.target.value })}
-      >
-        <option value="">{t("students.wizard.fields.academicHouse.none")}</option>
-        {MOCK_HOUSES.map((house) => (
-          <option key={house.id} value={house.id}>
-            {house.name}
-          </option>
-        ))}
-      </SelectField>
+      <StudentAttributesFields
+        mode={data.mode}
+        boardingHouseAllowed={boardingHouseAllowed}
+        errors={errors}
+        onModeChange={(studentMode) => onChange({ mode: studentMode })}
+      />
+    </div>
+  );
+}
+
+/**
+ * Everything on Class Details after placement — identical in create and
+ * edit mode. Only Mode is live: Academic House, Boarding House and
+ * Extra-curricular aren't supported by the Student Core API yet (it 422s
+ * on them), so they render as "Coming soon" and are never sent (see
+ * studentFormMapping.ts). Fee is pending the Fees/Accounts module.
+ */
+function StudentAttributesFields({
+  mode,
+  boardingHouseAllowed,
+  errors,
+  onModeChange,
+}: {
+  mode: ClassDetailsForm["mode"];
+  boardingHouseAllowed: boolean;
+  errors: FieldErrors;
+  onModeChange: (mode: ClassDetailsForm["mode"]) => void;
+}) {
+  const t = useTranslations();
+
+  return (
+    <>
+      <ComingSoonField label={t("students.wizard.fields.academicHouse.label")} />
 
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-text-primary">{t("students.wizard.fields.mode.label")}</span>
@@ -299,40 +264,18 @@ export function ClassDetailsStep({
             { value: "day", label: t("students.mode.day") },
             { value: "boarding", label: t("students.mode.boarding") },
           ]}
-          value={data.mode ? [data.mode] : []}
-          onChange={(values) =>
-            onChange({ mode: (values[0] as ClassDetailsForm["mode"]) ?? "", boarding_house_id: values[0] === "boarding" ? data.boarding_house_id : "" })
-          }
+          value={mode ? [mode] : []}
+          onChange={(values) => onModeChange((values[0] as ClassDetailsForm["mode"]) ?? "")}
           hasError={!!errors.mode}
           error={errors.mode ? t(errors.mode) : undefined}
         />
       </div>
 
-      {boardingHouseAllowed && data.mode === "boarding" ? (
-        <SelectField
-          id="wizard-boarding-house"
-          label={t("students.wizard.fields.boardingHouse.label")}
-          value={data.boarding_house_id}
-          onChange={(event) => onChange({ boarding_house_id: event.target.value })}
-        >
-          <option value="">{t("students.wizard.fields.boardingHouse.placeholder")}</option>
-          {MOCK_BOARDING_HOUSES.map((house) => (
-            <option key={house.id} value={house.id}>
-              {house.name}
-            </option>
-          ))}
-        </SelectField>
+      {boardingHouseAllowed && mode === "boarding" ? (
+        <ComingSoonField label={t("students.wizard.fields.boardingHouse.label")} />
       ) : null}
 
-      <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-text-primary">{t("students.wizard.fields.extraCurricular.label")}</span>
-        <ChipGroup
-          multiple
-          options={MOCK_EXTRA_CURRICULAR.map((activity) => ({ value: activity.id, label: activity.name }))}
-          value={data.extra_curricular_ids}
-          onChange={(values) => onChange({ extra_curricular_ids: values })}
-        />
-      </div>
+      <ComingSoonField label={t("students.wizard.fields.extraCurricular.label")} />
 
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-text-primary">{t("students.wizard.fields.fee.label")}</span>
@@ -340,6 +283,6 @@ export function ClassDetailsStep({
           {t("students.wizard.fields.fee.pending")}
         </p>
       </div>
-    </div>
+    </>
   );
 }

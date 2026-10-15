@@ -16,8 +16,8 @@ import type {
  * standalone Class Details / Student Details / Login Details steps onto
  * one screen; none of their field logic changed, this is purely a layout
  * container. Login Details moving here (off the old final step) means an
- * admin editing a student reaches the account/password on the FIRST
- * screen instead of the last.
+ * admin editing a student reaches the account on the FIRST screen instead
+ * of the last.
  */
 export function EnrolmentStep({
   yearId,
@@ -25,6 +25,7 @@ export function EnrolmentStep({
   classDetails,
   studentDetails,
   loginDetails,
+  studentDisplayId,
   errors,
   onClassDetailsChange,
   onStudentDetailsChange,
@@ -35,6 +36,8 @@ export function EnrolmentStep({
   classDetails: ClassDetailsForm;
   studentDetails: StudentDetailsForm;
   loginDetails: LoginDetailsForm;
+  /** The backend-assigned student_id, once one exists — shown read-only, never generated here. */
+  studentDisplayId: string | null;
   errors: FieldErrors;
   onClassDetailsChange: (patch: Partial<ClassDetailsForm>) => void;
   onStudentDetailsChange: (patch: Partial<StudentDetailsForm>) => void;
@@ -51,16 +54,16 @@ export function EnrolmentStep({
 
       <section className="border-t border-border pt-6">
         <p className="mb-3 text-sm font-semibold text-text-primary">{t("students.wizard.sections.studentDetails")}</p>
-        <StudentDetailsStep data={studentDetails} errors={errors} onChange={onStudentDetailsChange} />
+        <StudentDetailsStep
+          data={studentDetails}
+          studentDisplayId={studentDisplayId}
+          errors={errors}
+          onChange={onStudentDetailsChange}
+        />
       </section>
 
       {/* LoginDetailsSection brings its own top divider/spacing — no extra wrapper needed. */}
-      <LoginDetailsSection
-        data={loginDetails}
-        errors={errors}
-        admissionNumber={studentDetails.admission_number}
-        onChange={onLoginDetailsChange}
-      />
+      <LoginDetailsSection data={loginDetails} errors={errors} onChange={onLoginDetailsChange} />
     </div>
   );
 }

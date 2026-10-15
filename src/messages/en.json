@@ -912,7 +912,7 @@
     },
     "studentTermDetails": {
       "title": "Student Term Details",
-      "subtitle": "Automatically populated as students are created and placed into a class/arm/term, and kept up to date as terms roll over. Add Student Term is for corrections or edge cases only.",
+      "subtitle": "Automatically populated when a student is created and placed into a class/arm/term. Students aren't moved to later terms automatically — use Add Student Term for that and for corrections.",
       "addNew": "Add Student Term (Correction)",
       "searchPlaceholder": "Search by student name or admission no…",
       "empty": "No students placed into a term yet — they'll appear here automatically once added via the Students page.",
@@ -924,15 +924,14 @@
       "panel": {
         "createTitle": "Add Student Term",
         "editTitle": "Edit Student Term",
-        "subtitle": "Manual correction — most students are placed here automatically when they're created or when a term rolls over."
+        "subtitle": "Manual placement or correction — a student's first term is added automatically when they're created."
       },
       "columns": {
         "student": "Student",
         "schoolType": "School Type",
         "classTerm": "Class Term",
         "class": "Class",
-        "arm": "Class-arm",
-        "house": "Academic House"
+        "arm": "Class-arm"
       },
       "filters": {
         "term": "Term",
@@ -966,7 +965,6 @@
           "placeholder": "Search by name or admission no…",
           "emptyHint": "No eligible active students for this term."
         },
-        "house": { "label": "Academic House (optional)", "none": "No house" },
         "seatNumber": { "label": "Seat Number (optional)" },
         "rollNo": { "label": "Roll No (optional)" },
         "remark": { "label": "Remark (optional)" }
@@ -1092,6 +1090,8 @@
     "searchPlaceholder": "Search by name or admission no…",
     "addNew": "Add New Student",
     "empty": "No students yet — add your first one to get started.",
+    "emptyWithdrawn": "No withdrawn, suspended or expelled students.",
+    "emptyGraduate": "No graduated students yet.",
     "export": {
       "label": "Export List"
     },
@@ -1150,6 +1150,56 @@
       "male": "Male",
       "female": "Female"
     },
+    "statusActions": {
+      "titles": {
+        "withdraw": "Withdraw student",
+        "graduate": "Graduate student",
+        "reactivate": "Reactivate student",
+        "restore": "Restore student"
+      },
+      "descriptions": {
+        "withdraw": "Choose why the student is leaving. They move to the Withdrawn tab.",
+        "graduate": "The student moves to the Graduate tab.",
+        "reactivate": "The student returns to the active Student List.",
+        "restore": "Undoes the graduation and returns the student to the active Student List."
+      },
+      "expelledWarning": "This student was expelled. Only reactivate them if the expulsion was a mistake or has been reversed.",
+      "confirm": {
+        "withdrawn": "Withdraw",
+        "suspended": "Suspend",
+        "expelled": "Expel",
+        "graduate": "Graduate",
+        "reactivate": "Reactivate",
+        "restore": "Restore"
+      },
+      "fields": {
+        "category": "Category",
+        "reason": "Reason",
+        "reasonOptional": "Reason (optional)",
+        "effectiveOn": "Effective date (optional)"
+      },
+      "errors": {
+        "reasonRequired": "Enter a reason",
+        "reasonTooLong": "Reason must be {max} characters or fewer",
+        "failed": "Something went wrong. Please try again."
+      },
+      "success": {
+        "withdrawn": "{name} has been withdrawn",
+        "suspended": "{name} has been suspended",
+        "expelled": "{name} has been expelled",
+        "reactivated": "{name} has been reactivated",
+        "graduated": "{name} has graduated",
+        "restored": "{name} has been restored"
+      }
+    },
+    "view": {
+      "history": {
+        "title": "Status history",
+        "empty": "No status changes yet.",
+        "loadError": "Couldn't load the status history.",
+        "by": "by {name}"
+      }
+    },
     "actions": {
       "menuLabel": "Actions for {name}",
       "view": "View",
@@ -1157,19 +1207,14 @@
       "resume": "Resume",
       "sendMail": "Send Mail to Parent",
       "loginAs": "Login as Student",
-      "suspend": "Suspend",
       "graduate": "Graduate",
-      "expel": "Expel",
       "withdraw": "Withdraw",
+      "reactivate": "Reactivate",
+      "restore": "Restore",
       "comingSoon": "This action is coming in the next update",
-      "withdrawSucceeded": "{name} has been withdrawn",
-      "withdrawFailed": "Something went wrong withdrawing this student. Please try again.",
-      "confirmWithdraw": {
-        "title": "Withdraw student?",
-        "message": "This will withdraw {name} and move them to the Withdrawn list."
-      },
       "deleteDraftSucceeded": "Draft deleted",
       "deleteDraftFailed": "Something went wrong deleting this draft. Please try again.",
+      "loadFailed": "Couldn't load this student. Please try again.",
       "confirmDeleteDraft": {
         "title": "Delete draft?",
         "message": "This permanently deletes this draft student. This can't be undone."
@@ -1248,12 +1293,10 @@
           "empty": "No terms set up for this class yet"
         },
         "academicHouse": {
-          "label": "Academic House",
-          "none": "None"
+          "label": "Academic House"
         },
         "boardingHouse": {
-          "label": "Boarding House",
-          "placeholder": "Select a boarding house"
+          "label": "Boarding House"
         },
         "mode": {
           "label": "Mode"
@@ -1281,9 +1324,12 @@
         "lastName": {
           "label": "Last Name"
         },
+        "studentId": {
+          "label": "Student ID"
+        },
         "admissionNumber": {
           "label": "Admission Number",
-          "placeholder": "Leave blank to auto-generate later"
+          "placeholder": "Leave blank to use the Student ID"
         },
         "email": {
           "label": "Email"
@@ -1416,8 +1462,7 @@
           "phoneLabel": "Contact {number} Phone"
         },
         "agent": {
-          "label": "Agent",
-          "placeholder": "Search for an agent"
+          "label": "Agent"
         },
         "agentCommission": {
           "label": "Has agent / pays commission"
@@ -1446,12 +1491,10 @@
       "login": {
         "sectionTitle": "Login Details",
         "username": {
-          "label": "Username"
+          "label": "Username",
+          "helper": "Defaults to the student's email. You can change it to anything without spaces."
         },
-        "password": {
-          "label": "Password"
-        },
-        "regenerate": "Regenerate",
+        "passwordNote": "The student gets a temporary password from the system and must change it the first time they sign in.",
         "twoFactor": {
           "label": "Enable 2-Factor Authentication",
           "helper": "Admin-controlled, applies to this student's login."
@@ -1478,8 +1521,12 @@
         "personPhoneRequired": "Phone number is required",
         "streetRequired": "Street address is required",
         "countryRequired": "Select a country",
-        "usernameRequired": "Username is required",
-        "passwordRequired": "Password is required"
+        "emailRequired": "Email is required to add the student",
+        "emailInvalid": "Enter a valid email address",
+        "usernameInvalid": "Username must be 1–100 characters with no spaces",
+        "usernameRejected": "This username is taken or invalid — choose another",
+        "emailRejected": "Enter a valid email address",
+        "placementRejected": "This selection isn't valid for the chosen class or year"
       }
     }
   },

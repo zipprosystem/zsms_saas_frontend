@@ -28,6 +28,16 @@ export function validateClassDetails(data: ClassDetailsForm): FieldErrors {
   return errors;
 }
 
+/** Deliberately loose — the backend is the real gate; this only catches obvious typos before a round trip. */
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const USERNAME_MAX_LENGTH = 100;
+
+/**
+ * Email is REQUIRED for a final create/submit/active update (contract) —
+ * enforced here, on the step that owns it, so Next and the final submit
+ * both catch it. Save Draft skips validation entirely, which is what keeps
+ * it optional while drafting.
+ */
 export function validateStudentDetails(data: StudentDetailsForm): FieldErrors {
   const errors: FieldErrors = {};
   if (!data.first_name.trim()) errors.first_name = "students.wizard.errors.firstNameRequired";
@@ -40,6 +50,11 @@ export function validateStudentDetails(data: StudentDetailsForm): FieldErrors {
   }
   if (!data.nationality.trim()) errors.nationality = "students.wizard.errors.nationalityRequired";
   if (!data.date_of_birth) errors.date_of_birth = "students.wizard.errors.dobRequired";
+  if (!data.email.trim()) {
+    errors.email = "students.wizard.errors.emailRequired";
+  } else if (!EMAIL_PATTERN.test(data.email.trim())) {
+    errors.email = "students.wizard.errors.emailInvalid";
+  }
   return errors;
 }
 
@@ -78,10 +93,13 @@ export function validateAddress(data: AddressForm): FieldErrors {
   return errors;
 }
 
+/** Username is OPTIONAL (blank -> backend defaults it to the lowercased email). When given: 1–100 chars after trimming, no whitespace inside, any case, needn't be an email. */
 export function validateLoginDetails(data: LoginDetailsForm): FieldErrors {
   const errors: FieldErrors = {};
-  if (!data.username.trim()) errors.username = "students.wizard.errors.usernameRequired";
-  if (!data.password.trim()) errors.password = "students.wizard.errors.passwordRequired";
+  const username = data.username.trim();
+  if (username && (username.length > USERNAME_MAX_LENGTH || /\s/.test(username))) {
+    errors.username = "students.wizard.errors.usernameInvalid";
+  }
   return errors;
 }
 
