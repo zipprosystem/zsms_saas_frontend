@@ -8,6 +8,7 @@ import { StudentStatusBadge } from "@/components/students/StudentStatusBadge";
 import { DevBypassNotice } from "@/components/students/wizard/DevBypassNotice";
 import { isDevBypassUnavailable, throwIfTransient } from "@/lib/setup/crudTypes";
 import { listStudentStatusEvents, studentStatusEventsQueryKey } from "@/lib/students/studentsApi";
+import { listStaff, staffQueryKey } from "@/lib/staff/staffApi";
 import {
   genderLabelKey,
   modeLabelKey,
@@ -30,29 +31,43 @@ function DetailItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-function StatusEventRow({ event }: { event: StudentStatusEvent }) {
+function asKnownStatus(value: string | null): StudentStatus | null {
+  return value && KNOWN_STATUSES.includes(value) ? (value as StudentStatus) : null;
+}
+
+/** One event: to_status is the outcome (there's no category field). actorName is null when acted_by_user_id can't be resolved — a raw id is never shown. */
+function StatusEventRow({ event, actorName }: { event: StudentStatusEvent; actorName: string | null }) {
   const t = useTranslations();
-  const toStatus = event.to_status && KNOWN_STATUSES.includes(event.to_status) ? (event.to_status as StudentStatus) : null;
-  const date = event.effective_on ?? event.created_at?.slice(0, 10) ?? null;
+  const toStatus = asKnownStatus(event.to_status);
+  const fromStatus = asKnownStatus(event.from_status);
 
   return (
     <li className="flex flex-col gap-1 border-l-2 border-border py-1 pl-4">
       <div className="flex flex-wrap items-center gap-2">
-        {toStatus ? <StudentStatusBadge status={toStatus} /> : <span className="text-sm font-medium">{event.action ?? "—"}</span>}
-        {date ? <span className="text-xs text-text-muted">{date}</span> : null}
-        {event.actor_name ? (
-          <span className="text-xs text-text-muted">{t("students.view.history.by", { name: event.actor_name })}</span>
+        {toStatus ? <StudentStatusBadge status={toStatus} /> : <span className="text-sm font-medium">—</span>}
+        {fromStatus ? (
+          <span className="text-xs text-text-muted">
+            {t("students.view.history.from", { status: t(`students.status.${fromStatus}`) })}
+          </span>
+        ) : null}
+        {actorName ? <span className="text-xs text-text-muted">{t("students.view.history.by", { name: actorName })}</span> : null}
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-text-muted">
+        {event.effective_on ? <span>{t("students.view.history.effectiveOn", { date: event.effective_on })}</span> : null}
+        {event.created_at ? (
+          <span>{t("students.view.history.recordedOn", { date: event.created_at.slice(0, 10) })}</span>
         ) : null}
       </div>
-      {event.reason ? <p className="text-sm text-text-secondary">{event.reason}</p> : null}
+      {event.reason ? <p className="break-words text-sm text-text-secondary">{event.reason}</p> : null}
     </li>
   );
 }
 
 /**
  * Read-only student profile — what "View" opens (Edit opens the wizard).
- * Includes the status-change history (GET /:id/status-events), fetched
- * fresh each time the panel opens. Edit is offered from here only for an
+ * Includes the status-change history (GET /:id/status-events, oldest
+ * first — shown in that order, as a timeline), fetched fresh each time the
+ * panel opens. Edit is offered from here only for an
  * ACTIVE student; any other status isn't editable backend-side
  * (STUDENT_NOT_EDITABLE).
  */
@@ -77,6 +92,12 @@ export function StudentViewPanel({
     staleTime: 0,
   });
   const events = historyQuery.data?.ok ? historyQuery.data.data : [];
+
+  // acted_by_user_id is a users.id — the staff lookup's ids are users.id
+  // too, so it doubles as the name lookup. Anyone not in it (no access,
+  // a non-staff actor, dev bypass) just shows no "by" line.
+  const staffQuery = useQuery({ queryKey: staffQueryKey, queryFn: listStaff, enabled: events.length > 0 });
+  const staffNames = new Map((staffQuery.data ?? []).map((member) => [member.id, member.full_name]));
 
   const primary = student.primary_contact ? student[student.primary_contact] : (student.guardian ?? student.father ?? student.mother);
 
@@ -131,8 +152,13 @@ export function StudentViewPanel({
             <p className="text-sm text-text-muted">{t("students.view.history.empty")}</p>
           ) : (
             <ol className="flex flex-col gap-3">
-              {events.map((event) => (
-                <StatusEventRow key={event.id} event={event} />
+              {events.map((event, index) => (
+                <StatusEventRow
+                  // No event id in the contract; the list is append-only and oldest-first, so index is stable.
+                  key={index}
+                  event={event}
+                  actorName={(event.acted_by_user_id && staffNames.get(event.acted_by_user_id)) || null}
+                />
               ))}
             </ol>
           )}
