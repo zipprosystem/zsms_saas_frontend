@@ -28,11 +28,10 @@ import {
 } from "@/lib/students/wizardValidation";
 import { MOCK_SCHOOL_MODE } from "@/lib/students/studentsMockData";
 import { formDataToStudentBody, studentToFormData } from "@/lib/students/studentFormMapping";
+import { useDraftAutoSave } from "@/components/students/wizard/useDraftAutoSave";
 import {
   createStudent,
-  createStudentDraft,
-  saveStudentDraft,
-  studentsListQueryKeyRoot,
+  studentsQueryKey,
   submitStudentDraft,
   updateStudent,
 } from "@/lib/students/studentsApi";
@@ -108,11 +107,6 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
   const [data, setData] = useState<StudentFormData>(() =>
     initialStudent ? studentToFormData(initialStudent) : emptyStudentFormData(MOCK_SCHOOL_MODE),
   );
-  // Tracks the record a Save Draft call created, across subsequent saves in
-  // the SAME wizard session, so the second+ Save Draft (and the eventual
-  // final submit) upserts that exact row instead of creating a duplicate.
-  // Starts at initialStudent's id when editing/resuming.
-  const [studentId, setStudentId] = useState<string | null>(initialStudent?.id ?? null);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
@@ -122,6 +116,19 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
   // from the list. A resumed draft / edited student keeps the year it was
   // saved under; a new admission takes the session's selected year.
   const academicYearId = initialStudent?.academic_year_id ?? selectedYearId;
+
+  // Draft auto-save (create mode only — an active student is never
+  // drafted). It owns the draft's id: the first save, auto or manual,
+  // creates the row and every later save/submit reuses it, so there's
+  // never a duplicate. See useDraftAutoSave.ts.
+  const autoSave = useDraftAutoSave({
+    enabled: mode === "create",
+    data,
+    step,
+    academicYearId,
+    initialStudentId: initialStudent?.id ?? null,
+    initialStep: initialStep ?? 1,
+  });
 
   const updateGroup = <K extends keyof StudentFormData>(key: K, patch: Partial<StudentFormData[K]>) => {
     setData((current) => ({ ...current, [key]: { ...current[key], ...patch } }));
@@ -200,16 +207,16 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
       return;
     }
     setIsSavingDraft(true);
-    const body = formDataToStudentBody(data, academicYearId);
-    const result = studentId ? await saveStudentDraft(studentId, body, step) : await createStudentDraft(body, step);
+    const result = await autoSave.saveDraftManually();
     setIsSavingDraft(false);
 
+    if (!result) return;
     if (!result.ok) {
       handleSaveFailure(result);
       return;
     }
-    setStudentId(result.data.id);
-    queryClient.invalidateQueries({ queryKey: studentsListQueryKeyRoot });
+    // Only the year this student belongs to — never every cached year.
+    queryClient.invalidateQueries({ queryKey: studentsQueryKey(academicYearId) });
     showToast(t("students.wizard.footer.draftSaved"));
   };
 
@@ -232,6 +239,11 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
       return;
     }
     setIsSubmitting(true);
+    // Let any in-flight auto-save settle first: if it's creating the
+    // draft, submitting without its id would create a second student.
+    autoSave.pauseRetries();
+    await autoSave.whenIdle();
+    const studentId = autoSave.getStudentId();
     const body = formDataToStudentBody(data, academicYearId);
     // Three final-save routes: an already-active student is edited in place
     // (PUT /:id); a draft — resumed, or created by Save Draft earlier in this
@@ -249,7 +261,8 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
       handleSaveFailure(result);
       return;
     }
-    queryClient.invalidateQueries({ queryKey: studentsListQueryKeyRoot });
+    autoSave.stop();
+    queryClient.invalidateQueries({ queryKey: studentsQueryKey(academicYearId) });
     // AUTO-POPULATE: submit/create creates the student's initial Student
     // Term Details record server-side (same transaction) when placement is
     // complete — invalidate so that screen reflects it immediately.
@@ -270,12 +283,24 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
     }
   };
 
+  // User-initiated close (X, Esc, backdrop): flush unsaved changes first,
+  // without holding the modal open — the save finishes in the background.
+  // The list refetches once here rather than after every auto-save, so
+  // typing doesn't re-page the whole year every 2s.
+  const handleClose = () => {
+    const yearId = academicYearId;
+    void autoSave.closeAndFlush().then(() => {
+      if (yearId && autoSave.hasSaved()) queryClient.invalidateQueries({ queryKey: studentsQueryKey(yearId) });
+    });
+    onClose();
+  };
+
   const title = mode === "edit" ? t("students.wizard.titleEdit") : t("students.wizard.titleCreate");
 
   return (
     <WideModal
       isOpen
-      onClose={onClose}
+      onClose={handleClose}
       title={title}
       subtitle={t("students.wizard.subtitle", { step, total: WIZARD_STEP_NUMBERS.length })}
       size="2xl"
@@ -288,6 +313,7 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
           onNext={handleNext}
           isSubmitting={isSubmitting}
           isSavingDraft={isSavingDraft}
+          autoSaveState={autoSave.state}
         />
       }
     >

@@ -24,7 +24,6 @@ import {
   getStudent,
   listStudents,
   studentStatusEventsQueryKey,
-  studentsListQueryKeyRoot,
   studentsQueryKey,
 } from "@/lib/students/studentsApi";
 import type { Student } from "@/lib/students/studentTypes";
@@ -257,16 +256,24 @@ export function StudentsScreen() {
     view.setFilters({});
   };
 
+  /** Refetch only the changed student's own year (the one on screen), never every cached year. */
+  const invalidateStudentYear = (student: Student) => {
+    const yearId = student.academic_year_id ?? selectedYearId;
+    if (yearId) queryClient.invalidateQueries({ queryKey: studentsQueryKey(yearId) });
+  };
+
   const handleStatusDone = (message: string) => {
-    const studentId = statusTarget?.student.id;
+    const student = statusTarget?.student;
+    const studentId = student?.id;
     setStatusTarget(null);
-    queryClient.invalidateQueries({ queryKey: studentsListQueryKeyRoot });
+    if (student) invalidateStudentYear(student);
     if (studentId) queryClient.invalidateQueries({ queryKey: studentStatusEventsQueryKey(studentId) });
     showToast(message);
   };
 
   const handleConfirmDeleteDraft = async () => {
     if (!deleteDraftTarget) return;
+    const target = deleteDraftTarget;
     setIsDeletingDraft(true);
     const result = await deleteDraftStudent(deleteDraftTarget.id);
     setIsDeletingDraft(false);
@@ -275,7 +282,7 @@ export function StudentsScreen() {
       showToast(("message" in result && result.message) || t("students.actions.deleteDraftFailed"));
       return;
     }
-    queryClient.invalidateQueries({ queryKey: studentsListQueryKeyRoot });
+    invalidateStudentYear(target);
     showToast(t("students.actions.deleteDraftSucceeded"));
   };
 

@@ -915,6 +915,9 @@
       "subtitle": "Automatically populated when a student is created and placed into a class/arm/term. Students aren't moved to later terms automatically — use Add Student Term for that and for corrections.",
       "addNew": "Add Student Term (Correction)",
       "searchPlaceholder": "Search by student name or admission no…",
+      "locked": {
+        "reason": "Reactivate the student to edit."
+      },
       "empty": "No students placed into a term yet — they'll appear here automatically once added via the Students page.",
       "devBypassNotice": "Not available in local dev (real class data is required) — this works once deployed.",
       "noYear": {
@@ -1279,6 +1282,12 @@
         "studentCreated": "Student added",
         "studentUpdated": "Changes saved",
         "saveFailed": "Something went wrong saving. Please try again."
+      },
+      "autoSave": {
+        "saving": "Saving…",
+        "saved": "Saved",
+        "retrying": "Couldn't save — retrying",
+        "failed": "Couldn't save"
       },
       "fields": {
         "schoolType": {
