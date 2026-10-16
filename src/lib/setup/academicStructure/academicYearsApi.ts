@@ -66,7 +66,7 @@ function toResult<T>(response: Response, body: unknown): CrudResult<T> {
   // 401 isn't handled here: apiFetch already retries once via /auth/refresh
   // and force-logs-out + redirects to /login on failure, same as every
   // other authenticated call in this app.
-  return { ok: false, kind: "server" };
+  return { ok: false, kind: "server", status: response.status };
 }
 
 // CONFIRMED: school_mode is live on /erp/academic-years (Muntajir shipped

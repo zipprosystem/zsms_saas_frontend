@@ -83,7 +83,7 @@ function toResult<T>(response: Response, body: unknown): CrudResult<T> {
     return { ok: false, kind: "forbidden", message: message ?? undefined };
   }
   if (code === "VALIDATION_ERROR") {
-    return { ok: false, kind: "server", message: message ?? undefined };
+    return { ok: false, kind: "server", message: message ?? undefined, status: response.status };
   }
 
   if (response.status === 403) return { ok: false, kind: "forbidden" };
@@ -91,7 +91,7 @@ function toResult<T>(response: Response, body: unknown): CrudResult<T> {
   if (response.status === 422) return { ok: false, kind: "validation", errors: [] };
   // 401 isn't handled here: apiFetch already retries once via /auth/refresh
   // and force-logs-out + redirects to /login on failure.
-  return { ok: false, kind: "server", message: message ?? undefined };
+  return { ok: false, kind: "server", message: message ?? undefined, status: response.status };
 }
 
 // A doc with no text and nothing but empty paragraphs/hard breaks is

@@ -1,6 +1,6 @@
 import { apiFetch } from "@/lib/api/client";
 import { DEV_AUTH_BYPASS } from "@/lib/auth/authBridge";
-import { TransientQueryError } from "@/lib/queryClient";
+import { isClientErrorStatus, TransientQueryError } from "@/lib/queryClient";
 import type { SettingsData, SettingsUpdate } from "./types";
 
 /**
@@ -16,7 +16,8 @@ export type SettingsResult<T> =
   | { ok: false; kind: "forbidden" }
   | { ok: false; kind: "validation"; errors: Array<{ field: string; message?: string }> }
   | { ok: false; kind: "network" }
-  | { ok: false; kind: "server" }
+  // `status`: the HTTP status when it came from a response — a 4xx is never retried.
+  | { ok: false; kind: "server"; status?: number }
   // DEV-ONLY: the local dev-auth-bypass seeds a mock token that must never
   // reach the real API (see authBridge.ts). Returned instead of making any
   // network call at all when DEV_AUTH_BYPASS is active — this endpoint can
@@ -30,9 +31,9 @@ export type SettingsResult<T> =
 // crudTypes.ts's directly since SettingsResult isn't a CrudResult (no
 // `conflict` kind, and this file predates that type).
 export function throwIfTransientSettings<T>(result: SettingsResult<T>): SettingsResult<T> {
-  if (!result.ok && (result.kind === "network" || result.kind === "server")) {
-    throw new TransientQueryError();
-  }
+  if (result.ok) return result;
+  if (result.kind === "network") throw new TransientQueryError();
+  if (result.kind === "server" && !isClientErrorStatus(result.status)) throw new TransientQueryError(result.status);
   return result;
 }
 
@@ -52,7 +53,7 @@ function toResult<T>(response: Response, body: unknown): SettingsResult<T> {
   // 401 isn't handled here: apiFetch already retries once via /auth/refresh
   // and force-logs-out + redirects to /login on failure. By the time a 401
   // could reach this layer, that redirect is already in flight.
-  return { ok: false, kind: "server" };
+  return { ok: false, kind: "server", status: response.status };
 }
 
 export async function getSchoolSettings(): Promise<SettingsResult<SettingsData>> {

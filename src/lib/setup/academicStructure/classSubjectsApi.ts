@@ -106,17 +106,17 @@ function toResult<T>(response: Response, body: unknown): CrudResult<T> {
     return { ok: false, kind: "forbidden", message: message ?? undefined };
   }
   if (code === "VALIDATION_ERROR") {
-    return { ok: false, kind: "server", message: message ?? undefined };
+    return { ok: false, kind: "server", message: message ?? undefined, status: response.status };
   }
 
   if (response.status === 403) return { ok: false, kind: "forbidden" };
   if (response.status === 409) return { ok: false, kind: "conflict", message: message ?? undefined };
   // No per-field mapping here (this screen's form isn't CrudScreen-driven),
   // so a 422 surfaces the backend's message in the general banner instead.
-  if (response.status === 422) return { ok: false, kind: "server", message: message ?? undefined };
+  if (response.status === 422) return { ok: false, kind: "server", message: message ?? undefined, status: response.status };
   // 401 isn't handled here: apiFetch already retries once via /auth/refresh
   // and force-logs-out + redirects to /login on failure.
-  return { ok: false, kind: "server", message: message ?? undefined };
+  return { ok: false, kind: "server", message: message ?? undefined, status: response.status };
 }
 
 function toSubjectGroup(value: unknown): SubjectGroup {

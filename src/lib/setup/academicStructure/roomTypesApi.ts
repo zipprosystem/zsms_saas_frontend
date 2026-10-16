@@ -48,13 +48,13 @@ function toResult<T>(response: Response, body: unknown): CrudResult<T> {
     return { ok: false, kind: "forbidden", message: message ?? undefined };
   }
   if (code === "VALIDATION_ERROR") {
-    return { ok: false, kind: "server", message: message ?? undefined };
+    return { ok: false, kind: "server", message: message ?? undefined, status: response.status };
   }
 
   if (response.status === 403) return { ok: false, kind: "forbidden" };
   if (response.status === 409) return { ok: false, kind: "conflict", message: message ?? undefined };
   if (response.status === 422) return { ok: false, kind: "validation", errors: [] };
-  return { ok: false, kind: "server", message: message ?? undefined };
+  return { ok: false, kind: "server", message: message ?? undefined, status: response.status };
 }
 
 function extractRoomTypeList(body: unknown): RoomType[] {
