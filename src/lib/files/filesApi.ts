@@ -24,9 +24,10 @@ import type { CrudResult } from "@/lib/setup/crudTypes";
  *     -> { success: true, data: { url, ... } } — a short-lived signed URL
  *     (TTL 300s). FLAGGED, UNCONFIRMED: the key name — readDownloadUrl()
  *     accepts url / download_url / signed_url / a bare string.
- *     NEVER cached anywhere (not in react-query, not on the entity):
- *     fetched fresh on every click via FileDownloadLink, so an expired
- *     URL can't be handed out.
+ *     NEVER cached on the entity, and never cached for a link: fetched
+ *     fresh on every click via FileDownloadLink, so an expired URL can't
+ *     be handed out. The one exception is an <img> src (useFileImageUrl),
+ *     which uses the URL at once and caches it for less than the TTL.
  *
  * The backend validates type/size too; fileValidation.ts is only the
  * client-side first line.

@@ -169,8 +169,9 @@ function toAddressBlock(form: AddressBlockForm): AddressBlockBody | null {
  * not filled yet (a draft legitimately has required fields empty; final
  * saves are gated by validateAllSteps() before they get here).
  *
- * `academicYearId` is the session's selected year — sent on every save
- * even though the backend can infer it from class_id.
+ * `academicYearId` is sent on every save, drafts included: the list is
+ * year-filtered and a student without one never shows up in it (the
+ * wizard refuses to save without a year).
  *
  * NEVER sent (UI-only, the backend 422s on them unless null/omitted — see
  * studentTypes.ts): academic_house_id, boarding_house_id, agent_id,
@@ -178,7 +179,7 @@ function toAddressBlock(form: AddressBlockForm): AddressBlockBody | null {
  * assigns the initial one. `username` is omitted when blank: a final save
  * then defaults it to the lowercased email, an update keeps the existing.
  */
-export function formDataToStudentBody(data: StudentFormData, academicYearId: string | null): StudentWriteBody {
+export function formDataToStudentBody(data: StudentFormData, academicYearId: string): StudentWriteBody {
   const { classDetails, studentDetails, parentGuardian, address, agent, siblings, pastRecords, loginDetails } = data;
 
   const isGuardian = parentGuardian.relationship_type === "guardian";

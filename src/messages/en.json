@@ -1201,7 +1201,10 @@
         "title": "Status history",
         "empty": "No status changes yet.",
         "loadError": "Couldn't load the status history.",
-        "by": "by {name}"
+        "by": "by {name}",
+        "from": "from {status}",
+        "effectiveOn": "Effective {date}",
+        "recordedOn": "Recorded {date}"
       }
     },
     "actions": {
@@ -1528,7 +1531,10 @@
         "emailRequired": "Email is required to add the student",
         "emailInvalid": "Enter a valid email address",
         "usernameInvalid": "Username must be 1–100 characters with no spaces",
-        "usernameRejected": "This username is taken or invalid — choose another",
+        "usernameRejected": "This username isn't valid — choose another",
+        "usernameTaken": "This username is already taken — choose another",
+        "emailTaken": "Another account already uses this email address",
+        "noYear": "Select an academic year before saving this student",
         "emailRejected": "Enter a valid email address",
         "placementRejected": "This selection isn't valid for the chosen class or year"
       }

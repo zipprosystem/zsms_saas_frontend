@@ -1209,7 +1209,10 @@
         "title": "Historique des statuts",
         "empty": "Aucun changement de statut pour le moment.",
         "loadError": "Impossible de charger l'historique des statuts.",
-        "by": "par {name}"
+        "by": "par {name}",
+        "from": "depuis {status}",
+        "effectiveOn": "En vigueur le {date}",
+        "recordedOn": "Enregistré le {date}"
       }
     },
     "actions": {
@@ -1536,7 +1539,10 @@
         "emailRequired": "L'e-mail est requis pour ajouter l'élève",
         "emailInvalid": "Saisissez une adresse e-mail valide",
         "usernameInvalid": "Le nom d'utilisateur doit comporter de 1 à 100 caractères, sans espaces",
-        "usernameRejected": "Ce nom d'utilisateur est déjà pris ou invalide — choisissez-en un autre",
+        "usernameRejected": "Ce nom d'utilisateur n'est pas valide — choisissez-en un autre",
+        "usernameTaken": "Ce nom d'utilisateur est déjà pris — choisissez-en un autre",
+        "emailTaken": "Un autre compte utilise déjà cette adresse e-mail",
+        "noYear": "Sélectionnez une année académique avant d'enregistrer cet élève",
         "emailRejected": "Saisissez une adresse e-mail valide",
         "placementRejected": "Cette sélection n'est pas valide pour la classe ou l'année choisie"
       }

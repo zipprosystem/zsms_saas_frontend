@@ -48,6 +48,7 @@ import { StudentsTabs, type StudentsTabKey } from "@/components/students/Student
 import { StudentsComingSoonTab } from "@/components/students/StudentsComingSoonTab";
 import { MoreActionsMenu } from "@/components/students/MoreActionsMenu";
 import { StudentRowActionsMenu } from "@/components/students/StudentRowActionsMenu";
+import { StudentAvatar } from "@/components/students/StudentAvatar";
 import { StudentStatusBadge } from "@/components/students/StudentStatusBadge";
 import { StudentViewPanel } from "@/components/students/StudentViewPanel";
 import { StudentStatusActionPanel, type StudentStatusPanelAction } from "@/components/students/StudentStatusActionPanel";
@@ -70,16 +71,6 @@ const StudentWizard = dynamic(
     ),
   },
 );
-
-/** Small initials circle — the Add Student wizard's real photo upload (Commit 2) replaces this per-row once a student has photo_file_id set. */
-function StudentAvatar({ student }: { student: Student }) {
-  const initials = `${student.first_name[0] ?? ""}${student.last_name[0] ?? ""}`.toUpperCase();
-  return (
-    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-2 text-xs font-semibold text-accent">
-      {initials || "—"}
-    </span>
-  );
-}
 
 const COMING_SOON_TAB_TITLE_KEYS: Partial<Record<StudentsTabKey, string>> = {
   admissions: "students.tabs.admissions",

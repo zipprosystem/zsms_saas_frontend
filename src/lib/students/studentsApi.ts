@@ -47,19 +47,25 @@ import type {
  * the same transaction (drafts don't) — callers invalidate that screen's
  * query after a successful submit/create.
  *
- * Error codes -> CrudResult:
- *   USERNAME_TAKEN / USERNAME_INVALID* -> `username` field
- *   EMAIL_REQUIRED* / EMAIL_INVALID*   -> `email` field
+ * Error codes -> CrudResult (confirmed contract):
+ *   409 USERNAME_TAKEN -> `username` field · 409 EMAIL_TAKEN -> `email` field
  *   CLASS_NOT_IN_YEAR -> class_id, SECTION_NOT_IN_CLASS -> class_arm_id,
  *   TERM_NOT_IN_CLASS -> class_term_id, SCHOOL_MODE_FORBIDS_STUDENT_MODE
  *   -> mode (the same codes Student Term Details documents; assumed to
  *   surface on create/submit too since those auto-create the term detail)
+ *   422 VALIDATION_ERROR -> a missing/invalid field is NOT its own code:
+ *   the message names the field (e.g. "email must be a valid email",
+ *   same pattern as "academic_year_id is required unless all_years is
+ *   true"). fieldFromValidationMessage() reads that name; when it's one
+ *   the wizard can point at (VALIDATION_FIELDS) it becomes a field error,
+ *   otherwise the backend message is shown as a banner (server).
  *   ENROLMENT_LOCKED / NOT_A_DRAFT / STUDENT_NOT_EDITABLE /
  *   INVALID_STATUS_TRANSITION / STUDENT_NOT_FOUND* -> conflict (backend message)
- *   VALIDATION_ERROR -> server (backend message as a banner)
- * (* = code name GUESSED, not in the contract — a bad username is only
- * documented as "422"; harmless if it never fires.) Anything else falls
- * back to plain status-code classification, same as every other service.
+ * (* = code name GUESSED, not in the contract; harmless if it never
+ * fires.) Anything else falls back to plain status-code classification,
+ * same as every other service. Every field error carries its `code`
+ * (the backend's, or VALIDATION_ERROR) so the wizard can tell "taken"
+ * from "invalid".
  */
 /** Prefix shared by every year's list — pass to invalidateQueries after a mutation to refresh whichever year(s) are cached. */
 export const studentsListQueryKeyRoot = ["students", "list"] as const;
@@ -77,9 +83,7 @@ const LIST_MAX_PAGES = 100;
 
 const FIELD_ERROR_CODES: Record<string, string> = {
   USERNAME_TAKEN: "username",
-  USERNAME_INVALID: "username",
-  EMAIL_REQUIRED: "email",
-  EMAIL_INVALID: "email",
+  EMAIL_TAKEN: "email",
   CLASS_NOT_IN_YEAR: "class_id",
   SECTION_NOT_IN_CLASS: "class_arm_id",
   TERM_NOT_IN_CLASS: "class_term_id",
@@ -94,6 +98,21 @@ const CONFLICT_CODES = new Set([
   "STUDENT_NOT_FOUND",
 ]);
 
+/** Body fields a 422 VALIDATION_ERROR can be pinned to — the ones the wizard shows a field error for. Anything else stays a banner. */
+const VALIDATION_FIELDS = new Set(["email", "username", "class_id", "class_arm_id", "class_term_id", "mode"]);
+
+/**
+ * The field a VALIDATION_ERROR message names, if it's one we can show.
+ * The field name LEADS the message; tolerates Joi-style quoting
+ * ("\"email\" must be…") and a body./data. path prefix, since only the
+ * plain form has been seen live.
+ */
+function fieldFromValidationMessage(message: string | null): string | null {
+  const match = message?.match(/^\s*["'`]?(?:body\.|data\.)?([a-z][a-z0-9_]*)/i);
+  const field = match?.[1]?.toLowerCase() ?? null;
+  return field && VALIDATION_FIELDS.has(field) ? field : null;
+}
+
 function studentPath(id: string): string {
   return `${BASE_PATH}/${encodeURIComponent(id)}`;
 }
@@ -106,7 +125,11 @@ function toResult<T>(response: Response, body: unknown): CrudResult<T> {
   const { code, message } = extractErpError(body);
 
   if (code && FIELD_ERROR_CODES[code]) {
-    return { ok: false, kind: "validation", errors: [{ field: FIELD_ERROR_CODES[code], message: message ?? undefined }] };
+    return {
+      ok: false,
+      kind: "validation",
+      errors: [{ field: FIELD_ERROR_CODES[code], message: message ?? undefined, code }],
+    };
   }
   if (code && CONFLICT_CODES.has(code)) {
     return { ok: false, kind: "conflict", message: message ?? undefined };
@@ -114,7 +137,9 @@ function toResult<T>(response: Response, body: unknown): CrudResult<T> {
   if (code === "FORBIDDEN" || code === "UNAUTHORIZED") {
     return { ok: false, kind: "forbidden", message: message ?? undefined };
   }
-  if (code === "VALIDATION_ERROR") {
+  if (code === "VALIDATION_ERROR" || (!code && response.status === 422)) {
+    const field = fieldFromValidationMessage(message);
+    if (field) return { ok: false, kind: "validation", errors: [{ field, message: message ?? undefined, code: "VALIDATION_ERROR" }] };
     return { ok: false, kind: "server", message: message ?? undefined };
   }
 
@@ -122,7 +147,6 @@ function toResult<T>(response: Response, body: unknown): CrudResult<T> {
   if (response.status === 404 || response.status === 409) {
     return { ok: false, kind: "conflict", message: message ?? undefined };
   }
-  if (response.status === 422) return { ok: false, kind: "server", message: message ?? undefined };
   // 401 isn't handled here: apiFetch already retries once via /auth/refresh
   // and force-logs-out + redirects to /login on failure, same as every
   // other authenticated call in this app.
@@ -203,6 +227,38 @@ const STUDENT_STATUSES: readonly StudentStatus[] = [
   "inactive",
 ];
 
+/**
+ * Past records keyed off attachment_file_id (the POST /files id, purpose
+ * past_record_attachment) — the stable reference. The backend's row id
+ * can change on a later save, so it's ignored. A record with an
+ * attachment keeps the same key across saves/refetches; a repeat of an
+ * already-seen attachment_file_id is the same record and is dropped. A
+ * record with no attachment has nothing stable to key on, so it gets a
+ * generated key and is never deduped.
+ */
+function pastRecordsFromWire(value: unknown): PastRecord[] {
+  const seenFileIds = new Set<string>();
+  const records: PastRecord[] = [];
+  for (const item of asArray(value)) {
+    const record = asRecord(item) ?? {};
+    const attachmentFileId = strOrNull(record.attachment_file_id);
+    if (attachmentFileId) {
+      if (seenFileIds.has(attachmentFileId)) continue;
+      seenFileIds.add(attachmentFileId);
+    }
+    records.push({
+      id: attachmentFileId ? `past-record-file-${attachmentFileId}` : localId("past-record"),
+      school: strOrNull(record.school),
+      class: strOrNull(record.class),
+      grade: strOrNull(record.grade),
+      rank: strOrNull(record.rank),
+      year: strOrNull(record.year),
+      attachment_file_id: attachmentFileId,
+    });
+  }
+  return records;
+}
+
 export function fromWire(value: unknown): Student {
   const r = asRecord(value) ?? {};
   const status = STUDENT_STATUSES.includes(r.status as StudentStatus) ? (r.status as StudentStatus) : "draft";
@@ -268,18 +324,7 @@ export function fromWire(value: unknown): Student {
 
     sibling_student_ids: asArray(r.sibling_student_ids).filter((id): id is string => typeof id === "string"),
 
-    past_records: asArray(r.past_records).map((item): PastRecord => {
-      const record = asRecord(item) ?? {};
-      return {
-        id: strOrNull(record.id) ?? localId("past-record"),
-        school: strOrNull(record.school),
-        class: strOrNull(record.class),
-        grade: strOrNull(record.grade),
-        rank: strOrNull(record.rank),
-        year: strOrNull(record.year),
-        attachment_file_id: strOrNull(record.attachment_file_id),
-      };
-    }),
+    past_records: pastRecordsFromWire(r.past_records),
 
     username: str(r.username),
     two_factor_enabled: bool(r.two_factor_enabled, false),
@@ -441,26 +486,22 @@ export function studentStatusEventsQueryKey(id: string): readonly unknown[] {
   return ["students", "statusEvents", id];
 }
 
-function fromStatusEventWire(value: unknown, index: number): StudentStatusEvent {
+function fromStatusEventWire(value: unknown): StudentStatusEvent {
   const r = asRecord(value) ?? {};
-  const actor = asRecord(r.actor) ?? asRecord(r.performed_by);
   return {
-    id: strOrNull(r.id) ?? `status-event-${index}`,
-    action: strOrNull(r.action) ?? strOrNull(r.event_type),
     from_status: strOrNull(r.from_status),
     to_status: strOrNull(r.to_status),
     reason: strOrNull(r.reason),
     effective_on: strOrNull(r.effective_on),
+    acted_by_user_id: strOrNull(r.acted_by_user_id),
     created_at: strOrNull(r.created_at),
-    actor_name: strOrNull(actor?.name) ?? strOrNull(r.actor_name) ?? strOrNull(r.performed_by_name),
   };
 }
 
-/** FLAGGED: response shape unconfirmed — accepts a bare array or { items }. */
+/** Confirmed: data is a bare, OLDEST-FIRST array of events (returned in that order). */
 export async function listStudentStatusEvents(id: string): Promise<CrudResult<StudentStatusEvent[]>> {
   return send(`${studentPath(id)}/status-events`, { method: "GET" }, (body) => {
     const data = (body as { data?: unknown } | null)?.data;
-    const items = Array.isArray(data) ? data : asArray(asRecord(data)?.items);
-    return { ok: true, data: items.map(fromStatusEventWire) };
+    return { ok: true, data: asArray(data).map(fromStatusEventWire) };
   });
 }

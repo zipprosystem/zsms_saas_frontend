@@ -64,7 +64,7 @@ export type RowAction<T> = {
 export type CrudResult<T> =
   | { ok: true; data: T }
   | { ok: false; kind: "forbidden"; message?: string }
-  | { ok: false; kind: "validation"; errors: Array<{ field: string; message?: string }> }
+  | { ok: false; kind: "validation"; errors: Array<{ field: string; message?: string; code?: string }> }
   | { ok: false; kind: "conflict"; message?: string }
   | { ok: false; kind: "network" }
   // `status`: the HTTP status, when the service reports it — lets

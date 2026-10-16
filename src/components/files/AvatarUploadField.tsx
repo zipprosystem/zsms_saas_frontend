@@ -6,6 +6,7 @@ import { CloseIcon } from "@/components/icons/CloseIcon";
 import { UploadIcon } from "@/components/icons/UploadIcon";
 import { uploadFile, type AttachedFile } from "@/lib/files/filesApi";
 import type { FileValidation } from "@/lib/files/fileValidation";
+import { useFileImageUrl } from "@/lib/files/useFileImageUrl";
 
 /**
  * Circular-preview variant of FileAttachmentField, for Student Details'
@@ -13,12 +14,15 @@ import type { FileValidation } from "@/lib/files/fileValidation";
  * square photo" look the design calls for.
  *
  * Uses the real uploadFile() (filesApi.ts) like every other attachment
- * field — its AttachedFile has no local-preview field (the real API has no
- * equivalent; a saved photo's preview would come from a signed
- * download-url fetch instead, same as FileDownloadLink). The circular
- * preview immediately after picking a file is generated here instead, via
- * a plain browser object URL kept in local state — independent of the
- * upload's own result — and revoked on replace/unmount so it doesn't leak.
+ * field — its AttachedFile has no local-preview field. Two preview
+ * sources:
+ *   - just picked: a plain browser object URL kept in local state —
+ *     independent of the upload's own result — and revoked on
+ *     replace/unmount so it doesn't leak.
+ *   - already saved (edit/resume, where `value` was seeded from the
+ *     stored file id): a signed URL via useFileImageUrl, the same lookup
+ *     the Students list avatar uses. Only fetched while there's no local
+ *     preview; falls back to the upload icon if it fails.
  */
 export function AvatarUploadField({
   label,
@@ -37,7 +41,10 @@ export function AvatarUploadField({
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [failedSavedUrl, setFailedSavedUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const savedUrl = useFileImageUrl(previewUrl ? null : value?.file_id);
+  const imageUrl = previewUrl ?? (savedUrl && savedUrl !== failedSavedUrl ? savedUrl : null);
 
   // Revoke on replace (new object URL set) and on unmount — object URLs
   // otherwise hold their Blob in memory for the page's lifetime.
@@ -95,9 +102,16 @@ export function AvatarUploadField({
           disabled={isUploading}
           className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-dashed border-border bg-background text-text-muted transition-colors hover:border-accent hover:text-accent disabled:cursor-wait disabled:opacity-60"
         >
-          {value && previewUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- a local object URL for the just-picked file, not an optimizable remote asset
-            <img src={previewUrl} alt="" className="h-full w-full object-cover" />
+          {value && imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- a local object URL or short-lived signed URL, not an optimizable static asset
+            <img
+              src={imageUrl}
+              alt=""
+              onError={() => {
+                if (imageUrl === savedUrl) setFailedSavedUrl(imageUrl);
+              }}
+              className="h-full w-full object-cover"
+            />
           ) : (
             <UploadIcon className="h-6 w-6" />
           )}

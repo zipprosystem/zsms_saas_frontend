@@ -55,7 +55,7 @@ const STEP_VALIDATORS: Record<WizardStep, (data: StudentFormData) => FieldErrors
   3: () => ({}), // Agent/Siblings/Past Records are all optional
 };
 
-/** i18n key shown under a field the BACKEND rejected (studentsApi.ts's field-mapped error codes) — the backend's own message goes in the toast. */
+/** i18n key shown under a field the BACKEND rejected (studentsApi.ts's field-mapped errors: a 422 VALIDATION_ERROR naming the field, or a code below) — the backend's own message goes in the toast. */
 const SERVER_FIELD_ERROR_KEYS: Record<string, string> = {
   username: "students.wizard.errors.usernameRejected",
   email: "students.wizard.errors.emailRejected",
@@ -63,6 +63,12 @@ const SERVER_FIELD_ERROR_KEYS: Record<string, string> = {
   class_arm_id: "students.wizard.errors.placementRejected",
   class_term_id: "students.wizard.errors.placementRejected",
   mode: "students.wizard.errors.placementRejected",
+};
+
+/** The 409 duplicates get their own hint (overrides the field's generic "invalid" one). */
+const SERVER_CODE_ERROR_KEYS: Record<string, string> = {
+  USERNAME_TAKEN: "students.wizard.errors.usernameTaken",
+  EMAIL_TAKEN: "students.wizard.errors.emailTaken",
 };
 
 /** Routes a final-submit validation error back to the step that owns it, so the user lands on something they can actually fix. */
@@ -110,6 +116,12 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
   const [errors, setErrors] = useState<FieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+
+  // The list is year-filtered and drops any student without an
+  // academic_year_id, so every save MUST carry one or a draft would vanish
+  // from the list. A resumed draft / edited student keeps the year it was
+  // saved under; a new admission takes the session's selected year.
+  const academicYearId = initialStudent?.academic_year_id ?? selectedYearId;
 
   const updateGroup = <K extends keyof StudentFormData>(key: K, patch: Partial<StudentFormData[K]>) => {
     setData((current) => ({ ...current, [key]: { ...current[key], ...patch } }));
@@ -166,7 +178,8 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
     if (result.kind === "validation" && result.errors.length > 0) {
       const fieldErrors: FieldErrors = {};
       for (const error of result.errors) {
-        if (SERVER_FIELD_ERROR_KEYS[error.field]) fieldErrors[error.field] = SERVER_FIELD_ERROR_KEYS[error.field];
+        const key = (error.code && SERVER_CODE_ERROR_KEYS[error.code]) || SERVER_FIELD_ERROR_KEYS[error.field];
+        if (key) fieldErrors[error.field] = key;
       }
       const firstField = Object.keys(fieldErrors)[0];
       if (firstField) {
@@ -182,8 +195,12 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
   };
 
   const handleSaveDraft = async () => {
+    if (!academicYearId) {
+      showToast(t("students.wizard.errors.noYear"));
+      return;
+    }
     setIsSavingDraft(true);
-    const body = formDataToStudentBody(data, selectedYearId);
+    const body = formDataToStudentBody(data, academicYearId);
     const result = studentId ? await saveStudentDraft(studentId, body, step) : await createStudentDraft(body, step);
     setIsSavingDraft(false);
 
@@ -210,8 +227,12 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
       return;
     }
 
+    if (!academicYearId) {
+      showToast(t("students.wizard.errors.noYear"));
+      return;
+    }
     setIsSubmitting(true);
-    const body = formDataToStudentBody(data, selectedYearId);
+    const body = formDataToStudentBody(data, academicYearId);
     // Three final-save routes: an already-active student is edited in place
     // (PUT /:id); a draft — resumed, or created by Save Draft earlier in this
     // same session — is submitted (POST /:id/submit); otherwise it's a
@@ -232,7 +253,7 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
     // AUTO-POPULATE: submit/create creates the student's initial Student
     // Term Details record server-side (same transaction) when placement is
     // complete — invalidate so that screen reflects it immediately.
-    if (selectedYearId) queryClient.invalidateQueries({ queryKey: studentTermDetailsQueryKey(selectedYearId) });
+    queryClient.invalidateQueries({ queryKey: studentTermDetailsQueryKey(academicYearId) });
     showToast(mode === "edit" ? t("students.wizard.footer.studentUpdated") : t("students.wizard.footer.studentCreated"));
     onClose();
   };
