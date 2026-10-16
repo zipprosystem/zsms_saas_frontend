@@ -1288,6 +1288,12 @@
         "studentUpdated": "Modifications enregistrées",
         "saveFailed": "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer."
       },
+      "autoSave": {
+        "saving": "Enregistrement…",
+        "saved": "Enregistré",
+        "retrying": "Échec de l'enregistrement — nouvelle tentative",
+        "failed": "Échec de l'enregistrement"
+      },
       "fields": {
         "schoolType": {
           "label": "Type d'établissement",

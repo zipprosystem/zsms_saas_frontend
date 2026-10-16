@@ -1280,6 +1280,12 @@
         "studentUpdated": "Changes saved",
         "saveFailed": "Something went wrong saving. Please try again."
       },
+      "autoSave": {
+        "saving": "Saving…",
+        "saved": "Saved",
+        "retrying": "Couldn't save — retrying",
+        "failed": "Couldn't save"
+      },
       "fields": {
         "schoolType": {
           "label": "School Type",
