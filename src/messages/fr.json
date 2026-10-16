@@ -923,6 +923,9 @@
       "subtitle": "Automatiquement renseigné lorsqu'un élève est créé et placé dans une classe/section/trimestre. Les élèves ne passent pas automatiquement aux trimestres suivants — utilisez « Ajouter un trimestre élève » pour cela et pour les corrections.",
       "addNew": "Ajouter un trimestre élève (correction)",
       "searchPlaceholder": "Rechercher par nom ou n° d'admission…",
+      "locked": {
+        "reason": "Réactivez l'élève pour le modifier."
+      },
       "empty": "Aucun élève placé dans un trimestre pour le moment — ils apparaîtront ici automatiquement une fois ajoutés depuis la page Élèves.",
       "devBypassNotice": "Non disponible en local (les données de classe réelles sont requises) — fonctionne une fois déployé.",
       "noYear": {

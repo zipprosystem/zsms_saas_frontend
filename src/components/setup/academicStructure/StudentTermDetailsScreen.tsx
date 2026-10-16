@@ -32,6 +32,7 @@ import {
 import { listStudents, studentsQueryKey } from "@/lib/students/studentsApi";
 import type { Student } from "@/lib/students/studentTypes";
 import { studentFullName } from "@/lib/students/studentsTableHelpers";
+import { StudentStatusBadge } from "@/components/students/StudentStatusBadge";
 
 type FormState = {
   class_id: string;
@@ -170,6 +171,20 @@ function StudentTermDetailsTable({ yearId }: { yearId: string }) {
     const student = studentById(row.student_id);
     return student ? studentFullName(student) || "—" : "—";
   };
+  // STATUS LOCK: a student who isn't active (withdrawn, suspended,
+  // expelled, graduated, ...) has their OWN term-detail rows locked —
+  // edit/delete disabled with a reason; other students in the same
+  // class-term stay editable. Reactivating unlocks. Add is already covered:
+  // the create form only offers active students. The backend's
+  // STUDENT_NOT_EDITABLE (-> conflict banner, studentTermDetailsApi.ts)
+  // stays as the safety net, e.g. while the students list is still loading
+  // and a row's student is unknown (treated as unlocked here).
+  const isRowLocked = (row: StudentTermDetail): boolean => {
+    const student = studentById(row.student_id);
+    return !!student && student.status !== "active";
+  };
+  const lockedReason = t("setup.studentTermDetails.locked.reason");
+
   const schoolTypeName = (row: StudentTermDetail): string => {
     const schoolTypeId = classById(row.class_id)?.school_type_id;
     return (schoolTypeId && schoolTypeById(schoolTypeId)?.name) || "—";
@@ -216,7 +231,26 @@ function StudentTermDetailsTable({ yearId }: { yearId: string }) {
   ];
 
   const columns: ColumnDef<StudentTermDetail>[] = [
-    { key: "student", header: t("setup.studentTermDetails.columns.student"), render: (row) => studentName(row) },
+    {
+      key: "student",
+      header: t("setup.studentTermDetails.columns.student"),
+      render: (row) => {
+        const student = studentById(row.student_id);
+        // Locked rows spell the reason out in the row itself: the disabled
+        // actions' title tooltip never shows on touch screens.
+        return student && student.status !== "active" ? (
+          <span className="flex flex-col gap-1">
+            <span className="flex flex-wrap items-center gap-2">
+              {studentName(row)}
+              <StudentStatusBadge status={student.status} />
+            </span>
+            <span className="text-xs text-text-muted">{lockedReason}</span>
+          </span>
+        ) : (
+          studentName(row)
+        );
+      },
+    },
     { key: "schoolType", header: t("setup.studentTermDetails.columns.schoolType"), render: (row) => schoolTypeName(row) },
     {
       key: "classTerm",
@@ -277,12 +311,20 @@ function StudentTermDetailsTable({ yearId }: { yearId: string }) {
         (!filters.arm || sectionById(row.section_id)?.name === filters.arm)
       }
       rowActions={(row, helpers) => [
-        { key: "edit", label: t("common.edit"), onClick: helpers.edit },
+        {
+          key: "edit",
+          label: t("common.edit"),
+          onClick: helpers.edit,
+          disabled: isRowLocked(row),
+          disabledReason: lockedReason,
+        },
         {
           key: "delete",
           label: t("common.delete"),
           variant: "danger",
           onClick: helpers.remove,
+          disabled: isRowLocked(row),
+          disabledReason: lockedReason,
           confirm: {
             title: t("setup.studentTermDetails.confirmDelete.title"),
             message: t("setup.studentTermDetails.confirmDelete.message", { name: studentName(row) }),
