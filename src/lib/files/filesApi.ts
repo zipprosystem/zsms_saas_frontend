@@ -56,7 +56,7 @@ function toResult<T>(response: Response, body: unknown): CrudResult<T> {
   if (response.status === 404) return { ok: false, kind: "conflict", message: message ?? undefined };
   // 401 isn't handled here: apiFetch already retries once via /auth/refresh
   // and force-logs-out + redirects to /login on failure.
-  return { ok: false, kind: "server", message: message ?? undefined };
+  return { ok: false, kind: "server", message: message ?? undefined, status: response.status };
 }
 
 function asString(value: unknown): string | null {
