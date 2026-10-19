@@ -1,0 +1,261 @@
+<title>Modern Result Template</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Layout: a calm modern result card; a summary band of headline metrics sits above a quiet subject table. Toggle = end-of-term vs mid-term. */
+  :root{
+    --page-bg:#eef0ea; --paper:#ffffff; --ink:#1b1f1e; --muted:#5f6562;
+    --line:#e4e2d9; --line-strong:#c6c3b6; --accent:#0f766e; --accent-fg:#ffffff;
+    --gold:#9a7416; --tint:#edf5f3; --tint-2:#f5f4ee; --good:#15803d;
+    --gA:#15803d; --gB:#0f766e; --gC:#9a7416; --gD:#a65c1d; --gF:#b4453b;
+    --disp:"Fraunces",Georgia,serif; --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --page-bg:#101312; --paper:#1a1e1d; --ink:#ebeeec; --muted:#9ea4a1;
+    --line:#2b302e; --line-strong:#474d4a; --accent:#2dd4bf; --accent-fg:#06211d;
+    --gold:#d8aa4d; --tint:#15302b; --tint-2:#20231f; --good:#4ade80;
+    --gA:#4ade80; --gB:#2dd4bf; --gC:#d8aa4d; --gD:#e0975a; --gF:#e3786d; color-scheme:dark;
+  }}
+  :root[data-theme="dark"]{
+    --page-bg:#101312; --paper:#1a1e1d; --ink:#ebeeec; --muted:#9ea4a1;
+    --line:#2b302e; --line-strong:#474d4a; --accent:#2dd4bf; --accent-fg:#06211d;
+    --gold:#d8aa4d; --tint:#15302b; --tint-2:#20231f; --good:#4ade80;
+    --gA:#4ade80; --gB:#2dd4bf; --gC:#d8aa4d; --gD:#e0975a; --gF:#e3786d; color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--page-bg);color:var(--ink);font-family:var(--sans);line-height:1.5}
+  .wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:26px;display:flex;flex-direction:column;align-items:center;gap:18px}
+
+  .toolbar{width:100%;max-width:900px;display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-content:space-between}
+  .seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:999px;overflow:hidden;background:var(--paper)}
+  .seg button{appearance:none;border:0;background:transparent;color:var(--muted);font:600 13px/1 var(--sans);padding:10px 18px;cursor:pointer}
+  .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+  .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .note{color:var(--muted);font-size:12px;max-width:48ch;min-width:0}
+  .note b{color:var(--ink);font-weight:600}
+
+  .card{width:100%;max-width:900px;background:var(--paper);border:1px solid var(--line-strong);border-radius:16px;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.03),0 24px 50px -30px rgba(0,0,0,.5)}
+  .head{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;padding:22px 24px 18px}
+  .logo{width:54px;height:54px;border-radius:14px;background:var(--tint);border:1px solid var(--line-strong);display:grid;place-items:center;color:var(--accent);font:700 11px/1 var(--sans);letter-spacing:.06em}
+  .head h1{font-family:var(--disp);font-weight:600;font-size:clamp(21px,3.6vw,30px);margin:0;letter-spacing:-.01em;text-wrap:balance}
+  .head .sub{color:var(--muted);font-size:12px;margin:2px 0 0}
+  .head .badge-term{display:inline-block;margin-top:7px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);background:var(--tint);border:1px solid var(--line-strong);padding:3px 10px;border-radius:999px}
+  .photo{width:58px;height:70px;border-radius:9px;border:1px solid var(--line-strong);background:var(--tint-2);display:grid;place-items:center}
+  .photo svg{width:38px;height:38px;color:var(--muted)}
+
+  .ident{display:flex;flex-wrap:wrap;gap:4px 28px;padding:0 24px 16px;border-bottom:1px solid var(--line)}
+  .ident div{display:flex;flex-direction:column;min-width:0}
+  .ident .k{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+  .ident .v{font-weight:600;font-size:13.5px}
+
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);padding:1px;margin:16px 24px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+  .stat{background:var(--paper);padding:14px 16px;display:flex;flex-direction:column;gap:3px;min-width:0}
+  .stat .k{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+  .stat .v{font-family:var(--disp);font-weight:700;font-size:24px;line-height:1;font-variant-numeric:tabular-nums}
+  .stat .v small{font-size:13px;color:var(--muted);font-weight:500}
+  .stat.hero .v{color:var(--accent)}
+
+  .sechead{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 24px}
+  .tablebox{overflow-x:auto;padding:0 10px}
+  table{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
+  th,td{padding:9px 12px;text-align:center;font-variant-numeric:tabular-nums;border-bottom:1px solid var(--line)}
+  thead th{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600;border-bottom:1.5px solid var(--line-strong)}
+  td.subj,th.subj{text-align:left;font-weight:600}
+  td.rmk,th.rmk{text-align:left;color:var(--muted);font-weight:400}
+  tbody tr:last-child td{border-bottom:0}
+  .pill{display:inline-block;min-width:26px;padding:2px 8px;border-radius:999px;font-weight:700;font-size:12px;color:#fff;font-family:var(--disp)}
+  .pA{background:var(--gA)} .pB{background:var(--gB)} .pC{background:var(--gC)} .pD{background:var(--gD)} .pF{background:var(--gF)}
+
+  .domains{display:grid;grid-template-columns:1fr 1fr;gap:0 28px;padding:6px 24px 8px}
+  .domain h3{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:8px 0 4px}
+  :root[data-theme="dark"] .domain h3{color:var(--ink)} @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .domain h3{color:var(--ink)}}
+  .trait{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:5px 0;border-top:1px solid var(--line);font-size:13px}
+  .dots{display:inline-flex;gap:4px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--line-strong)}
+  .dot.on{background:var(--accent)}
+
+  .remarks{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--line);margin-top:10px}
+  .remark{padding:14px 24px}
+  .remark:first-child{border-right:1px solid var(--line)}
+  .remark h3{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+  .remark p{margin:0;font-size:13px;font-style:italic}
+  .remark .by{margin-top:10px;font-size:12px;color:var(--muted)}
+  .remark .by b{font-family:var(--disp);font-style:italic;color:var(--ink);font-weight:600}
+
+  .legend{display:flex;flex-wrap:wrap;gap:8px;padding:14px 24px 20px;border-top:1px solid var(--line);align-items:center}
+  .legend .lab{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;margin-right:4px}
+  .chip{font-size:11.5px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+  .chip i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+  @media (max-width:620px){
+    .head{grid-template-columns:auto 1fr}.photo{display:none}
+    .stats{grid-template-columns:1fr 1fr}
+    .domains,.remarks{grid-template-columns:1fr}
+    .remark:first-child{border-right:0;border-bottom:1px solid var(--line)}
+  }
+</style>
+
+<div class="wrap">
+  <div class="toolbar">
+    <div class="seg" role="group" aria-label="Report variant">
+      <button id="b-full" aria-pressed="true">End of Term</button>
+      <button id="b-mid" aria-pressed="false">Mid-Term (C.A.)</button>
+    </div>
+    <p class="note"><b>Template preview — sample data.</b> A clean, modern result layout you can offer as a default. Logo, photo, name and scores are placeholders filled per school.</p>
+  </div>
+
+  <!-- END OF TERM -->
+  <article class="card" id="full">
+    <div class="head">
+      <div class="logo">LOGO</div>
+      <div>
+        <h1>Brightlands School</h1>
+        <p class="sub">15 Harmony Avenue, Abuja, Nigeria &middot; hello@brightlands.example</p>
+        <span class="badge-term">First Term Report &middot; 2025/2026</span>
+      </div>
+      <div class="photo" aria-label="Student photo placeholder"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z"/></svg></div>
+    </div>
+
+    <div class="ident">
+      <div><span class="k">Student</span><span class="v">Zainab Ibrahim</span></div>
+      <div><span class="k">Class</span><span class="v">Grade 8 — Sapphire</span></div>
+      <div><span class="k">Admission No.</span><span class="v">BLS/2025/118</span></div>
+      <div><span class="k">Next Term</span><span class="v">12 Jan 2026</span></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat hero"><span class="k">Average</span><span class="v">84.1<small>%</small></span></div>
+      <div class="stat hero"><span class="k">Overall Grade</span><span class="v">A</span></div>
+      <div class="stat"><span class="k">Position</span><span class="v">2<small>/26</small></span></div>
+      <div class="stat"><span class="k">Attendance</span><span class="v">98<small>%</small></span></div>
+    </div>
+
+    <div class="sechead">Subjects</div>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th class="subj">Subject</th><th>C.A. (30)</th><th>Exam (70)</th><th>Total</th><th>Grade</th><th class="rmk">Remark</th></tr></thead>
+        <tbody>
+          <tr><td class="subj">Mathematics</td><td>27</td><td>61</td><td>88</td><td><span class="pill pA">A</span></td><td class="rmk">Excellent problem-solving</td></tr>
+          <tr><td class="subj">English Language</td><td>26</td><td>58</td><td>84</td><td><span class="pill pA">A</span></td><td class="rmk">Clear, confident writing</td></tr>
+          <tr><td class="subj">Basic Science</td><td>29</td><td>63</td><td>92</td><td><span class="pill pA">A</span></td><td class="rmk">Outstanding</td></tr>
+          <tr><td class="subj">Social Studies</td><td>24</td><td>44</td><td>68</td><td><span class="pill pB">B</span></td><td class="rmk">Very good</td></tr>
+          <tr><td class="subj">Business Studies</td><td>25</td><td>52</td><td>77</td><td><span class="pill pA">A</span></td><td class="rmk">Consistent effort</td></tr>
+          <tr><td class="subj">Computer Studies</td><td>28</td><td>60</td><td>88</td><td><span class="pill pA">A</span></td><td class="rmk">Strong practical skills</td></tr>
+          <tr><td class="subj">French</td><td>21</td><td>38</td><td>59</td><td><span class="pill pC">C</span></td><td class="rmk">Good; keep practising</td></tr>
+          <tr><td class="subj">Agricultural Science</td><td>26</td><td>56</td><td>82</td><td><span class="pill pA">A</span></td><td class="rmk">Keen and curious</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="domains">
+      <div class="domain">
+        <h3>Affective Domain</h3>
+        <div class="trait"><span>Punctuality</span><span class="dots" data-on="5"></span></div>
+        <div class="trait"><span>Neatness</span><span class="dots" data-on="4"></span></div>
+        <div class="trait"><span>Politeness</span><span class="dots" data-on="5"></span></div>
+        <div class="trait"><span>Cooperation</span><span class="dots" data-on="5"></span></div>
+        <div class="trait"><span>Responsibility</span><span class="dots" data-on="4"></span></div>
+      </div>
+      <div class="domain">
+        <h3>Psychomotor Skills</h3>
+        <div class="trait"><span>Handwriting</span><span class="dots" data-on="5"></span></div>
+        <div class="trait"><span>Sports &amp; Games</span><span class="dots" data-on="4"></span></div>
+        <div class="trait"><span>Drawing &amp; Painting</span><span class="dots" data-on="3"></span></div>
+        <div class="trait"><span>Communication</span><span class="dots" data-on="5"></span></div>
+        <div class="trait"><span>Creativity</span><span class="dots" data-on="4"></span></div>
+      </div>
+    </div>
+
+    <div class="remarks">
+      <div class="remark"><h3>Class Teacher</h3><p>&ldquo;Zainab is diligent and kind-hearted, and a steadying presence in class. A little more speaking practice in French will round out an excellent term.&rdquo;</p><p class="by">— <b>Mrs A. Danladi</b> &middot; 05 Dec 2025</p></div>
+      <div class="remark"><h3>Head of School</h3><p>&ldquo;A splendid set of results built on real consistency. Well done — we look forward to seeing you build on this.&rdquo;</p><p class="by">— <b>Dr O. Eze</b> &middot; 05 Dec 2025</p></div>
+    </div>
+
+    <div class="legend">
+      <span class="lab">Grading</span>
+      <span class="chip"><i style="background:var(--gA)"></i>A · 70–100 Excellent</span>
+      <span class="chip"><i style="background:var(--gB)"></i>B · 60–69 Very Good</span>
+      <span class="chip"><i style="background:var(--gC)"></i>C · 50–59 Good</span>
+      <span class="chip"><i style="background:var(--gD)"></i>D · 45–49 Pass</span>
+      <span class="chip"><i style="background:var(--gF)"></i>F · 0–44 Below Pass</span>
+      <span class="lab" style="margin-left:10px">Traits</span>
+      <span class="chip">5 dots = Excellent → 1 dot = Poor</span>
+    </div>
+  </article>
+
+  <!-- MID TERM -->
+  <article class="card" id="mid" hidden>
+    <div class="head">
+      <div class="logo">LOGO</div>
+      <div>
+        <h1>Brightlands School</h1>
+        <p class="sub">15 Harmony Avenue, Abuja, Nigeria &middot; hello@brightlands.example</p>
+        <span class="badge-term">Mid-Term Assessment &middot; 2025/2026</span>
+      </div>
+      <div class="photo" aria-label="Student photo placeholder"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z"/></svg></div>
+    </div>
+
+    <div class="ident">
+      <div><span class="k">Student</span><span class="v">Zainab Ibrahim</span></div>
+      <div><span class="k">Class</span><span class="v">Grade 8 — Sapphire</span></div>
+      <div><span class="k">Admission No.</span><span class="v">BLS/2025/118</span></div>
+      <div><span class="k">Assessed</span><span class="v">17 Oct 2025</span></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat hero"><span class="k">C.A. Average</span><span class="v">86.7<small>%</small></span></div>
+      <div class="stat hero"><span class="k">Overall Grade</span><span class="v">A</span></div>
+      <div class="stat"><span class="k">Subjects</span><span class="v">8</span></div>
+      <div class="stat"><span class="k">Attendance</span><span class="v">99<small>%</small></span></div>
+    </div>
+
+    <div class="sechead">Continuous Assessment (scaled to 100%)</div>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th class="subj">Subject</th><th>C.A. 1</th><th>C.A. 2</th><th>C.A. 3</th><th>Total (30)</th><th>Score</th><th>Grade</th></tr></thead>
+        <tbody>
+          <tr><td class="subj">Mathematics</td><td>9</td><td>8</td><td>10</td><td>27</td><td>90.0</td><td><span class="pill pA">A</span></td></tr>
+          <tr><td class="subj">English Language</td><td>8</td><td>9</td><td>9</td><td>26</td><td>86.7</td><td><span class="pill pA">A</span></td></tr>
+          <tr><td class="subj">Basic Science</td><td>10</td><td>9</td><td>10</td><td>29</td><td>96.7</td><td><span class="pill pA">A</span></td></tr>
+          <tr><td class="subj">Social Studies</td><td>8</td><td>7</td><td>8</td><td>23</td><td>76.7</td><td><span class="pill pA">A</span></td></tr>
+          <tr><td class="subj">Business Studies</td><td>9</td><td>8</td><td>8</td><td>25</td><td>83.3</td><td><span class="pill pA">A</span></td></tr>
+          <tr><td class="subj">Computer Studies</td><td>9</td><td>9</td><td>10</td><td>28</td><td>93.3</td><td><span class="pill pA">A</span></td></tr>
+          <tr><td class="subj">French</td><td>7</td><td>7</td><td>7</td><td>21</td><td>70.0</td><td><span class="pill pA">A</span></td></tr>
+          <tr><td class="subj">Agricultural Science</td><td>8</td><td>9</td><td>8</td><td>25</td><td>83.3</td><td><span class="pill pA">A</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="remarks">
+      <div class="remark"><h3>Class Teacher</h3><p>&ldquo;A strong, focused start to the term — Zainab is well prepared and participates readily.&rdquo;</p><p class="by">— <b>Mrs A. Danladi</b> &middot; 17 Oct 2025</p></div>
+      <div class="remark"><h3>Note</h3><p>Mid-term shows continuous assessment only, scaled to 100%. Examination scores are added on the end-of-term report.</p></div>
+    </div>
+
+    <div class="legend">
+      <span class="lab">Grading</span>
+      <span class="chip"><i style="background:var(--gA)"></i>A · 70–100</span>
+      <span class="chip"><i style="background:var(--gB)"></i>B · 60–69</span>
+      <span class="chip"><i style="background:var(--gC)"></i>C · 50–59</span>
+      <span class="chip"><i style="background:var(--gD)"></i>D · 45–49</span>
+      <span class="chip"><i style="background:var(--gF)"></i>F · 0–44</span>
+    </div>
+  </article>
+</div>
+
+<script>
+  (function(){
+    var full=document.getElementById('full'), mid=document.getElementById('mid');
+    var bF=document.getElementById('b-full'), bM=document.getElementById('b-mid');
+    function show(isFull){
+      full.hidden=!isFull; mid.hidden=isFull;
+      bF.setAttribute('aria-pressed',String(isFull));
+      bM.setAttribute('aria-pressed',String(!isFull));
+    }
+    bF.addEventListener('click',function(){show(true)});
+    bM.addEventListener('click',function(){show(false)});
+    document.querySelectorAll('.dots').forEach(function(d){
+      var on=parseInt(d.getAttribute('data-on'),10)||0;
+      for(var i=1;i<=5;i++){var s=document.createElement('span');s.className='dot'+(i<=on?' on':'');d.appendChild(s);}
+    });
+  })();
+</script>

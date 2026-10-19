@@ -2,6 +2,15 @@ import { apiFetch } from "@/lib/api/client";
 import { DEV_AUTH_BYPASS } from "@/lib/auth/authBridge";
 import { extractErpError } from "@/lib/setup/erpError";
 import type { CrudResult, CrudService } from "@/lib/setup/crudTypes";
+import {
+  SCHOOL_TYPE_ASSIGNMENTS_LIVE,
+  assignmentsFromWire,
+  deleteMockAssignments,
+  loadMockAssignments,
+  saveMockAssignments,
+  type SchoolTypeAssignments,
+} from "@/lib/setup/academicStructure/schoolTypeAssignments";
+import { devCreate, devList, devRemove, devUpdate } from "@/lib/setup/academicStructure/schoolTypesDevMock";
 
 /**
  * Finalized contract per Muntajir: { success, data }, Bearer auth via
@@ -50,6 +59,17 @@ import type { CrudResult, CrudService } from "@/lib/setup/crudTypes";
  *   SCHOOL_TYPE_NOT_FOUND  -> conflict (stale row)
  * Any other/missing code falls back to the plain status-code classification
  * (403/409/422/else), same defensive pattern as Award Bodies/Academic Years.
+ *
+ * TEMPLATE ASSIGNMENTS (result_template_id, student_id_card_template_id,
+ * staff_id_card_template_id, report_logo_file_id) — not in the backend
+ * yet. While SCHOOL_TYPE_ASSIGNMENTS_LIVE is false they're kept in a
+ * MOCK side-store and merged on read; the real POST/PUT body above is
+ * unchanged. See schoolTypeAssignments.ts.
+ *
+ * DEV_AUTH_BYPASS: list/create/update/remove fall back to a throwaway
+ * localStorage mock (schoolTypesDevMock.ts) instead of returning
+ * devBypassUnavailable — local-only scaffolding for the assignment flow,
+ * removed when the flag flips.
  */
 export type SchoolTypeClass = {
   id: string;
@@ -57,7 +77,7 @@ export type SchoolTypeClass = {
   is_active: boolean;
 };
 
-export type SchoolType = {
+type SchoolTypeBase = {
   id: string;
   name: string;
   award_body_ids: string[];
@@ -66,11 +86,16 @@ export type SchoolType = {
   classes: SchoolTypeClass[];
 };
 
-export type SchoolTypeInput = {
+export type SchoolType = SchoolTypeBase & SchoolTypeAssignments;
+
+/** What the real POST/PUT body carries today. */
+type SchoolTypeBaseInput = {
   name: string;
   award_body_ids: string[];
   description: string | null;
 };
+
+export type SchoolTypeInput = SchoolTypeBaseInput & SchoolTypeAssignments;
 
 const BASE_PATH = "erp/school-types";
 
@@ -110,12 +135,12 @@ function toResult<T>(response: Response, body: unknown): CrudResult<T> {
   return { ok: false, kind: "server", message: message ?? undefined, status: response.status };
 }
 
-function extractSchoolTypeList(body: unknown): SchoolType[] {
+function extractSchoolTypeList(body: unknown): SchoolTypeBase[] {
   const items = (body as { data?: { items?: unknown } } | null)?.data?.items;
-  return Array.isArray(items) ? (items as SchoolType[]) : [];
+  return Array.isArray(items) ? (items as SchoolTypeBase[]) : [];
 }
 
-async function list(): Promise<CrudResult<SchoolType[]>> {
+async function realList(): Promise<CrudResult<SchoolTypeBase[]>> {
   if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
 
   let response: Response;
@@ -132,7 +157,7 @@ async function list(): Promise<CrudResult<SchoolType[]>> {
   return toResult(response, body);
 }
 
-async function create(data: SchoolTypeInput): Promise<CrudResult<SchoolType>> {
+async function realCreate(data: SchoolTypeBaseInput | SchoolTypeInput): Promise<CrudResult<SchoolTypeBase>> {
   if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
 
   let response: Response;
@@ -144,14 +169,14 @@ async function create(data: SchoolTypeInput): Promise<CrudResult<SchoolType>> {
 
   const body = await parseBody(response);
   if (response.ok) {
-    const created = (body as { data?: SchoolType } | null)?.data;
+    const created = (body as { data?: SchoolTypeBase } | null)?.data;
     if (created) return { ok: true, data: created };
     return { ok: false, kind: "server" };
   }
   return toResult(response, body);
 }
 
-async function update(id: string, data: SchoolTypeInput): Promise<CrudResult<SchoolType>> {
+async function realUpdate(id: string, data: SchoolTypeBaseInput | SchoolTypeInput): Promise<CrudResult<SchoolTypeBase>> {
   if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
 
   let response: Response;
@@ -166,14 +191,14 @@ async function update(id: string, data: SchoolTypeInput): Promise<CrudResult<Sch
 
   const body = await parseBody(response);
   if (response.ok) {
-    const updated = (body as { data?: SchoolType } | null)?.data;
+    const updated = (body as { data?: SchoolTypeBase } | null)?.data;
     if (updated) return { ok: true, data: updated };
     return { ok: false, kind: "server" };
   }
   return toResult(response, body);
 }
 
-async function remove(id: string): Promise<CrudResult<void>> {
+async function realRemove(id: string): Promise<CrudResult<void>> {
   if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
 
   let response: Response;
@@ -186,6 +211,59 @@ async function remove(id: string): Promise<CrudResult<void>> {
   if (response.ok) return { ok: true, data: undefined };
   const body = await parseBody(response);
   return toResult(response, body);
+}
+
+// ---------------------------------------------------------------------------
+// Public surface: real (or dev-bypass mock) School Type + assignments.
+// ---------------------------------------------------------------------------
+
+function baseInput(data: SchoolTypeInput): SchoolTypeBaseInput {
+  return { name: data.name, award_body_ids: data.award_body_ids, description: data.description };
+}
+
+function assignmentsOf(data: SchoolTypeInput): SchoolTypeAssignments {
+  return {
+    result_template_id: data.result_template_id,
+    student_id_card_template_id: data.student_id_card_template_id,
+    staff_id_card_template_id: data.staff_id_card_template_id,
+    report_logo_file_id: data.report_logo_file_id,
+  };
+}
+
+/** Live: the four fields come back on the entity itself. Mock: merged from the side-store. */
+function withAssignments(row: SchoolTypeBase): SchoolType {
+  const assignments = SCHOOL_TYPE_ASSIGNMENTS_LIVE
+    ? assignmentsFromWire(row as unknown as Record<string, unknown>)
+    : loadMockAssignments(row.id);
+  return { ...row, ...assignments };
+}
+
+/** Mock: the base save succeeded, so persist its assignments alongside. */
+function afterSave(result: CrudResult<SchoolTypeBase>, data: SchoolTypeInput): CrudResult<SchoolType> {
+  if (!result.ok) return result;
+  if (!SCHOOL_TYPE_ASSIGNMENTS_LIVE) saveMockAssignments(result.data.id, assignmentsOf(data));
+  return { ok: true, data: withAssignments(result.data) };
+}
+
+async function list(): Promise<CrudResult<SchoolType[]>> {
+  const result = DEV_AUTH_BYPASS ? await devList() : await realList();
+  return result.ok ? { ok: true, data: result.data.map(withAssignments) } : result;
+}
+
+async function create(data: SchoolTypeInput): Promise<CrudResult<SchoolType>> {
+  const body = SCHOOL_TYPE_ASSIGNMENTS_LIVE ? data : baseInput(data);
+  return afterSave(DEV_AUTH_BYPASS ? await devCreate(data) : await realCreate(body), data);
+}
+
+async function update(id: string, data: SchoolTypeInput): Promise<CrudResult<SchoolType>> {
+  const body = SCHOOL_TYPE_ASSIGNMENTS_LIVE ? data : baseInput(data);
+  return afterSave(DEV_AUTH_BYPASS ? await devUpdate(id, data) : await realUpdate(id, body), data);
+}
+
+async function remove(id: string): Promise<CrudResult<void>> {
+  const result = DEV_AUTH_BYPASS ? await devRemove(id) : await realRemove(id);
+  if (result.ok && !SCHOOL_TYPE_ASSIGNMENTS_LIVE) deleteMockAssignments(id);
+  return result;
 }
 
 export const schoolTypesService: CrudService<SchoolType, SchoolTypeInput, SchoolTypeInput> = {

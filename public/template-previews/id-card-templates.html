@@ -1,0 +1,183 @@
+<title>ID Card Templates</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800&display=swap">
+<style>
+  /* Layout: ID-card mockups at true CR80 proportions (1.585:1), student landscape + staff portrait, each front + back. */
+  :root{
+    --page-bg:#e9ecf1; --surface:#ffffff; --ink:#14233b; --muted:#5e6b80;
+    --line:#d6dce4; --line-strong:#aab4c2; --navy:#1f3a5f; --navy-2:#2f5688; --gold:#c0922f; --tint:#eef2f7;
+    --disp:"Mulish",system-ui,-apple-system,Segoe UI,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --page-bg:#0f1319; --surface:#1a2130; --ink:#e7ecf3; --muted:#9fabbd;
+    --line:#2a3342; --line-strong:#49566a; --navy:#294b76; --navy-2:#356098; --gold:#d8aa4d; --tint:#1d2634; color-scheme:dark;
+  }}
+  :root[data-theme="dark"]{
+    --page-bg:#0f1319; --surface:#1a2130; --ink:#e7ecf3; --muted:#9fabbd;
+    --line:#2a3342; --line-strong:#49566a; --navy:#294b76; --navy-2:#356098; --gold:#d8aa4d; --tint:#1d2634; color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--page-bg);color:var(--ink);font-family:var(--disp);line-height:1.4}
+  .wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:26px;display:flex;flex-direction:column;align-items:center;gap:24px}
+  .intro{width:100%;max-width:900px}
+  .intro h2{font-weight:800;font-size:18px;margin:0}
+  .intro p{color:var(--muted);font-size:12.5px;margin:4px 0 0;max-width:64ch}.intro p b{color:var(--ink);font-weight:700}
+
+  .group{width:100%;max-width:900px}
+  .glabel{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+  .pair{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}
+  .face{display:flex;flex-direction:column;gap:7px}
+  .ftag{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+
+  .card{background:var(--surface);border:1px solid var(--line-strong);border-radius:14px;overflow:hidden;box-shadow:0 14px 28px -18px rgba(0,0,0,.6);color:var(--ink)}
+  .land{width:min(468px,90vw);aspect-ratio:1.585/1;display:grid}
+  .port{width:min(300px,64vw);aspect-ratio:1/1.585;display:grid}
+
+  .pfp{border-radius:8px;border:1px solid var(--line-strong);background:var(--tint);display:grid;place-items:center;overflow:hidden}
+  .pfp svg{width:52%;height:52%;color:var(--muted)}
+  .stripe{background:linear-gradient(90deg,var(--navy),var(--gold))}
+
+  /* ---------- STUDENT (landscape) ---------- */
+  .s-front{grid-template-rows:auto 1fr 7px}
+  .s-head{background:var(--navy);color:#fff;display:flex;align-items:center;gap:10px;padding:10px 14px}
+  .s-head .crest{width:30px;height:30px;border-radius:7px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);display:grid;place-items:center;font:800 8px/1 var(--disp);flex:none}
+  .s-head .nm{font-weight:800;font-size:13px;line-height:1.15}
+  .s-head .ad{font-size:9px;opacity:.82}
+  .s-main{display:flex;align-items:center;gap:16px;padding:14px 16px;min-width:0}
+  .s-main .pfp{width:84px;height:104px;flex:none}
+  .s-info{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .s-info .big{font-weight:800;font-size:19px;line-height:1.1;color:var(--navy)}
+  :root[data-theme="dark"] .s-info .big{color:var(--ink)} @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .s-info .big{color:var(--ink)}}
+  .s-info .role{font-weight:700;font-size:11.5px;color:var(--gold)}
+  .s-info .kv{font-size:11px;color:var(--muted)}.s-info .kv b{color:var(--ink);font-weight:700}
+
+  /* ---------- STAFF (portrait) ---------- */
+  .t-front{grid-template-rows:auto 1fr 7px}
+  .t-head{background:var(--navy);color:#fff;display:flex;flex-direction:column;align-items:center;gap:5px;padding:14px 12px 12px;text-align:center}
+  .t-head .crest{width:38px;height:38px;border-radius:9px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);display:grid;place-items:center;font:800 9px/1 var(--disp)}
+  .t-head .nm{font-weight:800;font-size:12.5px;line-height:1.2}
+  .t-body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:16px 14px;text-align:center}
+  .t-body .pfp{width:104px;height:126px}
+  .t-body .big{font-weight:800;font-size:16px;line-height:1.15}
+  .t-body .role{font-weight:700;font-size:11.5px;color:var(--gold)}
+  .t-body .kv{font-size:10.5px;color:var(--muted)}.t-body .kv b{color:var(--ink);font-weight:700}
+
+  /* ---------- Backs ---------- */
+  .back-l{grid-template-rows:7px 1fr}
+  .back-l .body{display:flex;align-items:center;gap:16px;padding:16px}
+  .back-p{grid-template-rows:7px 1fr}
+  .back-p .body{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px;text-align:center}
+  .qr{width:96px;height:96px;background:#fff;border:1px solid var(--line-strong);border-radius:7px;padding:6px;flex:none}
+  .qr svg{display:block;width:100%;height:100%}
+  .bk{font-size:10px;color:var(--muted);min-width:0}
+  .bk .issued{font-weight:800;color:var(--ink);font-size:11px;margin-bottom:3px}
+  .bk .ad{margin-top:7px;line-height:1.4}.bk .ad b{color:var(--ink)}
+
+  @media (max-width:560px){ .pair{justify-content:center} }
+  @media print{ @page{margin:8mm} body{background:#fff} .intro{display:none} .card{box-shadow:none} }
+</style>
+
+<div class="wrap">
+  <div class="intro">
+    <h2>ID Card Templates</h2>
+    <p><b>Template preview — sample data.</b> Generic student and staff cards at true card proportions (CR80), shown front and back. Crest, photo, name, level and QR are placeholders; each school's details and the holder's ID (encoded in the QR) fill in at print. A card is typed <b>student</b> or <b>staff</b>, and either orientation is supported.</p>
+  </div>
+
+  <!-- STUDENT -->
+  <section class="group">
+    <p class="glabel">Student card · landscape</p>
+    <div class="pair">
+      <div class="face">
+        <span class="ftag">Front</span>
+        <div class="card land s-front">
+          <div class="s-head">
+            <div class="crest">LOGO</div>
+            <div><div class="nm">Meridian Grammar School</div><div class="ad">Asu Village Road, Abeokuta · +234 000 0000</div></div>
+          </div>
+          <div class="s-main">
+            <div class="pfp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z"/></svg></div>
+            <div class="s-info">
+              <span class="big">Chidalu Nnamdi</span>
+              <span class="role">Key Stage 3 · Year 9</span>
+              <span class="kv">DOB &nbsp;<b>21 Jun 2012</b></span>
+              <span class="kv">ID &nbsp;<b>MGS-26-0471</b></span>
+            </div>
+          </div>
+          <div class="stripe"></div>
+        </div>
+      </div>
+      <div class="face">
+        <span class="ftag">Back</span>
+        <div class="card land back-l">
+          <div class="stripe"></div>
+          <div class="body">
+            <div class="qr" data-qr="MGS-26-0471" aria-label="QR placeholder"></div>
+            <div class="bk">
+              <div class="issued">Issued: 16 Oct 2026</div>
+              <div>Property of Meridian Grammar School.</div>
+              <div class="ad">If found, please return to:<br><b>Meridian Grammar School</b>, Asu Village Road, Abeokuta, Ogun State.<br>info@meridian.example</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STAFF -->
+  <section class="group">
+    <p class="glabel">Staff card · portrait</p>
+    <div class="pair">
+      <div class="face">
+        <span class="ftag">Front</span>
+        <div class="card port t-front">
+          <div class="t-head">
+            <div class="crest">LOGO</div>
+            <div class="nm">Meridian Grammar School</div>
+          </div>
+          <div class="t-body">
+            <div class="pfp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z"/></svg></div>
+            <div>
+              <div class="big">Mr Abiodun Atanda</div>
+              <div class="role">Mathematics · Staff</div>
+            </div>
+            <div class="kv">Staff ID &nbsp;<b>MGS-STF-0081</b></div>
+          </div>
+          <div class="stripe"></div>
+        </div>
+      </div>
+      <div class="face">
+        <span class="ftag">Back</span>
+        <div class="card port back-p">
+          <div class="stripe"></div>
+          <div class="body">
+            <div class="qr" data-qr="MGS-STF-0081" aria-label="QR placeholder"></div>
+            <div class="bk">
+              <div class="issued">Issued: 16 Oct 2026</div>
+              <div>Property of Meridian Grammar School.</div>
+              <div class="ad">If found, please return to:<br><b>Liaison Office</b>, 2b Oko Awo St, Victoria Island, Lagos.<br>info@meridian.example</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Deterministic QR-style placeholder (decorative, not scannable): finder squares + seeded modules.
+  (function(){
+    function rng(seed){var h=2166136261>>>0;for(var i=0;i<seed.length;i++){h^=seed.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return function(){h^=h<<13;h^=h>>>17;h^=h<<5;h>>>=0;return h/4294967296;};}
+    function finder(x,y,c,N){for(var i=0;i<7;i++)for(var j=0;j<7;j++){var e=(i===0||i===6||j===0||j===6),k=(i>=2&&i<=4&&j>=2&&j<=4);if(e||k)c[(y+i)*N+(x+j)]=1;}}
+    function sep(x,y,c,N){for(var i=-1;i<8;i++)for(var j=-1;j<8;j++){var yy=y+i,xx=x+j;if(yy<0||xx<0||yy>=N||xx>=N)continue;if(i===-1||i===7||j===-1||j===7)c[yy*N+xx]=0;}}
+    document.querySelectorAll('.qr').forEach(function(box){
+      var N=21,c=new Array(N*N).fill(0),r=rng(box.getAttribute('data-qr')||'ZSMS');
+      for(var k=0;k<N*N;k++)c[k]=r()>0.52?1:0;
+      finder(0,0,c,N);finder(N-7,0,c,N);finder(0,N-7,c,N);
+      sep(0,0,c,N);sep(N-7,0,c,N);sep(0,N-7,c,N);
+      var ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
+      svg.setAttribute('viewBox','0 0 '+N+' '+N);svg.setAttribute('shape-rendering','crispEdges');
+      for(var y=0;y<N;y++)for(var x=0;x<N;x++){if(c[y*N+x]){var rc=document.createElementNS(ns,'rect');rc.setAttribute('x',x);rc.setAttribute('y',y);rc.setAttribute('width',1);rc.setAttribute('height',1);rc.setAttribute('fill','#111');svg.appendChild(rc);}}
+      box.appendChild(svg);
+    });
+  })();
+</script>

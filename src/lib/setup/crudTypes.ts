@@ -25,6 +25,8 @@ export type CardFieldsDef<T> = {
   badge?: (row: T) => ReactNode;
   /** Rendered as a row of small pill chips between the description and the actions footer — e.g. School Types' active class chips. */
   tags?: (row: T) => string[];
+  /** Full-bleed block at the top of the card — e.g. the template catalogs' preview thumbnails. */
+  media?: (row: T) => ReactNode;
 };
 
 // A discriminated union rather than two optional props on CrudScreen — a
