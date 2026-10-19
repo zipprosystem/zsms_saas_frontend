@@ -88,24 +88,22 @@ export function matchesStudentSearch(student: Student, query: string): boolean {
 }
 
 /**
- * "Arm" filters by arm NAME (e.g. "Gold"), not class_arm_id — the same arm
- * name exists per-class (real Sections, sectionsApi), so filtering by id
- * would only ever match one specific class's arm. Matching by resolved
- * name lets "Arm = Gold" narrow across every class at once, same as
- * Class-arms' own "armName" filter (ClassArmsScreen.tsx). `sections` is
- * passed in for the same reason resolveArmName takes it — a plain helper,
- * not a hook.
+ * "Class-arm" filters by section id (`section_id` — the same name the
+ * backend list's filter param uses, so it maps 1:1 once filtering moves
+ * server-side). The row's class_arm_id IS that section id (see
+ * resolveArmName). Matching by id, not arm name, so "JSS1 – A" doesn't
+ * also match every other class's "A".
  *
  * "Status" only distinguishes statuses WITHIN the current tab — each list
  * tab is prefiltered upstream to its own slice (StudentsScreen.tsx's
  * TAB_ROW_FILTERS: active+draft / withdrawn+suspended+expelled /
  * graduated), so "All Statuses" means "all of this tab's statuses."
  */
-export function matchesStudentFilters(student: Student, filters: Record<string, string>, sections: Section[]): boolean {
+export function matchesStudentFilters(student: Student, filters: Record<string, string>): boolean {
   return (
     (!filters.status || student.status === filters.status) &&
     (!filters.class || student.class_id === filters.class) &&
-    (!filters.arm || resolveArmName(student.class_arm_id, sections) === filters.arm) &&
+    (!filters.section_id || student.class_arm_id === filters.section_id) &&
     (!filters.boardingHouse || student.boarding_house_id === filters.boardingHouse) &&
     (!filters.mode || student.mode === filters.mode)
   );
