@@ -3,9 +3,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { useQuery } from "@tanstack/react-query";
 import { InputField } from "@/components/ui/Input";
 import { ChipGroup } from "@/components/ui/ChipGroup";
+import { SelectField } from "@/components/ui/Select";
 import { CrudScreen } from "@/components/setup/CrudScreen";
+import { ReportLogoUploadField } from "@/components/setup/academicStructure/ReportLogoUploadField";
+import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
+import { throwIfTransient, type CrudService } from "@/lib/setup/crudTypes";
+import { resultTemplatesService } from "@/lib/setup/assessmentConfiguration/resultTemplatesApi";
+import { idCardTemplatesServices } from "@/lib/setup/assessmentConfiguration/idCardTemplatesApi";
+import type { TemplateStatus } from "@/lib/setup/assessmentConfiguration/templateCatalog";
 import {
   schoolTypesService,
   type SchoolType,
@@ -17,9 +25,45 @@ type FormState = {
   name: string;
   award_body_ids: string[];
   description: string;
+  result_template_id: string;
+  student_id_card_template_id: string;
+  staff_id_card_template_id: string;
+  report_logo_file_id: string | null;
 };
 
-const EMPTY_FORM: FormState = { name: "", award_body_ids: [], description: "" };
+const EMPTY_FORM: FormState = {
+  name: "",
+  award_body_ids: [],
+  description: "",
+  result_template_id: "",
+  student_id_card_template_id: "",
+  staff_id_card_template_id: "",
+  report_logo_file_id: null,
+};
+
+type AssignableTemplate = { id: string; name: string; status: TemplateStatus };
+
+/** Same query key as the catalog screen, so both share one cache entry. */
+function useTemplateList<T extends AssignableTemplate>(service: CrudService<T, never, never>) {
+  const query = useQuery({
+    queryKey: service.queryKey,
+    queryFn: () => service.list().then(throwIfTransient),
+    staleTime: STRUCTURAL_STALE_TIME_MS,
+  });
+  return { items: query.data?.ok ? query.data.data : [], isLoading: query.isPending };
+}
+
+function toFormInput(data: FormState): SchoolTypeInput {
+  return {
+    name: data.name.trim(),
+    award_body_ids: data.award_body_ids,
+    description: data.description.trim() || null,
+    result_template_id: data.result_template_id || null,
+    student_id_card_template_id: data.student_id_card_template_id || null,
+    staff_id_card_template_id: data.staff_id_card_template_id || null,
+    report_logo_file_id: data.report_logo_file_id,
+  };
+}
 
 type AwardBodiesState =
   | { status: "loading" }
@@ -48,6 +92,27 @@ export function SchoolTypesScreen() {
   }, []);
 
   const noAwardBodiesYet = awardBodies.status === "loaded" && awardBodies.items.length === 0;
+
+  const resultTemplates = useTemplateList(resultTemplatesService);
+  const studentCards = useTemplateList(idCardTemplatesServices.student);
+  const staffCards = useTemplateList(idCardTemplatesServices.staff);
+
+  // Only `available` templates are assignable. A current assignment that
+  // has since been archived stays listed (marked) so opening the form
+  // never silently clears it.
+  const templateOptions = (items: AssignableTemplate[], selectedId: string) =>
+    items
+      .filter((item) => item.status === "available" || item.id === selectedId)
+      .map((item) => (
+        <option key={item.id} value={item.id}>
+          {item.status === "available"
+            ? item.name
+            : t("setup.schoolTypes.fields.templateNotAvailable", {
+                name: item.name,
+                status: t(`setup.templateCatalog.status.${item.status}`),
+              })}
+        </option>
+      ));
 
   return (
     <CrudScreen<SchoolType, SchoolTypeInput, SchoolTypeInput, FormState>
@@ -92,6 +157,10 @@ export function SchoolTypesScreen() {
         name: row.name,
         award_body_ids: row.award_body_ids,
         description: row.description ?? "",
+        result_template_id: row.result_template_id ?? "",
+        student_id_card_template_id: row.student_id_card_template_id ?? "",
+        staff_id_card_template_id: row.staff_id_card_template_id ?? "",
+        report_logo_file_id: row.report_logo_file_id,
       })}
       validate={(data) => {
         const errors: Record<string, string> = {};
@@ -99,18 +168,12 @@ export function SchoolTypesScreen() {
         if (data.award_body_ids.length === 0) {
           errors.award_body_ids = t("setup.schoolTypes.errors.awardBodiesRequired");
         }
+        if (!data.result_template_id) errors.result_template_id = t("setup.schoolTypes.errors.resultTemplateRequired");
+        if (!data.report_logo_file_id) errors.report_logo_file_id = t("setup.schoolTypes.errors.reportLogoRequired");
         return errors;
       }}
-      toCreateInput={(data) => ({
-        name: data.name.trim(),
-        award_body_ids: data.award_body_ids,
-        description: data.description.trim() || null,
-      })}
-      toUpdateInput={(data) => ({
-        name: data.name.trim(),
-        award_body_ids: data.award_body_ids,
-        description: data.description.trim() || null,
-      })}
+      toCreateInput={toFormInput}
+      toUpdateInput={toFormInput}
       renderFields={({ data, onChange, errors }) => (
         <>
           <InputField
@@ -164,6 +227,47 @@ export function SchoolTypesScreen() {
             value={data.description}
             onChange={(event) => onChange({ description: event.target.value })}
             maxLength={100}
+          />
+
+          <SelectField
+            id="school-type-result-template"
+            label={t("setup.schoolTypes.fields.resultTemplate.label")}
+            value={data.result_template_id}
+            onChange={(event) => onChange({ result_template_id: event.target.value })}
+            disabled={resultTemplates.isLoading}
+            hasError={!!errors.result_template_id}
+            error={errors.result_template_id}
+          >
+            <option value="">{t("setup.schoolTypes.fields.resultTemplate.placeholder")}</option>
+            {templateOptions(resultTemplates.items, data.result_template_id)}
+          </SelectField>
+
+          <SelectField
+            id="school-type-student-id-card"
+            label={t("setup.schoolTypes.fields.studentIdCard.label")}
+            value={data.student_id_card_template_id}
+            onChange={(event) => onChange({ student_id_card_template_id: event.target.value })}
+            disabled={studentCards.isLoading}
+          >
+            <option value="">{t("setup.schoolTypes.fields.idCardNone")}</option>
+            {templateOptions(studentCards.items, data.student_id_card_template_id)}
+          </SelectField>
+
+          <SelectField
+            id="school-type-staff-id-card"
+            label={t("setup.schoolTypes.fields.staffIdCard.label")}
+            value={data.staff_id_card_template_id}
+            onChange={(event) => onChange({ staff_id_card_template_id: event.target.value })}
+            disabled={staffCards.isLoading}
+          >
+            <option value="">{t("setup.schoolTypes.fields.idCardNone")}</option>
+            {templateOptions(staffCards.items, data.staff_id_card_template_id)}
+          </SelectField>
+
+          <ReportLogoUploadField
+            value={data.report_logo_file_id}
+            onChange={(report_logo_file_id) => onChange({ report_logo_file_id })}
+            error={errors.report_logo_file_id}
           />
         </>
       )}

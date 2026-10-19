@@ -296,6 +296,7 @@
       "gradeScales": { "name": "Grade Scales" },
       "assessmentTypes": { "name": "Assessment Types" },
       "resultTemplates": { "name": "Result Templates" },
+      "idCardTemplates": { "name": "ID Card Templates" },
       "commentBanks": { "name": "Comment Banks" },
       "rankingRules": { "name": "Ranking Rules" },
       "promotionCriteria": { "name": "Promotion Criteria" },
@@ -438,11 +439,27 @@
           "emptyHintLink": "Add one first",
           "loadError": "Couldn't load award bodies."
         },
-        "description": { "label": "Description (optional)", "placeholder": "e.g. Early years foundation stage" }
+        "description": { "label": "Description (optional)", "placeholder": "e.g. Early years foundation stage" },
+        "resultTemplate": { "label": "Result Template", "placeholder": "Select a result template" },
+        "studentIdCard": { "label": "Student ID Card (optional)" },
+        "staffIdCard": { "label": "Staff ID Card (optional)" },
+        "idCardNone": "None",
+        "templateNotAvailable": "{name} ({status})",
+        "reportLogo": {
+          "label": "Report Logo",
+          "choose": "Upload logo",
+          "hint": "PNG, JPEG or WebP, up to 1 MB. Printed on this school type's report cards.",
+          "errors": {
+            "unsupportedType": "Use a PNG, JPEG or WebP image",
+            "tooLarge": "The logo must be 1 MB or smaller"
+          }
+        }
       },
       "errors": {
         "nameRequired": "Enter a name for this school type",
-        "awardBodiesRequired": "Select at least one award body"
+        "awardBodiesRequired": "Select at least one award body",
+        "resultTemplateRequired": "Select a result template",
+        "reportLogoRequired": "Upload a report logo"
       },
       "confirmDelete": {
         "title": "Delete school type?",
@@ -452,6 +469,54 @@
         "created": "School type created",
         "updated": "School type updated",
         "deleted": "School type deleted"
+      }
+    },
+    "templateCatalog": {
+      "addNew": "Add New Template",
+      "addNewComingSoon": "Creating templates is coming soon",
+      "defaultBadge": "Default",
+      "status": { "draft": "Draft", "available": "Available", "archived": "Archived" },
+      "actions": {
+        "preview": "Preview",
+        "previewNamed": "Preview {name}",
+        "setDefault": "Set as default",
+        "archive": "Archive"
+      },
+      "disabled": {
+        "alreadyDefault": "This is already the default",
+        "notAvailable": "Only an available template can be the default",
+        "isDefault": "Set another template as default before archiving this one",
+        "archived": "Already archived"
+      },
+      "confirmArchive": {
+        "title": "Archive template?",
+        "message": "\"{name}\" will no longer be available to assign to school types."
+      },
+      "toast": {
+        "defaultSet": "\"{name}\" is now the default",
+        "archived": "\"{name}\" archived"
+      },
+      "preview": {
+        "none": "No preview available",
+        "loading": "Loading preview…",
+        "loadError": "Couldn't load the preview",
+        "sampleData": "Preview with sample data"
+      }
+    },
+    "resultTemplates": {
+      "title": "Result Templates",
+      "subtitle": "Report card layouts your school types can use",
+      "searchPlaceholder": "Search result templates…",
+      "empty": "No result templates yet."
+    },
+    "idCardTemplates": {
+      "title": "ID Card Templates",
+      "subtitle": "Student and staff ID card designs your school types can use",
+      "searchPlaceholder": "Search ID card templates…",
+      "tabs": { "student": "Student", "staff": "Staff" },
+      "empty": {
+        "student": "No student ID card templates yet.",
+        "staff": "No staff ID card templates yet."
       }
     },
     "classes": {

@@ -34,3 +34,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Windows download markers (alternate data streams surfaced by WSL)
+*:Zone.Identifier

@@ -77,13 +77,15 @@ export function CardGrid<T>({
             const description = card.description?.(row);
             const badge = card.badge?.(row);
             const tags = card.tags?.(row) ?? [];
+            const media = card.media?.(row);
             const actions = rowActions?.(row);
 
             return (
               <div
                 key={getRowId(row)}
-                className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-5 shadow-sm"
+                className={`flex flex-col gap-3 rounded-xl border border-border bg-surface p-5 shadow-sm ${media ? "overflow-hidden" : ""}`}
               >
+                {media ? <div className="-mx-5 -mt-5 mb-1 border-b border-border">{media}</div> : null}
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-text-primary">{card.title(row)}</p>

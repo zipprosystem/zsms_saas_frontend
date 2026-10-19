@@ -206,6 +206,12 @@ export const setupCategories: SetupConfig = [
         slug: "result-templates",
       },
       {
+        key: "idCardTemplates",
+        name: "setup.items.idCardTemplates.name",
+        done: false,
+        slug: "id-card-templates",
+      },
+      {
         key: "commentBanks",
         name: "setup.items.commentBanks.name",
         done: false,

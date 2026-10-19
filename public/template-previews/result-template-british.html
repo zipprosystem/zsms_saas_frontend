@@ -1,0 +1,286 @@
+<title>British Progress Template</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Layout: a wide landscape progress report (prints A4 landscape). Toggle = Interim (3A) vs Full (3B, mixed orientation). */
+  :root{
+    --page-bg:#eef1f5; --paper:#ffffff; --ink:#18212e; --muted:#5a6675;
+    --line:#d3dae2; --line-strong:#a9b4c1; --accent:#15639f; --accent-fg:#fff;
+    --tint:#eaf1f8; --tint-2:#f3f6f9; --head:#dbe7f2; --yellow:#fdf3c7; --yellow-bd:#e8cf6b;
+    --band1:#154e82; --band2:#1b74b8;
+    --l1:#1f8a54; --l2:#5aa0d8; --l3:#d8972f; --l4:#cc4b4b;
+    --disp:"Mulish",system-ui,-apple-system,Segoe UI,sans-serif;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --page-bg:#101620; --paper:#1a212b; --ink:#e9edf2; --muted:#9fabba;
+    --line:#2c343f; --line-strong:#49535f; --accent:#4ea3e0; --accent-fg:#0a141d;
+    --tint:#20303d; --tint-2:#1f2731; --head:#213444; --yellow:#4a4320; --yellow-bd:#7a6c32;
+    --band1:#113a61; --band2:#155487; --l1:#49c488; --l2:#7bb7e6; --l3:#e3b05a; --l4:#e07878; color-scheme:dark;
+  }}
+  :root[data-theme="dark"]{
+    --page-bg:#101620; --paper:#1a212b; --ink:#e9edf2; --muted:#9fabba;
+    --line:#2c343f; --line-strong:#49535f; --accent:#4ea3e0; --accent-fg:#0a141d;
+    --tint:#20303d; --tint-2:#1f2731; --head:#213444; --yellow:#4a4320; --yellow-bd:#7a6c32;
+    --band1:#113a61; --band2:#155487; --l1:#49c488; --l2:#7bb7e6; --l3:#e3b05a; --l4:#e07878; color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--page-bg);color:var(--ink);font-family:var(--sans);line-height:1.4}
+  .wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:22px;display:flex;flex-direction:column;align-items:center;gap:16px}
+
+  .toolbar{width:100%;max-width:1180px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+  .seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:999px;overflow:hidden;background:var(--paper)}
+  .seg button{appearance:none;border:0;background:transparent;color:var(--muted);font:700 13px/1 var(--disp);padding:10px 18px;cursor:pointer}
+  .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+  .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .note{color:var(--muted);font-size:12px;max-width:50ch;min-width:0}.note b{color:var(--ink);font-weight:700}
+
+  .card{width:100%;max-width:1180px;background:var(--paper);border:1px solid var(--line-strong);box-shadow:0 1px 0 rgba(0,0,0,.04),0 18px 40px -24px rgba(0,0,0,.45)}
+  .masthead{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;background:linear-gradient(100deg,var(--band1),var(--band2));color:#fff;padding:16px 20px}
+  .crest{width:54px;height:54px;border-radius:11px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.4);display:grid;place-items:center;font:800 10px/1 var(--disp);letter-spacing:.05em}
+  .school h1{font-family:var(--disp);font-weight:800;font-size:clamp(18px,3vw,27px);margin:0;text-wrap:balance}
+  .school .term{margin:3px 0 0;font-weight:600;font-size:12.5px;opacity:.92}
+  .school .cem{margin:2px 0 0;font-size:11.5px;opacity:.85}
+  .passport{width:52px;height:64px;border-radius:6px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.1);display:grid;place-items:center}
+  .passport svg{width:34px;height:34px;opacity:.85}
+
+  .bio{display:grid;grid-template-columns:2fr 1fr 1.3fr 1.5fr 1.4fr}
+  .bio .cellb{padding:9px 13px;border-right:1px solid var(--line);border-bottom:2px solid var(--line-strong);display:flex;flex-direction:column;gap:2px;min-width:0;background:var(--tint-2)}
+  .bio .cellb:first-child{background:var(--yellow)}
+  .bio .cellb:last-child{border-right:0}
+  .bio .k{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+  .bio .v{font-weight:700;font-size:13px}.bio .v.accent{color:var(--accent)}
+  :root[data-theme="dark"] .bio .cellb:first-child .v.accent{color:var(--ink)}
+
+  .sechead{font-family:var(--disp);font-weight:800;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);padding:12px 16px 6px}
+  :root[data-theme="dark"] .sechead{color:var(--ink)} @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .sechead{color:var(--ink)}}
+
+  .tablebox{overflow-x:auto}
+  table.grid{border-collapse:collapse;width:100%;font-size:10px;min-width:1120px}
+  table.grid th,table.grid td{border:1px solid var(--line);padding:3px 4px;text-align:center;font-variant-numeric:tabular-nums}
+  table.grid thead th{background:var(--head);font-weight:700;font-size:9.5px;font-family:var(--disp)}
+  table.grid thead tr.grp th{letter-spacing:.04em;text-transform:uppercase}
+  td.subj,th.subj{text-align:left;font-weight:700;white-space:nowrap}
+  td.tcr{text-align:left;color:var(--muted);white-space:nowrap}
+  td.tgt,th.tgt{background:var(--tint)}
+  .g{font-weight:800;font-family:var(--disp)}
+  .gb{color:var(--muted)}
+  .lv{font-weight:800;color:#fff;border-radius:3px;display:inline-block;min-width:16px;padding:0 1px;font-family:var(--disp);font-size:9.5px}
+  .lv1{background:var(--l1)} .lv2{background:var(--l2)} .lv3{background:var(--l3)} .lv4{background:var(--l4)}
+  tr.avg td{background:var(--tint-2);font-weight:700;color:var(--muted)}
+  /* current reporting-point column highlight */
+  .card[data-cur="3A"] .c3a,.card[data-cur="3B"] .c3b{background:var(--yellow);box-shadow:inset 0 0 0 1px var(--yellow-bd)}
+
+  /* footer: comment | boarding grades | principal */
+  .foot{display:grid;grid-template-columns:1fr 150px 230px;border-top:2px solid var(--line-strong)}
+  .foot .cmt{padding:10px 14px;border-right:1px solid var(--line);min-width:0}
+  .foot .cmt h4,.foot .bhg h4,.foot .prin h4{margin:0 0 5px;font:800 10px/1 var(--disp);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .foot .cmt p{margin:0;font-size:11.5px;line-height:1.45}
+  .foot .bhg{border-right:1px solid var(--line);padding:0}
+  .foot .bhg h4{padding:10px 12px 4px}
+  .foot .bhg table{width:100%;border-collapse:collapse;font-size:10.5px}
+  .foot .bhg td{border-top:1px solid var(--line);padding:3px 12px;font-variant-numeric:tabular-nums}
+  .foot .bhg td:last-child{text-align:center;font-weight:700}
+  .foot .prin{padding:10px 14px;display:flex;flex-direction:column}
+  .foot .prin .scribble{font-family:var(--disp);font-style:italic;font-weight:700;font-size:17px;transform:rotate(-4deg);margin:6px 0}
+  .foot .prin .date{margin-top:auto;font-size:11px;color:var(--muted)}
+
+  /* full-only: cover + narratives */
+  .cover{text-align:center;padding:20px;border-bottom:1px solid var(--line);background:var(--tint)}
+  .cover .big{font-family:var(--disp);font-weight:800;font-size:clamp(20px,3.6vw,30px);color:var(--accent);margin:0;text-wrap:balance}
+  :root[data-theme="dark"] .cover .big{color:var(--ink)} @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .cover .big{color:var(--ink)}}
+  .cover .mid{font-weight:700;margin:8px 0 0;font-size:14px}
+  .cover .mission{color:var(--muted);font-size:12px;font-style:italic;max-width:60ch;margin:12px auto 0}
+  .narr{display:grid;gap:10px;padding:4px 16px 10px}
+  .ncard{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:11px 13px;background:var(--tint-2)}
+  .ncard .top{display:flex;flex-wrap:wrap;gap:7px 13px;align-items:baseline;min-width:0}
+  .ncard .subjn{font-family:var(--disp);font-weight:800;font-size:14px}
+  .ncard .teach{color:var(--muted);font-size:12px}
+  .badges{display:flex;flex-wrap:wrap;gap:5px;margin-left:auto}
+  .badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--paper);border:1px solid var(--line-strong);color:var(--muted)}.badge b{color:var(--ink)}
+  .ncard p{margin:8px 0 0;font-size:12.5px;line-height:1.5}
+
+  .descr{overflow-x:auto;border-top:2px solid var(--line-strong)}
+  .descr table{border-collapse:collapse;width:100%;min-width:760px;font-size:11px}
+  .descr td,.descr th{border:1px solid var(--line);text-align:left;vertical-align:top;padding:7px 11px}
+  .descr thead th{background:var(--head);font-family:var(--disp);font-weight:800}
+  .descr .lvl{font-family:var(--disp);font-weight:800;white-space:nowrap}
+  .lv-tag{display:inline-block;margin-right:6px}
+
+  @media (max-width:640px){
+    .masthead{grid-template-columns:auto 1fr}.passport{display:none}
+    .bio{grid-template-columns:1fr 1fr}.bio .cellb{border-right:0}
+    .foot{grid-template-columns:1fr}.foot .cmt,.foot .bhg{border-right:0;border-bottom:1px solid var(--line)}
+  }
+  @media print{
+    @page{size:A4 landscape;margin:7mm}
+    html,body{background:#fff}
+    .wrap{padding:0;gap:0;display:block}
+    .toolbar{display:none!important}
+    .card{max-width:none;width:100%;border:0;box-shadow:none}
+    .tablebox,.descr{overflow:visible}
+    table.grid{min-width:0;font-size:8.5px}
+    .card,.foot,.descr table,.ncard{break-inside:avoid}
+  }
+</style>
+
+<div class="wrap">
+  <div class="toolbar">
+    <div class="seg" role="group" aria-label="Report variant">
+      <button id="btn-interim" aria-pressed="true">Interim (3A)</button>
+      <button id="btn-full" aria-pressed="false">Full Report (3B)</button>
+    </div>
+    <p class="note"><b>Template preview — sample data.</b> British 9–1 landscape report: attainment + grade-boundary scores across all reporting points, Engagement &amp; Learning Behaviour (1–4), boarding. Fictional school; placeholders fill per tenant.</p>
+  </div>
+
+  <article class="card" id="card" data-cur="3A">
+    <header class="masthead">
+      <div class="crest">CREST</div>
+      <div class="school">
+        <h1>Westbridge International College</h1>
+        <div class="term" id="term">Progress Report — Term 3A (Interim) · 28 May 2026</div>
+        <div class="cem">CEM MidYIS score: <strong>138</strong></div>
+      </div>
+      <div class="passport" aria-label="Student photo placeholder"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z"/></svg></div>
+    </header>
+
+    <div class="cover fullonly" hidden>
+      <p class="big">Westbridge International College</p>
+      <p class="mid">Term 3B — Full Report · 19 Apr 2026 – 09 Jul 2026</p>
+      <p class="mid" style="font-weight:800">Daniel Afolabi — Year 10 (10A)</p>
+      <p class="mission">Westbridge provides an outstanding education that inspires leadership and focuses on each child's ability to excel in a global world.</p>
+    </div>
+
+    <div class="bio">
+      <div class="cellb"><span class="k">Student's Name</span><span class="v accent">Daniel Afolabi</span></div>
+      <div class="cellb"><span class="k">Class</span><span class="v">10A</span></div>
+      <div class="cellb"><span class="k">Tutor</span><span class="v">Mr Joshua Ojo</span></div>
+      <div class="cellb"><span class="k">Boarding House</span><span class="v">Rowan House</span></div>
+      <div class="cellb"><span class="k">Pupil ID Number</span><span class="v">WIC-26-0210</span></div>
+    </div>
+
+    <div class="tablebox">
+      <table class="grid">
+        <thead>
+          <tr class="grp">
+            <th class="subj" rowspan="2">Subject</th>
+            <th class="tgt" rowspan="2">DWC<br>Target</th>
+            <th colspan="12">Current Attainment</th>
+            <th colspan="6">Engagement</th>
+            <th colspan="6">Learning Behaviour</th>
+            <th class="tcr" rowspan="2">Teacher</th>
+          </tr>
+          <tr>
+            <th>1A</th><th>1B</th><th>2A</th><th>2B</th><th class="c3a">3A</th><th class="c3b">3B</th>
+            <th>GB<br>1A</th><th>GB<br>1B</th><th>GB<br>2A</th><th>GB<br>2B</th><th>GB<br>3A</th><th>GB<br>3B</th>
+            <th>1A</th><th>1B</th><th>2A</th><th>2B</th><th class="c3a">3A</th><th class="c3b">3B</th>
+            <th>1A</th><th>1B</th><th>2A</th><th>2B</th><th class="c3a">3A</th><th class="c3b">3B</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+        <tfoot>
+          <tr class="avg">
+            <td class="subj">Average</td><td class="tgt"></td>
+            <td colspan="6"></td>
+            <td>82.09</td><td>85.00</td><td>85.18</td><td>86.55</td><td>85.82</td><td>79.91</td>
+            <td colspan="6"></td><td colspan="6"></td><td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="fullonly" hidden>
+      <div class="sechead">Subject Reports</div>
+      <div class="narr">
+        <div class="ncard">
+          <div class="top"><span class="subjn">Mathematics</span><span class="teach">Mrs Oluwatoyin Olatunbosun</span>
+            <span class="badges"><span class="badge">Target <b>9</b></span><span class="badge">Attainment <b>9</b></span><span class="badge">Engagement <b>1</b></span><span class="badge">Behaviour <b>1</b></span></span></div>
+          <p>Daniel is an outstanding mathematician who works with precision and pace and supports his peers. To consolidate a grade 9 he should keep working through full IGCSE past papers under timed conditions.</p>
+        </div>
+        <div class="ncard">
+          <div class="top"><span class="subjn">Physics</span><span class="teach">Mr Sunday Ogundana</span>
+            <span class="badges"><span class="badge">Target <b>9</b></span><span class="badge">Attainment <b>8</b></span><span class="badge">Engagement <b>3</b></span><span class="badge">Behaviour <b>3</b></span></span></div>
+          <p>A capable physicist whose engagement slipped this term. Revising vectors and committing to a regular problem-solving routine will bring him back towards target by the mocks.</p>
+        </div>
+        <div class="ncard">
+          <div class="top"><span class="subjn">English Literature</span><span class="teach">Miss Omolara Akinmoyede</span>
+            <span class="badges"><span class="badge">Target <b>9</b></span><span class="badge">Attainment <b>5</b></span><span class="badge">Engagement <b>1</b></span><span class="badge">Behaviour <b>1</b></span></span></div>
+          <p>A diligent reader who writes with insight; attainment dipped at 3B after a strong run. Precise, selective use of quotations and close focus on the anthology poems will lift his essays back up.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <div class="cmt">
+        <h4>Boarding House Comment</h4>
+        <p>Daniel has continued to participate actively in the boarding house this half term, with a pleasant, responsible attitude and positive interactions with peers and staff. He responds well to correction and has made steady progress in personal responsibility and social conduct. We encourage him to take greater initiative and to keep showing leadership among his peers.</p>
+      </div>
+      <div class="bhg">
+        <h4>Boarding Grade</h4>
+        <table><tbody>
+          <tr><td>1A</td><td>2</td></tr><tr><td>1B</td><td>2</td></tr>
+          <tr><td>2A</td><td>1</td></tr><tr><td>2B</td><td>—</td></tr>
+          <tr><td>3A</td><td>1</td></tr><tr><td>3B</td><td>1</td></tr>
+        </tbody></table>
+      </div>
+      <div class="prin">
+        <h4>Principal</h4>
+        <span class="scribble">A. T. Cole</span>
+        <span class="date" id="pdate">Date: 28 May 2026</span>
+      </div>
+    </div>
+
+    <div class="descr">
+      <table>
+        <thead><tr><th class="lvl">Level</th><th>Engagement</th><th>Learning Behaviour</th><th>Boarding: Community Contribution</th></tr></thead>
+        <tbody>
+          <tr><td class="lvl"><span class="lv lv1 lv-tag">1</span>Outstanding</td><td>Innovative, curious and self-regulating; seeks challenge and argues from evidence.</td><td>Plans and refines independently; thinks abstractly; resilient and focused.</td><td>A role model; community-minded and resilient; valuable contributor to house life.</td></tr>
+          <tr><td class="lvl"><span class="lv lv2 lv-tag">2</span>Good</td><td>High-standard work; open-minded; uses ICT productively and meets targets.</td><td>Collaborative; self-corrects; punctual and well equipped.</td><td>Positive, punctual contributor; empathetic and community-minded.</td></tr>
+          <tr><td class="lvl"><span class="lv lv3 lv-tag">3</span>Insufficient</td><td>Substandard or incomplete work; limited curiosity.</td><td>Lesson time not used well; loses focus and distracts peers.</td><td>Untidy; punctuality and organisation need improvement.</td></tr>
+          <tr><td class="lvl"><span class="lv lv4 lv-tag">4</span>Concern</td><td>Work not completed; disengaged; does not respond to feedback.</td><td>Misses objectives; closed mindset; disrupts lessons.</td><td>Below house expectations; poor organisation; unhelpful.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</div>
+
+<script>
+  var SUBJECTS=[
+    ["Biology",9,[9,9,9,9,8,9],[97,93,90,90,88,98],[1,1,2,1,2,2],[1,1,2,1,2,2],"Mr Wasiu Rasak"],
+    ["Chemistry",9,[9,9,8,8,8,9],[91,93,85,87,86,92],[1,1,1,1,1,1],[1,1,1,1,1,1],"Mr Ayodeji Jesuware"],
+    ["Computer Science",9,[9,9,9,9,8,8],[97,91,91,91,84,83],[1,1,1,1,1,1],[1,1,1,1,1,1],"Mr Adeshile Oyetoro"],
+    ["Design and Technology",9,[8,6,7,8,8,9],[91,79,84,85,94,96],[1,1,1,1,1,1],[1,1,1,1,1,1],"Mr Sola Olugbodi"],
+    ["English",9,[6,9,7,9,9,6],[61,78,67,87,76,58],[3,1,2,1,2,2],[2,1,2,1,2,2],"Mrs Olubunmi Fasakin"],
+    ["Further Pure Mathematics",9,[8,8,8,8,7,7],[84,81,87,81,74,62],[1,1,1,1,1,1],[1,1,1,1,1,1],"Mr Sam-Leke Abiwonnu"],
+    ["English Literature",9,[6,7,8,9,9,5],[61,63,73,82,84,53],[3,2,1,1,1,1],[2,1,1,1,1,1],"Miss Omolara Akinmoyede"],
+    ["Mathematics",9,[9,8,9,9,9,9],[84,94,88,85,91,90],[1,1,1,2,1,1],[1,2,1,1,2,2],"Mrs Oluwatoyin Olatunbosun"],
+    ["Physical Education",9,[7,8,8,9,9,8],[75,92,88,91,100,80],[2,1,1,1,1,1],[2,1,1,1,1,1],"Mrs Ayomide Akinola"],
+    ["Physics",9,[9,8,9,9,7,8],[91,85,93,90,76,83],[2,2,2,1,3,3],[2,2,2,2,3,3],"Mr Sunday Ogundana"],
+    ["Religious Studies",9,[7,8,9,8,9,8],[71,86,91,83,91,84],[1,1,1,1,1,1],[1,1,1,1,1,1],"Mr Christopher Jegede"]
+  ];
+  (function(){
+    var tb=document.getElementById('rows');
+    function lv(n){return '<span class="lv lv'+n+'">'+n+'</span>';}
+    SUBJECTS.forEach(function(s){
+      var att=s[2],gb=s[3],eng=s[4],beh=s[5],tr=document.createElement('tr');
+      var h='<td class="subj">'+s[0]+'</td><td class="tgt g">'+s[1]+'</td>';
+      att.forEach(function(g,i){h+='<td class="g'+(i===4?' c3a':i===5?' c3b':'')+'">'+g+'</td>';});
+      gb.forEach(function(v){h+='<td class="gb">'+v+'</td>';});
+      eng.forEach(function(v,i){h+='<td class="'+(i===4?'c3a':i===5?'c3b':'')+'">'+lv(v)+'</td>';});
+      beh.forEach(function(v,i){h+='<td class="'+(i===4?'c3a':i===5?'c3b':'')+'">'+lv(v)+'</td>';});
+      h+='<td class="tcr">'+s[6]+'</td>';
+      tr.innerHTML=h; tb.appendChild(tr);
+    });
+    var bI=document.getElementById('btn-interim'),bF=document.getElementById('btn-full');
+    var card=document.getElementById('card'),term=document.getElementById('term'),pdate=document.getElementById('pdate');
+    function set(full){
+      document.querySelectorAll('.fullonly').forEach(function(e){e.hidden=!full});
+      card.setAttribute('data-cur', full?'3B':'3A');
+      bF.setAttribute('aria-pressed',String(full)); bI.setAttribute('aria-pressed',String(!full));
+      term.textContent = full ? 'Progress Report — Term 3B (Full) · 19 Apr – 09 Jul 2026' : 'Progress Report — Term 3A (Interim) · 28 May 2026';
+      pdate.textContent = full ? 'Date: 09 Jul 2026' : 'Date: 28 May 2026';
+    }
+    bI.addEventListener('click',function(){set(false)});
+    bF.addEventListener('click',function(){set(true)});
+  })();
+</script>

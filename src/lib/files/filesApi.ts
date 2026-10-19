@@ -111,7 +111,13 @@ function readDownloadUrl(body: unknown): string | null {
 }
 
 /** Entities that can own an uploaded file — extend when a new one is confirmed with Muntajir. */
-export type FileUploadPurpose = "subject_master" | "class_subject" | "student_photo" | "past_record_attachment";
+export type FileUploadPurpose =
+  | "subject_master"
+  | "class_subject"
+  | "student_photo"
+  | "past_record_attachment"
+  // UNCONFIRMED — only sent once SCHOOL_TYPE_ASSIGNMENTS_LIVE flips (schoolTypeAssignments.ts).
+  | "report_logo";
 
 export async function uploadFile(file: File, purpose: FileUploadPurpose): Promise<CrudResult<AttachedFile>> {
   if (DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };

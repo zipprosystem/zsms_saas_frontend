@@ -11,6 +11,8 @@ import { ClassSubjectsScreen } from "@/components/setup/academicStructure/ClassS
 import { ClassSubjectGroupingScreen } from "@/components/setup/academicStructure/ClassSubjectGroupingScreen";
 import { StudentTermDetailsScreen } from "@/components/setup/academicStructure/StudentTermDetailsScreen";
 import { SubjectEnrolmentScreen } from "@/components/setup/academicStructure/SubjectEnrolmentScreen";
+import { ResultTemplatesScreen } from "@/components/setup/assessmentConfiguration/ResultTemplatesScreen";
+import { IdCardTemplatesScreen } from "@/components/setup/assessmentConfiguration/IdCardTemplatesScreen";
 
 /**
  * Keyed by "{categorySlug}/{screenSlug}". A screen not listed here falls
@@ -52,4 +54,8 @@ export const setupScreenRegistry: Record<string, ComponentType> = {
   // already be placed in a class/arm for a term before subjects can be
   // enrolled for them).
   "academic-structure/subject-enrolment": SubjectEnrolmentScreen,
+  // Both catalogs are MOCK (frontend-ahead) and feed the School Types
+  // form's template assignment dropdowns.
+  "assessment-configuration/result-templates": ResultTemplatesScreen,
+  "assessment-configuration/id-card-templates": IdCardTemplatesScreen,
 };

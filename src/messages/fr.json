@@ -296,6 +296,7 @@
       "gradeScales": { "name": "Échelles de notes" },
       "assessmentTypes": { "name": "Types d'évaluation" },
       "resultTemplates": { "name": "Modèles de résultats" },
+      "idCardTemplates": { "name": "Modèles de carte d'identité" },
       "commentBanks": { "name": "Banques de commentaires" },
       "rankingRules": { "name": "Règles de classement" },
       "promotionCriteria": { "name": "Critères de promotion" },
@@ -438,11 +439,27 @@
           "emptyHintLink": "En ajouter un d'abord",
           "loadError": "Impossible de charger les organismes d'examen."
         },
-        "description": { "label": "Description (optionnel)", "placeholder": "ex. Cycle préscolaire" }
+        "description": { "label": "Description (optionnel)", "placeholder": "ex. Cycle préscolaire" },
+        "resultTemplate": { "label": "Modèle de bulletin", "placeholder": "Sélectionnez un modèle de bulletin" },
+        "studentIdCard": { "label": "Carte d'identité élève (optionnel)" },
+        "staffIdCard": { "label": "Carte d'identité personnel (optionnel)" },
+        "idCardNone": "Aucune",
+        "templateNotAvailable": "{name} ({status})",
+        "reportLogo": {
+          "label": "Logo du bulletin",
+          "choose": "Téléverser le logo",
+          "hint": "PNG, JPEG ou WebP, 1 Mo maximum. Imprimé sur les bulletins de ce type d'établissement.",
+          "errors": {
+            "unsupportedType": "Utilisez une image PNG, JPEG ou WebP",
+            "tooLarge": "Le logo ne doit pas dépasser 1 Mo"
+          }
+        }
       },
       "errors": {
         "nameRequired": "Saisissez un nom pour ce type d'établissement",
-        "awardBodiesRequired": "Sélectionnez au moins un organisme d'examen"
+        "awardBodiesRequired": "Sélectionnez au moins un organisme d'examen",
+        "resultTemplateRequired": "Sélectionnez un modèle de bulletin",
+        "reportLogoRequired": "Téléversez un logo de bulletin"
       },
       "confirmDelete": {
         "title": "Supprimer le type d'établissement ?",
@@ -452,6 +469,54 @@
         "created": "Type d'établissement créé",
         "updated": "Type d'établissement mis à jour",
         "deleted": "Type d'établissement supprimé"
+      }
+    },
+    "templateCatalog": {
+      "addNew": "Ajouter un modèle",
+      "addNewComingSoon": "La création de modèles arrive bientôt",
+      "defaultBadge": "Par défaut",
+      "status": { "draft": "Brouillon", "available": "Disponible", "archived": "Archivé" },
+      "actions": {
+        "preview": "Aperçu",
+        "previewNamed": "Aperçu de {name}",
+        "setDefault": "Définir par défaut",
+        "archive": "Archiver"
+      },
+      "disabled": {
+        "alreadyDefault": "C'est déjà le modèle par défaut",
+        "notAvailable": "Seul un modèle disponible peut être défini par défaut",
+        "isDefault": "Définissez un autre modèle par défaut avant d'archiver celui-ci",
+        "archived": "Déjà archivé"
+      },
+      "confirmArchive": {
+        "title": "Archiver le modèle ?",
+        "message": "« {name} » ne pourra plus être attribué aux types d'établissement."
+      },
+      "toast": {
+        "defaultSet": "« {name} » est désormais le modèle par défaut",
+        "archived": "« {name} » archivé"
+      },
+      "preview": {
+        "none": "Aucun aperçu disponible",
+        "loading": "Chargement de l'aperçu…",
+        "loadError": "Impossible de charger l'aperçu",
+        "sampleData": "Aperçu avec des données fictives"
+      }
+    },
+    "resultTemplates": {
+      "title": "Modèles de résultats",
+      "subtitle": "Les mises en page de bulletin que vos types d'établissement peuvent utiliser",
+      "searchPlaceholder": "Rechercher des modèles de résultats…",
+      "empty": "Aucun modèle de résultats pour le moment."
+    },
+    "idCardTemplates": {
+      "title": "Modèles de carte d'identité",
+      "subtitle": "Les cartes d'identité élève et personnel que vos types d'établissement peuvent utiliser",
+      "searchPlaceholder": "Rechercher des modèles de carte…",
+      "tabs": { "student": "Élève", "staff": "Personnel" },
+      "empty": {
+        "student": "Aucun modèle de carte élève pour le moment.",
+        "staff": "Aucun modèle de carte personnel pour le moment."
       }
     },
     "classes": {
