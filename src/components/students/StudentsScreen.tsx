@@ -218,10 +218,19 @@ export function StudentsScreen() {
 
   const view = usePaginatedView(visibleStudents, {
     matchesSearch: matchesStudentSearch,
-    matchesFilters: (student, filters) => matchesStudentFilters(student, filters, sections),
+    matchesFilters: matchesStudentFilters,
   });
 
-  const armNames = Array.from(new Set(sections.map((section) => section.name))).sort();
+  // Every class's sections, labelled "Class – Arm" (ids differ per class even when arm names repeat).
+  const sectionOptions = sections
+    .map((section) => ({
+      value: section.id,
+      label: t("students.filters.sectionOption", {
+        className: resolveClassName(section.class_id, classes),
+        armName: section.name,
+      }),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
   const comingSoon = () => showToast(t("students.actions.comingSoon"));
 
   // Resume/Edit always re-fetch the full record (GET /:id) rather than
@@ -309,12 +318,9 @@ export function StudentsScreen() {
       ],
     },
     {
-      key: "arm",
+      key: "section_id",
       label: t("students.filters.arm"),
-      options: [
-        { value: "", label: t("students.filters.allArms") },
-        ...armNames.map((name) => ({ value: name, label: name })),
-      ],
+      options: [{ value: "", label: t("students.filters.allArms") }, ...sectionOptions],
     },
     ...(boardingHouseVisible
       ? [

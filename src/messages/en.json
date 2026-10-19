@@ -1117,6 +1117,7 @@
       "allClasses": "All Classes",
       "arm": "Class-arm",
       "allArms": "All Class-arms",
+      "sectionOption": "{className} – {armName}",
       "boardingHouse": "Boarding House",
       "allBoardingHouses": "All Houses",
       "studentType": "Student Type",

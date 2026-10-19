@@ -1125,6 +1125,7 @@
       "allClasses": "Toutes les classes",
       "arm": "Section",
       "allArms": "Toutes les sections",
+      "sectionOption": "{className} – {armName}",
       "boardingHouse": "Maison d'internat",
       "allBoardingHouses": "Toutes les maisons",
       "studentType": "Type d'élève",
