@@ -138,6 +138,9 @@
     "reports": "Rapports",
     "pastoral": "Pastorale",
     "hr": "RH",
+    "hrStaffs": "Personnel",
+    "hrStaffPosts": "Postes du personnel",
+    "hrPermissionGroups": "Groupes de permissions",
     "clinic": "Clinique",
     "adminPanel": "Panneau d'administration",
     "students": "Élèves",
@@ -240,6 +243,8 @@
       "brandingAssets": { "name": "Image de marque et ressources" },
       "generalBehaviour": { "name": "Comportement général" },
       "integrationsAlerts": { "name": "Intégrations et alertes" },
+      "staffPosts": { "name": "Postes du personnel", "description": "Les postes (fonctions) que le personnel peut occuper" },
+      "permissionGroups": { "name": "Groupes de permissions", "description": "Qui peut faire quoi — groupes de personnel et leurs permissions" },
       "academicYears": {
         "name": "Années académiques",
         "description": "Définissez votre année scolaire et sa plage de dates"
@@ -760,15 +765,15 @@
       "panel": { "createTitle": "Ajouter un département", "editTitle": "Modifier le département" },
       "columns": {
         "name": "Nom du département",
-        "hod": "Responsable",
-        "seniorManager": "Responsable senior",
+        "hod": "Chef (responsable hiérarchique)",
+        "seniorManager": "Responsable hiérarchique senior",
         "subjectsCount": "Matières",
         "staffCount": "Personnel"
       },
       "fields": {
         "name": { "label": "Nom du département", "placeholder": "ex. Sciences" },
         "hod": {
-          "label": "Responsable hiérarchique",
+          "label": "Chef (responsable hiérarchique)",
           "placeholder": "Sélectionner un membre du personnel",
           "loading": "Chargement du personnel…"
         },
@@ -780,7 +785,7 @@
       },
       "errors": {
         "nameRequired": "Saisissez un nom pour ce département",
-        "hodRequired": "Sélectionnez un responsable hiérarchique"
+        "hodRequired": "Sélectionnez un chef (responsable hiérarchique)"
       },
       "actions": {
         "cantDeleteHasSubjects": "Impossible de supprimer — {count, plural, one {# matière} other {# matières}} appartiennent encore à ce département"
@@ -1138,6 +1143,115 @@
       "includeAll": "Inclure toutes les lignes (ignorer les filtres)",
       "asExcel": "Exporter en Excel",
       "asPdf": "Exporter en PDF"
+    }
+  },
+  "hr": {
+    "common": {
+      "active": "Actif",
+      "inactive": "Inactif",
+      "allStatuses": "Tous les statuts",
+      "loading": "Chargement…",
+      "unknownStaff": "Membre du personnel inconnu"
+    },
+    "permissions": {
+      "modules": {
+        "students": "Élèves",
+        "staff": "Personnel",
+        "academics": "Pédagogie",
+        "attendance": "Présences",
+        "assessments": "Évaluations et résultats",
+        "finance": "Finances",
+        "communications": "Communications",
+        "reports": "Rapports",
+        "setup": "Configuration",
+        "settings": "Paramètres de l'école"
+      },
+      "actions": {
+        "view": "Voir",
+        "create": "Créer",
+        "edit": "Modifier",
+        "delete": "Supprimer"
+      }
+    },
+    "staffPosts": {
+      "title": "Postes du personnel",
+      "subtitle": "Gérez les postes (fonctions) que le personnel peut occuper",
+      "addNew": "Ajouter un poste",
+      "searchPlaceholder": "Rechercher un poste…",
+      "empty": "Aucun poste pour le moment — ajoutez le premier.",
+      "columns": {
+        "sn": "N°",
+        "name": "Poste",
+        "staffCount": "Personnel",
+        "status": "Statut"
+      },
+      "panel": {
+        "createTitle": "Ajouter un poste",
+        "editTitle": "Modifier le poste"
+      },
+      "fields": {
+        "name": {
+          "label": "Nom du poste",
+          "placeholder": "ex. Proviseur adjoint"
+        },
+        "isActive": {
+          "label": "Actif",
+          "helper": "Un poste inactif ne peut pas être attribué à un nouveau membre ; les titulaires actuels le conservent."
+        }
+      },
+      "errors": {
+        "nameRequired": "Saisissez un nom pour ce poste"
+      },
+      "toast": {
+        "created": "Poste ajouté",
+        "updated": "Poste mis à jour",
+        "deleted": "Poste supprimé"
+      }
+    },
+    "permissionGroups": {
+      "title": "Groupes de permissions",
+      "subtitle": "Regroupez le personnel et choisissez ce que chaque groupe peut faire",
+      "addNew": "Ajouter un groupe",
+      "searchPlaceholder": "Rechercher un groupe…",
+      "empty": "Aucun groupe de permissions pour le moment — ajoutez le premier.",
+      "columns": {
+        "sn": "N°",
+        "name": "Groupe",
+        "permissions": "Permissions",
+        "members": "Membres"
+      },
+      "permissionCount": "{count, plural, one {# permission} other {# permissions}}",
+      "memberCount": "{count, plural, one {# membre} other {# membres}}",
+      "noMembers": "Aucun membre",
+      "panel": {
+        "createTitle": "Ajouter un groupe de permissions",
+        "editTitle": "Modifier le groupe de permissions",
+        "subtitle": "Les permissions sont enregistrées maintenant et appliquées dans une prochaine mise à jour."
+      },
+      "fields": {
+        "name": {
+          "label": "Nom du groupe",
+          "placeholder": "ex. Professeurs principaux"
+        },
+        "permissions": {
+          "label": "Permissions",
+          "helper": "Cochez un module pour accorder toutes ses actions.",
+          "module": "Module"
+        },
+        "members": {
+          "label": "Membres",
+          "placeholder": "Rechercher par nom ou identifiant…",
+          "noOptions": "Aucun membre du personnel correspondant"
+        }
+      },
+      "errors": {
+        "nameRequired": "Saisissez un nom pour ce groupe"
+      },
+      "toast": {
+        "created": "Groupe ajouté",
+        "updated": "Groupe mis à jour",
+        "deleted": "Groupe supprimé"
+      }
     }
   },
   "students": {

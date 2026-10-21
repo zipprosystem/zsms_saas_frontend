@@ -128,9 +128,8 @@ export function CategoryCard({
                 // category's items are the new two-level CRUD routes this
                 // increment establishes.
                 href={
-                  category.key === "schoolSettings"
-                    ? "/admin/settings"
-                    : `/admin/setup/${category.slug}/${item.slug}`
+                  item.href ??
+                  (category.key === "schoolSettings" ? "/admin/settings" : `/admin/setup/${category.slug}/${item.slug}`)
                 }
                 name={t(item.name)}
                 description={item.description ? t(item.description) : undefined}

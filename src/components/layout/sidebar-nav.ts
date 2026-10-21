@@ -20,12 +20,20 @@ import { Warning2Icon } from "@/components/icons/sidebar/Warning2Icon";
 
 export type SidebarIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
+export type SidebarNavChild = {
+  key: string;
+  labelKey: string;
+  href: string;
+};
+
 export type SidebarNavItem = {
   key: string;
   labelKey: string;
   href: string;
   icon: SidebarIcon;
   hasSubmenu?: boolean;
+  /** Real submenu entries. A hasSubmenu item without them still shows the "coming soon" placeholder. */
+  children?: SidebarNavChild[];
 };
 
 export const sidebarNavItems: SidebarNavItem[] = [
@@ -39,7 +47,18 @@ export const sidebarNavItems: SidebarNavItem[] = [
   { key: "inventory", labelKey: "nav.inventory", href: "/admin/inventory", icon: ShoppingCartIcon },
   { key: "reports", labelKey: "nav.reports", href: "/admin/reports", icon: DocumentTextIcon },
   { key: "pastoral", labelKey: "nav.pastoral", href: "/admin/pastoral", icon: Profile2UserIcon, hasSubmenu: true },
-  { key: "hr", labelKey: "nav.hr", href: "/admin/hr", icon: HospitalIcon, hasSubmenu: true },
+  {
+    key: "hr",
+    labelKey: "nav.hr",
+    href: "/admin/hr",
+    icon: HospitalIcon,
+    hasSubmenu: true,
+    children: [
+      { key: "hrStaffs", labelKey: "nav.hrStaffs", href: "/admin/hr/staffs" },
+      { key: "hrStaffPosts", labelKey: "nav.hrStaffPosts", href: "/admin/hr/staff-posts" },
+      { key: "hrPermissionGroups", labelKey: "nav.hrPermissionGroups", href: "/admin/hr/permission-groups" },
+    ],
+  },
   { key: "clinic", labelKey: "nav.clinic", href: "/admin/clinic", icon: HospitalIcon },
   { key: "adminPanel", labelKey: "nav.adminPanel", href: "/admin/admin-panel", icon: BoxIcon },
   { key: "students", labelKey: "nav.students", href: "/admin/students", icon: PeopleIcon },

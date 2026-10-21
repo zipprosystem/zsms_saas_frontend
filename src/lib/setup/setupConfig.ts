@@ -7,6 +7,12 @@ export type SetupItem = {
   done: boolean;
   /** Kebab-case slug under /setup/[slug]. Explicit (not derived from `key`) so the route is stable across key renames. */
   slug: string;
+  /**
+   * Where the item's screen actually lives, when that's outside Setup —
+   * e.g. Staff Posts / Permission Groups are tracked here for progress but
+   * live under HR. Takes precedence over the category's default link.
+   */
+  href?: string;
 };
 
 export type SetupCategoryIconKey =
@@ -65,6 +71,24 @@ export const setupCategories: SetupConfig = [
         name: "setup.items.integrationsAlerts.name",
         done: true,
         slug: "integrations-alerts",
+      },
+      // Access/designation config — tracked for progress here (per
+      // Matthew), but the screens live under HR in the sidebar.
+      {
+        key: "staffPosts",
+        name: "setup.items.staffPosts.name",
+        description: "setup.items.staffPosts.description",
+        done: false,
+        slug: "staff-posts",
+        href: "/admin/hr/staff-posts",
+      },
+      {
+        key: "permissionGroups",
+        name: "setup.items.permissionGroups.name",
+        description: "setup.items.permissionGroups.description",
+        done: false,
+        slug: "permission-groups",
+        href: "/admin/hr/permission-groups",
       },
     ],
   },

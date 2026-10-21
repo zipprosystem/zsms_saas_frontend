@@ -14,3 +14,10 @@ export const SETUP_ITEM_KEYWORDS: Record<string, string[]> = {
   studentTermDetails: ["roll number", "roll no", "promotion", "class placement"],
   subjectEnrolment: ["enrol", "enrollment", "enroll", "core subjects", "elective subjects"],
 };
+
+/** Same idea for real sidebar submenu entries, keyed by SidebarNavChild.key. */
+export const NAV_CHILD_KEYWORDS: Record<string, string[]> = {
+  hrStaffs: ["staff", "teachers", "employees", "teaching", "non-teaching"],
+  hrStaffPosts: ["designation", "post", "job title", "position"],
+  hrPermissionGroups: ["roles", "permissions", "access", "RBAC", "user groups"],
+};

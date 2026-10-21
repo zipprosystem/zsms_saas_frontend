@@ -4,17 +4,17 @@ import { sidebarNavItems } from "@/components/layout/sidebar-nav";
 import { SETTINGS_SECTION_KEYS, settingsSectionHref, settingsSectionTitleKey } from "@/lib/settings/settingsSections";
 import { getShellCategories, setupCategories } from "@/lib/setup/setupConfig";
 import { setupScreenRegistry } from "@/lib/setup/screenRegistry";
-import { SETUP_ITEM_KEYWORDS } from "./searchKeywords";
+import { NAV_CHILD_KEYWORDS, SETUP_ITEM_KEYWORDS } from "./searchKeywords";
 import type { SearchGroup } from "./searchTypes";
 
 /**
  * Builds the three phase-1 groups entirely from existing config — never a
  * separate hand-maintained list, so the index stays in sync automatically
  * as screens are added:
- *   - Navigation: sidebarNavItems (top-level only — the hasSubmenu items'
- *     "sub-items" aren't real data yet, Sidebar.tsx just renders a static
- *     "coming soon" placeholder when one is expanded, so there's nothing
- *     further to index there).
+ *   - Navigation: sidebarNavItems, plus any REAL submenu children (HR ›
+ *     Staffs / Staff Posts / Permission Groups). A hasSubmenu item without
+ *     children still only renders a "coming soon" placeholder, so there's
+ *     nothing further to index for those.
  *   - Settings: SETTINGS_SECTION_KEYS (extracted out of admin/settings/
  *     page.tsx specifically so this and that page read the same source).
  *   - Setup: every item across getShellCategories(setupCategories) — the
@@ -37,11 +37,17 @@ export function useSearchIndex(): SearchGroup[] {
     const navigation: SearchGroup = {
       key: "navigation",
       label: t("search.groups.navigation"),
-      entries: sidebarNavItems.map((item) => ({
-        id: `nav-${item.key}`,
-        title: t(item.labelKey),
-        href: item.href,
-      })),
+      entries: sidebarNavItems.flatMap((item) => [
+        { id: `nav-${item.key}`, title: t(item.labelKey), href: item.href },
+        // Real submenu entries (e.g. HR › Staffs) are indexed too, titled
+        // "Parent › Child" so they read unambiguously in the palette.
+        ...(item.children ?? []).map((child) => ({
+          id: `nav-${item.key}-${child.key}`,
+          title: `${t(item.labelKey)} › ${t(child.labelKey)}`,
+          href: child.href,
+          keywords: NAV_CHILD_KEYWORDS[child.key],
+        })),
+      ]),
     };
 
     const settings: SearchGroup = {
