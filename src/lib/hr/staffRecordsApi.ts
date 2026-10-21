@@ -187,6 +187,62 @@ export async function fetchStaffServerPage(
   });
 }
 
+/** Staffs list page sizes — same set as Students. 500 and "all" exceed one request's cap, so listStaffPage assembles them from sequential 200-row requests. */
+export type StaffPageSize = 50 | 100 | 200 | 500 | "all";
+export const STAFF_PAGE_SIZES: readonly StaffPageSize[] = [50, 100, 200, 500, "all"];
+export const STAFF_PAGE_SIZE_DEFAULT: StaffPageSize = 50;
+
+export type StaffPageParams = StaffListFilters & {
+  /** Sent comma-separated; empty = no status param. */
+  statuses: StaffStatus[];
+  page: number;
+  limit: StaffPageSize;
+};
+
+/**
+ * Staffs list query key — everything that changes the result is in it.
+ * Under staffListQueryKeyRoot, so any staff/membership change refreshes it.
+ */
+export function staffPageQueryKey(params: StaffPageParams): readonly unknown[] {
+  return [...staffListQueryKeyRoot, "page", params];
+}
+
+/**
+ * ONE page of the Staffs list — paging, staff_type, status, department,
+ * subject and search all server-side (same discipline as
+ * studentsApi.listStudentsPage). 50/100/200 are a single request; 500
+ * fetches only the 200-row pages overlapping its window and slices it out;
+ * "all" loops until has_more is false and returns everything as one page
+ * (which Export then uses as-is). Capped at MAX_PAGES requests.
+ */
+export async function listStaffPage({ statuses, page, limit, ...filters }: StaffPageParams): Promise<CrudResult<StaffListPage>> {
+  const safePage = limit === "all" ? 1 : Math.max(1, Math.floor(page));
+  if (limit !== "all" && limit <= REQUEST_LIMIT_MAX) {
+    return fetchStaffServerPage(filters, statuses, safePage, limit);
+  }
+
+  const windowStart = limit === "all" ? 0 : (safePage - 1) * limit;
+  const windowEnd = limit === "all" ? Infinity : safePage * limit;
+  const firstServerPage = Math.floor(windowStart / REQUEST_LIMIT_MAX) + 1;
+  const firstRowOffset = (firstServerPage - 1) * REQUEST_LIMIT_MAX;
+  const collected: Staff[] = [];
+  let total = 0;
+  for (let serverPage = firstServerPage; serverPage < firstServerPage + MAX_PAGES; serverPage += 1) {
+    const result = await fetchStaffServerPage(filters, statuses, serverPage, REQUEST_LIMIT_MAX);
+    if (!result.ok) return result;
+    collected.push(...result.data.items);
+    total = result.data.total;
+    if (!result.data.hasMore || result.data.items.length === 0) break;
+    if (serverPage * REQUEST_LIMIT_MAX >= windowEnd) break;
+  }
+  const items = collected.slice(windowStart - firstRowOffset, windowEnd - firstRowOffset);
+
+  if (limit === "all") {
+    return { ok: true, data: { items, total: items.length, page: 1, limit: Math.max(1, items.length), hasMore: false } };
+  }
+  return { ok: true, data: { items, total, page: safePage, limit, hasMore: windowEnd < total } };
+}
+
 /** Every matching staff, paged through 200 at a time — for pickers (e.g. Permission Group members), not the Staffs list. */
 export async function listAllStaff(
   filters: StaffListFilters = {},
@@ -202,7 +258,7 @@ export async function listAllStaff(
   return { ok: true, data: all };
 }
 
-/** Picker list: every non-draft staff (members, line managers…). */
+/** Picker list cache key (e.g. Permission Group members) — the caller picks which statuses. */
 export const allStaffQueryKey = [...staffListQueryKeyRoot, "all"] as const;
 
 export async function getStaff(id: string): Promise<CrudResult<Staff>> {

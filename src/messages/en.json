@@ -1138,6 +1138,59 @@
     }
   },
   "hr": {
+    "staffs": {
+      "header": {
+        "title": "Staffs",
+        "subtitle": "Manage teaching and non-teaching staff records"
+      },
+      "tabs": {
+        "teaching": "Teaching Staffs",
+        "non_teaching": "Non-Teaching Staffs"
+      },
+      "tabTitleWithCount": "{title} ({count})",
+      "status": {
+        "draft": "Draft",
+        "active": "Active",
+        "suspended": "Suspended",
+        "retired": "Retired",
+        "terminated": "Terminated"
+      },
+      "columns": {
+        "sn": "S/N",
+        "photo": "Photo",
+        "lastName": "Last Name",
+        "firstName": "First Name",
+        "department": "Department",
+        "subjects": "Subject(s)",
+        "post": "Post",
+        "dateJoined": "Date Joined",
+        "status": "Status",
+        "lastActive": "Last Active",
+        "staffNo": "Staff ID",
+        "email": "Email"
+      },
+      "classArm": "{className} {armName}",
+      "filters": {
+        "department": "Department",
+        "allDepartments": "All Departments",
+        "status": "Status",
+        "allStatuses": "All Statuses",
+        "subject": "Subject",
+        "allSubjects": "All Subjects"
+      },
+      "pageSize": {
+        "label": "Rows per page",
+        "option": "{count} per page",
+        "all": "All rows"
+      },
+      "searchPlaceholder": "Search by name, staff ID or email…",
+      "addNew": "Add Staff",
+      "export": "Export",
+      "emptyTeaching": "No teaching staff match.",
+      "emptyNonTeaching": "No non-teaching staff match.",
+      "loadError": "Couldn't load staff. Please try again.",
+      "comingSoon": "Coming in the next update."
+    },
     "common": {
       "active": "Active",
       "inactive": "Inactive",

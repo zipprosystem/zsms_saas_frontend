@@ -1146,6 +1146,59 @@
     }
   },
   "hr": {
+    "staffs": {
+      "header": {
+        "title": "Personnel",
+        "subtitle": "Gérez les dossiers du personnel enseignant et non enseignant"
+      },
+      "tabs": {
+        "teaching": "Personnel enseignant",
+        "non_teaching": "Personnel non enseignant"
+      },
+      "tabTitleWithCount": "{title} ({count})",
+      "status": {
+        "draft": "Brouillon",
+        "active": "Actif",
+        "suspended": "Suspendu",
+        "retired": "Retraité",
+        "terminated": "Licencié"
+      },
+      "columns": {
+        "sn": "N°",
+        "photo": "Photo",
+        "lastName": "Nom",
+        "firstName": "Prénom",
+        "department": "Département",
+        "subjects": "Matière(s)",
+        "post": "Poste",
+        "dateJoined": "Date d'arrivée",
+        "status": "Statut",
+        "lastActive": "Dernière activité",
+        "staffNo": "Identifiant",
+        "email": "E-mail"
+      },
+      "classArm": "{className} {armName}",
+      "filters": {
+        "department": "Département",
+        "allDepartments": "Tous les départements",
+        "status": "Statut",
+        "allStatuses": "Tous les statuts",
+        "subject": "Matière",
+        "allSubjects": "Toutes les matières"
+      },
+      "pageSize": {
+        "label": "Lignes par page",
+        "option": "{count} par page",
+        "all": "Toutes les lignes"
+      },
+      "searchPlaceholder": "Rechercher par nom, identifiant ou e-mail…",
+      "addNew": "Ajouter un membre",
+      "export": "Exporter",
+      "emptyTeaching": "Aucun personnel enseignant ne correspond.",
+      "emptyNonTeaching": "Aucun personnel non enseignant ne correspond.",
+      "loadError": "Impossible de charger le personnel. Veuillez réessayer.",
+      "comingSoon": "Disponible dans la prochaine mise à jour."
+    },
     "common": {
       "active": "Actif",
       "inactive": "Inactif",
