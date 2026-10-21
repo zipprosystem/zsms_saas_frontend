@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useTranslations } from "next-intl";
 import { CloseIcon } from "@/components/icons/CloseIcon";
 import { UploadIcon } from "@/components/icons/UploadIcon";
-import { uploadFile, type AttachedFile } from "@/lib/files/filesApi";
+import { uploadFile, type AttachedFile, type FileUploadPurpose } from "@/lib/files/filesApi";
 import type { FileValidation } from "@/lib/files/fileValidation";
 import { useFileImageUrl } from "@/lib/files/useFileImageUrl";
 
@@ -30,12 +30,15 @@ export function AvatarUploadField({
   validationMessages,
   value,
   onChange,
+  purpose = "student_photo",
 }: {
   label: string;
   validate: (file: File) => FileValidation;
   validationMessages: { unsupportedType: string; tooLarge: string };
   value: AttachedFile | null;
   onChange: (file: AttachedFile | null) => void;
+  /** Defaults to the original Student Details use. */
+  purpose?: FileUploadPurpose;
 }) {
   const t = useTranslations();
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +75,7 @@ export function AvatarUploadField({
     });
 
     setIsUploading(true);
-    const result = await uploadFile(file, "student_photo");
+    const result = await uploadFile(file, purpose);
     setIsUploading(false);
 
     if (result.ok) {

@@ -16,6 +16,7 @@ import { hrMockTransport } from "@/lib/hr/mock/hrMockBackend";
 import {
   STAFF_STATUSES,
   type Staff,
+  type StaffWriteBody,
   type StaffAddress,
   type StaffClassTeacherAssignment,
   type StaffExperience,
@@ -37,9 +38,19 @@ import {
  * the backend ships the full staff list on the same route, the two
  * reconcile (open item for Muntajir: is staff.id === users.id?).
  *
- *   GET    erp/staff?staff_type=&status=&department_id=&subject_id=&search=&page=&limit=
+ *   GET    erp/staff?academic_year_id=&staff_type=&status=&department_id=&subject_id=&search=&page=&limit=
  *                         -> { items, total, page, limit, has_more } (limit max 200)
- *   GET    erp/staff/:id  -> Staff
+ *   GET    erp/staff/:id?academic_year_id=  -> Staff
+ *   POST   erp/staff/drafts       body + current_step
+ *   PUT    erp/staff/:id/draft    body + current_step
+ *   POST   erp/staff/:id/submit   body — draft -> active
+ *   POST   erp/staff              body — create active directly
+ *   PUT    erp/staff/:id          body — edit a non-draft staff
+ *   DELETE erp/staff/:id          drafts only
+ *
+ * academic_year_id scopes the two assignment sets (subject /
+ * class-teacher) on reads AND writes — see hrMockBackend.ts for the
+ * carry-forward rule. Every save sends the COMPLETE record.
  */
 const USE_MOCK = true;
 
@@ -87,10 +98,12 @@ export function fromWire(value: unknown): Staff {
     photo_file_id: strOrNull(r.photo_file_id),
     signature_file_id: strOrNull(r.signature_file_id),
     title: strOrNull(r.title),
+    initials: strOrNull(r.initials),
     first_name: str(r.first_name),
     last_name: str(r.last_name),
     other_name: strOrNull(r.other_name),
     email: strOrNull(r.email),
+    national_id: strOrNull(r.national_id),
     gender: r.gender === "male" || r.gender === "female" ? r.gender : null,
     date_of_birth: strOrNull(r.date_of_birth),
     date_joined: strOrNull(r.date_joined),
@@ -106,18 +119,21 @@ export function fromWire(value: unknown): Staff {
       class_id: str(a.class_id),
       section_id: str(a.section_id),
     })),
+    assignments_academic_year_id: strOrNull(r.assignments_academic_year_id),
+    assignments_carried_forward_from: strOrNull(r.assignments_carried_forward_from),
     permission_group_ids: stringIds(r.permission_group_ids),
     present_address: addressFromWire(r.present_address),
     permanent_same_as_present: r.permanent_same_as_present !== false,
     permanent_address: addressFromWire(r.permanent_address),
     qualifications: rows<StaffQualification>(r.qualifications, (q) => ({
       degree: strOrNull(q.degree),
-      grade: strOrNull(q.grade),
-      result: strOrNull(q.result),
-      year: strOrNull(q.year),
+      stream: strOrNull(q.stream),
+      board: strOrNull(q.board),
       institution: strOrNull(q.institution),
-      status: strOrNull(q.status),
-      session: strOrNull(q.session),
+      year: strOrNull(q.year),
+      result: strOrNull(q.result),
+      rank: strOrNull(q.rank),
+      duration: strOrNull(q.duration),
       remarks: strOrNull(q.remarks),
     })),
     references: rows<StaffReference>(r.references, (ref) => ({
@@ -153,6 +169,8 @@ export function staffFullName(staff: Pick<Staff, "first_name" | "other_name" | "
 // ---------------------------------------------------------------------------
 
 export type StaffListFilters = {
+  /** Which year's assignments come back (and subject_id filters on). */
+  academicYearId?: string;
   staffType?: StaffType;
   departmentId?: string;
   subjectId?: string;
@@ -163,6 +181,7 @@ export type StaffListPage = { items: Staff[]; total: number; page: number; limit
 
 function listPath(filters: StaffListFilters, statuses: StaffStatus[], page: number, limit: number): string {
   const params = new URLSearchParams();
+  if (filters.academicYearId) params.set("academic_year_id", filters.academicYearId);
   if (filters.staffType) params.set("staff_type", filters.staffType);
   if (statuses.length > 0) params.set("status", statuses.join(","));
   if (filters.departmentId) params.set("department_id", filters.departmentId);
@@ -261,9 +280,51 @@ export async function listAllStaff(
 /** Picker list cache key (e.g. Permission Group members) — the caller picks which statuses. */
 export const allStaffQueryKey = [...staffListQueryKeyRoot, "all"] as const;
 
-export async function getStaff(id: string): Promise<CrudResult<Staff>> {
-  return sendHrRequest(channel, "GET", `${BASE_PATH}/${encodeURIComponent(id)}`, undefined, (body) => {
-    const entity = readEntity(body);
-    return entity ? { ok: true, data: fromWire(entity) } : { ok: false, kind: "server" };
-  });
+function staffPath(id: string): string {
+  return `${BASE_PATH}/${encodeURIComponent(id)}`;
+}
+
+function staffResult(body: unknown): CrudResult<Staff> {
+  const entity = readEntity(body);
+  return entity ? { ok: true, data: fromWire(entity) } : { ok: false, kind: "server" };
+}
+
+/** One staff record, with `academicYearId`'s assignments (carried forward from a prior year when that year has none). */
+export async function getStaff(id: string, academicYearId: string | null): Promise<CrudResult<Staff>> {
+  const query = academicYearId ? `?academic_year_id=${encodeURIComponent(academicYearId)}` : "";
+  return sendHrRequest(channel, "GET", `${staffPath(id)}${query}`, undefined, staffResult);
+}
+
+// ---------------------------------------------------------------------------
+// Writes
+// ---------------------------------------------------------------------------
+
+/** First Save Draft (or auto-save) of a new staff. */
+export async function createStaffDraft(body: StaffWriteBody, currentStep: number): Promise<CrudResult<Staff>> {
+  return sendHrRequest(channel, "POST", `${BASE_PATH}/drafts`, { ...body, current_step: currentStep }, staffResult);
+}
+
+/** Every later Save Draft of the same draft. */
+export async function saveStaffDraft(id: string, body: StaffWriteBody, currentStep: number): Promise<CrudResult<Staff>> {
+  return sendHrRequest(channel, "PUT", `${staffPath(id)}/draft`, { ...body, current_step: currentStep }, staffResult);
+}
+
+/** Finish a draft: draft -> active, staff_no + credentials issued. */
+export async function submitStaffDraft(id: string, body: StaffWriteBody): Promise<CrudResult<Staff>> {
+  return sendHrRequest(channel, "POST", `${staffPath(id)}/submit`, body, staffResult);
+}
+
+/** Create an active staff directly, no draft involved. */
+export async function createStaff(body: StaffWriteBody): Promise<CrudResult<Staff>> {
+  return sendHrRequest(channel, "POST", BASE_PATH, body, staffResult);
+}
+
+/** Edit a non-draft staff. Writes body.academic_year_id's assignments only. */
+export async function updateStaff(id: string, body: StaffWriteBody): Promise<CrudResult<Staff>> {
+  return sendHrRequest(channel, "PUT", staffPath(id), body, staffResult);
+}
+
+/** Hard delete — drafts only (409 NOT_A_DRAFT otherwise). */
+export async function deleteStaffDraft(id: string): Promise<CrudResult<void>> {
+  return sendHrRequest(channel, "DELETE", staffPath(id), undefined, () => ({ ok: true, data: undefined }));
 }

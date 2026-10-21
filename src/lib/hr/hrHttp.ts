@@ -53,6 +53,7 @@ const CONFLICT_CODES = new Set([
 const VALIDATION_FIELDS = new Set([
   "name",
   "email",
+  "national_id",
   "username",
   "first_name",
   "last_name",

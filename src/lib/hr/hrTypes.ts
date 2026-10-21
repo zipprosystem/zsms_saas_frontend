@@ -20,10 +20,15 @@ export const STAFF_LIST_STATUSES: readonly StaffStatus[] = ["active", "suspended
 
 export type StaffStatusAction = "retire" | "terminate";
 
-/** One teaching allocation. A staff holds any number; the same subject may repeat across arms/classes. */
+/**
+ * One teaching allocation. A staff holds any number; the same subject may
+ * repeat across arms/classes. Year-scoped: class/arm ids belong to one
+ * academic year, so the whole set is stored PER YEAR (see
+ * Staff.assignments_academic_year_id).
+ */
 export type StaffSubjectAssignment = { class_id: string; section_id: string; subject_id: string };
 
-/** An arm this staff is class teacher (form tutor) of. */
+/** An arm this staff is class teacher (form tutor) of — teaching staff only, year-scoped like subject assignments. */
 export type StaffClassTeacherAssignment = { class_id: string; section_id: string };
 
 export type StaffAddress = {
@@ -35,14 +40,16 @@ export type StaffAddress = {
   address_line: string | null;
 };
 
+/** Fields per the Figma Add Staff frame (3347:64541), which supersedes the v1.0 spec's list. */
 export type StaffQualification = {
   degree: string | null;
-  grade: string | null;
-  result: string | null;
-  year: string | null;
+  stream: string | null;
+  board: string | null;
   institution: string | null;
-  status: string | null;
-  session: string | null;
+  year: string | null;
+  result: string | null;
+  rank: string | null;
+  duration: string | null;
   remarks: string | null;
 };
 
@@ -75,10 +82,13 @@ export type Staff = {
   photo_file_id: string | null;
   signature_file_id: string | null;
   title: string | null;
+  initials: string | null;
   first_name: string;
   last_name: string;
   other_name: string | null;
   email: string | null;
+  /** Optional national ID number — free-form string, since formats vary by country (no digit/length rule beyond max 32). */
+  national_id: string | null;
   gender: StaffGender | null;
   date_of_birth: string | null;
   date_joined: string | null;
@@ -88,8 +98,17 @@ export type Staff = {
   post_id: string | null;
 
   department_ids: string[];
+  /**
+   * Year-scoped sets, returned for the academic_year_id the read asked for
+   * (assignments_academic_year_id). When that year has none yet, the
+   * backend returns the most recent PRIOR year's sets as editable defaults
+   * and names it in assignments_carried_forward_from (null otherwise) —
+   * nothing is stored for the new year until a save.
+   */
   subject_assignments: StaffSubjectAssignment[];
   class_teacher_assignments: StaffClassTeacherAssignment[];
+  assignments_academic_year_id: string | null;
+  assignments_carried_forward_from: string | null;
   /**
    * DERIVED on read from Permission Group membership (the group is the
    * source of truth for members). Sending it on a staff save replaces this
@@ -120,7 +139,12 @@ export type Staff = {
   updated_at: string;
 };
 
-/** Everything a create/update sends — the complete record, never a partial patch (Student Core's convention). */
+/**
+ * Everything a create/update sends — the complete record, never a partial
+ * patch (Student Core's convention). academic_year_id says which year the
+ * two assignment sets are written to; other years are untouched. No
+ * password field: the backend issues the default (123456) itself.
+ */
 export type StaffWriteBody = Omit<
   Staff,
   | "id"
@@ -131,9 +155,11 @@ export type StaffWriteBody = Omit<
   | "last_active_at"
   | "status_reason"
   | "status_effective_on"
+  | "assignments_academic_year_id"
+  | "assignments_carried_forward_from"
   | "created_at"
   | "updated_at"
->;
+> & { academic_year_id: string | null };
 
 export type StaffStatusBody = { reason: string; effective_on: string };
 
