@@ -31,6 +31,7 @@ import { formDataToStudentBody, studentToFormData } from "@/lib/students/student
 import { useDraftAutoSave } from "@/components/students/wizard/useDraftAutoSave";
 import {
   createStudent,
+  studentsAllYearsQueryKeyRoot,
   studentsQueryKey,
   submitStudentDraft,
   updateStudent,
@@ -215,8 +216,10 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
       handleSaveFailure(result);
       return;
     }
-    // Only the year this student belongs to — never every cached year.
+    // Only the year this student belongs to — never every cached year —
+    // plus the Drafts tab, which lists drafts across all years.
     queryClient.invalidateQueries({ queryKey: studentsQueryKey(academicYearId) });
+    queryClient.invalidateQueries({ queryKey: studentsAllYearsQueryKeyRoot });
     showToast(t("students.wizard.footer.draftSaved"));
   };
 
@@ -263,6 +266,8 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
     }
     autoSave.stop();
     queryClient.invalidateQueries({ queryKey: studentsQueryKey(academicYearId) });
+    // A submitted draft leaves the Drafts tab.
+    queryClient.invalidateQueries({ queryKey: studentsAllYearsQueryKeyRoot });
     // AUTO-POPULATE: submit/create creates the student's initial Student
     // Term Details record server-side (same transaction) when placement is
     // complete — invalidate so that screen reflects it immediately.
@@ -290,7 +295,9 @@ export function StudentWizard({ mode, initialStudent, initialStep, onClose }: St
   const handleClose = () => {
     const yearId = academicYearId;
     void autoSave.closeAndFlush().then(() => {
-      if (yearId && autoSave.hasSaved()) queryClient.invalidateQueries({ queryKey: studentsQueryKey(yearId) });
+      if (!autoSave.hasSaved()) return;
+      if (yearId) queryClient.invalidateQueries({ queryKey: studentsQueryKey(yearId) });
+      queryClient.invalidateQueries({ queryKey: studentsAllYearsQueryKeyRoot });
     });
     onClose();
   };

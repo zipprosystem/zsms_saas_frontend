@@ -1140,6 +1140,7 @@
     },
     "tabs": {
       "list": "Student List",
+      "drafts": "Drafts",
       "admissions": "Admissions",
       "subjectEnrollment": "Subject Enrollment",
       "classEnrollment": "Class Enrollment",
@@ -1153,13 +1154,22 @@
       "newlyEnrolled": "Newly Enrolled",
       "day": "Day Students",
       "boarding": "Boarding Students",
-      "withdrawn": "Withdrawn"
+      "male": "Male Students",
+      "female": "Female Students",
+      "withdrawn": "Withdrawn",
+      "graduated": "Graduated"
     },
-    "searchPlaceholder": "Search by name or admission no…",
+    "searchPlaceholder": "Search by name, admission no or student ID…",
     "addNew": "Add New Student",
     "empty": "No students yet — add your first one to get started.",
     "emptyWithdrawn": "No withdrawn, suspended or expelled students.",
+    "pageSize": {
+      "label": "Rows per page",
+      "option": "{count} per page",
+      "all": "All rows"
+    },
     "emptyGraduate": "No graduated students yet.",
+    "emptyDrafts": "No draft admissions.",
     "noYear": {
       "message": "Select or create an academic year to view students.",
       "linkLabel": "Go to Academic Years"
