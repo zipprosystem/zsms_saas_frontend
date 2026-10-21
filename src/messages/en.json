@@ -138,6 +138,9 @@
     "reports": "Reports",
     "pastoral": "Pastoral",
     "hr": "HR",
+    "hrStaffs": "Staffs",
+    "hrStaffPosts": "Staff Posts",
+    "hrPermissionGroups": "Permission Groups",
     "clinic": "Clinic",
     "adminPanel": "Admin Panel",
     "students": "Students",
@@ -240,6 +243,8 @@
       "brandingAssets": { "name": "Branding & Assets" },
       "generalBehaviour": { "name": "General Behaviour" },
       "integrationsAlerts": { "name": "Integrations & Alerts" },
+      "staffPosts": { "name": "Staff Posts", "description": "The posts (designations) staff can hold" },
+      "permissionGroups": { "name": "Permission Groups", "description": "Who can do what — staff groups and their permissions" },
       "academicYears": {
         "name": "Academic Years",
         "description": "Define your school year and date range"
@@ -760,19 +765,19 @@
       "panel": { "createTitle": "Add Department", "editTitle": "Edit Department" },
       "columns": {
         "name": "Department Name",
-        "hod": "HOD",
-        "seniorManager": "Senior Manager",
+        "hod": "Head (line manager)",
+        "seniorManager": "Senior line manager",
         "subjectsCount": "Subjects",
         "staffCount": "Staff"
       },
       "fields": {
         "name": { "label": "Department Name", "placeholder": "e.g. Sciences" },
-        "hod": { "label": "Line Manager / HOD", "placeholder": "Select a staff member", "loading": "Loading staff…" },
-        "seniorManager": { "label": "Senior Line Manager (optional)", "none": "None", "loading": "Loading staff…" }
+        "hod": { "label": "Head (line manager)", "placeholder": "Select a staff member", "loading": "Loading staff…" },
+        "seniorManager": { "label": "Senior line manager (optional)", "none": "None", "loading": "Loading staff…" }
       },
       "errors": {
         "nameRequired": "Enter a name for this department",
-        "hodRequired": "Select a line manager / HOD"
+        "hodRequired": "Select a head (line manager)"
       },
       "actions": {
         "cantDeleteHasSubjects": "Can't delete — {count, plural, one {# subject} other {# subjects}} still belong to this department"
@@ -1130,6 +1135,115 @@
       "includeAll": "Include all rows (ignore filters)",
       "asExcel": "Export as Excel",
       "asPdf": "Export as PDF"
+    }
+  },
+  "hr": {
+    "common": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "allStatuses": "All Statuses",
+      "loading": "Loading…",
+      "unknownStaff": "Unknown staff"
+    },
+    "permissions": {
+      "modules": {
+        "students": "Students",
+        "staff": "Staff",
+        "academics": "Academics",
+        "attendance": "Attendance",
+        "assessments": "Assessments & Results",
+        "finance": "Finance",
+        "communications": "Communications",
+        "reports": "Reports",
+        "setup": "Setup",
+        "settings": "School Settings"
+      },
+      "actions": {
+        "view": "View",
+        "create": "Create",
+        "edit": "Edit",
+        "delete": "Delete"
+      }
+    },
+    "staffPosts": {
+      "title": "Staff Posts",
+      "subtitle": "Manage the posts (designations) staff can hold",
+      "addNew": "Add Staff Post",
+      "searchPlaceholder": "Search staff posts…",
+      "empty": "No staff posts yet — add your first one.",
+      "columns": {
+        "sn": "S/N",
+        "name": "Post",
+        "staffCount": "Staff",
+        "status": "Status"
+      },
+      "panel": {
+        "createTitle": "Add Staff Post",
+        "editTitle": "Edit Staff Post"
+      },
+      "fields": {
+        "name": {
+          "label": "Post name",
+          "placeholder": "e.g. Vice Principal"
+        },
+        "isActive": {
+          "label": "Active",
+          "helper": "Inactive posts can't be chosen for new staff; current holders keep them."
+        }
+      },
+      "errors": {
+        "nameRequired": "Enter a name for this post"
+      },
+      "toast": {
+        "created": "Staff post added",
+        "updated": "Staff post updated",
+        "deleted": "Staff post deleted"
+      }
+    },
+    "permissionGroups": {
+      "title": "Permission Groups",
+      "subtitle": "Group staff and choose what each group can do",
+      "addNew": "Add Permission Group",
+      "searchPlaceholder": "Search permission groups…",
+      "empty": "No permission groups yet — add your first one.",
+      "columns": {
+        "sn": "S/N",
+        "name": "Group",
+        "permissions": "Permissions",
+        "members": "Members"
+      },
+      "permissionCount": "{count, plural, one {# permission} other {# permissions}}",
+      "memberCount": "{count, plural, one {# member} other {# members}}",
+      "noMembers": "No members",
+      "panel": {
+        "createTitle": "Add Permission Group",
+        "editTitle": "Edit Permission Group",
+        "subtitle": "Permissions are recorded now and enforced in a later update."
+      },
+      "fields": {
+        "name": {
+          "label": "Group name",
+          "placeholder": "e.g. Form Tutors"
+        },
+        "permissions": {
+          "label": "Permissions",
+          "helper": "Tick a module to grant all of its actions.",
+          "module": "Module"
+        },
+        "members": {
+          "label": "Members",
+          "placeholder": "Search staff by name or staff ID…",
+          "noOptions": "No matching staff"
+        }
+      },
+      "errors": {
+        "nameRequired": "Enter a name for this group"
+      },
+      "toast": {
+        "created": "Permission group added",
+        "updated": "Permission group updated",
+        "deleted": "Permission group deleted"
+      }
     }
   },
   "students": {

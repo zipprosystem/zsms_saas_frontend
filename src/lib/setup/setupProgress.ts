@@ -14,6 +14,8 @@ import { classSubjectsQueryKey, fetchClassSubjectsForYear } from "@/lib/setup/ac
 import { createClassSubjectGroupService } from "@/lib/setup/academicStructure/classSubjectGroupingApi";
 import { createStudentTermDetailService } from "@/lib/setup/academicStructure/studentTermDetailsApi";
 import { listSubjectEnrolments, subjectEnrolmentsQueryKey } from "@/lib/setup/academicStructure/subjectEnrolmentApi";
+import { staffPostsService } from "@/lib/hr/staffPostsApi";
+import { permissionGroupsService } from "@/lib/hr/permissionGroupsApi";
 import type { SetupItem } from "@/lib/setup/setupConfig";
 
 /**
@@ -57,6 +59,8 @@ const ITEMS_WITH_LIVE_CHECK = new Set([
   "classSubjectGrouping",
   "studentTermDetails",
   "subjectEnrolment",
+  "staffPosts",
+  "permissionGroups",
 ]);
 
 export type SetupProgressState =
@@ -200,6 +204,21 @@ export function useSetupProgress(): SetupProgressState {
     staleTime: PROGRESS_STALE_TIME_MS,
   });
 
+  // HR masters (School Settings category) — school-scoped, not per-year.
+  const staffPostsQuery = useQuery({
+    queryKey: staffPostsService.queryKey,
+    queryFn: () => staffPostsService.list().then(throwIfTransient),
+    select: (result) => result.ok && result.data.length > 0,
+    staleTime: PROGRESS_STALE_TIME_MS,
+  });
+
+  const permissionGroupsQuery = useQuery({
+    queryKey: permissionGroupsService.queryKey,
+    queryFn: () => permissionGroupsService.list().then(throwIfTransient),
+    select: (result) => result.ok && result.data.length > 0,
+    staleTime: PROGRESS_STALE_TIME_MS,
+  });
+
   const sectionsStillLoading = activeClassIds.length > 0 && sectionQueries.some((query) => query.isPending);
   const classTermsStillLoading = allClassIds.length > 0 && classTermQueries.some((query) => query.isPending);
   const isLoading =
@@ -208,6 +227,8 @@ export function useSetupProgress(): SetupProgressState {
     schoolTypesQuery.isPending ||
     departmentsQuery.isPending ||
     subjectsMasterQuery.isPending ||
+    staffPostsQuery.isPending ||
+    permissionGroupsQuery.isPending ||
     (!!yearId &&
       (classesQuery.isPending ||
         sectionsStillLoading ||
@@ -232,6 +253,8 @@ export function useSetupProgress(): SetupProgressState {
   if (classSubjectGroupsQuery.data) completedKeys.add("classSubjectGrouping");
   if (studentTermDetailsQuery.data) completedKeys.add("studentTermDetails");
   if (subjectEnrolmentsQuery.data) completedKeys.add("subjectEnrolment");
+  if (staffPostsQuery.data) completedKeys.add("staffPosts");
+  if (permissionGroupsQuery.data) completedKeys.add("permissionGroups");
 
   return { status: "loaded", completedKeys };
 }

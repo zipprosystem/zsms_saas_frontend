@@ -1,5 +1,6 @@
-import { ModuleStub } from "@/components/layout/ModuleStub";
+import { redirect } from "next/navigation";
 
+/** HR has no landing page of its own — Staffs is its home. */
 export default function Page() {
-  return <ModuleStub titleKey="nav.hr" />;
+  redirect("/admin/hr/staffs");
 }

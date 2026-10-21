@@ -17,7 +17,12 @@ type SidebarProps = {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const t = useTranslations();
   const pathname = usePathname();
-  const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
+  // A parent whose real submenu holds the current page starts expanded.
+  const [expandedKeys, setExpandedKeys] = useState<string[]>(() =>
+    sidebarNavItems
+      .filter((item) => item.children && (pathname === item.href || pathname.startsWith(`${item.href}/`)))
+      .map((item) => item.key),
+  );
 
   const toggleExpanded = (key: string) => {
     setExpandedKeys((current) =>
@@ -87,9 +92,24 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </div>
               {expanded && (
                 <div className="ml-[44px] flex flex-col gap-0.5 border-l border-white/10 pb-1 pl-3">
-                  <span className="px-2 py-1.5 text-xs italic text-[#94a3b8]/70">
-                    {t("common.comingSoon")}
-                  </span>
+                  {item.children ? (
+                    item.children.map((child) => (
+                      <Link
+                        key={child.key}
+                        href={child.href}
+                        onClick={onClose}
+                        className={`truncate rounded-lg px-2 py-1.5 text-xs transition-colors ${
+                          isActive(child.href) ? "bg-white/10 text-white" : "text-[#94a3b8] hover:bg-white/5 hover:text-white"
+                        }`}
+                      >
+                        {t(child.labelKey)}
+                      </Link>
+                    ))
+                  ) : (
+                    <span className="px-2 py-1.5 text-xs italic text-[#94a3b8]/70">
+                      {t("common.comingSoon")}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
