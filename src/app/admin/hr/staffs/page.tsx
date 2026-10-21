@@ -1,6 +1,5 @@
-import { ModuleStub } from "@/components/layout/ModuleStub";
+import { StaffsScreen } from "@/components/hr/StaffsScreen";
 
-// Placeholder until the Staffs list lands (next stage of feature/staff-module).
 export default function Page() {
-  return <ModuleStub titleKey="nav.hrStaffs" />;
+  return <StaffsScreen />;
 }

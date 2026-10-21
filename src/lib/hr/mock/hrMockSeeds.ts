@@ -56,7 +56,8 @@ export const SEED_STAFF: Staff[] = Array.from({ length: 64 }, (_unused, index): 
   const firstName = FIRST_NAMES[index % FIRST_NAMES.length];
   const lastName = LAST_NAMES[(index * 7) % LAST_NAMES.length];
   const staffType: StaffType = index % 5 < 3 ? "teaching" : "non_teaching";
-  const status: StaffStatus = n % 23 === 0 ? "retired" : n % 29 === 0 ? "terminated" : n % 31 === 0 ? "draft" : "active";
+  const status: StaffStatus =
+    n % 23 === 0 ? "retired" : n % 29 === 0 ? "terminated" : n % 31 === 0 ? "draft" : n % 19 === 0 ? "suspended" : "active";
   const postId =
     index === 0 ? SEED_STAFF_POSTS[0].id : staffType === "teaching" ? TEACHER_POST : NON_TEACHING_POSTS[index % NON_TEACHING_POSTS.length];
   const email = `${firstName}.${lastName}${n}@example.school`.toLowerCase();
@@ -92,8 +93,15 @@ export const SEED_STAFF: Staff[] = Array.from({ length: 64 }, (_unused, index): 
     login_active: status === "active",
     must_change_password: false,
     last_active_at: status === "active" && n % 4 !== 0 ? isoDaysBefore(n % 9) : null,
-    status_reason: status === "retired" ? "Reached retirement age" : status === "terminated" ? "Contract ended" : null,
-    status_effective_on: status === "retired" || status === "terminated" ? isoDaysBefore(30).slice(0, 10) : null,
+    status_reason:
+      status === "retired"
+        ? "Reached retirement age"
+        : status === "terminated"
+          ? "Contract ended"
+          : status === "suspended"
+            ? "Pending disciplinary review"
+            : null,
+    status_effective_on: status === "retired" || status === "terminated" || status === "suspended" ? isoDaysBefore(30).slice(0, 10) : null,
     created_at: joined,
     updated_at: joined,
   };

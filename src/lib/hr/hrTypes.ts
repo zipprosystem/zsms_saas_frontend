@@ -6,10 +6,17 @@
 
 export type StaffType = "teaching" | "non_teaching";
 
-/** draft = Save Draft before Add Staff. Retire / Terminate are the ONE status mechanism (no separate Resignation). */
-export type StaffStatus = "draft" | "active" | "retired" | "terminated";
+/**
+ * employment_status. draft = Save Draft before Add Staff. Retire /
+ * Terminate are the ONE leaving mechanism (no separate Resignation);
+ * suspended is a status the list can filter on.
+ */
+export type StaffStatus = "draft" | "active" | "suspended" | "retired" | "terminated";
 
-export const STAFF_STATUSES: readonly StaffStatus[] = ["draft", "active", "retired", "terminated"];
+export const STAFF_STATUSES: readonly StaffStatus[] = ["draft", "active", "suspended", "retired", "terminated"];
+
+/** The Staffs list's Status filter choices — every employment status except draft. */
+export const STAFF_LIST_STATUSES: readonly StaffStatus[] = ["active", "suspended", "retired", "terminated"];
 
 export type StaffStatusAction = "retire" | "terminate";
 

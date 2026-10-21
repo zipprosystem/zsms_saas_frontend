@@ -11,17 +11,17 @@ import type { ExportColumn } from "@/lib/export/exportTypes";
 import { permissionGroupsService } from "@/lib/hr/permissionGroupsApi";
 import { allStaffQueryKey, listAllStaff, staffFullName } from "@/lib/hr/staffRecordsApi";
 import { PermissionMatrix } from "@/components/hr/PermissionMatrix";
-import type { PermissionGroup, PermissionGroupInput, Staff } from "@/lib/hr/hrTypes";
+import { STAFF_LIST_STATUSES, type PermissionGroup, type PermissionGroupInput, type Staff } from "@/lib/hr/hrTypes";
 
 type FormState = { name: string; permissions: string[]; member_staff_ids: string[] };
 
 const EMPTY_FORM: FormState = { name: "", permissions: [], member_staff_ids: [] };
 
-/** Members are picked from every non-draft staff — a retired member still shows (and can be removed). */
+/** Members are picked from every non-draft staff — a retired/suspended member still shows (and can be removed). */
 export function useStaffPickerQuery() {
   return useQuery({
     queryKey: allStaffQueryKey,
-    queryFn: () => listAllStaff({}, ["active", "retired", "terminated"]).then(throwIfTransient),
+    queryFn: () => listAllStaff({}, [...STAFF_LIST_STATUSES]).then(throwIfTransient),
     staleTime: STRUCTURAL_STALE_TIME_MS,
   });
 }
