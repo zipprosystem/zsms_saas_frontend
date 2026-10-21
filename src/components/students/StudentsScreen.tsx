@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient, type Query } from "@tanstack/react-query";
 import { DataTable } from "@/components/setup/DataTable";
 import { ExportMenu } from "@/components/setup/ExportMenu";
 import { ConfirmDialog } from "@/components/setup/ConfirmDialog";
@@ -14,7 +14,6 @@ import { Tooltip } from "@/components/ui/Tooltip";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useAcademicYear } from "@/lib/academicYear/AcademicYearContext";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
-import { PAGE_SIZE, usePaginatedView } from "@/lib/setup/usePaginatedView";
 import { throwIfTransient, type ColumnDef, type FilterDef } from "@/lib/setup/crudTypes";
 import type { ExportColumn, ExportConfig } from "@/lib/export/exportTypes";
 import { createClassesService, type SchoolClass } from "@/lib/setup/academicStructure/classesApi";
@@ -22,19 +21,25 @@ import { fetchSectionsForClass, sectionsQueryKey, type Section } from "@/lib/set
 import {
   deleteDraftStudent,
   getStudent,
-  listStudents,
+  getStudentsSummary,
+  listStudentsPage,
+  STUDENT_PAGE_SIZES,
+  STUDENTS_PAGE_SIZE_DEFAULT,
+  studentsAllYearsQueryKeyRoot,
+  studentsPageQueryKey,
   studentStatusEventsQueryKey,
   studentsQueryKey,
+  studentsSummaryQueryKey,
+  type StudentListFilters,
+  type StudentListScope,
+  type StudentPageParams,
+  type StudentPageSize,
 } from "@/lib/students/studentsApi";
-import type { Student } from "@/lib/students/studentTypes";
+import type { Student, StudentStatus } from "@/lib/students/studentTypes";
 import { clampToWizardStep, type WizardStep } from "@/components/students/wizard/WizardStepper";
-import { MOCK_BOARDING_HOUSES } from "@/lib/students/studentsMockData";
 import {
   genderLabelKey,
   isBoardingHouseVisible,
-  isWithdrawnGroup,
-  matchesStudentFilters,
-  matchesStudentSearch,
   modeLabelKey,
   resolveArmName,
   resolveBoardingHouseName,
@@ -78,37 +83,57 @@ const COMING_SOON_TAB_TITLE_KEYS: Partial<Record<StudentsTabKey, string>> = {
   notes: "students.tabs.notes",
 };
 
-/** The three tabs that are real lists over the same loaded student set, each its own slice by status. */
-type StudentListTabKey = "list" | "withdrawn" | "graduate";
+/** The tabs that are real server-paged lists, each its own status slice. */
+type StudentListTabKey = "list" | "drafts" | "withdrawn" | "graduate";
 
 function isStudentListTab(tab: StudentsTabKey): tab is StudentListTabKey {
-  return tab === "list" || tab === "withdrawn" || tab === "graduate";
+  return tab === "list" || tab === "drafts" || tab === "withdrawn" || tab === "graduate";
 }
 
 /**
- * Student List = active + draft (drafts have no tab of their own, so they
- * surface here with a badge and Resume/Delete instead of the menu).
- * Withdrawn = withdrawn + suspended + expelled (one Withdraw flow, told
- * apart by the Status column). Graduate = graduated.
+ * The `status` param each tab sends. Student List = active only. Drafts =
+ * draft, across ALL years (all_years=true — a draft may not have a year
+ * yet). Withdrawn = withdrawn + suspended + expelled (one Withdraw flow,
+ * told apart by the Status column). Graduate = graduated.
  */
-const TAB_ROW_FILTERS: Record<StudentListTabKey, (student: Student) => boolean> = {
-  list: (student) => student.status === "active" || student.status === "draft",
-  withdrawn: isWithdrawnGroup,
-  graduate: (student) => student.status === "graduated",
+const TAB_STATUSES: Record<StudentListTabKey, StudentStatus[]> = {
+  list: ["active"],
+  drafts: ["draft"],
+  withdrawn: ["withdrawn", "suspended", "expelled"],
+  graduate: ["graduated"],
 };
 
-/** Status filter choices per tab — Graduate has a single status, so no filter. */
-const TAB_STATUS_FILTER_OPTIONS: Record<StudentListTabKey, Student["status"][]> = {
-  list: ["active", "draft"],
-  withdrawn: ["withdrawn", "suspended", "expelled"],
-  graduate: [],
+/** Tabs whose Status filter narrows TAB_STATUSES to one — only Withdrawn has more than one status to pick from. */
+const TAB_HAS_STATUS_FILTER: Record<StudentListTabKey, boolean> = {
+  list: false,
+  drafts: false,
+  withdrawn: true,
+  graduate: false,
 };
 
 const TAB_EMPTY_KEYS: Record<StudentListTabKey, string> = {
   list: "students.empty",
+  drafts: "students.emptyDrafts",
   withdrawn: "students.emptyWithdrawn",
   graduate: "students.emptyGraduate",
 };
+
+/** Search is sent server-side, so wait for typing to pause before re-querying. */
+const SEARCH_DEBOUNCE_MS = 300;
+
+/**
+ * placeholderData guard: keep showing the previous page while the next one
+ * loads (no "Loading…" flash between pages/filters), but only within the
+ * same year/all-years scope and tab — never show another tab's or year's
+ * rows under this one. Key layout: see studentsPageQueryKey/
+ * studentsSummaryQueryKey (index 2 = year id or "allYears").
+ */
+function isSameListView(previous: Query | undefined, scopeKey: string, statuses?: StudentStatus[]): boolean {
+  if (!previous || previous.queryKey[2] !== scopeKey) return false;
+  if (!statuses) return true;
+  const previousParams = previous.queryKey[previous.queryKey.length - 1] as Partial<StudentPageParams> | undefined;
+  return previousParams?.statuses?.join(",") === statuses.join(",");
+}
 
 /**
  * Bespoke screen, NOT CrudScreen — CrudScreen hardcodes "Add New" to open
@@ -188,38 +213,103 @@ export function StudentsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Per-academic-year: every tab (List/Withdrawn/Graduate) is scoped to the
-  // header's selected year. Never fired without one — the backend 422s on a
-  // missing academic_year_id; the no-year state below renders instead.
-  const query = useQuery({
-    queryKey: studentsQueryKey(selectedYearId ?? ""),
-    // throwIfTransient: only network/5xx failures are retried — a 4xx
-    // (like the 422 a missing year used to cause) settles immediately.
-    queryFn: () => listStudents(selectedYearId ?? "").then(throwIfTransient),
-    enabled: !!selectedYearId,
-    staleTime: STRUCTURAL_STALE_TIME_MS,
-  });
-  const hasNoYear = !isYearLoading && !selectedYearId;
-
-  const allItems: Student[] = query.data?.ok ? query.data.data : [];
+  // Search/filters/pagination are all server-side: the table only ever
+  // holds the page on screen (GET erp/students with page/limit + filters),
+  // and the tiles come from GET erp/students/summary. Nothing is fetched
+  // in full or filtered/sliced/counted in the browser.
   const listTab: StudentListTabKey = isStudentListTab(activeTab) ? activeTab : "list";
-  // Each list tab is a status slice of the same loaded set (TAB_ROW_FILTERS).
-  // No sortable columns exist on this table (DataTable has no column-sort
-  // mechanism), so "most recently added at the top" is simply the list's
-  // one and only order — newest created_at first.
-  const visibleStudents = allItems
-    .filter(TAB_ROW_FILTERS[listTab])
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<StudentPageSize>(STUDENTS_PAGE_SIZE_DEFAULT);
+
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedSearch(search.trim()), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(handle);
+  }, [search]);
+
+  // Class/arm ids belong to one year — drop them when the year changes, or
+  // the new year's list would silently filter on the old year's class.
+  const [filtersYearId, setFiltersYearId] = useState(selectedYearId);
+  if (filtersYearId !== selectedYearId) {
+    setFiltersYearId(selectedYearId);
+    setFilters((current) => {
+      const next = { ...current };
+      delete next.class;
+      delete next.section_id;
+      return next;
+    });
+  }
+
+  // Back to page 1 whenever what's being paged changes — adjusted during
+  // render (not in an effect) so the stale page number is never requested.
+  const viewKey = JSON.stringify([selectedYearId, activeTab, debouncedSearch, filters, pageSize]);
+  const [pagedViewKey, setPagedViewKey] = useState(viewKey);
+  if (pagedViewKey !== viewKey) {
+    setPagedViewKey(viewKey);
+    setPage(1);
+  }
+
+  const listFilters: StudentListFilters = {
+    classId: filters.class || undefined,
+    sectionId: filters.section_id || undefined,
+    mode: filters.mode === "day" || filters.mode === "boarding" ? filters.mode : undefined,
+    search: debouncedSearch || undefined,
+  };
+  const statusFilter = TAB_HAS_STATUS_FILTER[listTab] ? (filters.status as StudentStatus | undefined) : undefined;
+  const statuses = statusFilter && TAB_STATUSES[listTab].includes(statusFilter) ? [statusFilter] : TAB_STATUSES[listTab];
+  // Drafts span every year; every other tab is scoped to the header's
+  // selected year and never fires without one (the backend 422s on a
+  // missing academic_year_id; the no-year state below renders instead).
+  const listScope: StudentListScope =
+    listTab === "drafts" ? { kind: "allYears" } : { kind: "year", academicYearId: selectedYearId ?? "" };
+  const scopeKey = listScope.kind === "year" ? listScope.academicYearId : "allYears";
+  const pageParams: StudentPageParams = { ...listFilters, statuses, page, limit: pageSize };
+
+  const query = useQuery({
+    queryKey: studentsPageQueryKey(listScope, pageParams),
+    // throwIfTransient: only network/5xx failures are retried — a 4xx
+    // settles immediately.
+    queryFn: () => listStudentsPage(listScope, pageParams).then(throwIfTransient),
+    enabled: isStudentListTab(activeTab) && (listScope.kind === "allYears" || !!selectedYearId),
+    staleTime: STRUCTURAL_STALE_TIME_MS,
+    placeholderData: (previous, previousQuery) =>
+      isSameListView(previousQuery as Query | undefined, scopeKey, statuses) ? previous : undefined,
+  });
+
+  // Tiles: Student List tab only, same year + filters as the list (no
+  // status — the summary splits by status itself).
+  const summaryQuery = useQuery({
+    queryKey: studentsSummaryQueryKey(selectedYearId ?? "", listFilters),
+    queryFn: () => getStudentsSummary(selectedYearId ?? "", listFilters).then(throwIfTransient),
+    enabled: activeTab === "list" && !!selectedYearId,
+    staleTime: STRUCTURAL_STALE_TIME_MS,
+    placeholderData: (previous, previousQuery) =>
+      isSameListView(previousQuery as Query | undefined, selectedYearId ?? "") ? previous : undefined,
+  });
+  const summary = summaryQuery.data?.ok ? summaryQuery.data.data : null;
+
+  const hasNoYear = !isYearLoading && !selectedYearId;
+  const needsYear = listTab !== "drafts";
+
+  const pageData = query.data?.ok ? query.data.data : null;
+  // Server order is the list's order (no client-side sort — this is one page of many).
+  const rows: Student[] = pageData?.items ?? [];
+  const lastPage = pageData ? Math.max(1, Math.ceil(pageData.total / pageData.limit)) : 1;
+  // has_more is authoritative for "is there a next page" even if total disagrees.
+  const totalPages = pageData?.hasMore ? Math.max(lastPage, page + 1) : Math.max(lastPage, pageData ? 1 : page);
+
+  // The current page emptied out from under us (e.g. its last row was
+  // deleted or changed status) — step back to the real last page.
+  if (pageData && !query.isPlaceholderData && rows.length === 0 && page > 1) {
+    setPage(Math.min(page - 1, lastPage));
+  }
 
   // A disabled query stays "pending" forever — only count it as loading
-  // once there's a year to load for.
-  const isLoading = isYearLoading || (!!selectedYearId && query.isPending);
+  // once there's something to load for.
+  const isLoading = (needsYear && isYearLoading) || (query.isPending && (!needsYear || !!selectedYearId));
   const errorMessage = query.isError || (query.data && !query.data.ok) ? t("students.list.loadError") : null;
-
-  const view = usePaginatedView(visibleStudents, {
-    matchesSearch: matchesStudentSearch,
-    matchesFilters: matchesStudentFilters,
-  });
 
   // Every class's sections, labelled "Class – Arm" (ids differ per class even when arm names repeat).
   const sectionOptions = sections
@@ -261,8 +351,9 @@ export function StudentsScreen() {
   // so a filter carried over from another tab could silently empty the list.
   const handleTabChange = (tab: StudentsTabKey) => {
     setActiveTab(tab);
-    view.setSearch("");
-    view.setFilters({});
+    setSearch("");
+    setDebouncedSearch("");
+    setFilters({});
   };
 
   /** Refetch only the changed student's own year (the one on screen), never every cached year. */
@@ -292,48 +383,44 @@ export function StudentsScreen() {
       return;
     }
     invalidateStudentYear(target);
+    queryClient.invalidateQueries({ queryKey: studentsAllYearsQueryKeyRoot });
     showToast(t("students.actions.deleteDraftSucceeded"));
   };
 
-  const statusFilterOptions = TAB_STATUS_FILTER_OPTIONS[listTab];
   const filterDefs: FilterDef[] = [
-    ...(statusFilterOptions.length > 0
+    ...(TAB_HAS_STATUS_FILTER[listTab]
       ? [
           {
             key: "status",
             label: t("students.filters.status"),
             options: [
               { value: "", label: t("students.filters.allStatuses") },
-              ...statusFilterOptions.map((status) => ({ value: status, label: t(`students.status.${status}`) })),
+              ...TAB_STATUSES[listTab].map((status) => ({ value: status, label: t(`students.status.${status}`) })),
             ],
           },
         ]
       : []),
-    {
-      key: "class",
-      label: t("students.filters.class"),
-      options: [
-        { value: "", label: t("students.filters.allClasses") },
-        ...classes.map((cls) => ({ value: cls.id, label: cls.name })),
-      ],
-    },
-    {
-      key: "section_id",
-      label: t("students.filters.arm"),
-      options: [{ value: "", label: t("students.filters.allArms") }, ...sectionOptions],
-    },
-    ...(boardingHouseVisible
+    // Class/arm options are the SELECTED year's — Drafts spans every year,
+    // so they'd only ever match some of its rows; hidden there.
+    ...(listTab !== "drafts"
       ? [
           {
-            key: "boardingHouse",
-            label: t("students.filters.boardingHouse"),
+            key: "class",
+            label: t("students.filters.class"),
             options: [
-              { value: "", label: t("students.filters.allBoardingHouses") },
-              ...MOCK_BOARDING_HOUSES.map((house) => ({ value: house.id, label: house.name })),
+              { value: "", label: t("students.filters.allClasses") },
+              ...classes.map((cls) => ({ value: cls.id, label: cls.name })),
             ],
+          },
+          {
+            key: "section_id",
+            label: t("students.filters.arm"),
+            options: [{ value: "", label: t("students.filters.allArms") }, ...sectionOptions],
           },
         ]
       : []),
+    // No Boarding House filter: boarding_house_id isn't in the backend
+    // schema (mock-only), so there's no server param to send.
     {
       key: "mode",
       label: t("students.filters.studentType"),
@@ -344,11 +431,28 @@ export function StudentsScreen() {
       ],
     },
   ];
-  const filters = filterDefs.map((def) => ({
-    def,
-    value: view.filters[def.key] ?? "",
+  // Page size rides in the toolbar's dropdown row (same control as the
+  // filters) but is its own state, not a server filter param.
+  const pageSizeControl = {
+    def: {
+      key: "pageSize",
+      label: t("students.pageSize.label"),
+      options: STUDENT_PAGE_SIZES.map((size) => ({
+        value: String(size),
+        label: size === "all" ? t("students.pageSize.all") : t("students.pageSize.option", { count: size }),
+      })),
+    },
+    value: String(pageSize),
     onChange: (value: string) => {
-      view.setFilters((current) => {
+      const next = STUDENT_PAGE_SIZES.find((size) => String(size) === value);
+      if (next) setPageSize(next);
+    },
+  };
+  const toolbarFilters = filterDefs.map((def) => ({
+    def,
+    value: filters[def.key] ?? "",
+    onChange: (value: string) => {
+      setFilters((current) => {
         const next = { ...current };
         if (value) next[def.key] = value;
         else delete next[def.key];
@@ -361,7 +465,7 @@ export function StudentsScreen() {
     {
       key: "sn",
       header: t("students.columns.sn"),
-      render: (_row, index) => (view.page - 1) * PAGE_SIZE + index + 1,
+      render: (_row, index) => (page - 1) * (pageData?.limit ?? 0) + index + 1,
     },
     { key: "admissionNumber", header: t("students.columns.admissionNumber"), render: (row) => row.admission_number ?? "—" },
     { key: "photo", header: t("students.columns.photo"), render: (row) => <StudentAvatar student={row} /> },
@@ -407,7 +511,9 @@ export function StudentsScreen() {
             content={
               <ul className="flex flex-col gap-1">
                 {row.sibling_student_ids.map((siblingId) => {
-                  const sibling = allItems.find((item) => item.id === siblingId);
+                  // Only this page is loaded — a sibling on another page
+                  // (or in another year) shows as unknown.
+                  const sibling = rows.find((item) => item.id === siblingId);
                   return (
                     <li key={siblingId}>
                       {sibling
@@ -479,9 +585,12 @@ export function StudentsScreen() {
       },
     },
   ];
+  // Export covers exactly what's loaded: the page on screen, or — with the
+  // "All" page size — the fully-assembled filtered set (see
+  // listStudentsPage), so picking All then exporting exports everything.
   const exportConfig: ExportConfig<Student> = {
-    filteredRows: view.filteredItems,
-    allRows: visibleStudents,
+    filteredRows: rows,
+    allRows: rows,
     columns: exportColumns,
     title: t(`students.tabs.${listTab}`),
     filenamePrefix: "students",
@@ -496,7 +605,7 @@ export function StudentsScreen() {
       <StudentsHeader />
       <StudentsTabs activeTab={activeTab} onChange={handleTabChange} />
 
-      {isStudentListTab(activeTab) && hasNoYear ? (
+      {isStudentListTab(activeTab) && needsYear && hasNoYear ? (
         <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-surface px-4 py-10 text-center">
           <p className="text-sm text-text-secondary">{t("students.noYear.message")}</p>
           <Link href="/admin/setup/academic-structure/academic-years" className="text-sm font-semibold text-accent hover:underline">
@@ -505,15 +614,15 @@ export function StudentsScreen() {
         </div>
       ) : isStudentListTab(activeTab) ? (
         <>
-          {activeTab === "list" ? <StudentsStatCards students={allItems} /> : null}
+          {activeTab === "list" ? <StudentsStatCards summary={summary} /> : null}
           <DataTable<Student>
             columns={columns}
-            rows={view.items}
+            rows={rows}
             getRowId={(row) => row.id}
-            searchValue={view.search}
-            onSearchChange={view.setSearch}
+            searchValue={search}
+            onSearchChange={setSearch}
             searchPlaceholder={t("students.searchPlaceholder")}
-            filters={filters}
+            filters={[...toolbarFilters, pageSizeControl]}
             onAddNew={activeTab === "list" ? () => setWizardState({ mode: "create" }) : undefined}
             addNewLabel={t("students.addNew")}
             extraActions={
@@ -526,10 +635,10 @@ export function StudentsScreen() {
             errorMessage={errorMessage}
             onRetry={() => query.refetch()}
             emptyMessage={t(TAB_EMPTY_KEYS[activeTab])}
-            page={view.page}
-            totalPages={view.totalPages}
-            onPreviousPage={() => view.setPage((p) => Math.max(1, p - 1))}
-            onNextPage={() => view.setPage((p) => Math.min(view.totalPages, p + 1))}
+            page={page}
+            totalPages={totalPages}
+            onPreviousPage={() => setPage((p) => Math.max(1, p - 1))}
+            onNextPage={() => setPage((p) => Math.min(totalPages, p + 1))}
           />
         </>
       ) : (

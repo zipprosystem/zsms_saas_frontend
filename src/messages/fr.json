@@ -1148,6 +1148,7 @@
     },
     "tabs": {
       "list": "Liste des élèves",
+      "drafts": "Brouillons",
       "admissions": "Admissions",
       "subjectEnrollment": "Inscription aux matières",
       "classEnrollment": "Inscription en classe",
@@ -1161,13 +1162,22 @@
       "newlyEnrolled": "Nouvellement inscrits",
       "day": "Élèves externes",
       "boarding": "Élèves internes",
-      "withdrawn": "Retirés"
+      "male": "Garçons",
+      "female": "Filles",
+      "withdrawn": "Retirés",
+      "graduated": "Diplômés"
     },
-    "searchPlaceholder": "Rechercher par nom ou numéro d'admission…",
+    "searchPlaceholder": "Rechercher par nom, numéro d'admission ou identifiant…",
     "addNew": "Ajouter un élève",
     "empty": "Aucun élève pour le moment — ajoutez le premier pour commencer.",
     "emptyWithdrawn": "Aucun élève retiré, suspendu ou exclu.",
+    "pageSize": {
+      "label": "Lignes par page",
+      "option": "{count} par page",
+      "all": "Toutes les lignes"
+    },
     "emptyGraduate": "Aucun élève diplômé pour l'instant.",
+    "emptyDrafts": "Aucune admission en brouillon.",
     "noYear": {
       "message": "Sélectionnez ou créez une année académique pour afficher les élèves.",
       "linkLabel": "Aller aux années académiques"

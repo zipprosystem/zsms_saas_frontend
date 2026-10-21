@@ -4,6 +4,7 @@ import { extractErpError } from "@/lib/setup/erpError";
 import type { CrudResult } from "@/lib/setup/crudTypes";
 import type {
   AddressBlock,
+  StudentMode,
   EmergencyContact,
   PastRecord,
   PersonBlock,
@@ -23,10 +24,15 @@ import type {
  * staging/deploy (DEV_AUTH_BYPASS short-circuits every call locally, same
  * as every other real ERP service).
  *
- *   GET    erp/students?academic_year_id=&page=&limit=
+ *   GET    erp/students?academic_year_id=&page=&limit=&status=&class_id=
+ *                  &section_id=&mode=&search=
  *                                      -> { items, total, page, limit, has_more }
  *                                      academic_year_id is REQUIRED (422
- *                                      otherwise) unless all_years=true
+ *                                      otherwise) unless all_years=true;
+ *                                      status is comma-separated; limit max 200
+ *   GET    erp/students/summary?academic_year_id=&class_id=&section_id=&mode=&search=
+ *                                      -> { total, by_status, by_gender, by_mode,
+ *                                           newly_enrolled_30d }
  *   GET    erp/students/:id            -> Student
  *   POST   erp/students/drafts         body + current_step (1|2|3)
  *   PUT    erp/students/:id/draft      body + current_step
@@ -75,7 +81,32 @@ export function studentsQueryKey(academicYearId: string): readonly unknown[] {
   return [...studentsListQueryKeyRoot, academicYearId];
 }
 
+/**
+ * Students screen's server-paged list (listStudentsPage). Nested under
+ * studentsQueryKey(yearId), so every existing invalidation of a year also
+ * refreshes its pages; never collides with the fetch-all entry, which sits
+ * at exactly studentsQueryKey(yearId).
+ */
+export function studentsPageQueryKey(scope: StudentListScope, params: StudentPageParams): readonly unknown[] {
+  const base = scope.kind === "year" ? studentsQueryKey(scope.academicYearId) : studentsAllYearsQueryKeyRoot;
+  return [...base, "page", params];
+}
+
+/** Prefix of every all_years=true list (the Drafts tab) — invalidate after a draft is saved, submitted or deleted, since drafts aren't scoped to the year key. */
+export const studentsAllYearsQueryKeyRoot = [...studentsListQueryKeyRoot, "allYears"] as const;
+
+/** Nested under the year key for the same reason as studentsPageQueryKey — any change to the year refreshes its tiles too. */
+export function studentsSummaryQueryKey(academicYearId: string, filters: StudentListFilters): readonly unknown[] {
+  return [...studentsQueryKey(academicYearId), "summary", filters];
+}
+
 const BASE_PATH = "erp/students";
+/** Students screen page sizes. 500 and "all" exceed the backend's per-request cap, so listStudentsPage assembles them from sequential 200-row requests. */
+export type StudentPageSize = 50 | 100 | 200 | 500 | "all";
+export const STUDENT_PAGE_SIZES: readonly StudentPageSize[] = [50, 100, 200, 500, "all"];
+export const STUDENTS_PAGE_SIZE_DEFAULT: StudentPageSize = 50;
+/** The backend's confirmed max limit for ONE request — a larger limit 422s. */
+const STUDENTS_REQUEST_LIMIT_MAX = 200;
 /** Page size for listStudents()' fetch-all loop. FLAGGED: the backend's max limit isn't confirmed — 100 is a conservative guess. */
 const LIST_PAGE_SIZE = 100;
 /** Hard stop for the fetch-all loop, so a backend that never reports has_more:false can't spin forever (100 × 100 = 10k students). */
@@ -397,13 +428,10 @@ function studentResult(body: unknown): CrudResult<Student> {
  * empty list here rather than firing the request that 422s.
  *
  * Pages through the server endpoint until has_more is false, so every
- * caller (Students screen, Siblings, Student Term Details, Subject
- * Enrolment) gets the year's whole list.
- *
- * REQUIRED FOLLOW-UP (Matthew, 2026-10-15 — not optional): move the
- * Students screen to server-side pagination/search/filter. Fetch-all is a
- * stopgap for this increment only; it doesn't scale for large schools or
- * low-bandwidth connections.
+ * caller (Siblings, Student Term Details, Subject Enrolment) gets the
+ * year's whole list. The Students screen itself no longer uses this — it
+ * pages server-side via listStudentsPage/getStudentsSummary. Kept for
+ * these remaining screens until they move off fetch-all too.
  */
 export async function listStudents(academicYearId: string): Promise<CrudResult<Student[]>> {
   if (!academicYearId) return { ok: true, data: [] };
@@ -419,6 +447,190 @@ export async function listStudents(academicYearId: string): Promise<CrudResult<S
     if (!result.data.hasMore || result.data.items.length === 0) break;
   }
   return { ok: true, data: all };
+}
+
+/** Year-scoped (the module's normal mode), or every year (the Drafts tab — drafts may not have a year yet). */
+export type StudentListScope = { kind: "year"; academicYearId: string } | { kind: "allYears" };
+
+/** Server-side filters shared by the paged list and the summary. Empty/undefined = not sent. */
+export type StudentListFilters = {
+  classId?: string;
+  sectionId?: string;
+  mode?: StudentMode;
+  search?: string;
+};
+
+export type StudentPageParams = StudentListFilters & {
+  /** Sent comma-separated; empty = no status param. */
+  statuses: StudentStatus[];
+  page: number;
+  limit: StudentPageSize;
+};
+
+export type StudentListPage = {
+  items: Student[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+};
+
+function filterParams(filters: StudentListFilters): URLSearchParams {
+  const params = new URLSearchParams();
+  if (filters.classId) params.set("class_id", filters.classId);
+  if (filters.sectionId) params.set("section_id", filters.sectionId);
+  if (filters.mode) params.set("mode", filters.mode);
+  const search = filters.search?.trim();
+  if (search) params.set("search", search);
+  return params;
+}
+
+function readListPage(body: unknown, requestedPage: number, requestedLimit: number): StudentListPage {
+  const data = asRecord((body as { data?: unknown } | null)?.data);
+  const items = asArray(data?.items).map(fromWire);
+  const page = typeof data?.page === "number" ? data.page : requestedPage;
+  const limit = typeof data?.limit === "number" && data.limit > 0 ? data.limit : requestedLimit;
+  const hasMore =
+    typeof data?.has_more === "boolean"
+      ? data.has_more
+      : typeof data?.total === "number"
+        ? page * limit < data.total
+        : items.length === limit;
+  // total missing would be off-contract — fall back to "what we've seen so
+  // far", plus one more page's worth when has_more says there is one.
+  const total = typeof data?.total === "number" ? data.total : (page - 1) * limit + items.length + (hasMore ? 1 : 0);
+  return { items, total, page, limit, hasMore };
+}
+
+/** One real request — limit must be within STUDENTS_REQUEST_LIMIT_MAX. */
+async function fetchServerPage(
+  scope: StudentListScope,
+  statuses: StudentStatus[],
+  filters: StudentListFilters,
+  page: number,
+  limit: number,
+): Promise<CrudResult<StudentListPage>> {
+  const params = filterParams(filters);
+  if (scope.kind === "year") params.set("academic_year_id", scope.academicYearId);
+  else params.set("all_years", "true");
+  if (statuses.length > 0) params.set("status", statuses.join(","));
+  params.set("page", String(page));
+  params.set("limit", String(limit));
+  return send(`${BASE_PATH}?${params.toString()}`, { method: "GET" }, (body) => ({
+    ok: true,
+    data: readListPage(body, page, limit),
+  }));
+}
+
+/**
+ * ONE page of the Students screen's list — pagination, status, class,
+ * section, mode and search all happen server-side. A year scope with an
+ * empty id short-circuits to an empty page (the backend 422s without
+ * academic_year_id), same rule as listStudents.
+ *
+ * 50/100/200 are a single request. 500 and "all" are bigger than one
+ * request may ask for, so they're assembled from sequential 200-row
+ * requests: 500 fetches just the 200-row pages overlapping the requested
+ * 500-row window and slices it out; "all" loops until has_more is false
+ * and comes back as one page holding everything (which Export then uses
+ * as-is). Capped at LIST_MAX_PAGES requests, same guard as listStudents.
+ */
+export async function listStudentsPage(
+  scope: StudentListScope,
+  { statuses, page, limit, ...filters }: StudentPageParams,
+): Promise<CrudResult<StudentListPage>> {
+  const safePage = limit === "all" ? 1 : Math.max(1, Math.floor(page));
+  if (scope.kind === "year" && !scope.academicYearId) {
+    return { ok: true, data: { items: [], total: 0, page: safePage, limit: limit === "all" ? 1 : limit, hasMore: false } };
+  }
+  if (limit !== "all" && limit <= STUDENTS_REQUEST_LIMIT_MAX) {
+    return fetchServerPage(scope, statuses, filters, safePage, limit);
+  }
+
+  const windowStart = limit === "all" ? 0 : (safePage - 1) * limit;
+  const windowEnd = limit === "all" ? Infinity : safePage * limit;
+  const firstServerPage = Math.floor(windowStart / STUDENTS_REQUEST_LIMIT_MAX) + 1;
+  const firstRowOffset = (firstServerPage - 1) * STUDENTS_REQUEST_LIMIT_MAX;
+  const collected: Student[] = [];
+  let total = 0;
+  for (let serverPage = firstServerPage; serverPage < firstServerPage + LIST_MAX_PAGES; serverPage += 1) {
+    const result = await fetchServerPage(scope, statuses, filters, serverPage, STUDENTS_REQUEST_LIMIT_MAX);
+    if (!result.ok) return result;
+    collected.push(...result.data.items);
+    total = result.data.total;
+    if (!result.data.hasMore || result.data.items.length === 0) break;
+    if (serverPage * STUDENTS_REQUEST_LIMIT_MAX >= windowEnd) break;
+  }
+  const items = collected.slice(windowStart - firstRowOffset, windowEnd - firstRowOffset);
+
+  if (limit === "all") {
+    return { ok: true, data: { items, total: items.length, page: 1, limit: Math.max(1, items.length), hasMore: false } };
+  }
+  return { ok: true, data: { items, total, page: safePage, limit, hasMore: windowEnd < total } };
+}
+
+export type StudentsSummary = {
+  total: number;
+  byStatus: Partial<Record<StudentStatus, number>>;
+  byGender: { male: number; female: number };
+  byMode: { day: number; boarding: number };
+  newlyEnrolled30d: number;
+};
+
+function count(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+/**
+ * by_* as a { key: count } map (assumed). Also tolerates an array of
+ * { <key>|key, count } rows in case the backend returns grouped rows —
+ * FLAGGED: exact shape unconfirmed, reconcile on staging.
+ */
+function countMap(value: unknown, keyField: string): Record<string, number> {
+  if (Array.isArray(value)) {
+    const map: Record<string, number> = {};
+    for (const item of value) {
+      const row = asRecord(item);
+      const key = row ? (strOrNull(row[keyField]) ?? strOrNull(row.key)) : null;
+      if (key) map[key] = count(row?.count);
+    }
+    return map;
+  }
+  const record = asRecord(value) ?? {};
+  return Object.fromEntries(Object.entries(record).map(([key, n]) => [key, count(n)]));
+}
+
+/** The Student List tiles — counted server-side over the year + the same filters as the list (no status: tiles split by status themselves). */
+export async function getStudentsSummary(
+  academicYearId: string,
+  filters: StudentListFilters,
+): Promise<CrudResult<StudentsSummary>> {
+  if (!academicYearId) {
+    return {
+      ok: true,
+      data: { total: 0, byStatus: {}, byGender: { male: 0, female: 0 }, byMode: { day: 0, boarding: 0 }, newlyEnrolled30d: 0 },
+    };
+  }
+  const params = filterParams(filters);
+  params.set("academic_year_id", academicYearId);
+  return send(`${BASE_PATH}/summary?${params.toString()}`, { method: "GET" }, (body) => {
+    const data = asRecord((body as { data?: unknown } | null)?.data) ?? {};
+    const byStatus = countMap(data.by_status, "status");
+    const byGender = countMap(data.by_gender, "gender");
+    const byMode = countMap(data.by_mode, "mode");
+    return {
+      ok: true,
+      data: {
+        total: count(data.total),
+        byStatus: Object.fromEntries(
+          Object.entries(byStatus).filter(([key]) => STUDENT_STATUSES.includes(key as StudentStatus)),
+        ) as Partial<Record<StudentStatus, number>>,
+        byGender: { male: byGender.male ?? 0, female: byGender.female ?? 0 },
+        byMode: { day: byMode.day ?? 0, boarding: byMode.boarding ?? 0 },
+        newlyEnrolled30d: count(data.newly_enrolled_30d),
+      },
+    };
+  });
 }
 
 export async function getStudent(id: string): Promise<CrudResult<Student>> {

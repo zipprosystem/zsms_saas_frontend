@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 
 export type StudentsTabKey =
   | "list"
+  | "drafts"
   | "admissions"
   | "subjectEnrollment"
   | "classEnrollment"
@@ -13,6 +14,7 @@ export type StudentsTabKey =
 
 const TAB_KEYS: StudentsTabKey[] = [
   "list",
+  "drafts",
   "admissions",
   "subjectEnrollment",
   "classEnrollment",
