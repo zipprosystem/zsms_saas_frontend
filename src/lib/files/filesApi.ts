@@ -116,6 +116,9 @@ export type FileUploadPurpose =
   | "class_subject"
   | "student_photo"
   | "past_record_attachment"
+  // UNCONFIRMED — HR staff passport / signature (staff module is mock-first).
+  | "staff_photo"
+  | "staff_signature"
   // UNCONFIRMED — only sent once SCHOOL_TYPE_ASSIGNMENTS_LIVE flips (schoolTypeAssignments.ts).
   | "report_logo";
 

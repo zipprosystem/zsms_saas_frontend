@@ -138,7 +138,7 @@
     "reports": "Reports",
     "pastoral": "Pastoral",
     "hr": "HR",
-    "hrStaffs": "Staffs",
+    "hrStaffs": "Staff",
     "hrStaffPosts": "Staff Posts",
     "hrPermissionGroups": "Permission Groups",
     "clinic": "Clinic",
@@ -1140,20 +1140,23 @@
   "hr": {
     "staffs": {
       "header": {
-        "title": "Staffs",
+        "title": "Staff",
         "subtitle": "Manage teaching and non-teaching staff records"
       },
       "tabs": {
-        "teaching": "Teaching Staffs",
-        "non_teaching": "Non-Teaching Staffs"
+        "teaching": "Teaching Staff",
+        "non_teaching": "Non-Teaching Staff",
+        "drafts": "Drafts"
       },
       "tabTitleWithCount": "{title} ({count})",
       "status": {
         "draft": "Draft",
         "active": "Active",
-        "suspended": "Suspended",
         "retired": "Retired",
-        "terminated": "Terminated"
+        "terminated": "Terminated",
+        "resigned": "Resigned",
+        "absconded": "Absconded",
+        "suspended": "Suspended"
       },
       "columns": {
         "sn": "S/N",
@@ -1167,7 +1170,10 @@
         "status": "Status",
         "lastActive": "Last Active",
         "staffNo": "Staff ID",
-        "email": "Email"
+        "email": "Email",
+        "type": "Type",
+        "lastSaved": "Last Saved",
+        "actions": "Actions"
       },
       "classArm": "{className} {armName}",
       "filters": {
@@ -1176,7 +1182,9 @@
         "status": "Status",
         "allStatuses": "All Statuses",
         "subject": "Subject",
-        "allSubjects": "All Subjects"
+        "allSubjects": "All Subjects",
+        "leavers": "Leavers (all)",
+        "leaverCategory": "— {status}"
       },
       "pageSize": {
         "label": "Rows per page",
@@ -1189,7 +1197,19 @@
       "emptyTeaching": "No teaching staff match.",
       "emptyNonTeaching": "No non-teaching staff match.",
       "loadError": "Couldn't load staff. Please try again.",
-      "comingSoon": "Coming in the next update."
+      "actions": {
+        "resume": "Resume",
+        "view": "View",
+        "menuLabel": "Actions for {name}"
+      },
+      "toast": {
+        "draftDeleted": "Draft deleted"
+      },
+      "emptyDrafts": "No unfinished staff drafts.",
+      "confirmDeleteDraft": {
+        "title": "Delete this draft?",
+        "message": "The unfinished staff record will be removed. This can't be undone."
+      }
     },
     "common": {
       "active": "Active",
@@ -1296,6 +1316,384 @@
         "created": "Permission group added",
         "updated": "Permission group updated",
         "deleted": "Permission group deleted"
+      }
+    },
+    "wizard": {
+      "titleCreate": "Add Staff",
+      "titleEdit": "Edit Staff",
+      "subtitle": "Only Staff Details and Staff Post are required — everything else can be added later.",
+      "stepCaption": "Step {step} of {total} — {title}",
+      "steps": {
+        "details": "Staff Details",
+        "post": "Staff Post",
+        "assignments": "Teaching Assignments",
+        "address": "Address",
+        "background": "Background",
+        "access": "Access & Login"
+      },
+      "sections": {
+        "details": {
+          "title": "Staff Details",
+          "subtitle": "Who is this staff?"
+        },
+        "post": {
+          "title": "Staff Post",
+          "subtitle": "Their type, post and department(s)"
+        },
+        "assignments": {
+          "title": "Teaching Assignments"
+        },
+        "subjects": {
+          "title": "Subject assignments",
+          "subtitle": "Each row is one subject taught in one class-arm"
+        },
+        "classTeacher": {
+          "title": "Class-teacher assignment",
+          "subtitle": "Arms this staff is class teacher (form tutor) of"
+        },
+        "presentAddress": {
+          "title": "Present Address",
+          "subtitle": "Where the staff lives now"
+        },
+        "permanentAddress": {
+          "title": "Permanent Address"
+        },
+        "qualifications": {
+          "title": "Qualifications",
+          "subtitle": "Enter the staff's qualifications here"
+        },
+        "references": {
+          "title": "References",
+          "subtitle": "People who can vouch for this staff"
+        },
+        "experience": {
+          "title": "Experience",
+          "subtitle": "Previous work experience"
+        },
+        "groups": {
+          "title": "Permission Groups",
+          "subtitle": "What this staff can do — managed in HR › Permission Groups"
+        },
+        "compensation": {
+          "title": "Compensation"
+        },
+        "login": {
+          "title": "Login Details",
+          "subtitle": "The staff's account for signing in"
+        }
+      },
+      "fields": {
+        "image": {
+          "unsupportedType": "Use a JPG, PNG or WebP image",
+          "tooLarge": "Image must be 2MB or smaller"
+        },
+        "passport": {
+          "label": "Passport photograph"
+        },
+        "signature": {
+          "label": "Signature",
+          "choose": "Upload signature"
+        },
+        "staffNo": {
+          "label": "Staff ID (auto-generated)",
+          "pending": "Assigned when the staff is added"
+        },
+        "initials": {
+          "label": "Initials",
+          "placeholder": "e.g. A.T"
+        },
+        "title": {
+          "label": "Title",
+          "placeholder": "Select title"
+        },
+        "firstName": {
+          "label": "First Name",
+          "placeholder": "Enter first name"
+        },
+        "lastName": {
+          "label": "Last Name",
+          "placeholder": "Enter last name"
+        },
+        "otherName": {
+          "label": "Other Names (optional)",
+          "placeholder": "Enter other names"
+        },
+        "email": {
+          "label": "Email Address",
+          "placeholder": "Enter email"
+        },
+        "gender": {
+          "label": "Gender",
+          "placeholder": "Select gender",
+          "male": "Male",
+          "female": "Female"
+        },
+        "nationalId": {
+          "label": "National ID",
+          "placeholder": "National ID number (optional)"
+        },
+        "dateOfBirth": {
+          "label": "Date of Birth"
+        },
+        "dateJoined": {
+          "label": "Date Joined"
+        },
+        "staffType": {
+          "label": "Staff type",
+          "nonTeachingDropsSubjects": "Non-teaching staff hold no subject or class-teacher assignments — those rows won't be saved."
+        },
+        "post": {
+          "label": "Post",
+          "placeholder": "Select a post",
+          "inactive": "{name} (inactive)"
+        },
+        "departments": {
+          "label": "Department(s)",
+          "placeholder": "Select departments",
+          "noOptions": "No departments found"
+        },
+        "class": {
+          "label": "Class",
+          "placeholder": "Select class"
+        },
+        "arm": {
+          "label": "Class-arm",
+          "placeholder": "Select arm"
+        },
+        "subject": {
+          "label": "Subject",
+          "placeholder": "Select subject",
+          "noneForClass": "No subjects set for this class"
+        },
+        "country": {
+          "label": "Country",
+          "placeholder": "Select country"
+        },
+        "state": {
+          "label": "State",
+          "placeholder": "Search states"
+        },
+        "city": {
+          "label": "City",
+          "placeholder": "Search cities"
+        },
+        "postalCode": {
+          "label": "Postal code"
+        },
+        "mobile": {
+          "label": "Mobile number"
+        },
+        "addressLine": {
+          "label": "Address",
+          "placeholder": "House number, street, area"
+        },
+        "noResults": "No results",
+        "sameAsPresent": {
+          "label": "Same as present address"
+        },
+        "qualification": {
+          "degree": "Degree",
+          "stream": "Stream",
+          "board": "Board / University",
+          "institution": "Institution",
+          "year": "Year",
+          "result": "Result",
+          "rank": "Rank achieved",
+          "duration": "Duration",
+          "remarks": "Remarks"
+        },
+        "reference": {
+          "name": "Name",
+          "organization": "Organization",
+          "designation": "Designation",
+          "phone": "Phone",
+          "email": "Email"
+        },
+        "experience": {
+          "organization": "Organization",
+          "role": "Role",
+          "tenure_from": "From",
+          "tenure_to": "To"
+        },
+        "groups": {
+          "label": "Permission group(s)",
+          "placeholder": "Select groups",
+          "noOptions": "No permission groups yet"
+        },
+        "loginActive": {
+          "label": "Activate staff login",
+          "helper": "Off = the account exists but can't sign in yet."
+        },
+        "username": {
+          "label": "Username",
+          "placeholder": "Defaults to the email"
+        },
+        "password": {
+          "label": "Default password"
+        }
+      },
+      "titles": {
+        "Mr": "Mr",
+        "Mrs": "Mrs",
+        "Miss": "Miss",
+        "Ms": "Ms",
+        "Dr": "Dr",
+        "Prof": "Prof",
+        "Engr": "Engr",
+        "Rev": "Rev"
+      },
+      "assignments": {
+        "noYear": "Select an academic year in the header to assign classes and subjects — assignments belong to a year.",
+        "selectedYear": "the selected year",
+        "priorYear": "a previous year",
+        "yearScope": "These assignments are for {year} only. Other years are kept separately.",
+        "carriedForward": "Pre-filled from {from} — nothing is saved for {year} yet. Edit as needed; saving applies to {year} only.",
+        "addSubject": "Add",
+        "addArm": "Add",
+        "noSubjects": "No subject assignments yet.",
+        "noArms": "Not a class teacher of any arm.",
+        "nonTeaching": "Subject and class-teacher assignments apply to teaching staff only.",
+        "removeRow": "Remove row {index}"
+      },
+      "background": {
+        "add": "Add",
+        "noQualifications": "No qualifications added.",
+        "noReferences": "No references added.",
+        "noExperience": "No experience added.",
+        "qualificationN": "Qualification {index}",
+        "referenceN": "Reference {index}",
+        "experienceN": "Experience {index}"
+      },
+      "compensation": {
+        "placeholder": "Salary and allowances are managed in Payroll (coming later)."
+      },
+      "login": {
+        "forcedChange": "The staff signs in with this password and must change it at first login (two-factor authentication is on for this school).",
+        "noForcedChange": "The staff signs in with this password. Passwords are never shown again or exported.",
+        "editNote": "To reset this staff's password to the default, use the staff profile.",
+        "notIssued": "Login credentials haven't been issued yet — issue them from the staff profile."
+      },
+      "autoSave": {
+        "saved": "Draft saved",
+        "failed": "Couldn't auto-save the draft"
+      },
+      "footer": {
+        "back": "Back",
+        "next": "Next",
+        "saveDraft": "Save Draft",
+        "addStaff": "Add Staff",
+        "update": "Update Staff"
+      },
+      "toast": {
+        "draftSaved": "Draft saved",
+        "created": "Staff added",
+        "updated": "Staff updated"
+      },
+      "errors": {
+        "firstNameRequired": "Enter a first name",
+        "lastNameRequired": "Enter a last name",
+        "emailRequired": "Enter an email address",
+        "emailInvalid": "Enter a valid email address",
+        "emailTaken": "Another staff already uses this email",
+        "genderRequired": "Select a gender",
+        "postRequired": "Select a post",
+        "incompleteRow": "Complete this row or remove it",
+        "usernameRequired": "Enter a username, or turn off the login",
+        "usernameSpaces": "Usernames can't contain spaces",
+        "usernameTaken": "This username is already taken",
+        "invalidField": "Check this field",
+        "draftNeedsName": "Enter a first and last name to save a draft",
+        "nationalIdTooLong": "National ID must be 32 characters or fewer"
+      }
+    },
+    "status": {
+      "goBack": "Go back",
+      "reason": {
+        "label": "Note / reason",
+        "placeholder": "Why is this happening?"
+      },
+      "category": {
+        "label": "Category",
+        "placeholder": "Select a category",
+        "retire": "Retire",
+        "terminate": "Terminate",
+        "resign": "Resign",
+        "abscond": "Abscond",
+        "suspend": "Suspend"
+      },
+      "dateLabel": {
+        "default": "Effective date",
+        "retire": "Retirement date",
+        "terminate": "Termination date",
+        "resign": "Resignation date",
+        "abscond": "Date absconded",
+        "suspend": "Suspension date"
+      },
+      "errors": {
+        "dateRequired": "Choose a date",
+        "reasonRequired": "Enter a note or reason",
+        "categoryRequired": "Choose a category",
+        "invalid": "Check this field"
+      },
+      "leaver": {
+        "menu": "Leaver",
+        "title": "Record Leaver",
+        "message": "Move {name} off the active roster. Their login is turned off.",
+        "confirm": "Confirm Leaver",
+        "event": "Leaver — {category}"
+      },
+      "reinstate": {
+        "menu": "Reinstate",
+        "title": "Reinstate Staff",
+        "message": "Bring {name} back to the active roster? Their login stays off until you turn it on from the profile.",
+        "confirm": "Reinstate",
+        "event": "Reinstated"
+      },
+      "toast": {
+        "leaver": "{name} is now {status}",
+        "reinstate": "{name} reinstated"
+      }
+    },
+    "profile": {
+      "title": "Staff profile",
+      "untitled": "Unnamed staff",
+      "loadError": "Couldn't load this staff. Please try again.",
+      "noDepartments": "No department",
+      "statusNote": "{status} from {date} — {reason}",
+      "assignments": {
+        "noYear": "Select an academic year in the header to see assignments.",
+        "forYear": "For {year}.",
+        "carried": "Pre-filled from {from} — not yet saved for this year."
+      },
+      "noGroups": "Not in any permission group.",
+      "unknownGroup": "Unknown group",
+      "login": {
+        "issue": "Issue credentials",
+        "reset": "Reset to default",
+        "draft": "Credentials are issued when the staff is added.",
+        "notIssued": "No login credentials have been issued yet.",
+        "notIssuedInactive": "No login credentials — reinstate the staff to issue them.",
+        "issuedAt": "Issued",
+        "resetAt": "Last reset",
+        "neverReset": "Never",
+        "password": "Password",
+        "passwordIndicator": "Starts as the default ({password}) — never shown or exported",
+        "offWhileInactive": "Login stays off while the staff isn't active.",
+        "issueTitle": "Issue credentials",
+        "issueMessage": "The staff signs in with this username and the default password ({password}).",
+        "resetTitle": "Reset password to default?",
+        "resetMessage": "{name}'s password goes back to the default ({password}). Share it with them directly.",
+        "toast": {
+          "issued": "Credentials issued",
+          "reset": "Password reset to default",
+          "activated": "Login activated",
+          "deactivated": "Login deactivated"
+        }
+      },
+      "history": {
+        "title": "Status history",
+        "empty": "No status changes yet.",
+        "dates": "Effective {effective} · recorded {recorded}"
       }
     }
   },

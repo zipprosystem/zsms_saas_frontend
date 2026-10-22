@@ -12,7 +12,7 @@ import type { SearchGroup } from "./searchTypes";
  * separate hand-maintained list, so the index stays in sync automatically
  * as screens are added:
  *   - Navigation: sidebarNavItems, plus any REAL submenu children (HR ›
- *     Staffs / Staff Posts / Permission Groups). A hasSubmenu item without
+ *     Staff / Staff Posts / Permission Groups). A hasSubmenu item without
  *     children still only renders a "coming soon" placeholder, so there's
  *     nothing further to index for those.
  *   - Settings: SETTINGS_SECTION_KEYS (extracted out of admin/settings/
@@ -39,7 +39,7 @@ export function useSearchIndex(): SearchGroup[] {
       label: t("search.groups.navigation"),
       entries: sidebarNavItems.flatMap((item) => [
         { id: `nav-${item.key}`, title: t(item.labelKey), href: item.href },
-        // Real submenu entries (e.g. HR › Staffs) are indexed too, titled
+        // Real submenu entries (e.g. HR › Staff) are indexed too, titled
         // "Parent › Child" so they read unambiguously in the palette.
         ...(item.children ?? []).map((child) => ({
           id: `nav-${item.key}-${child.key}`,

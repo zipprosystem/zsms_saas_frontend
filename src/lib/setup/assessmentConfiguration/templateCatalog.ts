@@ -26,7 +26,7 @@ export function templateStatusFromWire(value: unknown): TemplateStatus {
   return TEMPLATE_STATUSES.includes(value as TemplateStatus) ? (value as TemplateStatus) : "draft";
 }
 
-export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
+export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 export type WireResponse = { status: number; body: unknown };
 /** `path` may carry a query string. Throws only on a network failure (same as apiFetch). */
 export type Transport = (method: HttpMethod, path: string, payload?: unknown) => Promise<WireResponse>;

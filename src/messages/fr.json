@@ -1153,15 +1153,18 @@
       },
       "tabs": {
         "teaching": "Personnel enseignant",
-        "non_teaching": "Personnel non enseignant"
+        "non_teaching": "Personnel non enseignant",
+        "drafts": "Brouillons"
       },
       "tabTitleWithCount": "{title} ({count})",
       "status": {
         "draft": "Brouillon",
         "active": "Actif",
-        "suspended": "Suspendu",
         "retired": "Retraité",
-        "terminated": "Licencié"
+        "terminated": "Licencié",
+        "resigned": "Démissionnaire",
+        "absconded": "Abandon de poste",
+        "suspended": "Suspendu"
       },
       "columns": {
         "sn": "N°",
@@ -1175,7 +1178,10 @@
         "status": "Statut",
         "lastActive": "Dernière activité",
         "staffNo": "Identifiant",
-        "email": "E-mail"
+        "email": "E-mail",
+        "type": "Type",
+        "lastSaved": "Dernier enregistrement",
+        "actions": "Actions"
       },
       "classArm": "{className} {armName}",
       "filters": {
@@ -1184,7 +1190,9 @@
         "status": "Statut",
         "allStatuses": "Tous les statuts",
         "subject": "Matière",
-        "allSubjects": "Toutes les matières"
+        "allSubjects": "Toutes les matières",
+        "leavers": "Départs (tous)",
+        "leaverCategory": "— {status}"
       },
       "pageSize": {
         "label": "Lignes par page",
@@ -1197,7 +1205,19 @@
       "emptyTeaching": "Aucun personnel enseignant ne correspond.",
       "emptyNonTeaching": "Aucun personnel non enseignant ne correspond.",
       "loadError": "Impossible de charger le personnel. Veuillez réessayer.",
-      "comingSoon": "Disponible dans la prochaine mise à jour."
+      "actions": {
+        "resume": "Reprendre",
+        "view": "Voir",
+        "menuLabel": "Actions pour {name}"
+      },
+      "toast": {
+        "draftDeleted": "Brouillon supprimé"
+      },
+      "emptyDrafts": "Aucun brouillon en cours.",
+      "confirmDeleteDraft": {
+        "title": "Supprimer ce brouillon ?",
+        "message": "Le dossier inachevé sera supprimé. Cette action est irréversible."
+      }
     },
     "common": {
       "active": "Actif",
@@ -1304,6 +1324,384 @@
         "created": "Groupe ajouté",
         "updated": "Groupe mis à jour",
         "deleted": "Groupe supprimé"
+      }
+    },
+    "wizard": {
+      "titleCreate": "Ajouter un membre du personnel",
+      "titleEdit": "Modifier le membre du personnel",
+      "subtitle": "Seuls les détails et le poste sont obligatoires — le reste peut être ajouté plus tard.",
+      "stepCaption": "Étape {step} sur {total} — {title}",
+      "steps": {
+        "details": "Détails",
+        "post": "Poste",
+        "assignments": "Affectations",
+        "address": "Adresse",
+        "background": "Parcours",
+        "access": "Accès et connexion"
+      },
+      "sections": {
+        "details": {
+          "title": "Détails du membre",
+          "subtitle": "Qui est ce membre du personnel ?"
+        },
+        "post": {
+          "title": "Poste",
+          "subtitle": "Son type, son poste et son ou ses départements"
+        },
+        "assignments": {
+          "title": "Affectations d'enseignement"
+        },
+        "subjects": {
+          "title": "Matières enseignées",
+          "subtitle": "Chaque ligne correspond à une matière dans une classe-division"
+        },
+        "classTeacher": {
+          "title": "Professeur principal",
+          "subtitle": "Divisions dont ce membre est professeur principal"
+        },
+        "presentAddress": {
+          "title": "Adresse actuelle",
+          "subtitle": "Où le membre habite actuellement"
+        },
+        "permanentAddress": {
+          "title": "Adresse permanente"
+        },
+        "qualifications": {
+          "title": "Diplômes",
+          "subtitle": "Saisissez les diplômes du membre"
+        },
+        "references": {
+          "title": "Références",
+          "subtitle": "Personnes pouvant recommander ce membre"
+        },
+        "experience": {
+          "title": "Expérience",
+          "subtitle": "Expérience professionnelle antérieure"
+        },
+        "groups": {
+          "title": "Groupes de permissions",
+          "subtitle": "Ce que ce membre peut faire — géré dans RH › Groupes de permissions"
+        },
+        "compensation": {
+          "title": "Rémunération"
+        },
+        "login": {
+          "title": "Identifiants",
+          "subtitle": "Le compte de connexion du membre"
+        }
+      },
+      "fields": {
+        "image": {
+          "unsupportedType": "Utilisez une image JPG, PNG ou WebP",
+          "tooLarge": "L'image doit faire 2 Mo au maximum"
+        },
+        "passport": {
+          "label": "Photo d'identité"
+        },
+        "signature": {
+          "label": "Signature",
+          "choose": "Téléverser la signature"
+        },
+        "staffNo": {
+          "label": "Identifiant (généré automatiquement)",
+          "pending": "Attribué à l'ajout du membre"
+        },
+        "initials": {
+          "label": "Initiales",
+          "placeholder": "ex. A.T"
+        },
+        "title": {
+          "label": "Civilité",
+          "placeholder": "Choisir une civilité"
+        },
+        "firstName": {
+          "label": "Prénom",
+          "placeholder": "Saisir le prénom"
+        },
+        "lastName": {
+          "label": "Nom",
+          "placeholder": "Saisir le nom"
+        },
+        "otherName": {
+          "label": "Autres prénoms (facultatif)",
+          "placeholder": "Saisir les autres prénoms"
+        },
+        "email": {
+          "label": "Adresse e-mail",
+          "placeholder": "Saisir l'e-mail"
+        },
+        "gender": {
+          "label": "Sexe",
+          "placeholder": "Choisir le sexe",
+          "male": "Masculin",
+          "female": "Féminin"
+        },
+        "nationalId": {
+          "label": "Numéro d'identité national",
+          "placeholder": "Numéro d'identité national (facultatif)"
+        },
+        "dateOfBirth": {
+          "label": "Date de naissance"
+        },
+        "dateJoined": {
+          "label": "Date d'arrivée"
+        },
+        "staffType": {
+          "label": "Type de personnel",
+          "nonTeachingDropsSubjects": "Le personnel non enseignant n'a ni matières ni classe en charge — ces lignes ne seront pas enregistrées."
+        },
+        "post": {
+          "label": "Poste",
+          "placeholder": "Choisir un poste",
+          "inactive": "{name} (inactif)"
+        },
+        "departments": {
+          "label": "Département(s)",
+          "placeholder": "Choisir des départements",
+          "noOptions": "Aucun département trouvé"
+        },
+        "class": {
+          "label": "Classe",
+          "placeholder": "Choisir une classe"
+        },
+        "arm": {
+          "label": "Division",
+          "placeholder": "Choisir une division"
+        },
+        "subject": {
+          "label": "Matière",
+          "placeholder": "Choisir une matière",
+          "noneForClass": "Aucune matière définie pour cette classe"
+        },
+        "country": {
+          "label": "Pays",
+          "placeholder": "Choisir un pays"
+        },
+        "state": {
+          "label": "État / région",
+          "placeholder": "Rechercher une région"
+        },
+        "city": {
+          "label": "Ville",
+          "placeholder": "Rechercher une ville"
+        },
+        "postalCode": {
+          "label": "Code postal"
+        },
+        "mobile": {
+          "label": "Numéro de mobile"
+        },
+        "addressLine": {
+          "label": "Adresse",
+          "placeholder": "Numéro, rue, quartier"
+        },
+        "noResults": "Aucun résultat",
+        "sameAsPresent": {
+          "label": "Identique à l'adresse actuelle"
+        },
+        "qualification": {
+          "degree": "Diplôme",
+          "stream": "Filière",
+          "board": "Organisme / université",
+          "institution": "Établissement",
+          "year": "Année",
+          "result": "Résultat",
+          "rank": "Rang obtenu",
+          "duration": "Durée",
+          "remarks": "Remarques"
+        },
+        "reference": {
+          "name": "Nom",
+          "organization": "Organisation",
+          "designation": "Fonction",
+          "phone": "Téléphone",
+          "email": "E-mail"
+        },
+        "experience": {
+          "organization": "Organisation",
+          "role": "Fonction",
+          "tenure_from": "Du",
+          "tenure_to": "Au"
+        },
+        "groups": {
+          "label": "Groupe(s) de permissions",
+          "placeholder": "Choisir des groupes",
+          "noOptions": "Aucun groupe de permissions"
+        },
+        "loginActive": {
+          "label": "Activer la connexion",
+          "helper": "Désactivé = le compte existe mais ne peut pas encore se connecter."
+        },
+        "username": {
+          "label": "Nom d'utilisateur",
+          "placeholder": "Par défaut, l'e-mail"
+        },
+        "password": {
+          "label": "Mot de passe par défaut"
+        }
+      },
+      "titles": {
+        "Mr": "M.",
+        "Mrs": "Mme",
+        "Miss": "Mlle",
+        "Ms": "Mme",
+        "Dr": "Dr",
+        "Prof": "Pr",
+        "Engr": "Ing.",
+        "Rev": "Rév."
+      },
+      "assignments": {
+        "noYear": "Sélectionnez une année académique dans l'en-tête pour affecter des classes et des matières — les affectations dépendent de l'année.",
+        "selectedYear": "l'année sélectionnée",
+        "priorYear": "une année précédente",
+        "yearScope": "Ces affectations concernent uniquement {year}. Les autres années sont conservées séparément.",
+        "carriedForward": "Pré-rempli depuis {from} — rien n'est encore enregistré pour {year}. Modifiez si besoin ; l'enregistrement ne s'applique qu'à {year}.",
+        "addSubject": "Ajouter",
+        "addArm": "Ajouter",
+        "noSubjects": "Aucune matière affectée.",
+        "noArms": "Professeur principal d'aucune division.",
+        "nonTeaching": "Les matières et la fonction de professeur principal ne concernent que le personnel enseignant.",
+        "removeRow": "Supprimer la ligne {index}"
+      },
+      "background": {
+        "add": "Ajouter",
+        "noQualifications": "Aucun diplôme ajouté.",
+        "noReferences": "Aucune référence ajoutée.",
+        "noExperience": "Aucune expérience ajoutée.",
+        "qualificationN": "Diplôme {index}",
+        "referenceN": "Référence {index}",
+        "experienceN": "Expérience {index}"
+      },
+      "compensation": {
+        "placeholder": "Le salaire et les indemnités sont gérés dans la Paie (à venir)."
+      },
+      "login": {
+        "forcedChange": "Le membre se connecte avec ce mot de passe et doit le changer à la première connexion (l'authentification à deux facteurs est activée pour l'école).",
+        "noForcedChange": "Le membre se connecte avec ce mot de passe. Les mots de passe ne sont plus jamais affichés ni exportés.",
+        "editNote": "Pour réinitialiser le mot de passe de ce membre, utilisez sa fiche.",
+        "notIssued": "Aucun identifiant n'a encore été créé — créez-les depuis la fiche du membre."
+      },
+      "autoSave": {
+        "saved": "Brouillon enregistré",
+        "failed": "Impossible d'enregistrer automatiquement le brouillon"
+      },
+      "footer": {
+        "back": "Retour",
+        "next": "Suivant",
+        "saveDraft": "Enregistrer le brouillon",
+        "addStaff": "Ajouter",
+        "update": "Mettre à jour"
+      },
+      "toast": {
+        "draftSaved": "Brouillon enregistré",
+        "created": "Membre du personnel ajouté",
+        "updated": "Membre du personnel mis à jour"
+      },
+      "errors": {
+        "firstNameRequired": "Saisissez un prénom",
+        "lastNameRequired": "Saisissez un nom",
+        "emailRequired": "Saisissez une adresse e-mail",
+        "emailInvalid": "Saisissez une adresse e-mail valide",
+        "emailTaken": "Un autre membre utilise déjà cet e-mail",
+        "genderRequired": "Choisissez le sexe",
+        "postRequired": "Choisissez un poste",
+        "incompleteRow": "Complétez cette ligne ou supprimez-la",
+        "usernameRequired": "Saisissez un nom d'utilisateur ou désactivez la connexion",
+        "usernameSpaces": "Le nom d'utilisateur ne peut pas contenir d'espaces",
+        "usernameTaken": "Ce nom d'utilisateur est déjà pris",
+        "invalidField": "Vérifiez ce champ",
+        "draftNeedsName": "Saisissez un prénom et un nom pour enregistrer un brouillon",
+        "nationalIdTooLong": "Le numéro d'identité doit comporter 32 caractères au maximum"
+      }
+    },
+    "status": {
+      "goBack": "Retour",
+      "reason": {
+        "label": "Note / motif",
+        "placeholder": "Pourquoi ce changement ?"
+      },
+      "category": {
+        "label": "Catégorie",
+        "placeholder": "Choisir une catégorie",
+        "retire": "Retraite",
+        "terminate": "Licenciement",
+        "resign": "Démission",
+        "abscond": "Abandon de poste",
+        "suspend": "Suspension"
+      },
+      "dateLabel": {
+        "default": "Date d'effet",
+        "retire": "Date de retraite",
+        "terminate": "Date de fin de contrat",
+        "resign": "Date de démission",
+        "abscond": "Date d'abandon de poste",
+        "suspend": "Date de suspension"
+      },
+      "errors": {
+        "dateRequired": "Choisissez une date",
+        "reasonRequired": "Saisissez une note ou un motif",
+        "categoryRequired": "Choisissez une catégorie",
+        "invalid": "Vérifiez ce champ"
+      },
+      "leaver": {
+        "menu": "Départ",
+        "title": "Enregistrer un départ",
+        "message": "Retirer {name} de l'effectif actif. Sa connexion est désactivée.",
+        "confirm": "Confirmer le départ",
+        "event": "Départ — {category}"
+      },
+      "reinstate": {
+        "menu": "Réintégrer",
+        "title": "Réintégrer le membre",
+        "message": "Réintégrer {name} dans l'effectif actif ? Sa connexion reste désactivée jusqu'à ce que vous la réactiviez depuis sa fiche.",
+        "confirm": "Réintégrer",
+        "event": "Réintégré"
+      },
+      "toast": {
+        "leaver": "{name} : {status}",
+        "reinstate": "{name} réintégré"
+      }
+    },
+    "profile": {
+      "title": "Fiche du membre",
+      "untitled": "Membre sans nom",
+      "loadError": "Impossible de charger ce membre. Veuillez réessayer.",
+      "noDepartments": "Aucun département",
+      "statusNote": "{status} depuis le {date} — {reason}",
+      "assignments": {
+        "noYear": "Sélectionnez une année académique dans l'en-tête pour voir les affectations.",
+        "forYear": "Pour {year}.",
+        "carried": "Pré-rempli depuis {from} — pas encore enregistré pour cette année."
+      },
+      "noGroups": "Dans aucun groupe de permissions.",
+      "unknownGroup": "Groupe inconnu",
+      "login": {
+        "issue": "Créer les identifiants",
+        "reset": "Réinitialiser",
+        "draft": "Les identifiants sont créés à l'ajout du membre.",
+        "notIssued": "Aucun identifiant n'a encore été créé.",
+        "notIssuedInactive": "Aucun identifiant — réintégrez le membre pour en créer.",
+        "issuedAt": "Créés le",
+        "resetAt": "Dernière réinitialisation",
+        "neverReset": "Jamais",
+        "password": "Mot de passe",
+        "passwordIndicator": "Mot de passe par défaut au départ ({password}) — jamais affiché ni exporté",
+        "offWhileInactive": "La connexion reste désactivée tant que le membre n'est pas actif.",
+        "issueTitle": "Créer les identifiants",
+        "issueMessage": "Le membre se connecte avec ce nom d'utilisateur et le mot de passe par défaut ({password}).",
+        "resetTitle": "Réinitialiser le mot de passe ?",
+        "resetMessage": "Le mot de passe de {name} revient à la valeur par défaut ({password}). Communiquez-le directement.",
+        "toast": {
+          "issued": "Identifiants créés",
+          "reset": "Mot de passe réinitialisé",
+          "activated": "Connexion activée",
+          "deactivated": "Connexion désactivée"
+        }
+      },
+      "history": {
+        "title": "Historique du statut",
+        "empty": "Aucun changement de statut.",
+        "dates": "Effet le {effective} · enregistré le {recorded}"
       }
     }
   },
