@@ -1718,7 +1718,7 @@
       "subjectEnrollment": "Inscription aux matières",
       "classEnrollment": "Inscription en classe",
       "notes": "Notes sur l'élève",
-      "withdrawn": "Retirés",
+      "withdrawn": "Départs",
       "graduate": "Diplômés"
     },
     "tabComingSoon": "Cet onglet arrive dans une prochaine mise à jour.",
@@ -1729,13 +1729,13 @@
       "boarding": "Élèves internes",
       "male": "Garçons",
       "female": "Filles",
-      "withdrawn": "Retirés",
+      "withdrawn": "Départs",
       "graduated": "Diplômés"
     },
     "searchPlaceholder": "Rechercher par nom, numéro d'admission ou identifiant…",
     "addNew": "Ajouter un élève",
     "empty": "Aucun élève pour le moment — ajoutez le premier pour commencer.",
-    "emptyWithdrawn": "Aucun élève retiré, suspendu ou exclu.",
+    "emptyWithdrawn": "Aucun départ — aucun élève retiré, suspendu ou exclu.",
     "pageSize": {
       "label": "Lignes par page",
       "option": "{count} par page",
@@ -1808,13 +1808,13 @@
     },
     "statusActions": {
       "titles": {
-        "withdraw": "Retirer l'élève",
+        "withdraw": "Enregistrer un départ",
         "graduate": "Diplômer l'élève",
         "reactivate": "Réactiver l'élève",
         "restore": "Restaurer l'élève"
       },
       "descriptions": {
-        "withdraw": "Indiquez pourquoi l'élève part. Il passe dans l'onglet Retirés.",
+        "withdraw": "Indiquez pourquoi l'élève part. Il passe dans l'onglet Départs.",
         "graduate": "L'élève passe dans l'onglet Diplômés.",
         "reactivate": "L'élève revient dans la liste active des élèves.",
         "restore": "Annule la diplomation et remet l'élève dans la liste active des élèves."
@@ -1867,7 +1867,7 @@
       "sendMail": "Envoyer un e-mail au parent",
       "loginAs": "Se connecter en tant qu'élève",
       "graduate": "Diplômer",
-      "withdraw": "Retirer",
+      "withdraw": "Départ",
       "reactivate": "Réactiver",
       "restore": "Restaurer",
       "comingSoon": "Cette action arrive dans la prochaine mise à jour",

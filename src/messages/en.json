@@ -1710,7 +1710,7 @@
       "subjectEnrollment": "Subject Enrollment",
       "classEnrollment": "Class Enrollment",
       "notes": "Student Notes",
-      "withdrawn": "Withdrawn",
+      "withdrawn": "Leavers",
       "graduate": "Graduate"
     },
     "tabComingSoon": "This tab is coming in a later update.",
@@ -1721,13 +1721,13 @@
       "boarding": "Boarding Students",
       "male": "Male Students",
       "female": "Female Students",
-      "withdrawn": "Withdrawn",
+      "withdrawn": "Leavers",
       "graduated": "Graduated"
     },
     "searchPlaceholder": "Search by name, admission no or student ID…",
     "addNew": "Add New Student",
     "empty": "No students yet — add your first one to get started.",
-    "emptyWithdrawn": "No withdrawn, suspended or expelled students.",
+    "emptyWithdrawn": "No leavers — no withdrawn, suspended or expelled students.",
     "pageSize": {
       "label": "Rows per page",
       "option": "{count} per page",
@@ -1800,13 +1800,13 @@
     },
     "statusActions": {
       "titles": {
-        "withdraw": "Withdraw student",
+        "withdraw": "Record leaver",
         "graduate": "Graduate student",
         "reactivate": "Reactivate student",
         "restore": "Restore student"
       },
       "descriptions": {
-        "withdraw": "Choose why the student is leaving. They move to the Withdrawn tab.",
+        "withdraw": "Choose why the student is leaving. They move to the Leavers tab.",
         "graduate": "The student moves to the Graduate tab.",
         "reactivate": "The student returns to the active Student List.",
         "restore": "Undoes the graduation and returns the student to the active Student List."
@@ -1859,7 +1859,7 @@
       "sendMail": "Send Mail to Parent",
       "loginAs": "Login as Student",
       "graduate": "Graduate",
-      "withdraw": "Withdraw",
+      "withdraw": "Leaver",
       "reactivate": "Reactivate",
       "restore": "Restore",
       "comingSoon": "This action is coming in the next update",
