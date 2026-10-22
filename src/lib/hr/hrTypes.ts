@@ -165,7 +165,7 @@ export type Staff = {
   password_reset_at: string | null;
   last_active_at: string | null;
 
-  // Latest status change (Retire / Terminate)
+  // Latest status change (Leaver / Reinstate)
   status_reason: string | null;
   status_effective_date: string | null;
 

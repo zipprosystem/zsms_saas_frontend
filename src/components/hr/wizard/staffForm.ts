@@ -16,16 +16,20 @@ import type {
  * other step is optional (PO ruling).
  */
 
-export const STAFF_WIZARD_STEPS = [1, 2, 3, 4, 5, 6] as const;
+/**
+ * 1 Profile (details, contact, address, personal) · 2 Role & assignments
+ * (type, post, departments, teaching assignments, permission groups) ·
+ * 3 Credentials & records (login, qualifications / references /
+ * experience, review). A draft saved under the old 6-step layout resumes
+ * at its clamped step (4-6 -> 3) — only a cursor, nothing is lost.
+ */
+export const STAFF_WIZARD_STEPS = [1, 2, 3] as const;
 export type StaffWizardStep = (typeof STAFF_WIZARD_STEPS)[number];
 
 export const STAFF_STEP_TITLE_KEYS: Record<StaffWizardStep, string> = {
-  1: "hr.wizard.steps.details",
-  2: "hr.wizard.steps.post",
-  3: "hr.wizard.steps.assignments",
-  4: "hr.wizard.steps.address",
-  5: "hr.wizard.steps.background",
-  6: "hr.wizard.steps.access",
+  1: "hr.wizard.steps.profile",
+  2: "hr.wizard.steps.role",
+  3: "hr.wizard.steps.credentials",
 };
 
 export function clampToStaffStep(step: number | null | undefined): StaffWizardStep {
@@ -302,16 +306,39 @@ function validatePost(form: StaffForm): FieldErrors {
   return form.post_id ? {} : { post_id: "hr.wizard.errors.postRequired" };
 }
 
-/** Optional step, but a half-filled row would be silently dropped — make the admin finish or remove it. Non-teaching staff have no rows to check (none are sent). */
+// Unique within the year (the backend enforces the same — 409
+// DUPLICATE_SUBJECT_ASSIGNMENT / DUPLICATE_CLASS_TEACHER_ASSIGNMENT):
+// subject + class-arm, and class-arm for class-teacher. Only complete
+// rows have a key; an arm belongs to one class, so the arm id suffices.
+export function subjectAssignmentKey(row: Pick<SubjectAssignmentRow, "section_id" | "subject_id">): string | null {
+  return row.section_id && row.subject_id ? `${row.section_id}|${row.subject_id}` : null;
+}
+
+export function classTeacherKey(row: Pick<ClassTeacherRow, "section_id">): string | null {
+  return row.section_id || null;
+}
+
+/** True when another row (not `exceptKey`) already holds `key`. */
+export function isTakenBy<Row extends { key: string }>(rows: Row[], exceptKey: string, key: string | null, keyOf: (row: Row) => string | null): boolean {
+  return !!key && rows.some((row) => row.key !== exceptKey && keyOf(row) === key);
+}
+
+/** Optional section, but a half-filled row would be silently dropped — make the admin finish or remove it. A repeat (e.g. from loaded data) is flagged, never collapsed. Non-teaching staff have no rows to check (none are sent). */
 function validateAssignments(form: StaffForm): FieldErrors {
   const errors: FieldErrors = {};
   if (form.staff_type !== "teaching") return errors;
-  form.subject_assignments.forEach((row) => {
+  form.subject_assignments.forEach((row, index) => {
     const filled = [row.class_id, row.section_id, row.subject_id].filter(Boolean).length;
     if (filled > 0 && filled < 3) errors[`subject_assignments.${row.key}`] = "hr.wizard.errors.incompleteRow";
+    else if (isTakenBy(form.subject_assignments.slice(0, index), row.key, subjectAssignmentKey(row), subjectAssignmentKey)) {
+      errors[`subject_assignments.${row.key}`] = "hr.wizard.errors.duplicateSubjectAssignment";
+    }
   });
-  form.class_teacher_assignments.forEach((row) => {
+  form.class_teacher_assignments.forEach((row, index) => {
     if (!!row.class_id !== !!row.section_id) errors[`class_teacher_assignments.${row.key}`] = "hr.wizard.errors.incompleteRow";
+    else if (isTakenBy(form.class_teacher_assignments.slice(0, index), row.key, classTeacherKey(row), classTeacherKey)) {
+      errors[`class_teacher_assignments.${row.key}`] = "hr.wizard.errors.duplicateClassTeacher";
+    }
   });
   return errors;
 }
@@ -325,19 +352,19 @@ function validateAccess(form: StaffForm): FieldErrors {
 
 export const STAFF_STEP_VALIDATORS: Record<StaffWizardStep, (form: StaffForm) => FieldErrors> = {
   1: validateDetails,
-  2: validatePost,
-  3: validateAssignments,
-  4: () => ({}),
-  5: () => ({}),
-  6: validateAccess,
+  2: (form) => ({ ...validatePost(form), ...validateAssignments(form) }),
+  3: validateAccess,
 };
 
 /** Which step owns a (client or server) error field, so a failed save can jump there. */
 export function stepForField(field: string): StaffWizardStep {
-  if (["post_id", "staff_type", "department_ids"].includes(field)) return 2;
-  if (field.startsWith("subject_assignments") || field.startsWith("class_teacher_assignments") || field === "academic_year_id") {
-    return 3;
+  if (
+    ["post_id", "staff_type", "department_ids", "permission_group_ids", "academic_year_id"].includes(field) ||
+    field.startsWith("subject_assignments") ||
+    field.startsWith("class_teacher_assignments")
+  ) {
+    return 2;
   }
-  if (field === "username" || field === "permission_group_ids") return 6;
+  if (field === "username") return 3;
   return 1;
 }

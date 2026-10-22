@@ -60,6 +60,9 @@ const SEARCH_DEBOUNCE_MS = 300;
 const LEAVERS_FILTER = "leavers";
 
 /** The roster by default — leavers drop out of it, reachable via the Status filter (Leavers, or one category). Drafts have no Status filter. */
+/** Roster columns that only mean something for teaching staff — hidden on the Non-Teaching tab. */
+const TEACHING_ONLY_COLUMNS = new Set(["subjects"]);
+
 function defaultFilters(view: StaffListView): Record<string, string> {
   return view === "drafts" ? {} : { status: "active" };
 }
@@ -339,7 +342,10 @@ export function StaffsScreen() {
     },
   ];
 
-  const rosterColumns: ColumnDef<Staff>[] = [
+  // Subjects (and any other teaching-only column) are hidden on the
+  // Non-Teaching tab — those staff hold no teaching assignments.
+  const isNonTeaching = view === "non_teaching";
+  const allRosterColumns: ColumnDef<Staff>[] = [
     ...sharedLeadingColumns,
     {
       key: "department",
@@ -390,6 +396,7 @@ export function StaffsScreen() {
       ),
     },
   ];
+  const rosterColumns = isNonTeaching ? allRosterColumns.filter((column) => !TEACHING_ONLY_COLUMNS.has(column.key)) : allRosterColumns;
 
   // Export covers exactly what's loaded: the page on screen, or — with
   // the "All" page size — the fully-assembled filtered set. Never a password.
@@ -398,13 +405,17 @@ export function StaffsScreen() {
     { header: t("hr.staffs.columns.lastName"), value: (row) => row.last_name },
     { header: t("hr.staffs.columns.firstName"), value: (row) => row.first_name },
     { header: t("hr.staffs.columns.department"), value: (row) => row.department_ids.map(refs.departmentName).join(", ") },
-    {
-      header: t("hr.staffs.columns.subjects"),
-      value: (row) =>
-        subjectGroups(row)
-          .map(([subjectId, assignments]) => `${refs.subjectName(subjectId)} (${assignments.map((a) => armLabel(a.class_id, a.section_id)).join(", ")})`)
-          .join("; "),
-    },
+    ...(isNonTeaching
+      ? []
+      : [
+          {
+            header: t("hr.staffs.columns.subjects"),
+            value: (row: Staff) =>
+              subjectGroups(row)
+                .map(([subjectId, assignments]) => `${refs.subjectName(subjectId)} (${assignments.map((a) => armLabel(a.class_id, a.section_id)).join(", ")})`)
+                .join("; "),
+          },
+        ]),
     { header: t("hr.staffs.columns.post"), value: (row) => refs.postName(row.post_id) },
     { header: t("hr.staffs.columns.dateJoined"), value: (row) => formatDate(row.date_joined) },
     { header: t("hr.staffs.columns.status"), value: (row) => t(`hr.staffs.status.${row.status}`) },
