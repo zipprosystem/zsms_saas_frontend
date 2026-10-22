@@ -23,15 +23,20 @@ import {
  *                                         backend clears the previous one)
  *   DELETE erp/result-templates/:id       archives (status -> archived)
  *
- * Entity shape is the agreed mock contract: { id, name, description,
- * suited_for_label, status, is_default, preview_path, layout_definition }.
- * layout_definition is opaque for now (the layout editor is out of
- * scope). preview_path is server-owned, never written.
+ * Entity shape is the agreed mock contract: { id, template_key, name,
+ * description, suited_for_label, status, is_default, preview_path,
+ * layout_definition }. layout_definition is opaque for now (the layout
+ * editor is out of scope). template_key and preview_path are
+ * server-owned, never written: template_key is the backend's stable key
+ * for a built-in template (nigerian_terminal, british_progress,
+ * modern_generic, nigerian_primary, lela_blossom, white_pearl); null on a
+ * school-created one.
  */
 const USE_MOCK = true;
 
 export type ResultTemplate = {
   id: string;
+  template_key: string | null;
   name: string;
   description: string | null;
   suited_for_label: string | null;
@@ -61,6 +66,7 @@ export function fromWire(value: unknown): ResultTemplate {
   const r = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
   return {
     id: str(r.id),
+    template_key: strOrNull(r.template_key),
     name: str(r.name),
     description: strOrNull(r.description),
     suited_for_label: strOrNull(r.suited_for_label),
@@ -94,10 +100,12 @@ function toInput(template: ResultTemplate): ResultTemplateInput {
 }
 
 // Fixed UUIDs so seeded rows keep their ids across reloads (and any
-// School Type assignment pointing at them stays valid).
+// School Type assignment pointing at them stays valid). One seed per
+// backend template_key, each previewing its own file.
 const SEEDS: Array<ResultTemplate & MockTemplateRow> = [
   {
     id: "7d2f4c1e-1a0b-4c3d-9e8f-000000000001",
+    template_key: "nigerian_terminal",
     name: "Nigerian Terminal Report",
     description: "Continuous assessment and exam scores per subject, with affective and psychomotor ratings.",
     suited_for_label: "Nigerian curriculum — CA + Exam",
@@ -108,6 +116,7 @@ const SEEDS: Array<ResultTemplate & MockTemplateRow> = [
   },
   {
     id: "7d2f4c1e-1a0b-4c3d-9e8f-000000000002",
+    template_key: "british_progress",
     name: "British Progress Report",
     description: "Attainment against target grades, with engagement and behaviour levels per subject.",
     suited_for_label: "British / IGCSE 9–1",
@@ -118,6 +127,7 @@ const SEEDS: Array<ResultTemplate & MockTemplateRow> = [
   },
   {
     id: "7d2f4c1e-1a0b-4c3d-9e8f-000000000003",
+    template_key: "modern_generic",
     name: "Modern Generic Report",
     description: "A summary band of headline results above a simple subject table.",
     suited_for_label: "General",
@@ -126,12 +136,47 @@ const SEEDS: Array<ResultTemplate & MockTemplateRow> = [
     preview_path: "/template-previews/result-template-modern.html",
     layout_definition: null,
   },
+  {
+    id: "7d2f4c1e-1a0b-4c3d-9e8f-000000000004",
+    template_key: "nigerian_primary",
+    name: "Primary Terminal Report",
+    description: "Primary-school CA and exam scores per subject, with a per-term summary and a cumulative average in the third term.",
+    suited_for_label: "Nigerian curriculum — CA + Exam",
+    status: "available",
+    is_default: false,
+    preview_path: "/template-previews/result-template-primary.html",
+    layout_definition: null,
+  },
+  {
+    id: "7d2f4c1e-1a0b-4c3d-9e8f-000000000005",
+    template_key: "lela_blossom",
+    name: "LeLa Blossom Report",
+    description: "Five-component CA and termly exam report; exam columns grow by term up to first/second-term totals and a cumulative average.",
+    suited_for_label: "LeLa Blossom (JSS)",
+    status: "available",
+    is_default: false,
+    preview_path: "/template-previews/result-template-lela.html",
+    layout_definition: null,
+  },
+  {
+    id: "7d2f4c1e-1a0b-4c3d-9e8f-000000000006",
+    template_key: "white_pearl",
+    name: "White Pearl Report",
+    description: "CA component breakdown, and an exam report with subject units, grade points, total points and GPA.",
+    suited_for_label: "White Pearl International (JSS)",
+    status: "available",
+    is_default: false,
+    preview_path: "/template-previews/result-template-whitepearl.html",
+    layout_definition: null,
+  },
 ];
 
 const transport = USE_MOCK
   ? createMockCatalog({
       basePath: BASE_PATH,
-      storageKey: "zsms.mockResultTemplates",
+      // .v2: template_key + the three new seeds. Bumped so stored catalogs
+      // re-seed (ids are unchanged, so School Type assignments stay valid).
+      storageKey: "zsms.mockResultTemplates.v2",
       seeds: SEEDS,
       defaultScope: () => "all",
       writableFields: WRITABLE_FIELDS,
