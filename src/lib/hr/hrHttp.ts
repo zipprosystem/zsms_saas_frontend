@@ -37,6 +37,8 @@ const FIELD_ERROR_CODES: Record<string, string> = {
   DUPLICATE_EMAIL: "email",
   USERNAME_TAKEN: "username",
   POST_NOT_FOUND: "post_id",
+  DUPLICATE_SUBJECT_ASSIGNMENT: "subject_assignments",
+  DUPLICATE_CLASS_TEACHER_ASSIGNMENT: "class_teacher_assignments",
 };
 
 const CONFLICT_CODES = new Set([

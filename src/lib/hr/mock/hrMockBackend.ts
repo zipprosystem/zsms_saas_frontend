@@ -66,6 +66,11 @@ import { SCHOOL_TWO_FACTOR_ENABLED } from "@/lib/hr/schoolSecurity";
  * copy-forward on new-year creation — the general session-rollover
  * pattern. The mock derives it on read instead, same visible result.)
  * At swap, class-teacher rows also write the class-arm's form-tutor link.
+ * UNIQUE KEYS (409, every save incl. drafts): subject assignment =
+ * staff + subject + class-arm + year (DUPLICATE_SUBJECT_ASSIGNMENT);
+ * class-teacher = staff + class-arm + year
+ * (DUPLICATE_CLASS_TEACHER_ASSIGNMENT). A class-arm (section) belongs to
+ * one class, so class_id adds nothing to either key.
  *
  * Derived on read (compute-on-read, never stored twice):
  *   - staff.permission_group_ids from group membership (the group owns it;
@@ -453,6 +458,10 @@ function parseBody(payload: unknown): ParsedBody {
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const NATIONAL_ID_MAX_LENGTH = 32;
 
+function hasDuplicate(keys: string[]): boolean {
+  return new Set(keys).size !== keys.length;
+}
+
 /** Checks every save runs (drafts too): format/uniqueness of what IS filled in, and the assignment rules. */
 function validateCommon(parsed: ParsedBody, exceptId: string | null): WireResponse | null {
   const { fields } = parsed;
@@ -478,6 +487,16 @@ function validateCommon(parsed: ParsedBody, exceptId: string | null): WireRespon
   }
   if (fields.staff_type === "non_teaching" && parsed.classTeacherAssignments.length > 0) {
     return fail(422, "VALIDATION_ERROR", "class_teacher_assignments are only allowed for teaching staff");
+  }
+  // UNIQUE within a year (the body carries ONE year's complete sets):
+  //   subject assignment  = staff + subject + class-arm + year
+  //   class-teacher       = staff + class-arm + year
+  // A repeat is rejected, never silently collapsed.
+  if (hasDuplicate(parsed.subjectAssignments.map((a) => `${a.section_id}|${a.subject_id}`))) {
+    return fail(409, "DUPLICATE_SUBJECT_ASSIGNMENT", "The same subject is assigned to the same class-arm more than once");
+  }
+  if (hasDuplicate(parsed.classTeacherAssignments.map((a) => a.section_id))) {
+    return fail(409, "DUPLICATE_CLASS_TEACHER_ASSIGNMENT", "The same class-arm is listed as class-teacher more than once");
   }
   const hasAssignments = parsed.subjectAssignments.length > 0 || parsed.classTeacherAssignments.length > 0;
   if (hasAssignments && !parsed.yearId) {

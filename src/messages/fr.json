@@ -1332,12 +1332,11 @@
       "subtitle": "Seuls les détails et le poste sont obligatoires — le reste peut être ajouté plus tard.",
       "stepCaption": "Étape {step} sur {total} — {title}",
       "steps": {
-        "details": "Détails",
-        "post": "Poste",
-        "assignments": "Affectations",
+        "profile": "Profil",
+        "role": "Rôle et affectations",
+        "credentials": "Identifiants et dossiers",
         "address": "Adresse",
-        "background": "Parcours",
-        "access": "Accès et connexion"
+        "background": "Parcours"
       },
       "sections": {
         "details": {
@@ -1388,7 +1387,27 @@
         "login": {
           "title": "Identifiants",
           "subtitle": "Le compte de connexion du membre"
+        },
+        "contact": {
+          "title": "Contact",
+          "subtitle": "Les numéros de téléphone se saisissent avec chaque adresse ci-dessous"
+        },
+        "personal": {
+          "title": "Informations personnelles",
+          "subtitle": "Genre, date de naissance et date d'arrivée"
+        },
+        "review": {
+          "title": "Récapitulatif",
+          "subtitle": "Vérifiez les informations avant d'enregistrer"
         }
+      },
+      "review": {
+        "edit": "Modifier",
+        "name": "Nom",
+        "rows": "{count, plural, =0 {Aucune} one {# entrée} other {# entrées}}",
+        "notIssued": "Pas encore délivrés",
+        "on": "Activée",
+        "off": "Désactivée"
       },
       "fields": {
         "image": {
@@ -1560,7 +1579,6 @@
         "addArm": "Ajouter",
         "noSubjects": "Aucune matière affectée.",
         "noArms": "Professeur principal d'aucune division.",
-        "nonTeaching": "Les matières et la fonction de professeur principal ne concernent que le personnel enseignant.",
         "removeRow": "Supprimer la ligne {index}"
       },
       "background": {
@@ -1606,6 +1624,8 @@
         "genderRequired": "Choisissez le sexe",
         "postRequired": "Choisissez un poste",
         "incompleteRow": "Complétez cette ligne ou supprimez-la",
+        "duplicateSubjectAssignment": "Cette matière est déjà affectée à cette classe-division",
+        "duplicateClassTeacher": "Cette classe-division figure déjà dans la liste",
         "usernameRequired": "Saisissez un nom d'utilisateur ou désactivez la connexion",
         "usernameSpaces": "Le nom d'utilisateur ne peut pas contenir d'espaces",
         "usernameTaken": "Ce nom d'utilisateur est déjà pris",

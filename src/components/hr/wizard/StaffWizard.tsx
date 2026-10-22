@@ -22,12 +22,9 @@ import { staffPostsQueryKey } from "@/lib/hr/staffPostsApi";
 import type { Staff } from "@/lib/hr/hrTypes";
 import { useHrReferenceData } from "@/components/hr/useHrReferenceData";
 import { StaffWizardStepper } from "@/components/hr/wizard/StaffWizardStepper";
-import { StaffDetailsStep } from "@/components/hr/wizard/steps/StaffDetailsStep";
-import { StaffPostStep } from "@/components/hr/wizard/steps/StaffPostStep";
-import { StaffAssignmentsStep } from "@/components/hr/wizard/steps/StaffAssignmentsStep";
-import { StaffAddressStep } from "@/components/hr/wizard/steps/StaffAddressStep";
-import { StaffBackgroundStep } from "@/components/hr/wizard/steps/StaffBackgroundStep";
-import { StaffAccessStep } from "@/components/hr/wizard/steps/StaffAccessStep";
+import { StaffProfileStep } from "@/components/hr/wizard/steps/StaffProfileStep";
+import { StaffRoleStep } from "@/components/hr/wizard/steps/StaffRoleStep";
+import { StaffCredentialsStep } from "@/components/hr/wizard/steps/StaffCredentialsStep";
 import {
   emptyStaffForm,
   formToWire,
@@ -51,6 +48,14 @@ export type StaffWizardProps = {
 };
 
 const LAST_STEP = STAFF_WIZARD_STEPS[STAFF_WIZARD_STEPS.length - 1];
+
+/** Backend field-error codes the form has its own message for (hrHttp.ts FIELD_ERROR_CODES). */
+const SERVER_ERROR_KEYS: Record<string, string> = {
+  DUPLICATE_EMAIL: "hr.wizard.errors.emailTaken",
+  USERNAME_TAKEN: "hr.wizard.errors.usernameTaken",
+  DUPLICATE_SUBJECT_ASSIGNMENT: "hr.wizard.errors.duplicateSubjectAssignment",
+  DUPLICATE_CLASS_TEACHER_ASSIGNMENT: "hr.wizard.errors.duplicateClassTeacher",
+};
 
 /**
  * Add / Edit Staff (Figma 3347:64541), mock-backed via staffRecordsApi.
@@ -116,12 +121,7 @@ export function StaffWizard({ mode, initialStaff, initialStep, onClose }: StaffW
     if (result.kind === "validation" && result.errors.length > 0) {
       const fieldErrors: FieldErrors = {};
       for (const error of result.errors) {
-        fieldErrors[error.field] =
-          error.code === "DUPLICATE_EMAIL"
-            ? "hr.wizard.errors.emailTaken"
-            : error.code === "USERNAME_TAKEN"
-              ? "hr.wizard.errors.usernameTaken"
-              : "hr.wizard.errors.invalidField";
+        fieldErrors[error.field] = SERVER_ERROR_KEYS[error.code ?? ""] ?? "hr.wizard.errors.invalidField";
       }
       setErrors(fieldErrors);
       goToStep(stepForField(result.errors[0].field));
@@ -256,10 +256,9 @@ export function StaffWizard({ mode, initialStaff, initialStep, onClose }: StaffW
     >
       <div className="flex min-w-0 flex-col gap-6">
         <StaffWizardStepper activeStep={step} reachedSteps={reached} onStepClick={goToStep} />
-        {step === 1 ? <StaffDetailsStep form={form} onChange={change} errors={errors} staffNo={staffNo} /> : null}
-        {step === 2 ? <StaffPostStep form={form} onChange={change} errors={errors} refs={refs} /> : null}
-        {step === 3 ? (
-          <StaffAssignmentsStep
+        {step === 1 ? <StaffProfileStep form={form} onChange={change} errors={errors} staffNo={staffNo} /> : null}
+        {step === 2 ? (
+          <StaffRoleStep
             form={form}
             onChange={change}
             errors={errors}
@@ -268,10 +267,8 @@ export function StaffWizard({ mode, initialStaff, initialStep, onClose }: StaffW
             carriedFromYearName={carriedFromYearName}
           />
         ) : null}
-        {step === 4 ? <StaffAddressStep form={form} onChange={change} /> : null}
-        {step === 5 ? <StaffBackgroundStep form={form} onChange={change} /> : null}
-        {step === 6 ? (
-          <StaffAccessStep
+        {step === 3 ? (
+          <StaffCredentialsStep
             form={form}
             onChange={change}
             errors={errors}
@@ -279,6 +276,7 @@ export function StaffWizard({ mode, initialStaff, initialStep, onClose }: StaffW
             mode={mode}
             credentialsIssued={!!initialStaff?.credentials_issued_at}
             isActiveStaff={initialStaff?.status === "active"}
+            onEditStep={goToStep}
           />
         ) : null}
       </div>

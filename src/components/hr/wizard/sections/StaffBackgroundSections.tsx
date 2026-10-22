@@ -107,8 +107,8 @@ function RepeaterSection<Row extends { key: string }>({
   );
 }
 
-/** Step 5 — optional Qualifications / References / Experience (fields per the Figma frame). */
-export function StaffBackgroundStep({ form, onChange }: { form: StaffForm; onChange: (patch: Partial<StaffForm>) => void }) {
+/** Credentials & records step — optional Qualifications / References / Experience (fields per the Figma frame). */
+export function StaffBackgroundSections({ form, onChange }: { form: StaffForm; onChange: (patch: Partial<StaffForm>) => void }) {
   const t = useTranslations();
 
   return (

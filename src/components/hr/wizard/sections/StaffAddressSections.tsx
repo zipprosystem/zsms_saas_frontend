@@ -118,8 +118,8 @@ function AddressFields({
   );
 }
 
-/** Step 4 — optional Present + Permanent address; "Same as present" is the source of truth (no stale copy kept). */
-export function StaffAddressStep({ form, onChange }: { form: StaffForm; onChange: (patch: Partial<StaffForm>) => void }) {
+/** Profile step — optional Present + Permanent address; "Same as present" is the source of truth (no stale copy kept). */
+export function StaffAddressSections({ form, onChange }: { form: StaffForm; onChange: (patch: Partial<StaffForm>) => void }) {
   const t = useTranslations();
   const { countries, loading } = useCountries();
 

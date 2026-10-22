@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
 import { SelectField } from "@/components/ui/Select";
@@ -9,7 +10,10 @@ import { DevBypassNotice } from "@/components/students/wizard/DevBypassNotice";
 import { StaffStepSection } from "@/components/hr/wizard/StaffStepSection";
 import type { HrReferenceData } from "@/components/hr/useHrReferenceData";
 import {
+  classTeacherKey,
+  isTakenBy,
   rowKey,
+  subjectAssignmentKey,
   type ClassTeacherRow,
   type FieldErrors,
   type StaffForm,
@@ -41,30 +45,40 @@ function RemoveRowButton({ label, onClick }: { label: string; onClick: () => voi
 }
 
 /**
- * Step 3 — year-scoped Subject assignments {class + arm + subject} and
- * Class-teacher arms — both teaching staff only. Rows belong to the SELECTED year; when
- * it has none yet the backend pre-fills the most recent prior year's as
- * editable defaults (carry-forward), and saving writes this year only.
+ * Role step — year-scoped Subject assignments {class + arm + subject} and
+ * Class-teacher arms, both teaching staff only (the Role step doesn't
+ * render this for non-teaching staff). Rows belong to the SELECTED year;
+ * when it has none yet the backend pre-fills the most recent prior year's
+ * as editable defaults (carry-forward), and saving writes this year only.
+ *
+ * Unique within the year: subject + class-arm, and class-arm for
+ * class-teacher. Options another row already holds are disabled; a change
+ * that would still repeat one is rejected with an inline notice on that
+ * row (the backend 409s the same — see staffForm.ts).
+ *
  * Classes / arms / class subjects are the real Academic APIs — empty under
  * dev-bypass, and there's no selected year there either.
  */
-export function StaffAssignmentsStep({ form, onChange, errors, refs, yearName, carriedFromYearName }: StepProps) {
+export function StaffTeachingAssignments({ form, onChange, errors, refs, yearName, carriedFromYearName }: StepProps) {
   const t = useTranslations();
+  /** Row key -> i18n key of a rejected duplicate change; cleared by that row's next accepted change. */
+  const [rejected, setRejected] = useState<Record<string, string>>({});
+  const setRowNotice = (key: string, notice: string | null) =>
+    setRejected((current) => {
+      if (!notice && !(key in current)) return current;
+      const next = { ...current };
+      if (notice) next[key] = notice;
+      else delete next[key];
+      return next;
+    });
+
+  if (form.staff_type !== "teaching") return null;
 
   if (!yearName) {
     return (
       <StaffStepSection title={t("hr.wizard.sections.assignments.title")}>
         <p className="text-sm text-text-muted">{t("hr.wizard.assignments.noYear")}</p>
         {refs.academicUnavailable ? <DevBypassNotice /> : null}
-      </StaffStepSection>
-    );
-  }
-
-  // Both sets are teaching-staff only.
-  if (form.staff_type !== "teaching") {
-    return (
-      <StaffStepSection title={t("hr.wizard.sections.assignments.title")}>
-        <p className="text-sm text-text-muted">{t("hr.wizard.assignments.nonTeaching")}</p>
       </StaffStepSection>
     );
   }
@@ -80,18 +94,45 @@ export function StaffAssignmentsStep({ form, onChange, errors, refs, yearName, c
         name: refs.subjectName(classSubject.subject_master_id),
       }));
 
-  const updateSubjectRow = (key: string, patch: Partial<SubjectAssignmentRow>) =>
+  const updateSubjectRow = (key: string, patch: Partial<SubjectAssignmentRow>) => {
+    const current = form.subject_assignments.find((row) => row.key === key);
+    if (!current) return;
+    if (isTakenBy(form.subject_assignments, key, subjectAssignmentKey({ ...current, ...patch }), subjectAssignmentKey)) {
+      setRowNotice(key, "hr.wizard.errors.duplicateSubjectAssignment");
+      return;
+    }
+    setRowNotice(key, null);
     onChange({
       subject_assignments: form.subject_assignments.map((row) => (row.key === key ? { ...row, ...patch } : row)),
     });
-  const updateClassTeacherRow = (key: string, patch: Partial<ClassTeacherRow>) =>
+  };
+  const updateClassTeacherRow = (key: string, patch: Partial<ClassTeacherRow>) => {
+    const current = form.class_teacher_assignments.find((row) => row.key === key);
+    if (!current) return;
+    if (isTakenBy(form.class_teacher_assignments, key, classTeacherKey({ ...current, ...patch }), classTeacherKey)) {
+      setRowNotice(key, "hr.wizard.errors.duplicateClassTeacher");
+      return;
+    }
+    setRowNotice(key, null);
     onChange({
       class_teacher_assignments: form.class_teacher_assignments.map((row) =>
         row.key === key ? { ...row, ...patch } : row,
       ),
     });
+  };
 
-  const rowError = (field: string) => (errors[field] ? <p className="text-xs text-error">{t(errors[field])}</p> : null);
+  /** A rejected change (this session) wins over the validator's error for the same row. */
+  const rowError = (field: string, key: string) => {
+    const message = rejected[key] ?? errors[field];
+    return message ? <p className="text-xs text-error">{t(message)}</p> : null;
+  };
+  /** A save the backend rejected (409 DUPLICATE_*) — pinned to the whole set, not a row. */
+  const setError = (field: string) =>
+    errors[field] ? (
+      <p role="alert" className="text-xs text-error">
+        {t(errors[field])}
+      </p>
+    ) : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -139,6 +180,7 @@ export function StaffAssignmentsStep({ form, onChange, errors, refs, yearName, c
           </Button>
         }
       >
+        {setError("subject_assignments")}
         {form.subject_assignments.length === 0 ? (
           <p className="text-sm text-text-muted">{t("hr.wizard.assignments.noSubjects")}</p>
         ) : (
@@ -184,7 +226,16 @@ export function StaffAssignmentsStep({ form, onChange, errors, refs, yearName, c
                         {t("hr.wizard.fields.arm.placeholder")}
                       </option>
                       {armsFor(row.class_id).map((section) => (
-                        <option key={section.id} value={section.id}>
+                        <option
+                          key={section.id}
+                          value={section.id}
+                          disabled={isTakenBy(
+                            form.subject_assignments,
+                            row.key,
+                            subjectAssignmentKey({ section_id: section.id, subject_id: row.subject_id }),
+                            subjectAssignmentKey,
+                          )}
+                        >
                           {section.name}
                         </option>
                       ))}
@@ -206,7 +257,16 @@ export function StaffAssignmentsStep({ form, onChange, errors, refs, yearName, c
                           : t("hr.wizard.fields.subject.placeholder")}
                       </option>
                       {subjectOptions.map((subject) => (
-                        <option key={subject.id} value={subject.id}>
+                        <option
+                          key={subject.id}
+                          value={subject.id}
+                          disabled={isTakenBy(
+                            form.subject_assignments,
+                            row.key,
+                            subjectAssignmentKey({ section_id: row.section_id, subject_id: subject.id }),
+                            subjectAssignmentKey,
+                          )}
+                        >
                           {subject.name}
                         </option>
                       ))}
@@ -223,7 +283,7 @@ export function StaffAssignmentsStep({ form, onChange, errors, refs, yearName, c
                     }
                   />
                 </div>
-                {rowError(`subject_assignments.${row.key}`)}
+                {rowError(`subject_assignments.${row.key}`, row.key)}
               </div>
             );
           })
@@ -256,6 +316,7 @@ export function StaffAssignmentsStep({ form, onChange, errors, refs, yearName, c
           </Button>
         }
       >
+        {setError("class_teacher_assignments")}
         {form.class_teacher_assignments.length === 0 ? (
           <p className="text-sm text-text-muted">{t("hr.wizard.assignments.noArms")}</p>
         ) : (
@@ -298,7 +359,11 @@ export function StaffAssignmentsStep({ form, onChange, errors, refs, yearName, c
                       {t("hr.wizard.fields.arm.placeholder")}
                     </option>
                     {armsFor(row.class_id).map((section) => (
-                      <option key={section.id} value={section.id}>
+                      <option
+                        key={section.id}
+                        value={section.id}
+                        disabled={isTakenBy(form.class_teacher_assignments, row.key, classTeacherKey({ section_id: section.id }), classTeacherKey)}
+                      >
                         {section.name}
                       </option>
                     ))}
@@ -315,7 +380,7 @@ export function StaffAssignmentsStep({ form, onChange, errors, refs, yearName, c
                   }
                 />
               </div>
-              {rowError(`class_teacher_assignments.${row.key}`)}
+              {rowError(`class_teacher_assignments.${row.key}`, row.key)}
             </div>
           ))
         )}

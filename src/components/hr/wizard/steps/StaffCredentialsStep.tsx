@@ -2,12 +2,13 @@
 
 import { useTranslations } from "next-intl";
 import { InputField } from "@/components/ui/Input";
-import { MultiSearchableSelect } from "@/components/ui/MultiSearchableSelect";
 import { Toggle } from "@/components/ui/Toggle";
 import { StaffStepSection } from "@/components/hr/wizard/StaffStepSection";
+import { StaffBackgroundSections } from "@/components/hr/wizard/sections/StaffBackgroundSections";
+import { StaffReviewSection } from "@/components/hr/wizard/sections/StaffReviewSection";
 import { SCHOOL_TWO_FACTOR_ENABLED } from "@/lib/hr/schoolSecurity";
 import type { HrReferenceData } from "@/components/hr/useHrReferenceData";
-import { effectiveUsername, type FieldErrors, type StaffForm } from "@/components/hr/wizard/staffForm";
+import { effectiveUsername, type FieldErrors, type StaffForm, type StaffWizardStep } from "@/components/hr/wizard/staffForm";
 
 /** The backend's default initial password — shown so the admin can hand it over; never sent, stored or exported by the frontend. */
 const DEFAULT_PASSWORD = "123456";
@@ -22,38 +23,23 @@ type StepProps = {
   credentialsIssued: boolean;
   /** Edit mode: login can only be ON for an active staff. */
   isActiveStaff: boolean;
+  /** The review's Edit links jump back to the step that owns a group. */
+  onEditStep: (step: StaffWizardStep) => void;
 };
 
 /**
- * Step 6 — Permission Group(s), the Compensation placeholder, and Login
- * Details. Groups own membership; picking them here sends
- * permission_group_ids and the backend updates the groups. Username
- * follows the email until edited. On edit, credentials aren't re-issued
- * (reset lives on the staff profile).
+ * Step 3 — Credentials & records: Login Details, then the optional
+ * Qualifications / References / Experience and the Compensation
+ * placeholder, then a read-only review of the whole record before Add
+ * Staff / Update. Username follows the email until edited. On edit,
+ * credentials aren't re-issued (reset lives on the staff profile).
  */
-export function StaffAccessStep({ form, onChange, errors, refs, mode, credentialsIssued, isActiveStaff }: StepProps) {
+export function StaffCredentialsStep({ form, onChange, errors, refs, mode, credentialsIssued, isActiveStaff, onEditStep }: StepProps) {
   const t = useTranslations();
   const username = effectiveUsername(form);
 
   return (
     <div className="flex flex-col gap-6">
-      <StaffStepSection title={t("hr.wizard.sections.groups.title")} subtitle={t("hr.wizard.sections.groups.subtitle")}>
-        <MultiSearchableSelect
-          id="staff-permission-groups"
-          label={t("hr.wizard.fields.groups.label")}
-          placeholder={refs.isLoadingGroups ? t("hr.common.loading") : t("hr.wizard.fields.groups.placeholder")}
-          options={refs.groups.map((group) => ({ value: group.id, label: group.name }))}
-          value={form.permission_group_ids}
-          onChange={(permission_group_ids) => onChange({ permission_group_ids })}
-          disabled={refs.isLoadingGroups}
-          noOptionsLabel={t("hr.wizard.fields.groups.noOptions")}
-        />
-      </StaffStepSection>
-
-      <StaffStepSection title={t("hr.wizard.sections.compensation.title")}>
-        <p className="text-sm text-text-muted">{t("hr.wizard.compensation.placeholder")}</p>
-      </StaffStepSection>
-
       <StaffStepSection title={t("hr.wizard.sections.login.title")} subtitle={t("hr.wizard.sections.login.subtitle")}>
         {mode === "edit" && !credentialsIssued ? (
           <p className="text-sm text-text-muted">{t("hr.wizard.login.notIssued")}</p>
@@ -68,6 +54,21 @@ export function StaffAccessStep({ form, onChange, errors, refs, mode, credential
           />
         )}
       </StaffStepSection>
+
+      <StaffBackgroundSections form={form} onChange={onChange} />
+
+      <StaffStepSection title={t("hr.wizard.sections.compensation.title")}>
+        <p className="text-sm text-text-muted">{t("hr.wizard.compensation.placeholder")}</p>
+      </StaffStepSection>
+
+      <StaffReviewSection
+        form={form}
+        refs={refs}
+        mode={mode}
+        credentialsIssued={credentialsIssued}
+        isActiveStaff={isActiveStaff}
+        onEditStep={onEditStep}
+      />
     </div>
   );
 }

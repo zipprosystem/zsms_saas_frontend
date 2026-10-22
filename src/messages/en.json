@@ -1324,12 +1324,11 @@
       "subtitle": "Only Staff Details and Staff Post are required — everything else can be added later.",
       "stepCaption": "Step {step} of {total} — {title}",
       "steps": {
-        "details": "Staff Details",
-        "post": "Staff Post",
-        "assignments": "Teaching Assignments",
+        "profile": "Profile",
+        "role": "Role & Assignments",
+        "credentials": "Credentials & Records",
         "address": "Address",
-        "background": "Background",
-        "access": "Access & Login"
+        "background": "Background"
       },
       "sections": {
         "details": {
@@ -1380,7 +1379,27 @@
         "login": {
           "title": "Login Details",
           "subtitle": "The staff's account for signing in"
+        },
+        "contact": {
+          "title": "Contact",
+          "subtitle": "Phone numbers are entered with each address below"
+        },
+        "personal": {
+          "title": "Personal",
+          "subtitle": "Gender, date of birth and when they joined"
+        },
+        "review": {
+          "title": "Review",
+          "subtitle": "Check the details before saving"
         }
+      },
+      "review": {
+        "edit": "Edit",
+        "name": "Name",
+        "rows": "{count, plural, =0 {None} one {# entry} other {# entries}}",
+        "notIssued": "Not issued yet",
+        "on": "On",
+        "off": "Off"
       },
       "fields": {
         "image": {
@@ -1552,7 +1571,6 @@
         "addArm": "Add",
         "noSubjects": "No subject assignments yet.",
         "noArms": "Not a class teacher of any arm.",
-        "nonTeaching": "Subject and class-teacher assignments apply to teaching staff only.",
         "removeRow": "Remove row {index}"
       },
       "background": {
@@ -1598,6 +1616,8 @@
         "genderRequired": "Select a gender",
         "postRequired": "Select a post",
         "incompleteRow": "Complete this row or remove it",
+        "duplicateSubjectAssignment": "This subject is already assigned to this class-arm",
+        "duplicateClassTeacher": "This class-arm is already listed",
         "usernameRequired": "Enter a username, or turn off the login",
         "usernameSpaces": "Usernames can't contain spaces",
         "usernameTaken": "This username is already taken",
