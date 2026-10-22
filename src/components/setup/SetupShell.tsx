@@ -11,6 +11,7 @@ import { ClipboardChartIcon } from "@/components/icons/setup/ClipboardChartIcon"
 import { LocationPinIcon } from "@/components/icons/setup/LocationPinIcon";
 import { ClockIcon } from "@/components/icons/setup/ClockIcon";
 import type { SetupCategory, SetupCategoryIconKey } from "@/lib/setup/setupConfig";
+import { setupScreenRegistry } from "@/lib/setup/screenRegistry";
 
 const categoryIcons: Record<SetupCategoryIconKey, typeof GearIcon> = {
   gear: GearIcon,
@@ -55,12 +56,13 @@ export function SetupShell({
         const Icon = categoryIcons[category.iconKey];
         const isActiveCategory = category.key === activeCategory.key;
         const isExpanded = expandedKeys.has(category.key);
-        // Setup-1: only Academic Structure's items are real links (to the
-        // new [category]/[screen] routes, whether the screen itself is
-        // built yet or still the generic "coming soon" placeholder). The
-        // other 3 categories are expandable but their items are inert
-        // until built, per the approved plan.
-        const itemsAreLinks = category.key === "academicStructure";
+        // Academic Structure's items are all real links (to the
+        // [category]/[screen] routes, whether the screen itself is built
+        // yet or still the generic "coming soon" placeholder). In the
+        // other categories an item links only once its screen is built
+        // (registered in setupScreenRegistry, same check the search index
+        // uses); the rest stay inert placeholders.
+        const isAcademicStructure = category.key === "academicStructure";
 
         return (
           <div key={category.key}>
@@ -85,8 +87,9 @@ export function SetupShell({
               <div className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-border pl-3">
                 {category.items.map((item) => {
                   const isActiveItem = isActiveCategory && item.slug === activeScreenSlug;
+                  const isLink = isAcademicStructure || `${category.slug}/${item.slug}` in setupScreenRegistry;
 
-                  if (!itemsAreLinks) {
+                  if (!isLink) {
                     return (
                       <span
                         key={item.key}
