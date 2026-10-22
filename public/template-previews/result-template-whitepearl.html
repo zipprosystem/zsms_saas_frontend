@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>White Pearl Report</title>
+<meta name="description" content="White Pearl International School (JSS) report — CA (component) and Exam (CA+Exam → term final, GPA units & points) variants, with percent-grade and GPA scales.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#1f74c4;--blue-dk:#14568f;--sky:#2f93d6;--soft:#e8f3fc;--line:#b9d9f1;
+    --ink:#0f2438;--ink-soft:#4a6075;--paper:#fff;--page-bg:#dde9f3;--rule:#d4e4f2;--stripe:#f1f8fd;
+    --ok:#157a46;--warn:#b26a00;--bad:#b4342a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--page-bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:24px 16px 64px;}
+
+  .controls{max-width:900px;margin:0 auto 16px;display:flex;justify-content:center;gap:14px;}
+  .ctl{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--rule);
+    border-radius:999px;padding:5px 7px;box-shadow:0 1px 2px rgba(15,36,56,.07);}
+  .ctl span{font-size:11px;font-weight:600;color:var(--ink-soft);padding-left:8px;text-transform:uppercase;letter-spacing:.03em;}
+  .ctl button{border:0;background:transparent;font:inherit;font-size:12.5px;font-weight:600;color:var(--ink-soft);
+    padding:6px 14px;border-radius:999px;cursor:pointer;transition:.15s;}
+  .ctl button.on{background:var(--blue);color:#fff;}
+  .hint{max-width:900px;margin:0 auto 18px;text-align:center;font-size:12px;color:var(--ink-soft);}
+
+  .sheet{width:210mm;min-height:297mm;margin:0 auto;background:var(--paper);
+    border:1px solid var(--rule);box-shadow:0 10px 40px rgba(15,36,56,.16);padding:8mm;position:relative;overflow:hidden;}
+  .wmk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;}
+  .wmk b{font-family:"Archivo";font-weight:800;font-size:92px;color:var(--blue);opacity:.05;transform:rotate(-20deg);white-space:nowrap;}
+  .sheet > :not(.wmk){position:relative;z-index:1;}
+
+  .head{display:grid;grid-template-columns:70px 1fr;gap:12px;align-items:center;padding:2px 2px 10px;border-bottom:3px solid var(--blue);}
+  .logo{width:70px;height:70px;border-radius:50%;border:3px solid var(--blue);background:var(--soft);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--blue-dk);}
+  .logo .l1{font-size:12px;font-weight:800;letter-spacing:.04em;}
+  .logo .l2{font-size:5.5px;font-weight:700;margin-top:2px;letter-spacing:.03em;}
+  .sch{text-align:center;}
+  .sch h1{font-family:"Archivo";font-weight:800;font-size:26px;color:var(--blue);margin:0;letter-spacing:.01em;}
+  .sch .ad{font-size:9.5px;color:var(--ink-soft);margin-top:3px;}
+  .sch .mo{display:inline-block;margin-top:5px;font-weight:700;font-size:11px;color:var(--blue-dk);
+    border-bottom:2px solid var(--line);padding:0 10px 2px;}
+
+  .bio{display:grid;grid-template-columns:96px 1fr;gap:10px;margin-top:9px;}
+  .photo{width:96px;height:116px;border:1.5px solid var(--line);border-radius:4px;
+    background:repeating-linear-gradient(45deg,#eef6fd,#eef6fd 7px,#e0eef9 7px,#e0eef9 14px);
+    display:flex;align-items:center;justify-content:center;color:#93b6d6;font-size:8px;font-weight:600;}
+  .biogrid{border:1px solid var(--line);border-radius:4px;overflow:hidden;align-self:start;}
+  .biogrid .r{display:grid;grid-template-columns:1fr 1fr;}
+  .biogrid .r + .r{border-top:1px solid var(--rule);}
+  .biogrid .c{display:flex;gap:6px;padding:7px 10px;font-size:10px;}
+  .biogrid .c + .c{border-left:1px solid var(--rule);}
+  .biogrid .k{color:var(--ink-soft);font-weight:600;}
+  .biogrid .v{font-weight:700;}
+
+  table{width:100%;border-collapse:collapse;}
+  .subs{margin-top:9px;}
+  .subs th{background:var(--blue);color:#fff;font-weight:700;font-size:7.6px;line-height:1.1;padding:5px 3px;text-align:center;border:1px solid var(--blue);}
+  .subs th.s{text-align:left;}
+  .subs td{font-size:7.8px;padding:3.5px 3px;border:1px solid var(--rule);text-align:center;}
+  .subs td.s{text-align:left;font-weight:600;}
+  .subs td.sig{font-style:italic;color:var(--ink-soft);font-size:7px;}
+  .subs tbody tr:nth-child(even){background:var(--stripe);}
+  .subs tr.max td{background:var(--soft);color:var(--blue-dk);font-weight:700;font-size:7.4px;}
+  .subs tr.tot td{background:var(--blue-dk);color:#fff;font-weight:700;}
+  .num{font-variant-numeric:tabular-nums;}
+  .g-ok{color:var(--ok);font-weight:700;}
+  .g-pass{color:var(--warn);font-weight:700;}
+  .g-fail{color:var(--bad);font-weight:700;}
+
+  .band{margin-top:9px;display:flex;background:var(--blue);color:#fff;border-radius:4px;overflow:hidden;font-size:11px;font-weight:700;}
+  .band div{flex:1;text-align:center;padding:7px 6px;}
+  .band div + div{border-left:1px solid rgba(255,255,255,.25);}
+  .passfail{margin-top:7px;display:flex;gap:7px;font-size:9.5px;}
+  .passfail div{flex:1;border:1px solid var(--line);border-radius:4px;padding:6px 10px;background:var(--soft);font-weight:600;color:var(--blue-dk);}
+  .passfail b{color:var(--ink);}
+
+  .ranks{margin-top:9px;display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+  .ranks.hide{display:none;}
+  .panel{border:1px solid var(--line);border-radius:4px;overflow:hidden;}
+  .panel h3{margin:0;background:var(--blue);color:#fff;font-size:9px;font-weight:700;padding:4px 9px;display:flex;justify-content:space-between;}
+  .panel .rr{display:flex;justify-content:space-between;padding:3px 9px;font-size:8.6px;}
+  .panel .rr + .rr{border-top:1px solid var(--rule);}
+  .panel .rr span:last-child{font-weight:700;color:var(--blue-dk);}
+  .ratingkey{margin-top:7px;border:1px solid var(--line);border-radius:4px;display:flex;font-size:8.4px;overflow:hidden;}
+  .ratingkey div{flex:1;text-align:center;padding:5px;color:var(--ink-soft);font-weight:600;}
+  .ratingkey div + div{border-left:1px solid var(--rule);}
+
+  .scales{margin-top:9px;display:grid;grid-template-columns:150px 1fr;gap:7px;}
+  .key{border:1px solid var(--line);border-radius:4px;padding:7px 9px;font-size:8.5px;color:var(--ink-soft);}
+  .key h4{margin:0 0 5px;font-size:9px;color:var(--blue-dk);}
+  .key p{margin:2px 0;}
+  .scaleblk{border:1px solid var(--line);border-radius:4px;overflow:hidden;}
+  .scaleblk .lab{background:var(--soft);color:var(--blue-dk);font-weight:700;font-size:8.5px;padding:4px 9px;border-bottom:1px solid var(--line);}
+  .scaleblk table td{font-size:7.6px;padding:3px 2px;border:1px solid var(--rule);text-align:center;}
+  .scaleblk table td.h{background:#f3f9fe;font-weight:700;color:var(--blue-dk);}
+
+  .signs{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .sign{border:1px solid var(--line);border-radius:4px;padding:9px 11px;font-size:8.6px;color:var(--ink-soft);}
+  .sign .ttl{font-weight:700;color:var(--blue-dk);}
+  .sign .rm{line-height:1.35;margin:3px 0;}
+  .sign .ln{font-family:"Archivo";font-style:italic;color:var(--blue-dk);font-size:14px;border-bottom:1px dashed var(--rule);padding:6px 0 5px;margin:3px 0;}
+  .sign .dt{font-weight:700;color:var(--ink);}
+
+  @media (max-width:800px){.sheet{width:100%;min-height:0;padding:12px;}.wmk b{font-size:48px;}}
+  @media print{@page{size:A4 portrait;margin:0;}body{background:#fff;padding:0;}.controls,.hint{display:none!important;}
+    .sheet{width:auto;min-height:auto;margin:0;border:0;box-shadow:none;padding:7mm;}}
+</style>
+</head>
+<body>
+  <div class="controls">
+    <div class="ctl" id="typeCtl">
+      <span>Report</span>
+      <button data-type="ca" class="on">CA</button>
+      <button data-type="exam">Exam</button>
+    </div>
+  </div>
+  <p class="hint">White Pearl International School — JSS report, <b>sample data</b>: pupil, teacher and contact details are placeholders. <b>CA</b> shows the component breakdown (Test/Asgmt/Note/Attnd); <b>Exam</b> shows CA + Exam → term final with GPA units, grade point and total point.</p>
+
+  <div class="sheet">
+    <div class="wmk"><b>IN PURSUIT OF EXCELLENCE</b></div>
+
+    <div class="head">
+      <div class="logo"><div class="l1">W.P.I.S</div><div class="l2">IN PURSUIT OF<br>EXCELLENCE</div></div>
+      <div class="sch">
+        <h1>White Pearl International School</h1>
+        <div class="ad">12 Example Crescent, Abuja.</div>
+        <div class="mo" id="bMonth">JUNE, 2026</div>
+      </div>
+    </div>
+
+    <div class="bio">
+      <div class="photo">PHOTO</div>
+      <div class="biogrid">
+        <div class="r">
+          <div class="c"><span class="k">Student's Name:</span><span class="v">Zainab Bello</span></div>
+          <div class="c"><span class="k">Reg. No:</span><span class="v">WPI_ST000000</span></div>
+        </div>
+        <div class="r">
+          <div class="c"><span class="k">School Session:</span><span class="v">2025 / 2026</span></div>
+          <div class="c"><span class="k">Class:</span><span class="v">JSS 1</span></div>
+        </div>
+        <div class="r">
+          <div class="c"><span class="k">Class Average:</span><span class="v" id="bClassAvg">74.77%</span></div>
+          <div class="c"><span class="k">No. in Class:</span><span class="v">38</span></div>
+        </div>
+        <div class="r">
+          <div class="c"><span class="k">Term:</span><span class="v" id="bTerm">First Term — CA</span></div>
+          <div class="c"><span class="k" id="bNextK">&nbsp;</span><span class="v" id="bNextV">&nbsp;</span></div>
+        </div>
+      </div>
+    </div>
+
+    <table class="subs">
+      <thead id="subHead"></thead>
+      <tbody id="subBody"></tbody>
+      <tfoot id="subFoot"></tfoot>
+    </table>
+
+    <div class="band" id="band"></div>
+    <div class="passfail" id="passfail"></div>
+
+    <div class="ranks hide" id="ranks">
+      <div class="panel"><h3>Affective Domain <span>Ranking</span></h3><div id="affBody"></div></div>
+      <div class="panel"><h3>Psychomotor Skill <span>Ranking</span></h3><div id="psyBody"></div></div>
+    </div>
+    <div class="ratingkey">
+      <div>5 — EXCELLENT</div><div>4 — VERY GOOD</div><div>3 — GOOD</div><div>2 — FAIR</div><div>1 — POOR</div>
+    </div>
+
+    <div class="scales">
+      <div class="key">
+        <h4>Key</h4>
+        <p><b>T.P.</b> — Term Point</p>
+        <p><b>G.p.</b> — Grade Point</p>
+        <p><b>GPA</b> — Grade Point Average</p>
+        <p><b>*</b> — Intensive ESL</p>
+      </div>
+      <div>
+        <div class="scaleblk"><div class="lab">Percent Grade Scale</div><table id="pctScale"></table></div>
+        <div class="scaleblk" style="margin-top:7px;"><div class="lab">GPA Scale</div><table id="gpaScale"></table></div>
+      </div>
+    </div>
+
+    <div class="signs">
+      <div class="sign"><span class="ttl">Classroom Teacher</span><div class="rm" id="ctRem"></div><div class="ln">I. Teacher</div><span>Date: </span><span class="dt" id="ctDate"></span></div>
+      <div class="sign"><span class="ttl">Head of School</span><div class="rm" id="htRem"></div><div class="ln">&nbsp;</div><span>Date: </span><span class="dt" id="htDate"></span></div>
+    </div>
+  </div>
+
+<script>
+  // CA report: [subject, test1,test2,asgmt,note,attnd, score40, pct100, grade, units, gradeWeight, remark, teacher]
+  var CA=[
+    ["Business Studies",5,6,10,5,5,31,51.67,"C-",2,4.6,"GOOD","A. Teacher"],
+    ["Christian Religious Studies",10,9,10,5,5,39,65.00,"C-",2,4.6,"GOOD","B. Teacher"],
+    ["Cultural & Creative Arts",10,10,10,5,3,38,63.33,"C-",2,4.6,"GOOD","C. Teacher"],
+    ["Digital Technology",7,6,9,5,5,32,53.33,"C-",2,4.6,"GOOD","D. Teacher"],
+    ["English Language",9,9,10,4,5,37,61.67,"C-",5,11.5,"GOOD","E. Teacher"],
+    ["French",10,10,10,5,5,40,66.67,"C-",2,4.6,"GOOD","F. Teacher"],
+    ["General Mathematics",9,10,7,5,5,36,60.00,"C-",5,11.5,"GOOD","D. Teacher"],
+    ["Hausa Language",8,8,10,4,5,35,58.33,"C-",2,4.6,"GOOD","G. Teacher"],
+    ["History",10,10,10,5,5,40,66.67,"C-",2,4.6,"GOOD","C. Teacher"],
+    ["Intermediate Science",10,10,5,2,1,28,46.67,"D",2,3.4,"PASS","H. Teacher"],
+    ["Physical & Health Education",10,10,9,5,3,37,61.67,"C-",2,4.6,"GOOD","—"],
+    ["Project",9,8,10,5,5,37,61.67,"C-",4,9.2,"GOOD","I. Teacher"],
+    ["Social & Citizenship Studies",10,10,7,5,5,37,61.67,"C-",2,4.6,"GOOD","I. Teacher"]
+  ];
+  // Exam report: [subject, units, caMarks40, examMarks60, final100, grade, gp, tp, remark, teacher]
+  var EX=[
+    ["Business Studies",2,39,58.00,97.00,"A",4,8,"EXCELLENT","A. Teacher"],
+    ["Christian Religious Studies",2,37,56.00,93.00,"A",4,8,"EXCELLENT","B. Teacher"],
+    ["Cultural & Creative Arts",2,30,58.00,88.00,"A-",3.7,7.4,"EXCELLENT","C. Teacher"],
+    ["Digital Technology",2,38,55.00,93.00,"A",4,8,"EXCELLENT","D. Teacher"],
+    ["English Language",5,38,45.00,83.00,"B+",3.5,17.5,"EXCELLENT","E. Teacher"],
+    ["French",2,32,48.00,80.00,"B+",3.5,7,"EXCELLENT","F. Teacher"],
+    ["General Mathematics",5,37,54.00,91.00,"A",4,20,"EXCELLENT","D. Teacher"],
+    ["Hausa Language",2,0,0.00,0.00,"F",1.3,2.6,"FAIL","G. Teacher"],
+    ["History",2,38,56.00,94.00,"A",4,8,"EXCELLENT","C. Teacher"],
+    ["Intermediate Science",2,37,51.00,88.00,"A-",3.7,7.4,"EXCELLENT","H. Teacher"],
+    ["Physical & Health Education",2,40,51.00,91.00,"A",4,8,"EXCELLENT","—"],
+    ["Project",4,24,58.00,82.00,"B+",3.5,14,"EXCELLENT","I. Teacher"],
+    ["Social & Citizenship Studies",2,36,52.00,88.00,"A-",3.7,7.4,"EXCELLENT","I. Teacher"]
+  ];
+  var AFF=[["Attentiveness",4],["Attitude to School Work",4],["Relationship with Others",4],["Punctuality",4]];
+  var PSY=[["Game",4],["Handwriting",4],["Sport",4],["Verbal",4]];
+  var PCT=[["A","90-100"],["A-","87-89"],["B+","80-86"],["B","77-79"],["B-","74-76"],["C+","70-73"],
+    ["C","67-69"],["C-","50-66"],["D+","47-49"],["D","44-46"],["D-","40-43"],["F","0-39"]];
+  var GPA=[["A","4"],["A-","3.7"],["B+","3.5"],["B","3.3"],["B-","3"],["C+","2.8"],
+    ["C","2.5"],["C-","2.3"],["D+","2"],["D","1.7"],["D-","1.5"],["F","1.3"]];
+
+  var state={type:"ca"};
+  function f2(n){return (Math.round(n*100)/100).toFixed(2);}
+  function gcls(g){return g==="F"?"g-fail":(g.charAt(0)==="D"?"g-pass":"g-ok");}
+
+  function render(){
+    var head=document.getElementById("subHead"),body=document.getElementById("subBody"),foot=document.getElementById("subFoot");
+    var band=document.getElementById("band"),pf=document.getElementById("passfail"),ranks=document.getElementById("ranks");
+
+    if(state.type==="ca"){
+      document.getElementById("bMonth").textContent="JUNE, 2026";
+      document.getElementById("bClassAvg").textContent="74.77%";
+      document.getElementById("bTerm").textContent="First Term — CA";
+      document.getElementById("bNextK").innerHTML="&nbsp;"; document.getElementById("bNextV").innerHTML="&nbsp;";
+      head.innerHTML='<tr><th class="s">Subject</th><th>Test 1</th><th>Test 2</th><th>Asgmt</th><th>Note</th><th>Attnd</th>'+
+        '<th>Score<br>Obtained</th><th>Score<br>[%]</th><th>Grade</th><th>Units</th><th>Grade<br>Weight</th><th>Remark</th><th>Subject Teacher</th></tr>';
+      body.innerHTML='<tr class="max"><td class="s">Maximum Score</td><td>10</td><td>10</td><td>10</td><td>5</td><td>5</td><td>40</td><td>100</td><td colspan="5"></td></tr>'+
+        CA.map(function(r){return '<tr><td class="s">'+r[0]+'</td><td class="num">'+f2(r[1])+'</td><td class="num">'+f2(r[2])+
+          '</td><td class="num">'+f2(r[3])+'</td><td class="num">'+f2(r[4])+'</td><td class="num">'+f2(r[5])+
+          '</td><td class="num">'+r[6]+'</td><td class="num">'+f2(r[7])+'</td><td class="'+gcls(r[8])+'">'+r[8]+
+          '</td><td class="num">'+r[9]+'</td><td class="num">'+f2(r[10])+'</td><td>'+r[11]+'</td><td class="sig">'+r[12]+'</td></tr>';}).join("");
+      foot.innerHTML='<tr class="tot"><td class="s">TOTAL</td><td colspan="8"></td><td class="num">34</td><td class="num">77.0</td><td colspan="2"></td></tr>';
+      band.innerHTML='<div>Student Average: 89.81%</div><div>GPA: 2.26</div><div>Overall Grade: D+</div>';
+      pf.innerHTML='<div>Number of Subjects Passed: <b>13</b></div><div>Number of Subjects Failed: <b>0</b></div>';
+      ranks.classList.add("hide");
+      document.getElementById("ctRem").textContent="Sample remark — steady continuous-assessment work this term.";
+      document.getElementById("htRem").textContent="Sample remark — good progress.";
+      document.getElementById("ctDate").textContent="04-06-2026"; document.getElementById("htDate").textContent="04-06-2026";
+    } else {
+      document.getElementById("bMonth").textContent="DECEMBER, 2025";
+      document.getElementById("bClassAvg").textContent="55.19%";
+      document.getElementById("bTerm").textContent="First Term";
+      document.getElementById("bNextK").textContent="Next Term Begins On:"; document.getElementById("bNextV").textContent="12/01/2026";
+      head.innerHTML='<tr><th class="s">Subject</th><th>Subject<br>Units (S.u)</th><th>CA<br>Marks (40)</th><th>Exam<br>Marks (60)</th>'+
+        '<th>Term Final<br>Score (100)</th><th>Term Final<br>Grade</th><th>Grade<br>Point (G.p.)</th><th>Total<br>Point (T.p.)</th><th>Remark</th><th>Teacher</th></tr>';
+      body.innerHTML='<tr class="max"><td class="s">Maximum Score</td><td></td><td>40</td><td>60</td><td>100</td><td colspan="5"></td></tr>'+
+        EX.map(function(r){return '<tr><td class="s">'+r[0]+'</td><td class="num">'+r[1]+'</td><td class="num">'+r[2]+
+          '</td><td class="num">'+f2(r[3])+'</td><td class="num"><b>'+f2(r[4])+'</b></td><td class="'+gcls(r[5])+'">'+r[5]+
+          '</td><td class="num">'+r[6]+'</td><td class="num">'+r[7]+'</td><td class="'+(r[8]==="FAIL"?"g-fail":"")+'">'+r[8]+
+          '</td><td class="sig">'+r[9]+'</td></tr>';}).join("");
+      foot.innerHTML='<tr class="tot"><td class="s">TOTAL</td><td class="num">34</td><td colspan="4"></td><td class="num">46.9</td><td class="num">123.3</td><td colspan="2"></td></tr>';
+      band.innerHTML='<div>Student Average: 82.15%</div><div>GPA: 3.63</div><div>Overall Grade: B+</div>';
+      pf.innerHTML='<div>Number of Subjects Passed: <b>12</b></div><div>Number of Subjects Failed: <b>1</b></div>';
+      ranks.classList.remove("hide");
+      document.getElementById("ctRem").textContent="Sample remark — a good term; keep up the effort.";
+      document.getElementById("htRem").textContent="Sample remark — a good result.";
+      document.getElementById("ctDate").textContent="15-12-2025"; document.getElementById("htDate").textContent="15-12-2025";
+    }
+  }
+
+  document.getElementById("affBody").innerHTML=AFF.map(function(r){return '<div class="rr"><span>'+r[0]+'</span><span>'+r[1]+'</span></div>';}).join("");
+  document.getElementById("psyBody").innerHTML=PSY.map(function(r){return '<div class="rr"><span>'+r[0]+'</span><span>'+r[1]+'</span></div>';}).join("");
+  function scale(id,rows){document.getElementById(id).innerHTML='<tr>'+rows.map(function(r){return '<td class="h">'+r[0]+'</td>';}).join("")+'</tr>'+
+    '<tr>'+rows.map(function(r){return '<td class="num">'+r[1]+'</td>';}).join("")+'</tr>';}
+  scale("pctScale",PCT); scale("gpaScale",GPA);
+
+  document.getElementById("typeCtl").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;
+    state.type=b.dataset.type;[].forEach.call(this.querySelectorAll("button"),function(x){x.classList.toggle("on",x===b);});render();});
+  render();
+</script>
+</body>
+</html>

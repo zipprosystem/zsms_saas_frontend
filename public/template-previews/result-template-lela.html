@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lela Blossom Report</title>
+<meta name="description" content="LeLa Blossom Schools JSS terminal report — CA (five-component) and Exam variants, with a Term toggle; in 2nd/3rd term the Exam view adds prior-term totals and the cumulative average.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#17386b;--blue:#2e6bb3;--blue-dk:#1d4e86;--soft:#eaf2fb;--line:#bcd2ec;
+    --ink:#13233b;--ink-soft:#54637a;--paper:#fff;--page-bg:#dfe8f2;--rule:#d2deee;--stripe:#f2f7fc;--ok:#15803d;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--page-bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:24px 16px 64px;}
+
+  .controls{max-width:900px;margin:0 auto 16px;display:flex;justify-content:center;gap:14px;flex-wrap:wrap;}
+  .ctl{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--rule);
+    border-radius:999px;padding:5px 7px;box-shadow:0 1px 2px rgba(19,35,59,.07);}
+  .ctl span{font-size:11px;font-weight:600;color:var(--ink-soft);padding-left:8px;text-transform:uppercase;letter-spacing:.03em;}
+  .ctl button{border:0;background:transparent;font:inherit;font-size:12.5px;font-weight:600;color:var(--ink-soft);
+    padding:6px 13px;border-radius:999px;cursor:pointer;transition:.15s;}
+  .ctl button.on{background:var(--blue);color:#fff;}
+  .hint{max-width:900px;margin:0 auto 18px;text-align:center;font-size:12px;color:var(--ink-soft);}
+
+  .sheet{width:210mm;min-height:297mm;margin:0 auto;background:var(--paper);
+    border:1px solid var(--rule);box-shadow:0 10px 40px rgba(19,35,59,.16);padding:8mm;position:relative;overflow:hidden;}
+  .wmk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;}
+  .wmk b{font-family:"Playfair Display";font-weight:800;font-size:116px;color:var(--navy);opacity:.045;
+    transform:rotate(-22deg);white-space:nowrap;}
+  .sheet > :not(.wmk){position:relative;z-index:1;}
+
+  .head{display:grid;grid-template-columns:78px 1fr 78px;gap:10px;align-items:center;padding:4px 4px 10px;border-bottom:3px solid var(--blue);}
+  .logo{width:78px;height:78px;border-radius:50%;border:3px solid var(--navy);background:var(--soft);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--navy);}
+  .logo .l1{font-size:7.5px;font-weight:700;letter-spacing:.06em;line-height:1.2;}
+  .logo .l2{font-size:6px;font-style:italic;margin-top:3px;color:var(--blue-dk);}
+  .photo{width:78px;height:92px;border:1.5px solid var(--line);border-radius:4px;
+    background:repeating-linear-gradient(45deg,#eef4fb,#eef4fb 7px,#e2ecf7 7px,#e2ecf7 14px);
+    display:flex;align-items:center;justify-content:center;color:#9bb3d1;font-size:8px;font-weight:600;}
+  .sch{text-align:center;}
+  .sch h1{font-family:"Playfair Display";font-weight:800;font-size:27px;color:var(--navy);margin:0;letter-spacing:.02em;}
+  .sch .mt{font-size:10.5px;font-weight:700;color:var(--blue-dk);margin:2px 0;}
+  .sch .ad{font-size:9px;color:var(--ink-soft);line-height:1.35;}
+
+  .bio{margin-top:8px;border:1px solid var(--blue);border-radius:4px;overflow:hidden;}
+  .bio .r{display:grid;grid-template-columns:1.1fr 1.5fr 1.1fr;}
+  .bio .r + .r{border-top:1px solid #3f74b4;}
+  .bio .c{display:flex;gap:5px;padding:5px 9px;font-size:9.5px;background:var(--blue);color:#fff;}
+  .bio .c + .c{border-left:1px solid #3f74b4;}
+  .bio .k{opacity:.82;font-weight:500;}
+  .bio .v{font-weight:700;}
+
+  table{width:100%;border-collapse:collapse;}
+  .subs{margin-top:8px;}
+  .subs thead th{background:var(--navy);color:#fff;font-weight:700;font-size:8px;line-height:1.12;
+    padding:6px 4px;text-align:center;border:1px solid var(--navy);}
+  .subs thead th.s{text-align:left;}
+  .subs tbody td{font-size:8.4px;padding:4px 4px;border:1px solid var(--rule);text-align:center;}
+  .subs tbody td.s{text-align:left;font-weight:600;font-size:8.2px;}
+  .subs tbody tr:nth-child(odd){background:var(--stripe);}
+  .subs td.rem{font-weight:600;font-size:7.6px;color:var(--blue-dk);white-space:nowrap;}
+  .num{font-variant-numeric:tabular-nums;}
+  .subs td.cum{background:#fef9e7;font-weight:800;color:#8a6d00;}
+  .subs tfoot td{background:var(--blue);color:#fff;font-weight:700;font-size:8.4px;padding:5px 7px;border:1px solid var(--blue);}
+  .subs tfoot td.cumline{background:#1d4e86;}
+
+  .mid{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:7px;margin-top:8px;}
+  .panel{border:1px solid var(--line);border-radius:4px;overflow:hidden;}
+  .panel h3{margin:0;background:var(--blue);color:#fff;font-size:9px;font-weight:700;padding:4px 8px;display:flex;justify-content:space-between;letter-spacing:.02em;}
+  .rate .rr{display:flex;justify-content:space-between;padding:3px 8px;font-size:8.6px;}
+  .rate .rr + .rr{border-top:1px solid var(--rule);}
+  .rate .rr span:last-child{font-weight:700;color:var(--blue-dk);}
+  .grade table td{font-size:8px;padding:2.5px 5px;border:1px solid var(--rule);}
+  .grade table td.g{font-weight:700;color:var(--navy);width:30px;}
+  .grade table td.rg{color:var(--ink-soft);}
+  .grade table td.nm{font-weight:600;color:var(--ok);}
+  .chart{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;gap:8px;}
+  .donut{width:84px;height:84px;border-radius:50%;background:conic-gradient(var(--ok) 0 100%);display:flex;align-items:center;justify-content:center;}
+  .donut i{width:52px;height:52px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;font-size:12px;color:var(--ok);}
+  .legend{font-size:8px;color:var(--ink-soft);line-height:1.5;}
+  .legend b{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:middle;}
+
+  .ratingkey{margin-top:8px;border:1px solid var(--line);border-radius:4px;display:flex;font-size:8.6px;overflow:hidden;}
+  .ratingkey div{flex:1;text-align:center;padding:5px;color:var(--ink-soft);font-weight:600;}
+  .ratingkey div + div{border-left:1px solid var(--rule);}
+
+  .remarks{margin-top:8px;border:1px solid var(--line);border-radius:4px;overflow:hidden;}
+  .remarks .rrow{display:grid;grid-template-columns:150px 1fr 120px;font-size:9px;}
+  .remarks .rrow + .rrow{border-top:1px solid var(--rule);}
+  .remarks .lbl{background:var(--soft);color:var(--navy);font-weight:700;padding:6px 9px;}
+  .remarks .txt{padding:6px 9px;line-height:1.4;}
+  .remarks .sig{padding:6px 9px;border-left:1px solid var(--rule);color:var(--ink-soft);font-size:8.5px;}
+
+  @media (max-width:800px){.sheet{width:100%;min-height:0;padding:12px;}.wmk b{font-size:58px;}}
+  @media print{@page{size:A4 portrait;margin:0;}body{background:#fff;padding:0;}.controls,.hint{display:none!important;}
+    .sheet{width:auto;min-height:auto;margin:0;border:0;box-shadow:none;padding:7mm;}}
+</style>
+</head>
+<body>
+
+  <div class="controls">
+    <div class="ctl" id="typeCtl">
+      <span>Report</span>
+      <button data-type="ca" class="on">CA</button>
+      <button data-type="exam">Exam</button>
+    </div>
+    <div class="ctl" id="termCtl">
+      <span>Term</span>
+      <button data-term="1" class="on">1st</button>
+      <button data-term="2">2nd</button>
+      <button data-term="3">3rd</button>
+    </div>
+  </div>
+  <p class="hint">LeLa Blossom JSS report — <b>sample data</b>: pupil, teacher and contact details are placeholders. In the <b>Exam</b> view the term columns grow — 1st term shows Subject Average; <b>3rd term</b> adds Second Term Total, First Term Total and <b>Cumulative Average</b>.</p>
+
+  <div class="sheet">
+    <div class="wmk"><b>Nurturing Excellent Minds</b></div>
+
+    <div class="head">
+      <div class="logo"><div class="l1">LELA<br>BLOSSOM<br>SCHOOLS<br>ABUJA</div><div class="l2">Nurturing excellent minds</div></div>
+      <div class="sch">
+        <h1>LeLa Blossom Schools</h1>
+        <div class="mt">Motto: Nurturing Excellent Minds</div>
+        <div class="ad">Plot 12, Example Road, Abuja, FCT.<br>
+          www.lelablossom.example &nbsp;·&nbsp; Tel. +234 800 000 0000</div>
+      </div>
+      <div class="photo">PHOTO</div>
+    </div>
+
+    <div class="bio">
+      <div class="r">
+        <div class="c"><span class="k">Admission No.:</span><span class="v">LBS/JS/0000</span></div>
+        <div class="c"><span class="k">Term:</span><span class="v" id="bTerm">First Term (07/09/2025 – 12/12/2025)</span></div>
+        <div class="c"><span class="k">Time School Opened:</span><span class="v" id="bOpened">130</span></div>
+      </div>
+      <div class="r">
+        <div class="c"><span class="k">Fullname:</span><span class="v">Amara Nwosu</span></div>
+        <div class="c"><span class="k">Class:</span><span class="v">JSS 2</span></div>
+        <div class="c"><span class="k">Attendance:</span><span class="v" id="bAttend">126</span></div>
+      </div>
+      <div class="r">
+        <div class="c"><span class="k">Gender:</span><span class="v">Female</span></div>
+        <div class="c"><span class="k">Date of Birth:</span><span class="v">15/06/2013</span></div>
+        <div class="c"><span class="k">Resumption Date:</span><span class="v" id="bResume">07/01/2026</span></div>
+      </div>
+    </div>
+
+    <table class="subs">
+      <thead id="subHead"></thead>
+      <tbody id="subBody"></tbody>
+      <tfoot id="subFoot"></tfoot>
+    </table>
+
+    <div class="mid">
+      <div class="panel rate"><h3>Affective Assessment <span>Rating</span></h3><div id="affBody"></div></div>
+      <div class="panel rate"><h3>Psychomotor Assessment <span>Rating</span></h3><div id="psyBody"></div></div>
+      <div class="panel grade">
+        <h3>Grading &amp; Distribution</h3>
+        <div style="display:grid;grid-template-columns:1.4fr 1fr;">
+          <table id="gradeTbl"></table>
+          <div class="chart">
+            <div class="donut"><i>100%</i></div>
+            <div class="legend">
+              <div><b style="background:var(--ok)"></b>Met Expectation (16)</div>
+              <div><b style="background:#e0a800"></b>Emerging (0)</div>
+              <div><b style="background:#c0392b"></b>Intervention (0)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ratingkey">
+      <div>5 — EXCELLENT</div><div>4 — VERY GOOD</div><div>3 — GOOD</div><div>2 — FAIR</div><div>1 — POOR</div>
+    </div>
+
+    <div class="remarks">
+      <div class="rrow"><div class="lbl">Class Teacher's Remarks</div><div class="txt" id="ctRem"></div>
+        <div class="sig">Signature<br><b>A. T.</b><br><span id="sig1"></span></div></div>
+      <div class="rrow"><div class="lbl">Head Teacher's Remarks</div><div class="txt">Sample remark — a good result.</div>
+        <div class="sig">Signature<br><b>H. T.</b><br><span id="sig2"></span></div></div>
+    </div>
+  </div>
+
+<script>
+  // Subjects. e1 = first-term exam [ca1,ca2,exam60,total,subjAvg,high,low,rem]
+  //           e3 = third-term exam  [ca1,ca2,exam60,total,high,low,rem]
+  //           t2 = second-term total ; ca = CA 5-component [cw,hw,wk,ca,pj,total,rem]
+  var S=[
+    {n:"AGRICULTURAL SCIENCE", e1:[17.40,19.00,53.00,89.40,72.66,91.20,53.40,"B+ · VERY GOOD"], e3:[18.40,18.40,52.00,88.80,91.60,50.20,"B+ · VERY GOOD"], t2:92.60, ca:[17,18,20,18,14,87,"B+ · VERY GOOD"]},
+    {n:"BASIC TECHNOLOGY", e1:[19.80,20.00,50.00,89.80,85.09,94.60,74.00,"B+ · VERY GOOD"], e3:[19.20,20.00,49.00,88.20,88.20,55.80,"B+ · VERY GOOD"], t2:86.40, ca:[20,20,20,19,20,99,"A+ · DISTINCTION"]},
+    {n:"BUSINESS STUDIES", e1:[17.60,16.00,50.00,83.60,68.09,83.60,44.20,"B · VERY GOOD"], e3:[19.00,20.00,53.40,92.40,92.40,33.00,"A · EXCELLENT"], t2:92.80, ca:[20,16,16,16,20,88,"B+ · VERY GOOD"]},
+    {n:"CHRISTIAN RELIGIOUS STUDIES", e1:[18.84,19.60,53.00,91.44,80.11,92.10,69.40,"A · EXCELLENT"], e3:[19.40,18.40,54.60,92.40,92.40,28.10,"A · EXCELLENT"], t2:93.04, ca:[16,20,18.5,19.7,20,94.2,"A · EXCELLENT"]},
+    {n:"CITIZENSHIP & HERITAGE STUDIES", e1:[19.66,20.00,58.00,97.66,81.23,97.66,62.06,"A+ · DISTINCTION"], e3:[18.66,19.00,58.20,95.86,95.86,28.20,"A+ · DISTINCTION"], t2:94.06, ca:[20,20,20,18.3,20,98.3,"A+ · DISTINCTION"]},
+    {n:"DIGITAL TECHNOLOGY", e1:[19.60,20.00,54.00,93.60,72.89,93.60,58.20,"A · EXCELLENT"], e3:[19.20,18.80,44.00,82.00,90.60,39.60,"B · VERY GOOD"], t2:90.00, ca:[20,20,20,18,20,98,"A+ · DISTINCTION"]},
+    {n:"ENGLISH LANGUAGE", e1:[17.80,19.00,49.00,85.80,70.14,85.80,58.80,"B+ · VERY GOOD"], e3:[16.80,17.40,47.00,81.20,82.40,37.00,"B · VERY GOOD"], t2:85.80, ca:[18,17,17,19,18,89,"B+ · VERY GOOD"]},
+    {n:"FINE ART", e1:[17.00,19.00,58.30,94.30,84.66,94.30,69.60,"A · EXCELLENT"], e3:[18.00,20.00,54.50,92.50,92.50,34.40,"A · EXCELLENT"], t2:97.00, ca:[12,20,18,17,18,85,"B+ · VERY GOOD"]},
+    {n:"FRENCH", e1:[19.40,19.00,55.00,93.40,73.92,94.60,44.00,"A · EXCELLENT"], e3:[16.60,19.00,52.00,87.60,87.60,36.00,"B+ · VERY GOOD"], t2:69.20, ca:[20,20,20,17,20,97,"A+ · DISTINCTION"]},
+    {n:"HAUSA LANGUAGE", e1:[19.20,20.00,54.00,93.20,81.63,94.20,62.00,"A · EXCELLENT"], e3:[19.20,19.50,36.00,74.70,82.60,45.60,"C+ · GOOD"], t2:94.00, ca:[20,20,20,16,20,96,"A+ · DISTINCTION"]},
+    {n:"HISTORY", e1:[18.88,19.00,53.40,91.28,71.65,91.28,38.80,"A · EXCELLENT"], e3:[17.66,17.00,52.00,86.56,88.20,38.40,"A · EXCELLENT"], t2:89.80, ca:[19,20,19,18.4,18,94.4,"A · EXCELLENT"]},
+    {n:"HOME ECONOMICS", e1:[19.00,19.00,56.00,94.00,75.26,94.00,46.80,"A · EXCELLENT"], e3:[17.00,18.00,44.00,79.00,88.00,29.00,"C+ · GOOD"], t2:82.00, ca:[20,20,19,16,20,95,"A+ · DISTINCTION"]},
+    {n:"INTERMEDIATE SCIENCE", e1:[19.20,19.00,55.00,93.20,71.43,93.20,51.80,"A · EXCELLENT"], e3:[18.80,19.60,45.00,83.40,88.00,39.80,"B · VERY GOOD"], t2:89.40, ca:[20,20,20,16,20,96,"A+ · DISTINCTION"]},
+    {n:"MATHEMATICS", e1:[18.86,16.00,52.00,86.86,73.54,90.52,43.46,"B+ · VERY GOOD"], e3:[19.80,18.90,59.60,98.30,98.30,29.90,"A+ · DISTINCTION"], t2:89.00, ca:[20,20,16,18.3,20,94.3,"A · EXCELLENT"]},
+    {n:"MUSIC", e1:[19.60,13.00,54.00,86.60,65.51,86.60,54.20,"B+ · VERY GOOD"], e3:[18.80,18.00,56.00,92.80,92.80,43.80,"A · EXCELLENT"], t2:83.72, ca:[20,20,20,18,20,98,"A+ · DISTINCTION"]},
+    {n:"PHYSICAL & HEALTH EDUCATION", e1:[18.60,19.00,59.00,96.60,82.29,96.60,57.80,"A+ · DISTINCTION"], e3:[19.80,17.00,56.40,93.20,94.10,41.60,"A · EXCELLENT"], t2:99.40, ca:[16,18,20,19,20,93,"A · EXCELLENT"]}
+  ];
+  var AFF=[["Attentiveness",5],["Attitude to School Work",5],["Relationship with Others",5],["Neatness",5],["Punctuality",5]];
+  var PSY=[["Game",4],["Handling of Tools",5],["Hand Writing",5],["Sport",5],["Verbal",5]];
+  var GRADE=[["A+","95 – 100","DISTINCTION"],["A","90 – 94","EXCELLENT"],["B+","85 – 89","VERY GOOD"],["B","80 – 84","VERY GOOD"],
+    ["C+","70 – 79","GOOD"],["C","60 – 69","GOOD"],["D","55 – 59","PASS"],["E","50 – 54","FAIR"],["F","0 – 49","FAIL"]];
+  var TERM=[
+    {name:"First Term (07/09/2025 – 12/12/2025)", opened:130, attend:126, resume:"07/01/2026", sig:"05-12-2025"},
+    {name:"Second Term (07/01/2026 – 10/04/2026)", opened:118, attend:115, resume:"21/04/2026", sig:"08-04-2026"},
+    {name:"Third Term (21/04/2026 – 17/07/2026)", opened:112, attend:110, resume:"07/09/2026", sig:"15-07-2026"}
+  ];
+
+  var state={type:"ca",term:1};
+  function f2(n){return (Math.round(n*100)/100).toFixed(2);}
+  function m2(a,b){return (a+b)/2;}
+
+  function examRow(r){
+    var t1=r.e1[3], t2=r.t2, t3=r.e3[3];
+    if(state.term===1){
+      var e=r.e1;
+      return '<td class="num">'+f2(e[0])+'</td><td class="num">'+f2(e[1])+'</td><td class="num">'+f2(e[2])+
+        '</td><td class="num"><b>'+f2(e[3])+'</b></td><td class="num">'+f2(e[4])+
+        '</td><td class="num">'+f2(e[5])+'</td><td class="num">'+f2(e[6])+'</td><td class="rem">'+e[7]+'</td>';
+    }
+    if(state.term===2){
+      var ca1=m2(r.e1[0],r.e3[0]), ca2=m2(r.e1[1],r.e3[1]), ex=m2(r.e1[2],r.e3[2]);
+      var cum=(t1+t2)/2;
+      return '<td class="num">'+f2(ca1)+'</td><td class="num">'+f2(ca2)+'</td><td class="num">'+f2(ex)+
+        '</td><td class="num"><b>'+f2(t2)+'</b></td><td class="num">'+f2(t1)+
+        '</td><td class="num cum">'+f2(cum)+'</td><td class="num">'+f2(r.e1[5])+'</td><td class="num">'+f2(r.e1[6])+
+        '</td><td class="rem">'+r.e1[7]+'</td>';
+    }
+    // term 3
+    var e=r.e3; var cum3=(t1+t2+t3)/3;
+    return '<td class="num">'+f2(e[0])+'</td><td class="num">'+f2(e[1])+'</td><td class="num">'+f2(e[2])+
+      '</td><td class="num"><b>'+f2(e[3])+'</b></td><td class="num">'+f2(t2)+'</td><td class="num">'+f2(t1)+
+      '</td><td class="num cum">'+f2(cum3)+'</td><td class="num">'+f2(e[4])+'</td><td class="num">'+f2(e[5])+
+      '</td><td class="rem">'+e[6]+'</td>';
+  }
+
+  function render(){
+    var head=document.getElementById("subHead"), body=document.getElementById("subBody"), foot=document.getElementById("subFoot");
+    var t=TERM[state.term-1];
+
+    if(state.type==="ca"){
+      head.innerHTML='<tr><th class="s">Subject</th><th>Class<br>Work (20%)</th><th>Home<br>Work (20%)</th>'+
+        '<th>Weekly<br>Test (20%)</th><th>C.A.<br>Test (20%)</th><th>Project<br>Test (20%)</th><th>Total<br>(100%)</th><th>Remarks</th></tr>';
+      body.innerHTML=S.map(function(r){return '<tr><td class="s">'+r.n+'</td><td class="num">'+f2(r.ca[0])+'</td><td class="num">'+f2(r.ca[1])+
+        '</td><td class="num">'+f2(r.ca[2])+'</td><td class="num">'+f2(r.ca[3])+'</td><td class="num">'+f2(r.ca[4])+
+        '</td><td class="num"><b>'+f2(r.ca[5])+'</b></td><td class="rem">'+r.ca[6]+'</td></tr>';}).join("");
+      foot.innerHTML='<tr><td colspan="8">No of Subjects: 16 &nbsp;·&nbsp; Total Score: 1,502.20 &nbsp;·&nbsp; '+
+        'Student’s Average: 93.89% &nbsp;·&nbsp; Class Average: 80.77%</td></tr>';
+    } else {
+      var cols, span, cumLine="";
+      if(state.term===1){
+        cols='<th>CA 1<br>(20)</th><th>CA 2<br>(20)</th><th>Exam<br>(60)</th><th>Exam<br>Total (100)</th>'+
+             '<th>Subject<br>Average</th><th>Class<br>Highest</th><th>Class<br>Lowest</th><th>Remarks</th>'; span=9;
+        foot.innerHTML='<tr><td colspan="'+span+'">No of Subjects: 16 &nbsp;·&nbsp; Obtained: 1,460.74 &nbsp;·&nbsp; Obtainable: 1600 &nbsp;·&nbsp; Student’s Average: 91.30% &nbsp;·&nbsp; Class Average: 78.44%</td></tr>';
+      } else if(state.term===2){
+        cols='<th>CA 1<br>(20)</th><th>CA 2<br>(20)</th><th>Exam<br>(60)</th><th>Exam<br>Total (100)</th>'+
+             '<th>First Term<br>Total</th><th>Cumulative<br>Average</th><th>Class<br>Highest</th><th>Class<br>Lowest</th><th>Remarks</th>'; span=10;
+        foot.innerHTML='<tr><td colspan="'+span+'">No of Subjects: 16 &nbsp;·&nbsp; Obtained: 1,471.30 &nbsp;·&nbsp; Obtainable: 1600 &nbsp;·&nbsp; Student’s Average: 91.96% &nbsp;·&nbsp; Class Average: 75.60%</td></tr>'+
+          '<tr><td class="cumline" colspan="'+span+'">Student cumulative average: 91.60</td></tr>';
+      } else {
+        cols='<th>CA 1<br>(20)</th><th>CA 2<br>(20)</th><th>Exam<br>(60)</th><th>Exam<br>Total (100)</th>'+
+             '<th>Second Term<br>Total</th><th>First Term<br>Total</th><th>Cumulative<br>Average</th><th>Class<br>Highest</th><th>Class<br>Lowest</th><th>Remarks</th>'; span=11;
+        foot.innerHTML='<tr><td colspan="'+span+'">No of Subjects: 16 &nbsp;·&nbsp; Obtained: 1,409.02 &nbsp;·&nbsp; Obtainable: 1600 &nbsp;·&nbsp; Student’s Average: 88.06% &nbsp;·&nbsp; Class Average: 71.21%</td></tr>'+
+          '<tr><td class="cumline" colspan="'+span+'">Student cumulative average: 89.53</td></tr>';
+      }
+      head.innerHTML='<tr><th class="s">Subject</th>'+cols+'</tr>';
+      body.innerHTML=S.map(function(r){return '<tr><td class="s">'+r.n+'</td>'+examRow(r)+'</tr>';}).join("");
+    }
+
+    document.getElementById("bTerm").textContent=t.name;
+    document.getElementById("bOpened").textContent=t.opened;
+    document.getElementById("bAttend").textContent=t.attend;
+    document.getElementById("bResume").textContent=t.resume;
+    document.getElementById("sig1").textContent=t.sig;
+    document.getElementById("sig2").textContent=t.sig;
+    document.getElementById("ctRem").textContent = state.type==="ca"
+      ? "Sample remark — steady continuous-assessment work this term."
+      : "Sample remark — a good term; keep up the effort.";
+  }
+
+  document.getElementById("affBody").innerHTML=AFF.map(function(r){return '<div class="rr"><span>'+r[0]+'</span><span>'+r[1]+'</span></div>';}).join("");
+  document.getElementById("psyBody").innerHTML=PSY.map(function(r){return '<div class="rr"><span>'+r[0]+'</span><span>'+r[1]+'</span></div>';}).join("");
+  document.getElementById("gradeTbl").innerHTML=GRADE.map(function(r){return '<tr><td class="g">'+r[0]+'</td><td class="rg num">'+r[1]+'</td><td class="nm">'+r[2]+'</td></tr>';}).join("");
+
+  document.getElementById("typeCtl").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;
+    state.type=b.dataset.type;[].forEach.call(this.querySelectorAll("button"),function(x){x.classList.toggle("on",x===b);});render();});
+  document.getElementById("termCtl").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;
+    state.term=parseInt(b.dataset.term,10);[].forEach.call(this.querySelectorAll("button"),function(x){x.classList.toggle("on",x===b);});render();});
+  render();
+</script>
+</body>
+</html>
