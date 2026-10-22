@@ -7,18 +7,48 @@
 export type StaffType = "teaching" | "non_teaching";
 
 /**
- * employment_status. draft = Save Draft before Add Staff. Retire /
- * Terminate are the ONE leaving mechanism (no separate Resignation);
- * suspended is a status the list can filter on.
+ * employment_status. draft = Save Draft before Add Staff. Every other
+ * non-active status is a LEAVER category, set through the one Leaver
+ * flow (parallel to the students' Withdraw); Reinstate brings any leaver
+ * back to active.
  */
-export type StaffStatus = "draft" | "active" | "suspended" | "retired" | "terminated";
+export type StaffStatus = "draft" | "active" | "retired" | "terminated" | "resigned" | "absconded" | "suspended";
 
-export const STAFF_STATUSES: readonly StaffStatus[] = ["draft", "active", "suspended", "retired", "terminated"];
+export const STAFF_STATUSES: readonly StaffStatus[] = [
+  "draft",
+  "active",
+  "retired",
+  "terminated",
+  "resigned",
+  "absconded",
+  "suspended",
+];
 
-/** The Staffs list's Status filter choices — every employment status except draft. */
-export const STAFF_LIST_STATUSES: readonly StaffStatus[] = ["active", "suspended", "retired", "terminated"];
+/** The Leaver categories (what the admin picks) and the status each one sets. */
+export type StaffLeaverCategory = "retire" | "terminate" | "resign" | "abscond" | "suspend";
 
-export type StaffStatusAction = "retire" | "terminate";
+export const STAFF_LEAVER_CATEGORIES: readonly StaffLeaverCategory[] = ["retire", "terminate", "resign", "abscond", "suspend"];
+
+export const LEAVER_CATEGORY_STATUS: Record<StaffLeaverCategory, StaffStatus> = {
+  retire: "retired",
+  terminate: "terminated",
+  resign: "resigned",
+  abscond: "absconded",
+  suspend: "suspended",
+};
+
+/** Every leaver status — the Status filter's "Leavers" grouping. */
+export const STAFF_LEAVER_STATUSES: readonly StaffStatus[] = STAFF_LEAVER_CATEGORIES.map((category) => LEAVER_CATEGORY_STATUS[category]);
+
+export function isLeaverStatus(status: StaffStatus): boolean {
+  return STAFF_LEAVER_STATUSES.includes(status);
+}
+
+/** The Staff list's statuses — every employment status except draft. */
+export const STAFF_LIST_STATUSES: readonly StaffStatus[] = ["active", ...STAFF_LEAVER_STATUSES];
+
+/** The two status actions: apply a leaver category, or reinstate. Each is recorded as a staff status event. */
+export type StaffStatusEventType = "leaver" | "reinstate";
 
 /**
  * One teaching allocation. A staff holds any number; the same subject may
@@ -129,11 +159,15 @@ export type Staff = {
   login_active: boolean;
   /** Set when credentials are issued/reset AND the school has 2FA on — otherwise no forced change. */
   must_change_password: boolean;
+  /** When credentials were issued — null = never issued (no username yet). */
+  credentials_issued_at: string | null;
+  /** Last reset to the default password, if any. */
+  password_reset_at: string | null;
   last_active_at: string | null;
 
   // Latest status change (Retire / Terminate)
   status_reason: string | null;
-  status_effective_on: string | null;
+  status_effective_date: string | null;
 
   created_at: string;
   updated_at: string;
@@ -154,14 +188,31 @@ export type StaffWriteBody = Omit<
   | "must_change_password"
   | "last_active_at"
   | "status_reason"
-  | "status_effective_on"
+  | "status_effective_date"
+  | "credentials_issued_at"
+  | "password_reset_at"
   | "assignments_academic_year_id"
   | "assignments_carried_forward_from"
   | "created_at"
   | "updated_at"
 > & { academic_year_id: string | null };
 
-export type StaffStatusBody = { reason: string; effective_on: string };
+/** POST /staff/:id/leaver */
+export type StaffLeaverBody = { category: StaffLeaverCategory; effective_date: string; reason: string };
+
+/** POST /staff/:id/reinstate */
+export type StaffReinstateBody = { effective_date: string; reason: string };
+
+/** One staff_status_event — the history behind employment_status, oldest first. category: leaver events only. */
+export type StaffStatusEvent = {
+  type: StaffStatusEventType;
+  category: StaffLeaverCategory | null;
+  from_status: StaffStatus | null;
+  to_status: StaffStatus | null;
+  reason: string | null;
+  effective_date: string | null;
+  created_at: string | null;
+};
 
 export type StaffPost = {
   id: string;

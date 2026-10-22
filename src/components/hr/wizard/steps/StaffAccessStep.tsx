@@ -18,6 +18,10 @@ type StepProps = {
   errors: FieldErrors;
   refs: HrReferenceData;
   mode: "create" | "edit";
+  /** Edit mode: credentials exist (else they're issued from the profile, not here). */
+  credentialsIssued: boolean;
+  /** Edit mode: login can only be ON for an active staff. */
+  isActiveStaff: boolean;
 };
 
 /**
@@ -27,7 +31,7 @@ type StepProps = {
  * follows the email until edited. On edit, credentials aren't re-issued
  * (reset lives on the staff profile).
  */
-export function StaffAccessStep({ form, onChange, errors, refs, mode }: StepProps) {
+export function StaffAccessStep({ form, onChange, errors, refs, mode, credentialsIssued, isActiveStaff }: StepProps) {
   const t = useTranslations();
   const username = effectiveUsername(form);
 
@@ -51,35 +55,72 @@ export function StaffAccessStep({ form, onChange, errors, refs, mode }: StepProp
       </StaffStepSection>
 
       <StaffStepSection title={t("hr.wizard.sections.login.title")} subtitle={t("hr.wizard.sections.login.subtitle")}>
-        <Toggle
-          id="staff-login-active"
-          label={t("hr.wizard.fields.loginActive.label")}
-          helper={t("hr.wizard.fields.loginActive.helper")}
-          checked={form.login_active}
-          onChange={(checked) => onChange({ login_active: checked })}
-        />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <InputField
-            id="staff-username"
-            label={t("hr.wizard.fields.username.label")}
-            placeholder={t("hr.wizard.fields.username.placeholder")}
-            value={username}
-            onChange={(event) => onChange({ username: event.target.value, username_edited: true })}
-            hasError={!!errors.username}
-            error={errors.username ? t(errors.username) : undefined}
+        {mode === "edit" && !credentialsIssued ? (
+          <p className="text-sm text-text-muted">{t("hr.wizard.login.notIssued")}</p>
+        ) : (
+          <LoginFields
+            form={form}
+            onChange={onChange}
+            errors={errors}
+            mode={mode}
+            isActiveStaff={isActiveStaff}
+            username={username}
           />
-          {mode === "create" ? (
-            <InputField id="staff-password" label={t("hr.wizard.fields.password.label")} value={DEFAULT_PASSWORD} readOnly disabled />
-          ) : null}
-        </div>
-        <p className="text-xs text-text-muted">
-          {mode === "edit"
-            ? t("hr.wizard.login.editNote")
-            : SCHOOL_TWO_FACTOR_ENABLED
-              ? t("hr.wizard.login.forcedChange")
-              : t("hr.wizard.login.noForcedChange")}
-        </p>
+        )}
       </StaffStepSection>
     </div>
+  );
+}
+
+function LoginFields({
+  form,
+  onChange,
+  errors,
+  mode,
+  isActiveStaff,
+  username,
+}: Pick<StepProps, "form" | "onChange" | "errors" | "mode" | "isActiveStaff"> & { username: string }) {
+  const t = useTranslations();
+  const loginLocked = mode === "edit" && !isActiveStaff;
+  return (
+    <>
+      <Toggle
+        id="staff-login-active"
+        label={t("hr.wizard.fields.loginActive.label")}
+        helper={t("hr.wizard.fields.loginActive.helper")}
+        checked={form.login_active && !loginLocked}
+        onChange={(checked) => {
+          if (!loginLocked) onChange({ login_active: checked });
+        }}
+      />
+      {loginLocked ? <p className="text-xs text-text-muted">{t("hr.profile.login.offWhileInactive")}</p> : null}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <InputField
+          id="staff-username"
+          label={t("hr.wizard.fields.username.label")}
+          placeholder={t("hr.wizard.fields.username.placeholder")}
+          value={username}
+          onChange={(event) => onChange({ username: event.target.value, username_edited: true })}
+          hasError={!!errors.username}
+          error={errors.username ? t(errors.username) : undefined}
+        />
+        {mode === "create" ? (
+          <InputField
+            id="staff-password"
+            label={t("hr.wizard.fields.password.label")}
+            value={DEFAULT_PASSWORD}
+            readOnly
+            disabled
+          />
+        ) : null}
+      </div>
+      <p className="text-xs text-text-muted">
+        {mode === "edit"
+          ? t("hr.wizard.login.editNote")
+          : SCHOOL_TWO_FACTOR_ENABLED
+            ? t("hr.wizard.login.forcedChange")
+            : t("hr.wizard.login.noForcedChange")}
+      </p>
+    </>
   );
 }

@@ -47,6 +47,9 @@ const CONFLICT_CODES = new Set([
   "PERMISSION_GROUP_IN_USE",
   "NOT_A_DRAFT",
   "INVALID_STATUS_TRANSITION",
+  "CREDENTIALS_ALREADY_ISSUED",
+  "CREDENTIALS_NOT_ISSUED",
+  "STAFF_NOT_ACTIVE",
 ]);
 
 /** Body fields a 422 VALIDATION_ERROR can be pinned to; anything else stays a banner. The field name LEADS the message (Student Core's confirmed convention). */
@@ -60,7 +63,7 @@ const VALIDATION_FIELDS = new Set([
   "post_id",
   "staff_type",
   "reason",
-  "effective_on",
+  "effective_date",
 ]);
 
 function fieldFromValidationMessage(message: string | null): string | null {

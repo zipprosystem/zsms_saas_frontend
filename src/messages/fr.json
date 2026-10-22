@@ -1160,9 +1160,11 @@
       "status": {
         "draft": "Brouillon",
         "active": "Actif",
-        "suspended": "Suspendu",
         "retired": "Retraité",
-        "terminated": "Licencié"
+        "terminated": "Licencié",
+        "resigned": "Démissionnaire",
+        "absconded": "Abandon de poste",
+        "suspended": "Suspendu"
       },
       "columns": {
         "sn": "N°",
@@ -1188,7 +1190,9 @@
         "status": "Statut",
         "allStatuses": "Tous les statuts",
         "subject": "Matière",
-        "allSubjects": "Toutes les matières"
+        "allSubjects": "Toutes les matières",
+        "leavers": "Départs (tous)",
+        "leaverCategory": "— {status}"
       },
       "pageSize": {
         "label": "Lignes par page",
@@ -1202,7 +1206,9 @@
       "emptyNonTeaching": "Aucun personnel non enseignant ne correspond.",
       "loadError": "Impossible de charger le personnel. Veuillez réessayer.",
       "actions": {
-        "resume": "Reprendre"
+        "resume": "Reprendre",
+        "view": "Voir",
+        "menuLabel": "Actions pour {name}"
       },
       "toast": {
         "draftDeleted": "Brouillon supprimé"
@@ -1572,7 +1578,8 @@
       "login": {
         "forcedChange": "Le membre se connecte avec ce mot de passe et doit le changer à la première connexion (l'authentification à deux facteurs est activée pour l'école).",
         "noForcedChange": "Le membre se connecte avec ce mot de passe. Les mots de passe ne sont plus jamais affichés ni exportés.",
-        "editNote": "Pour réinitialiser le mot de passe de ce membre, utilisez sa fiche."
+        "editNote": "Pour réinitialiser le mot de passe de ce membre, utilisez sa fiche.",
+        "notIssued": "Aucun identifiant n'a encore été créé — créez-les depuis la fiche du membre."
       },
       "autoSave": {
         "saved": "Brouillon enregistré",
@@ -1605,6 +1612,96 @@
         "invalidField": "Vérifiez ce champ",
         "draftNeedsName": "Saisissez un prénom et un nom pour enregistrer un brouillon",
         "nationalIdTooLong": "Le numéro d'identité doit comporter 32 caractères au maximum"
+      }
+    },
+    "status": {
+      "goBack": "Retour",
+      "reason": {
+        "label": "Note / motif",
+        "placeholder": "Pourquoi ce changement ?"
+      },
+      "category": {
+        "label": "Catégorie",
+        "placeholder": "Choisir une catégorie",
+        "retire": "Retraite",
+        "terminate": "Licenciement",
+        "resign": "Démission",
+        "abscond": "Abandon de poste",
+        "suspend": "Suspension"
+      },
+      "dateLabel": {
+        "default": "Date d'effet",
+        "retire": "Date de retraite",
+        "terminate": "Date de fin de contrat",
+        "resign": "Date de démission",
+        "abscond": "Date d'abandon de poste",
+        "suspend": "Date de suspension"
+      },
+      "errors": {
+        "dateRequired": "Choisissez une date",
+        "reasonRequired": "Saisissez une note ou un motif",
+        "categoryRequired": "Choisissez une catégorie",
+        "invalid": "Vérifiez ce champ"
+      },
+      "leaver": {
+        "menu": "Départ",
+        "title": "Enregistrer un départ",
+        "message": "Retirer {name} de l'effectif actif. Sa connexion est désactivée.",
+        "confirm": "Confirmer le départ",
+        "event": "Départ — {category}"
+      },
+      "reinstate": {
+        "menu": "Réintégrer",
+        "title": "Réintégrer le membre",
+        "message": "Réintégrer {name} dans l'effectif actif ? Sa connexion reste désactivée jusqu'à ce que vous la réactiviez depuis sa fiche.",
+        "confirm": "Réintégrer",
+        "event": "Réintégré"
+      },
+      "toast": {
+        "leaver": "{name} : {status}",
+        "reinstate": "{name} réintégré"
+      }
+    },
+    "profile": {
+      "title": "Fiche du membre",
+      "untitled": "Membre sans nom",
+      "loadError": "Impossible de charger ce membre. Veuillez réessayer.",
+      "noDepartments": "Aucun département",
+      "statusNote": "{status} depuis le {date} — {reason}",
+      "assignments": {
+        "noYear": "Sélectionnez une année académique dans l'en-tête pour voir les affectations.",
+        "forYear": "Pour {year}.",
+        "carried": "Pré-rempli depuis {from} — pas encore enregistré pour cette année."
+      },
+      "noGroups": "Dans aucun groupe de permissions.",
+      "unknownGroup": "Groupe inconnu",
+      "login": {
+        "issue": "Créer les identifiants",
+        "reset": "Réinitialiser",
+        "draft": "Les identifiants sont créés à l'ajout du membre.",
+        "notIssued": "Aucun identifiant n'a encore été créé.",
+        "notIssuedInactive": "Aucun identifiant — réintégrez le membre pour en créer.",
+        "issuedAt": "Créés le",
+        "resetAt": "Dernière réinitialisation",
+        "neverReset": "Jamais",
+        "password": "Mot de passe",
+        "passwordIndicator": "Mot de passe par défaut au départ ({password}) — jamais affiché ni exporté",
+        "offWhileInactive": "La connexion reste désactivée tant que le membre n'est pas actif.",
+        "issueTitle": "Créer les identifiants",
+        "issueMessage": "Le membre se connecte avec ce nom d'utilisateur et le mot de passe par défaut ({password}).",
+        "resetTitle": "Réinitialiser le mot de passe ?",
+        "resetMessage": "Le mot de passe de {name} revient à la valeur par défaut ({password}). Communiquez-le directement.",
+        "toast": {
+          "issued": "Identifiants créés",
+          "reset": "Mot de passe réinitialisé",
+          "activated": "Connexion activée",
+          "deactivated": "Connexion désactivée"
+        }
+      },
+      "history": {
+        "title": "Historique du statut",
+        "empty": "Aucun changement de statut.",
+        "dates": "Effet le {effective} · enregistré le {recorded}"
       }
     }
   },

@@ -11,7 +11,9 @@ const STATUS_CLASSES: Record<StaffStatus, string> = {
   draft: "bg-category-amber-tint text-warning",
   suspended: "bg-category-amber-tint text-warning",
   retired: "border border-border text-text-secondary",
+  resigned: "border border-border text-text-secondary",
   terminated: "border border-error text-error",
+  absconded: "border border-error text-error",
 };
 
 export function StaffStatusBadge({ status }: { status: StaffStatus }) {

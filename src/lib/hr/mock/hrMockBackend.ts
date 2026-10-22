@@ -2,9 +2,14 @@ import { mockDelay } from "@/lib/onboarding/mockDelay";
 import { academicYearsService } from "@/lib/setup/academicStructure/academicYearsApi";
 import { normalizePermissions } from "@/lib/hr/permissionCatalog";
 import {
+  isLeaverStatus,
+  LEAVER_CATEGORY_STATUS,
+  STAFF_LEAVER_CATEGORIES,
   STAFF_STATUSES,
   type PermissionGroup,
   type Staff,
+  type StaffLeaverCategory,
+  type StaffStatusEvent,
   type StaffClassTeacherAssignment,
   type StaffPost,
   type StaffStatus,
@@ -40,6 +45,12 @@ import { SCHOOL_TWO_FACTOR_ENABLED } from "@/lib/hr/schoolSecurity";
  *   PUT    erp/staff/:id             body — edit a non-draft staff
  *   DELETE erp/staff/:id             drafts only (409 NOT_A_DRAFT) — a real staff
  *                                    leaves via Retire/Terminate, never a delete
+ *   POST   erp/staff/:id/leaver     { category, effective_date, reason } — see applyLeaver
+ *   POST   erp/staff/:id/reinstate  { effective_date, reason }
+ *   GET    erp/staff/:id/status-events  oldest-first staff_status_event list
+ *   POST   erp/staff/:id/credentials           issue  — see handleCredentials
+ *   POST   erp/staff/:id/credentials/reset     reset to the default password
+ *   PATCH  erp/staff/:id/credentials/activate  { active }
  *   GET/POST          erp/staff-posts            { name, is_active }
  *   PUT/DELETE        erp/staff-posts/:id        DELETE 409 STAFF_POST_IN_USE while any staff holds it
  *   GET/POST          erp/permission-groups      { name, permissions[], member_staff_ids[] }
@@ -70,9 +81,10 @@ import { SCHOOL_TWO_FACTOR_ENABLED } from "@/lib/hr/schoolSecurity";
  * stores assignments, it never enforces anything.
  */
 
-// v2: staff rows now store assignments per year. Bumping the prefix
-// re-seeds the mock rather than migrating test data.
-const STORAGE_PREFIX = "zsms.mockHr.v2";
+// Bumping the prefix re-seeds the mock rather than migrating test data
+// (v2: assignments per year).
+// v4: Leaver categories (v3: status events + credential timestamps). Re-seeds; test data resets.
+const STORAGE_PREFIX = "zsms.mockHr.v4";
 const REQUEST_LIMIT_MAX = 200;
 
 
@@ -82,7 +94,7 @@ type YearAssignments = {
   saved_at: string;
 };
 
-/** How a staff row is stored: assignments keyed by year, membership kept on the groups. */
+/** How a staff row is stored: assignments keyed by year, membership kept on the groups, status history alongside. */
 type StoredStaff = Omit<
   Staff,
   | "subject_assignments"
@@ -90,7 +102,7 @@ type StoredStaff = Omit<
   | "assignments_academic_year_id"
   | "assignments_carried_forward_from"
   | "permission_group_ids"
-> & { assignments_by_year: Record<string, YearAssignments> };
+> & { assignments_by_year: Record<string, YearAssignments>; status_events: StaffStatusEvent[] };
 
 type Tables = {
   staff: StoredStaff[];
@@ -108,7 +120,22 @@ function toStored(staff: Staff): StoredStaff {
   delete rest.assignments_academic_year_id;
   delete rest.assignments_carried_forward_from;
   delete rest.permission_group_ids;
-  return { ...(rest as Omit<StoredStaff, "assignments_by_year">), assignments_by_year: {} };
+  // A seeded leaver gets the one Leaver event that explains its status.
+  const category = STAFF_LEAVER_CATEGORIES.find((item) => LEAVER_CATEGORY_STATUS[item] === staff.status) ?? null;
+  const status_events: StaffStatusEvent[] = category
+    ? [
+        {
+          type: "leaver",
+          category,
+          from_status: "active",
+          to_status: staff.status,
+          reason: staff.status_reason,
+          effective_date: staff.status_effective_date,
+          created_at: staff.updated_at,
+        },
+      ]
+    : [];
+  return { ...(rest as Omit<StoredStaff, "assignments_by_year" | "status_events">), assignments_by_year: {}, status_events };
 }
 
 const SEEDS: Tables = {
@@ -233,7 +260,8 @@ function priorYearWithAssignments(
 
 /** The staff record as the API returns it for `yearId`: that year's sets (or carried forward), membership from the groups. */
 function staffForRead(staff: StoredStaff, yearId: string | null, starts: Map<string, string>): Staff {
-  const { assignments_by_year: byYear, ...rest } = staff;
+  const { assignments_by_year: byYear, status_events: _events, ...rest } = staff;
+  void _events;
   let sets: Pick<YearAssignments, "subject_assignments" | "class_teacher_assignments"> = {
     subject_assignments: [],
     class_teacher_assignments: [],
@@ -306,7 +334,23 @@ async function listStaff(query: URLSearchParams): Promise<WireResponse> {
 // Staff — writes
 // ---------------------------------------------------------------------------
 
-type StaffFields = Omit<StoredStaff, "id" | "staff_no" | "status" | "draft_last_step" | "assignments_by_year" | "created_at" | "updated_at" | "last_active_at" | "must_change_password" | "status_reason" | "status_effective_on">;
+type StaffFields = Omit<
+  StoredStaff,
+  | "id"
+  | "staff_no"
+  | "status"
+  | "draft_last_step"
+  | "assignments_by_year"
+  | "status_events"
+  | "created_at"
+  | "updated_at"
+  | "last_active_at"
+  | "must_change_password"
+  | "credentials_issued_at"
+  | "password_reset_at"
+  | "status_reason"
+  | "status_effective_date"
+>;
 
 type ParsedBody = {
   fields: StaffFields;
@@ -495,11 +539,16 @@ function nextStaffNo(): string {
 }
 
 /** Issue credentials on finalize: username defaults to the email; forced change only with 2FA on. Password is the backend's default (123456), never returned. */
-function withCredentials(fields: StaffFields): Pick<StoredStaff, "username" | "login_active" | "must_change_password"> {
+function withCredentials(
+  fields: StaffFields,
+  now: string,
+): Pick<StoredStaff, "username" | "login_active" | "must_change_password" | "credentials_issued_at" | "password_reset_at"> {
   return {
     username: fields.username || fields.email,
     login_active: fields.login_active,
-    must_change_password: fields.login_active && SCHOOL_TWO_FACTOR_ENABLED,
+    must_change_password: SCHOOL_TWO_FACTOR_ENABLED,
+    credentials_issued_at: now,
+    password_reset_at: null,
   };
 }
 
@@ -514,6 +563,146 @@ async function respondWithStaff(staff: StoredStaff, yearId: string | null, statu
 
 function replaceStaff(next: StoredStaff): void {
   save("staff", load("staff").map((staff) => (staff.id === next.id ? next : staff)));
+}
+
+// ---------------------------------------------------------------------------
+// Staff — status actions (staff_status_event) and credentials
+// ---------------------------------------------------------------------------
+
+/**
+ * ONE Leaver flow (parallel to the students' Withdraw) + Reinstate:
+ *   POST /staff/:id/leaver     { category, effective_date, reason }
+ *     category: retire | terminate | resign | abscond | suspend, setting
+ *     retired | terminated | resigned | absconded | suspended.
+ *     Allowed from active, or from suspended into any OTHER category (a
+ *     suspension can end in a retirement/termination/resignation/...);
+ *     any other leaver must be reinstated first (409
+ *     INVALID_STATUS_TRANSITION).
+ *   POST /staff/:id/reinstate  { effective_date, reason } — any leaver -> active.
+ * reason + effective_date (YYYY-MM-DD) required on both. Leaving turns
+ * login OFF; reinstating does NOT turn it back on (the admin re-enables
+ * login explicitly). The status changes when the action is recorded — a
+ * future effective_date is stored as-is, not scheduled (open item).
+ * Each action appends a staff_status_event { type, category, from/to, reason, effective_date }.
+ */
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function readReasonAndDate(payload: unknown): { reason: string; effectiveDate: string } | WireResponse {
+  const body = record(payload);
+  const reason = text(body.reason);
+  const effectiveDate = text(body.effective_date);
+  if (!reason) return fail(422, "VALIDATION_ERROR", "reason is required");
+  if (!DATE_PATTERN.test(effectiveDate)) return fail(422, "VALIDATION_ERROR", "effective_date is required (YYYY-MM-DD)");
+  return { reason, effectiveDate };
+}
+
+async function applyLeaver(existing: StoredStaff, payload: unknown, now: string): Promise<WireResponse> {
+  const category = STAFF_LEAVER_CATEGORIES.find((item) => item === record(payload).category) as StaffLeaverCategory | undefined;
+  if (!category) return fail(422, "VALIDATION_ERROR", "category must be one of retire, terminate, resign, abscond, suspend");
+  const to = LEAVER_CATEGORY_STATUS[category];
+  const allowed = existing.status === "active" || (existing.status === "suspended" && to !== "suspended");
+  if (!allowed) {
+    return fail(409, "INVALID_STATUS_TRANSITION", `A ${existing.status} staff can't be moved to ${to} — reinstate them first`);
+  }
+  const input = readReasonAndDate(payload);
+  if ("status" in input) return input;
+  return recordStatusChange(existing, { type: "leaver", category, to, ...input }, now);
+}
+
+async function applyReinstate(existing: StoredStaff, payload: unknown, now: string): Promise<WireResponse> {
+  if (!isLeaverStatus(existing.status)) {
+    return fail(409, "INVALID_STATUS_TRANSITION", `A ${existing.status} staff can't be reinstated`);
+  }
+  const input = readReasonAndDate(payload);
+  if ("status" in input) return input;
+  return recordStatusChange(existing, { type: "reinstate", category: null, to: "active", ...input }, now);
+}
+
+async function recordStatusChange(
+  existing: StoredStaff,
+  change: { type: StaffStatusEvent["type"]; category: StaffLeaverCategory | null; to: StaffStatus; reason: string; effectiveDate: string },
+  now: string,
+): Promise<WireResponse> {
+  const isLeaving = change.type === "leaver";
+  const event: StaffStatusEvent = {
+    type: change.type,
+    category: change.category,
+    from_status: existing.status,
+    to_status: change.to,
+    reason: change.reason,
+    effective_date: change.effectiveDate,
+    created_at: now,
+  };
+  const next: StoredStaff = {
+    ...existing,
+    status: change.to,
+    status_reason: isLeaving ? change.reason : null,
+    status_effective_date: isLeaving ? change.effectiveDate : null,
+    login_active: isLeaving ? false : existing.login_active,
+    status_events: [...(existing.status_events ?? []), event],
+    updated_at: now,
+  };
+  replaceStaff(next);
+  return respondWithStaff(next, null);
+}
+
+/**
+ *   POST  erp/staff/:id/credentials           { username? } issue — 409 CREDENTIALS_ALREADY_ISSUED;
+ *                                             username defaults to the email; login ON
+ *   POST  erp/staff/:id/credentials/reset     back to the default password (123456) — 409 CREDENTIALS_NOT_ISSUED
+ *   PATCH erp/staff/:id/credentials/activate  { active } — turning ON needs an active staff (409 STAFF_NOT_ACTIVE)
+ * Issue/reset set must_change_password only when the school has 2FA on.
+ * No route ever returns a password.
+ */
+function handleCredentials(
+  method: HttpMethod,
+  existing: StoredStaff,
+  sub: string | null,
+  payload: unknown,
+  now: string,
+): Promise<WireResponse> | WireResponse {
+  const issued = !!existing.credentials_issued_at;
+  if (existing.status === "draft") return fail(409, "NOT_A_DRAFT", "Add the staff before issuing credentials");
+
+  if (method === "POST" && !sub) {
+    if (issued) return fail(409, "CREDENTIALS_ALREADY_ISSUED", "Credentials were already issued — reset them instead");
+    if (existing.status !== "active") return fail(409, "STAFF_NOT_ACTIVE", "Only an active staff can be issued credentials");
+    const username = (text(record(payload).username) || existing.email || "").toLowerCase();
+    if (!username) return fail(422, "VALIDATION_ERROR", "username is required");
+    if (/\s/.test(username)) return fail(422, "VALIDATION_ERROR", "username must not contain spaces");
+    if (load("staff").some((staff) => staff.id !== existing.id && staff.username?.toLowerCase() === username)) {
+      return fail(409, "USERNAME_TAKEN", "This username is already taken");
+    }
+    const next: StoredStaff = {
+      ...existing,
+      username,
+      login_active: true,
+      must_change_password: SCHOOL_TWO_FACTOR_ENABLED,
+      credentials_issued_at: now,
+      password_reset_at: null,
+      updated_at: now,
+    };
+    replaceStaff(next);
+    return respondWithStaff(next, null);
+  }
+
+  if (!issued) return fail(409, "CREDENTIALS_NOT_ISSUED", "Issue credentials first");
+
+  if (method === "POST" && sub === "reset") {
+    const next: StoredStaff = { ...existing, must_change_password: SCHOOL_TWO_FACTOR_ENABLED, password_reset_at: now, updated_at: now };
+    replaceStaff(next);
+    return respondWithStaff(next, null);
+  }
+
+  if (method === "PATCH" && sub === "activate") {
+    const active = record(payload).active === true;
+    if (active && existing.status !== "active") return fail(409, "STAFF_NOT_ACTIVE", "Only an active staff can have login turned on");
+    const next: StoredStaff = { ...existing, login_active: active, updated_at: now };
+    replaceStaff(next);
+    return respondWithStaff(next, null);
+  }
+
+  return fail(405, "METHOD_NOT_ALLOWED", "Method not allowed");
 }
 
 async function handleStaff(
@@ -537,11 +726,15 @@ async function handleStaff(
       staff_no: isDraft ? null : nextStaffNo(),
       status: isDraft ? "draft" : "active",
       draft_last_step: isDraft ? currentStep(payload) : null,
-      ...(isDraft ? { must_change_password: false } : withCredentials(parsed.fields)),
+      // A draft keeps the intended username/login toggle, but nothing is issued until finalize.
+      ...(isDraft
+        ? { must_change_password: false, credentials_issued_at: null, password_reset_at: null }
+        : withCredentials(parsed.fields, now)),
       last_active_at: null,
       status_reason: null,
-      status_effective_on: null,
+      status_effective_date: null,
       assignments_by_year: {},
+      status_events: [],
       created_at: now,
       updated_at: now,
     };
@@ -578,7 +771,7 @@ async function handleStaff(
       {
         ...existing,
         ...parsed.fields,
-        ...withCredentials(parsed.fields),
+        ...withCredentials(parsed.fields, now),
         staff_no: existing.staff_no ?? nextStaffNo(),
         status: "active",
         draft_last_step: null,
@@ -597,12 +790,16 @@ async function handleStaff(
     const parsed = parseBody(payload);
     const invalid = validateCommon(parsed, existing.id) ?? validateFinal(parsed);
     if (invalid) return invalid;
-    // Edit never re-issues credentials; username/login_active are plain edits.
+    // Edit never issues or re-issues credentials (that's POST
+    // /credentials). With credentials, username is an admin override; login
+    // can only be ON for an active staff (leaving the roster turns it off).
+    const issued = !!existing.credentials_issued_at;
     const next = withYearAssignments(
       {
         ...existing,
         ...parsed.fields,
-        username: parsed.fields.username || existing.username || parsed.fields.email,
+        username: issued ? parsed.fields.username || existing.username : null,
+        login_active: issued && existing.status === "active" ? parsed.fields.login_active : false,
         updated_at: now,
       },
       parsed,
@@ -612,6 +809,13 @@ async function handleStaff(
     applyMemberships(next.id, parsed.permissionGroupIds);
     return respondWithStaff(next, parsed.yearId);
   }
+
+  if (method === "GET" && action === "status-events") return ok(existing.status_events ?? []);
+
+  if (method === "POST" && action === "leaver") return applyLeaver(existing, payload, now);
+  if (method === "POST" && action === "reinstate") return applyReinstate(existing, payload, now);
+
+  if (action === "credentials") return handleCredentials(method, existing, (rest ?? "").split("/")[2] ?? null, payload, now);
 
   if (method === "DELETE" && !action) {
     if (existing.status !== "draft") return fail(409, "NOT_A_DRAFT", "Only a draft can be deleted");

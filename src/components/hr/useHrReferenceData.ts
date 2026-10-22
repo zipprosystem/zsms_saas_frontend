@@ -17,7 +17,7 @@ import { permissionGroupsService } from "@/lib/hr/permissionGroupsApi";
 import type { PermissionGroup, StaffPost } from "@/lib/hr/hrTypes";
 
 /**
- * Everything the Staffs list and the Add/Edit wizard resolve names / pick
+ * Everything the Staff list and the Add/Edit wizard resolve names / pick
  * options from. HR masters (posts, groups) are MOCK; departments, subjects
  * and the year's classes / arms / class subjects are the REAL Academic
  * APIs — empty under dev-bypass (`academicUnavailable` says so, so the

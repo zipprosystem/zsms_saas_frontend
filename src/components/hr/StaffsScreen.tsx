@@ -26,12 +26,21 @@ import {
   type StaffPageSize,
 } from "@/lib/hr/staffRecordsApi";
 import { permissionGroupsQueryKey } from "@/lib/hr/permissionGroupsApi";
-import { STAFF_LIST_STATUSES, type Staff, type StaffStatus } from "@/lib/hr/hrTypes";
+import {
+  STAFF_LEAVER_STATUSES,
+  STAFF_LIST_STATUSES,
+  type Staff,
+  type StaffStatus,
+  type StaffStatusEventType,
+} from "@/lib/hr/hrTypes";
 import { StaffsHeader } from "@/components/hr/StaffsHeader";
 import { StaffTypeTabs, type StaffListView } from "@/components/hr/StaffTypeTabs";
 import { ClassArmChip, StaffAvatar, StaffStatusBadge } from "@/components/hr/StaffBadges";
 import { useHrReferenceData } from "@/components/hr/useHrReferenceData";
 import { clampToStaffStep, type StaffWizardStep } from "@/components/hr/wizard/staffForm";
+import { StaffRowActionsMenu } from "@/components/hr/StaffRowActionsMenu";
+import { StaffStatusDialog } from "@/components/hr/StaffStatusDialog";
+import { StaffProfile } from "@/components/hr/StaffProfile";
 
 // Lazy-loaded — the wizard is the biggest chunk here and most visits just
 // browse the list (same reasoning as the Students wizard).
@@ -47,7 +56,10 @@ const StaffWizard = dynamic(() => import("@/components/hr/wizard/StaffWizard").t
 /** Search is sent server-side, so wait for typing to pause before re-querying. */
 const SEARCH_DEBOUNCE_MS = 300;
 
-/** The roster by default — retired/terminated/suspended staff drop out of it, reachable via the Status filter. Drafts have no Status filter. */
+/** Status filter value for the "Leavers" grouping (every non-active category) — like the students' Withdrawn grouping. */
+const LEAVERS_FILTER = "leavers";
+
+/** The roster by default — leavers drop out of it, reachable via the Status filter (Leavers, or one category). Drafts have no Status filter. */
 function defaultFilters(view: StaffListView): Record<string, string> {
   return view === "drafts" ? {} : { status: "active" };
 }
@@ -67,7 +79,7 @@ type WizardState =
   | { mode: "edit"; staff: Staff };
 
 /**
- * HR › Staffs list (Figma 3347:61729). Mirrors the Students list
+ * HR › Staff list (Figma 3347:61729). Mirrors the Students list
  * discipline: paging, staff_type (the tab), status, department, subject
  * and search are all server params (listStaffPage → GET erp/staff), with
  * page sizes up to "All" assembled from 200-row requests. Runs against the
@@ -99,6 +111,8 @@ export function StaffsScreen() {
   const [wizardState, setWizardState] = useState<WizardState | null>(null);
   const [openingStaffId, setOpeningStaffId] = useState<string | null>(null);
   const [deleteDraftTarget, setDeleteDraftTarget] = useState<Staff | null>(null);
+  const [profileStaffId, setProfileStaffId] = useState<string | null>(null);
+  const [statusTarget, setStatusTarget] = useState<{ staff: Staff; action: StaffStatusEventType } | null>(null);
   const [isDeletingDraft, setIsDeletingDraft] = useState(false);
   const isDrafts = view === "drafts";
 
@@ -116,12 +130,14 @@ export function StaffsScreen() {
     setPage(1);
   }
 
-  const statusFilter = filters.status as StaffStatus | undefined;
+  const statusFilter = filters.status;
   const statuses: StaffStatus[] = isDrafts
     ? ["draft"]
-    : statusFilter && STAFF_LIST_STATUSES.includes(statusFilter)
-      ? [statusFilter]
-      : [...STAFF_LIST_STATUSES];
+    : statusFilter === LEAVERS_FILTER
+      ? [...STAFF_LEAVER_STATUSES]
+      : statusFilter && STAFF_LIST_STATUSES.includes(statusFilter as StaffStatus)
+        ? [statusFilter as StaffStatus]
+        : [...STAFF_LIST_STATUSES];
   const pageParams: StaffPageParams = {
     academicYearId: selectedYearId ?? undefined,
     staffType: isDrafts ? undefined : view,
@@ -165,6 +181,7 @@ export function StaffsScreen() {
   // Resume/Edit always re-fetch the full record for the selected year (the
   // wizard sends the COMPLETE record back, so a list row must never seed it).
   const openStaff = async (row: Staff, intent: "resume" | "edit") => {
+    setProfileStaffId(null);
     if (openingStaffId) return;
     setOpeningStaffId(row.id);
     const result = await getStaff(row.id, selectedYearId);
@@ -212,7 +229,12 @@ export function StaffsScreen() {
           label: t("hr.staffs.filters.status"),
           options: [
             { value: "", label: t("hr.staffs.filters.allStatuses") },
-            ...STAFF_LIST_STATUSES.map((status) => ({ value: status, label: t(`hr.staffs.status.${status}`) })),
+            { value: "active", label: t("hr.staffs.status.active") },
+            { value: LEAVERS_FILTER, label: t("hr.staffs.filters.leavers") },
+            ...STAFF_LEAVER_STATUSES.map((status) => ({
+              value: status,
+              label: t("hr.staffs.filters.leaverCategory", { status: t(`hr.staffs.status.${status}`) }),
+            })),
           ],
         },
         // Teaching staff are the ones with subject assignments.
@@ -278,7 +300,20 @@ export function StaffsScreen() {
   const sharedLeadingColumns: ColumnDef<Staff>[] = [
     { key: "sn", header: t("hr.staffs.columns.sn"), render: (_row, index) => (page - 1) * (pageData?.limit ?? 0) + index + 1 },
     { key: "photo", header: t("hr.staffs.columns.photo"), render: (row) => <StaffAvatar staff={row} /> },
-    { key: "lastName", header: t("hr.staffs.columns.lastName"), render: (row) => row.last_name || "—" },
+    {
+      key: "lastName",
+      header: t("hr.staffs.columns.lastName"),
+      // Opens the profile — drafts open straight into Resume instead.
+      render: (row) => (
+        <button
+          type="button"
+          onClick={() => (row.status === "draft" ? void openStaff(row, "resume") : setProfileStaffId(row.id))}
+          className="text-left font-medium text-text-primary hover:text-accent hover:underline"
+        >
+          {row.last_name || "—"}
+        </button>
+      ),
+    },
     { key: "firstName", header: t("hr.staffs.columns.firstName"), render: (row) => row.first_name || "—" },
   ];
 
@@ -346,9 +381,12 @@ export function StaffsScreen() {
       key: "actions",
       header: t("hr.staffs.columns.actions"),
       render: (row) => (
-        <button type="button" onClick={() => void openStaff(row, "edit")} disabled={openingStaffId === row.id} className={actionLink}>
-          {t("common.edit")}
-        </button>
+        <StaffRowActionsMenu
+          staff={row}
+          onView={() => setProfileStaffId(row.id)}
+          onEdit={() => void openStaff(row, "edit")}
+          onStatusAction={(action) => setStatusTarget({ staff: row, action })}
+        />
       ),
     },
   ];
@@ -420,6 +458,27 @@ export function StaffsScreen() {
           initialStaff={wizardState.staff}
           initialStep={wizardState.mode === "create" ? wizardState.initialStep : undefined}
           onClose={() => setWizardState(null)}
+        />
+      ) : null}
+
+      {profileStaffId ? (
+        <StaffProfile
+          staffId={profileStaffId}
+          onClose={() => setProfileStaffId(null)}
+          onEdit={(staff) => void openStaff(staff, "edit")}
+          onResume={(staff) => void openStaff(staff, "resume")}
+          onStatusAction={(staff, action) => setStatusTarget({ staff, action })}
+        />
+      ) : null}
+
+      {statusTarget ? (
+        <StaffStatusDialog
+          key={`${statusTarget.staff.id}-${statusTarget.action}`}
+          staff={statusTarget.staff}
+          action={statusTarget.action}
+          onClose={() => setStatusTarget(null)}
+          // The profile (if open) refreshes itself from the invalidated cache.
+          onDone={() => setStatusTarget(null)}
         />
       ) : null}
 

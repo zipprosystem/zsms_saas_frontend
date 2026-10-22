@@ -138,7 +138,7 @@
     "reports": "Reports",
     "pastoral": "Pastoral",
     "hr": "HR",
-    "hrStaffs": "Staffs",
+    "hrStaffs": "Staff",
     "hrStaffPosts": "Staff Posts",
     "hrPermissionGroups": "Permission Groups",
     "clinic": "Clinic",
@@ -1140,21 +1140,23 @@
   "hr": {
     "staffs": {
       "header": {
-        "title": "Staffs",
+        "title": "Staff",
         "subtitle": "Manage teaching and non-teaching staff records"
       },
       "tabs": {
-        "teaching": "Teaching Staffs",
-        "non_teaching": "Non-Teaching Staffs",
+        "teaching": "Teaching Staff",
+        "non_teaching": "Non-Teaching Staff",
         "drafts": "Drafts"
       },
       "tabTitleWithCount": "{title} ({count})",
       "status": {
         "draft": "Draft",
         "active": "Active",
-        "suspended": "Suspended",
         "retired": "Retired",
-        "terminated": "Terminated"
+        "terminated": "Terminated",
+        "resigned": "Resigned",
+        "absconded": "Absconded",
+        "suspended": "Suspended"
       },
       "columns": {
         "sn": "S/N",
@@ -1180,7 +1182,9 @@
         "status": "Status",
         "allStatuses": "All Statuses",
         "subject": "Subject",
-        "allSubjects": "All Subjects"
+        "allSubjects": "All Subjects",
+        "leavers": "Leavers (all)",
+        "leaverCategory": "— {status}"
       },
       "pageSize": {
         "label": "Rows per page",
@@ -1194,7 +1198,9 @@
       "emptyNonTeaching": "No non-teaching staff match.",
       "loadError": "Couldn't load staff. Please try again.",
       "actions": {
-        "resume": "Resume"
+        "resume": "Resume",
+        "view": "View",
+        "menuLabel": "Actions for {name}"
       },
       "toast": {
         "draftDeleted": "Draft deleted"
@@ -1564,7 +1570,8 @@
       "login": {
         "forcedChange": "The staff signs in with this password and must change it at first login (two-factor authentication is on for this school).",
         "noForcedChange": "The staff signs in with this password. Passwords are never shown again or exported.",
-        "editNote": "To reset this staff's password to the default, use the staff profile."
+        "editNote": "To reset this staff's password to the default, use the staff profile.",
+        "notIssued": "Login credentials haven't been issued yet — issue them from the staff profile."
       },
       "autoSave": {
         "saved": "Draft saved",
@@ -1597,6 +1604,96 @@
         "invalidField": "Check this field",
         "draftNeedsName": "Enter a first and last name to save a draft",
         "nationalIdTooLong": "National ID must be 32 characters or fewer"
+      }
+    },
+    "status": {
+      "goBack": "Go back",
+      "reason": {
+        "label": "Note / reason",
+        "placeholder": "Why is this happening?"
+      },
+      "category": {
+        "label": "Category",
+        "placeholder": "Select a category",
+        "retire": "Retire",
+        "terminate": "Terminate",
+        "resign": "Resign",
+        "abscond": "Abscond",
+        "suspend": "Suspend"
+      },
+      "dateLabel": {
+        "default": "Effective date",
+        "retire": "Retirement date",
+        "terminate": "Termination date",
+        "resign": "Resignation date",
+        "abscond": "Date absconded",
+        "suspend": "Suspension date"
+      },
+      "errors": {
+        "dateRequired": "Choose a date",
+        "reasonRequired": "Enter a note or reason",
+        "categoryRequired": "Choose a category",
+        "invalid": "Check this field"
+      },
+      "leaver": {
+        "menu": "Leaver",
+        "title": "Record Leaver",
+        "message": "Move {name} off the active roster. Their login is turned off.",
+        "confirm": "Confirm Leaver",
+        "event": "Leaver — {category}"
+      },
+      "reinstate": {
+        "menu": "Reinstate",
+        "title": "Reinstate Staff",
+        "message": "Bring {name} back to the active roster? Their login stays off until you turn it on from the profile.",
+        "confirm": "Reinstate",
+        "event": "Reinstated"
+      },
+      "toast": {
+        "leaver": "{name} is now {status}",
+        "reinstate": "{name} reinstated"
+      }
+    },
+    "profile": {
+      "title": "Staff profile",
+      "untitled": "Unnamed staff",
+      "loadError": "Couldn't load this staff. Please try again.",
+      "noDepartments": "No department",
+      "statusNote": "{status} from {date} — {reason}",
+      "assignments": {
+        "noYear": "Select an academic year in the header to see assignments.",
+        "forYear": "For {year}.",
+        "carried": "Pre-filled from {from} — not yet saved for this year."
+      },
+      "noGroups": "Not in any permission group.",
+      "unknownGroup": "Unknown group",
+      "login": {
+        "issue": "Issue credentials",
+        "reset": "Reset to default",
+        "draft": "Credentials are issued when the staff is added.",
+        "notIssued": "No login credentials have been issued yet.",
+        "notIssuedInactive": "No login credentials — reinstate the staff to issue them.",
+        "issuedAt": "Issued",
+        "resetAt": "Last reset",
+        "neverReset": "Never",
+        "password": "Password",
+        "passwordIndicator": "Starts as the default ({password}) — never shown or exported",
+        "offWhileInactive": "Login stays off while the staff isn't active.",
+        "issueTitle": "Issue credentials",
+        "issueMessage": "The staff signs in with this username and the default password ({password}).",
+        "resetTitle": "Reset password to default?",
+        "resetMessage": "{name}'s password goes back to the default ({password}). Share it with them directly.",
+        "toast": {
+          "issued": "Credentials issued",
+          "reset": "Password reset to default",
+          "activated": "Login activated",
+          "deactivated": "Login deactivated"
+        }
+      },
+      "history": {
+        "title": "Status history",
+        "empty": "No status changes yet.",
+        "dates": "Effective {effective} · recorded {recorded}"
       }
     }
   },

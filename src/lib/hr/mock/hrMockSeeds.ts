@@ -50,18 +50,40 @@ function isoDaysBefore(days: number): string {
   return new Date(BASE_DATE - days * DAY_MS).toISOString();
 }
 
-/** 64 staff: enough to page past the default 50. ~60% teaching; a few retired/terminated/draft to exercise tabs and the Status filter. */
+const SEED_LEAVER_REASONS: Partial<Record<StaffStatus, string>> = {
+  retired: "Reached retirement age",
+  terminated: "Contract ended",
+  resigned: "Relocating to another city",
+  absconded: "Absent without notice since mid-term",
+  suspended: "Pending disciplinary review",
+};
+
+/** 64 staff: enough to page past the default 50. ~60% teaching; one or more of each leaver category plus drafts, to exercise the Status filter. */
 export const SEED_STAFF: Staff[] = Array.from({ length: 64 }, (_unused, index): Staff => {
   const n = index + 1;
   const firstName = FIRST_NAMES[index % FIRST_NAMES.length];
   const lastName = LAST_NAMES[(index * 7) % LAST_NAMES.length];
   const staffType: StaffType = index % 5 < 3 ? "teaching" : "non_teaching";
   const status: StaffStatus =
-    n % 23 === 0 ? "retired" : n % 29 === 0 ? "terminated" : n % 31 === 0 ? "draft" : n % 19 === 0 ? "suspended" : "active";
+    n % 23 === 0
+      ? "retired"
+      : n % 29 === 0
+        ? "terminated"
+        : n % 31 === 0
+          ? "draft"
+          : n % 19 === 0
+            ? "suspended"
+            : n % 37 === 0
+              ? "resigned"
+              : n % 41 === 0
+                ? "absconded"
+                : "active";
   const postId =
     index === 0 ? SEED_STAFF_POSTS[0].id : staffType === "teaching" ? TEACHER_POST : NON_TEACHING_POSTS[index % NON_TEACHING_POSTS.length];
   const email = `${firstName}.${lastName}${n}@example.school`.toLowerCase();
   const joined = isoDaysBefore(200 + index * 37);
+  // Every 7th active staff has never had credentials issued — exercises the profile's "Issue credentials".
+  const hasCredentials = status !== "draft" && !(status === "active" && n % 7 === 0);
   return {
     id: seedId("5a7f0002", n),
     staff_no: status === "draft" ? null : `STF/${String(1000 + n)}`,
@@ -93,19 +115,14 @@ export const SEED_STAFF: Staff[] = Array.from({ length: 64 }, (_unused, index): 
     qualifications: [],
     references: [],
     experience: [],
-    username: status === "draft" ? null : email,
-    login_active: status === "active",
+    username: hasCredentials ? email : null,
+    login_active: hasCredentials && status === "active",
     must_change_password: false,
-    last_active_at: status === "active" && n % 4 !== 0 ? isoDaysBefore(n % 9) : null,
-    status_reason:
-      status === "retired"
-        ? "Reached retirement age"
-        : status === "terminated"
-          ? "Contract ended"
-          : status === "suspended"
-            ? "Pending disciplinary review"
-            : null,
-    status_effective_on: status === "retired" || status === "terminated" || status === "suspended" ? isoDaysBefore(30).slice(0, 10) : null,
+    credentials_issued_at: hasCredentials ? joined : null,
+    password_reset_at: null,
+    last_active_at: hasCredentials && status === "active" && n % 4 !== 0 ? isoDaysBefore(n % 9) : null,
+    status_reason: SEED_LEAVER_REASONS[status] ?? null,
+    status_effective_date: SEED_LEAVER_REASONS[status] ? isoDaysBefore(30).slice(0, 10) : null,
     created_at: joined,
     updated_at: joined,
   };

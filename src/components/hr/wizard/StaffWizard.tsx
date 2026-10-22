@@ -270,7 +270,17 @@ export function StaffWizard({ mode, initialStaff, initialStep, onClose }: StaffW
         ) : null}
         {step === 4 ? <StaffAddressStep form={form} onChange={change} /> : null}
         {step === 5 ? <StaffBackgroundStep form={form} onChange={change} /> : null}
-        {step === 6 ? <StaffAccessStep form={form} onChange={change} errors={errors} refs={refs} mode={mode} /> : null}
+        {step === 6 ? (
+          <StaffAccessStep
+            form={form}
+            onChange={change}
+            errors={errors}
+            refs={refs}
+            mode={mode}
+            credentialsIssued={!!initialStaff?.credentials_issued_at}
+            isActiveStaff={initialStaff?.status === "active"}
+          />
+        ) : null}
       </div>
     </WideModal>
   );

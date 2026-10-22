@@ -4,6 +4,7 @@ import {
   asRecord,
   readEntity,
   readListItems,
+  readData,
   readPageMeta,
   realTransport,
   sendHrRequest,
@@ -14,8 +15,12 @@ import {
 } from "@/lib/hr/hrHttp";
 import { hrMockTransport } from "@/lib/hr/mock/hrMockBackend";
 import {
+  STAFF_LEAVER_CATEGORIES,
   STAFF_STATUSES,
   type Staff,
+  type StaffLeaverBody,
+  type StaffReinstateBody,
+  type StaffStatusEvent,
   type StaffWriteBody,
   type StaffAddress,
   type StaffClassTeacherAssignment,
@@ -28,7 +33,7 @@ import {
 } from "@/lib/hr/hrTypes";
 
 /**
- * Staff records (HR › Staffs) — MOCK until the backend ships it; flip
+ * Staff records (HR › Staff) — MOCK until the backend ships it; flip
  * USE_MOCK to swap (nothing else changes, see hrHttp.ts).
  *
  * NOT the same thing as src/lib/staff/staffApi.ts: that's the REAL,
@@ -47,6 +52,12 @@ import {
  *   POST   erp/staff              body — create active directly
  *   PUT    erp/staff/:id          body — edit a non-draft staff
  *   DELETE erp/staff/:id          drafts only
+ *   POST   erp/staff/:id/leaver                                 { category, effective_date, reason }
+ *   POST   erp/staff/:id/reinstate                              { effective_date, reason }
+ *   GET    erp/staff/:id/status-events                          oldest-first
+ *   POST   erp/staff/:id/credentials                            issue { username? }
+ *   POST   erp/staff/:id/credentials/reset                      back to the default password
+ *   PATCH  erp/staff/:id/credentials/activate                   { active }
  *
  * academic_year_id scopes the two assignment sets (subject /
  * class-teacher) on reads AND writes — see hrMockBackend.ts for the
@@ -152,9 +163,11 @@ export function fromWire(value: unknown): Staff {
     username: strOrNull(r.username),
     login_active: r.login_active === true,
     must_change_password: r.must_change_password === true,
+    credentials_issued_at: strOrNull(r.credentials_issued_at),
+    password_reset_at: strOrNull(r.password_reset_at),
     last_active_at: strOrNull(r.last_active_at),
     status_reason: strOrNull(r.status_reason),
-    status_effective_on: strOrNull(r.status_effective_on),
+    status_effective_date: strOrNull(r.status_effective_date),
     created_at: str(r.created_at),
     updated_at: str(r.updated_at),
   };
@@ -206,7 +219,7 @@ export async function fetchStaffServerPage(
   });
 }
 
-/** Staffs list page sizes — same set as Students. 500 and "all" exceed one request's cap, so listStaffPage assembles them from sequential 200-row requests. */
+/** Staff list page sizes — same set as Students. 500 and "all" exceed one request's cap, so listStaffPage assembles them from sequential 200-row requests. */
 export type StaffPageSize = 50 | 100 | 200 | 500 | "all";
 export const STAFF_PAGE_SIZES: readonly StaffPageSize[] = [50, 100, 200, 500, "all"];
 export const STAFF_PAGE_SIZE_DEFAULT: StaffPageSize = 50;
@@ -219,7 +232,7 @@ export type StaffPageParams = StaffListFilters & {
 };
 
 /**
- * Staffs list query key — everything that changes the result is in it.
+ * Staff list query key — everything that changes the result is in it.
  * Under staffListQueryKeyRoot, so any staff/membership change refreshes it.
  */
 export function staffPageQueryKey(params: StaffPageParams): readonly unknown[] {
@@ -227,7 +240,7 @@ export function staffPageQueryKey(params: StaffPageParams): readonly unknown[] {
 }
 
 /**
- * ONE page of the Staffs list — paging, staff_type, status, department,
+ * ONE page of the Staff list — paging, staff_type, status, department,
  * subject and search all server-side (same discipline as
  * studentsApi.listStudentsPage). 50/100/200 are a single request; 500
  * fetches only the 200-row pages overlapping its window and slices it out;
@@ -262,7 +275,7 @@ export async function listStaffPage({ statuses, page, limit, ...filters }: Staff
   return { ok: true, data: { items, total, page: safePage, limit, hasMore: windowEnd < total } };
 }
 
-/** Every matching staff, paged through 200 at a time — for pickers (e.g. Permission Group members), not the Staffs list. */
+/** Every matching staff, paged through 200 at a time — for pickers (e.g. Permission Group members), not the Staff list. */
 export async function listAllStaff(
   filters: StaffListFilters = {},
   statuses: StaffStatus[] = [],
@@ -327,4 +340,64 @@ export async function updateStaff(id: string, body: StaffWriteBody): Promise<Cru
 /** Hard delete — drafts only (409 NOT_A_DRAFT otherwise). */
 export async function deleteStaffDraft(id: string): Promise<CrudResult<void>> {
   return sendHrRequest(channel, "DELETE", staffPath(id), undefined, () => ({ ok: true, data: undefined }));
+}
+
+/** The profile's cache entry — under staffListQueryKeyRoot, so every staff mutation refreshes it too. */
+export function staffRecordQueryKey(id: string, academicYearId: string | null): readonly unknown[] {
+  return [...staffListQueryKeyRoot, "record", id, academicYearId];
+}
+
+export function staffStatusEventsQueryKey(id: string): readonly unknown[] {
+  return [...staffListQueryKeyRoot, "statusEvents", id];
+}
+
+// ---------------------------------------------------------------------------
+// Status actions + credentials
+// ---------------------------------------------------------------------------
+
+/** The one Leaver flow: applies a category (retire / terminate / resign / abscond / suspend); login is turned off. */
+export async function applyStaffLeaver(id: string, body: StaffLeaverBody): Promise<CrudResult<Staff>> {
+  return sendHrRequest(channel, "POST", `${staffPath(id)}/leaver`, body, staffResult);
+}
+
+/** Any leaver back to active. Login stays off until an admin re-enables it. */
+export async function reinstateStaff(id: string, body: StaffReinstateBody): Promise<CrudResult<Staff>> {
+  return sendHrRequest(channel, "POST", `${staffPath(id)}/reinstate`, body, staffResult);
+}
+
+function statusEventFromWire(value: unknown): StaffStatusEvent {
+  const r = asRecord(value) ?? {};
+  const status = (field: unknown) => (STAFF_STATUSES.includes(field as StaffStatus) ? (field as StaffStatus) : null);
+  return {
+    type: r.type === "reinstate" ? "reinstate" : "leaver",
+    category: STAFF_LEAVER_CATEGORIES.find((category) => category === r.category) ?? null,
+    from_status: status(r.from_status),
+    to_status: status(r.to_status),
+    reason: strOrNull(r.reason),
+    effective_date: strOrNull(r.effective_date),
+    created_at: strOrNull(r.created_at),
+  };
+}
+
+/** Oldest-first status history. */
+export async function listStaffStatusEvents(id: string): Promise<CrudResult<StaffStatusEvent[]>> {
+  return sendHrRequest(channel, "GET", `${staffPath(id)}/status-events`, undefined, (body) => ({
+    ok: true,
+    data: asArray(readData(body)).map(statusEventFromWire),
+  }));
+}
+
+/** Issue credentials (never issued before). Username defaults to the email server-side; the password is the backend's default and is never returned. */
+export async function issueStaffCredentials(id: string, username: string | null): Promise<CrudResult<Staff>> {
+  return sendHrRequest(channel, "POST", `${staffPath(id)}/credentials`, username ? { username } : {}, staffResult);
+}
+
+/** Reset the password back to the default. */
+export async function resetStaffCredentials(id: string): Promise<CrudResult<Staff>> {
+  return sendHrRequest(channel, "POST", `${staffPath(id)}/credentials/reset`, {}, staffResult);
+}
+
+/** Turn login on/off. On needs an active staff with credentials. */
+export async function setStaffLoginActive(id: string, active: boolean): Promise<CrudResult<Staff>> {
+  return sendHrRequest(channel, "PATCH", `${staffPath(id)}/credentials/activate`, { active }, staffResult);
 }
