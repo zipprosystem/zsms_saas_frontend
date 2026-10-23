@@ -141,6 +141,7 @@
     "hrStaffs": "Staff",
     "hrStaffPosts": "Staff Posts",
     "hrPermissionGroups": "Permission Groups",
+    "academicsExam": "Exam",
     "clinic": "Clinic",
     "adminPanel": "Admin Panel",
     "students": "Students",
@@ -180,10 +181,14 @@
       "navigation": "Navigation",
       "settings": "Settings",
       "setup": "Setup",
-      "students": "Students"
+      "students": "Students",
+      "exams": "Exams"
     },
     "students": {
       "addStudent": "Add Student"
+    },
+    "exams": {
+      "manageExamResult": "Manage Exam Result"
     }
   },
   "tenant": {
@@ -2871,6 +2876,115 @@
       "contact": "Contact",
       "builtBy": "Built by {company} — <link>zipprosystem.com</link>",
       "rights": "© {year} {company}. All rights reserved."
+    }
+  },
+  "exam": {
+    "header": {
+      "title": "Exams",
+      "subtitle": "Manage, view and set everything related to exams here"
+    },
+    "tabs": {
+      "label": "Exam sections",
+      "list": "List",
+      "results": "Results",
+      "broadSheet": "Broad Sheet",
+      "reports": "Reports",
+      "reportProgression": "Report Progression",
+      "cutoff": "Cutoff Management"
+    },
+    "marks": {
+      "title": "Manage Exam Result",
+      "subtitle": "Enter each student's scores for a subject. Grades, totals and positions are worked out later.",
+      "loading": "Loading…",
+      "searchPlaceholder": "Search students",
+      "remarkPlaceholder": "Add a remark",
+      "unsavedRow": "Unsaved changes",
+      "kinds": {
+        "ca": "CA",
+        "exam": "Exam"
+      },
+      "filters": {
+        "year": "Academic year",
+        "currentYear": "{name} (current)",
+        "class": "Class/Form",
+        "arm": "Arm",
+        "term": "Term",
+        "subject": "Subject",
+        "exam": "Exam"
+      },
+      "mock": {
+        "actingAs": "Mock: acting as",
+        "admin": "Admin (all subjects)",
+        "teacher": "{name} (teacher)",
+        "hint": "Test data only. A teacher sees only the subjects they're assigned; this picker goes away when the real backend is connected."
+      },
+      "info": {
+        "term": "Term",
+        "exam": "Exam",
+        "structure": "Assessment type",
+        "totalMarks": "Total marks",
+        "marks": "{value} marks",
+        "progress": "{done} of {total} marked as completed",
+        "closesOn": "Entry closes {date}"
+      },
+      "cbt": {
+        "label": "Fill marks from CBT",
+        "placeholder": "Select test",
+        "comingLater": "CBT isn't available yet."
+      },
+      "columns": {
+        "sn": "S/N",
+        "student": "Students ({count})",
+        "seatNo": "Seat No.",
+        "present": "Present?",
+        "componentTotal": "Total",
+        "total": "Total",
+        "remarks": "Subject Teacher Remarks",
+        "completed": "Mark as completed",
+        "actions": "Actions"
+      },
+      "aria": {
+        "present": "{name} present",
+        "score": "{field} for {name}, out of {max}",
+        "remark": "Remark for {name}",
+        "completed": "Mark {name} as completed",
+        "rowActions": "Actions for {name}"
+      },
+      "actions": {
+        "clearScores": "Clear scores",
+        "undoChanges": "Undo changes"
+      },
+      "notices": {
+        "noStructure": "No active assessment type is in force for this class, so there are no score columns. Set a default assessment type in Setup.",
+        "goToAssessmentTypes": "Go to Assessment Types",
+        "noComponentsForKind": "\"{structure}\" has no {kind} components, so there's nothing to enter for this exam.",
+        "entryClosed": "Marks entry for this exam closed on {date}. Scores are read-only."
+      },
+      "empty": {
+        "noClasses": "No classes with subjects have been set up yet.",
+        "noAssignments": "You aren't assigned to any subjects yet. Ask an admin to add your teaching assignments.",
+        "noExams": "No exams have been set up for this term yet.",
+        "noSubjects": "No subjects are offered to this arm.",
+        "noStudents": "No students take this subject in this arm.",
+        "noSearchMatches": "No students match your search."
+      },
+      "errors": {
+        "scoreRange": "Enter a score from 0 to {max}",
+        "invalidCount": "{count, plural, one {# score is} other {# scores are}} outside the allowed range. Fix {count, plural, one {it} other {them}} to save."
+      },
+      "saveBar": {
+        "unsaved": "{count, plural, one {# student has} other {# students have}} unsaved changes",
+        "allSaved": "All changes saved",
+        "discard": "Discard changes",
+        "save": "Save marks"
+      },
+      "discardConfirm": {
+        "title": "Discard unsaved marks?",
+        "message": "{count, plural, one {# student has} other {# students have}} unsaved changes. They'll be lost if you continue."
+      },
+      "toast": {
+        "saved": "Marks saved for {count, plural, one {# student} other {# students}}"
+      }
     }
   }
 }

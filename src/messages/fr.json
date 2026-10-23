@@ -141,6 +141,7 @@
     "hrStaffs": "Personnel",
     "hrStaffPosts": "Postes du personnel",
     "hrPermissionGroups": "Groupes de permissions",
+    "academicsExam": "Examen",
     "clinic": "Clinique",
     "adminPanel": "Panneau d'administration",
     "students": "Élèves",
@@ -180,10 +181,14 @@
       "navigation": "Navigation",
       "settings": "Paramètres",
       "setup": "Configuration",
-      "students": "Élèves"
+      "students": "Élèves",
+      "exams": "Examens"
     },
     "students": {
       "addStudent": "Ajouter un élève"
+    },
+    "exams": {
+      "manageExamResult": "Gérer les résultats d'examen"
     }
   },
   "tenant": {
@@ -2879,6 +2884,115 @@
       "contact": "Contact",
       "builtBy": "Développé par {company} — <link>zipprosystem.com</link>",
       "rights": "© {year} {company}. Tous droits réservés."
+    }
+  },
+  "exam": {
+    "header": {
+      "title": "Examens",
+      "subtitle": "Gérez, consultez et paramétrez tout ce qui concerne les examens"
+    },
+    "tabs": {
+      "label": "Sections des examens",
+      "list": "Liste",
+      "results": "Résultats",
+      "broadSheet": "Relevé général",
+      "reports": "Rapports",
+      "reportProgression": "Progression des bulletins",
+      "cutoff": "Gestion des seuils"
+    },
+    "marks": {
+      "title": "Gérer les résultats d'examen",
+      "subtitle": "Saisissez les notes de chaque élève pour une matière. Les mentions, totaux et rangs sont calculés plus tard.",
+      "loading": "Chargement…",
+      "searchPlaceholder": "Rechercher des élèves",
+      "remarkPlaceholder": "Ajouter une appréciation",
+      "unsavedRow": "Modifications non enregistrées",
+      "kinds": {
+        "ca": "CC",
+        "exam": "Examen"
+      },
+      "filters": {
+        "year": "Année scolaire",
+        "currentYear": "{name} (en cours)",
+        "class": "Classe",
+        "arm": "Section",
+        "term": "Trimestre",
+        "subject": "Matière",
+        "exam": "Examen"
+      },
+      "mock": {
+        "actingAs": "Simulation : connecté en tant que",
+        "admin": "Administrateur (toutes les matières)",
+        "teacher": "{name} (enseignant)",
+        "hint": "Données de test uniquement. Un enseignant ne voit que les matières qui lui sont attribuées ; ce sélecteur disparaîtra une fois le vrai backend connecté."
+      },
+      "info": {
+        "term": "Trimestre",
+        "exam": "Examen",
+        "structure": "Type d'évaluation",
+        "totalMarks": "Total des points",
+        "marks": "{value} points",
+        "progress": "{done} sur {total} marqués comme terminés",
+        "closesOn": "Saisie close le {date}"
+      },
+      "cbt": {
+        "label": "Remplir les notes depuis le CBT",
+        "placeholder": "Choisir un test",
+        "comingLater": "Le CBT n'est pas encore disponible."
+      },
+      "columns": {
+        "sn": "N°",
+        "student": "Élèves ({count})",
+        "seatNo": "N° de place",
+        "present": "Présent ?",
+        "componentTotal": "Total",
+        "total": "Total",
+        "remarks": "Appréciation de l'enseignant",
+        "completed": "Marquer comme terminé",
+        "actions": "Actions"
+      },
+      "aria": {
+        "present": "{name} présent",
+        "score": "{field} pour {name}, sur {max}",
+        "remark": "Appréciation pour {name}",
+        "completed": "Marquer {name} comme terminé",
+        "rowActions": "Actions pour {name}"
+      },
+      "actions": {
+        "clearScores": "Effacer les notes",
+        "undoChanges": "Annuler les modifications"
+      },
+      "notices": {
+        "noStructure": "Aucun type d'évaluation actif ne s'applique à cette classe : il n'y a donc pas de colonnes de notes. Définissez un type d'évaluation par défaut dans la Configuration.",
+        "goToAssessmentTypes": "Aller aux types d'évaluation",
+        "noComponentsForKind": "« {structure} » n'a pas de composante {kind} : il n'y a rien à saisir pour cet examen.",
+        "entryClosed": "La saisie des notes de cet examen a été close le {date}. Les notes sont en lecture seule."
+      },
+      "empty": {
+        "noClasses": "Aucune classe avec des matières n'a encore été configurée.",
+        "noAssignments": "Aucune matière ne vous est encore attribuée. Demandez à un administrateur d'ajouter vos attributions.",
+        "noExams": "Aucun examen n'a encore été configuré pour ce trimestre.",
+        "noSubjects": "Aucune matière n'est proposée à cette section.",
+        "noStudents": "Aucun élève ne suit cette matière dans cette section.",
+        "noSearchMatches": "Aucun élève ne correspond à votre recherche."
+      },
+      "errors": {
+        "scoreRange": "Saisissez une note de 0 à {max}",
+        "invalidCount": "{count, plural, one {# note est} other {# notes sont}} hors de la plage autorisée. Corrigez-{count, plural, one {la} other {les}} pour enregistrer."
+      },
+      "saveBar": {
+        "unsaved": "{count, plural, one {# élève a} other {# élèves ont}} des modifications non enregistrées",
+        "allSaved": "Toutes les modifications sont enregistrées",
+        "discard": "Annuler les modifications",
+        "save": "Enregistrer les notes"
+      },
+      "discardConfirm": {
+        "title": "Abandonner les notes non enregistrées ?",
+        "message": "{count, plural, one {# élève a} other {# élèves ont}} des modifications non enregistrées. Elles seront perdues si vous continuez."
+      },
+      "toast": {
+        "saved": "Notes enregistrées pour {count, plural, one {# élève} other {# élèves}}"
+      }
     }
   }
 }

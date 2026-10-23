@@ -97,6 +97,21 @@ export function useSearchIndex(): SearchGroup[] {
       ],
     };
 
-    return [navigation, settings, setup, students];
+    // Exam (Stage 1b): the marks-entry screen is a tab inside Academics ›
+    // Exam, so it gets its own entry rather than relying on the nav child.
+    const exams: SearchGroup = {
+      key: "exams",
+      label: t("search.groups.exams"),
+      entries: [
+        {
+          id: "exams-manage-result",
+          title: t("search.exams.manageExamResult"),
+          href: "/admin/academics/exam/results",
+          keywords: ["marks", "scores", "enter marks", "enter grades", "CA", "exam result", "results", "gpa grades"],
+        },
+      ],
+    };
+
+    return [navigation, settings, setup, students, exams];
   }, [t]);
 }

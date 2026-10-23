@@ -38,7 +38,17 @@ export type SidebarNavItem = {
 
 export const sidebarNavItems: SidebarNavItem[] = [
   { key: "overview", labelKey: "nav.overview", href: "/admin/overview", icon: ChartIcon },
-  { key: "academics", labelKey: "nav.academics", href: "/admin/academics", icon: BookSavedIcon, hasSubmenu: true },
+  {
+    key: "academics",
+    labelKey: "nav.academics",
+    href: "/admin/academics",
+    icon: BookSavedIcon,
+    hasSubmenu: true,
+    // Only Exam is built so far; the other Figma children (Progression,
+    // Assignment, Period Master, E-Learning, Self Assessment, Time Table)
+    // are added as they're built.
+    children: [{ key: "academicsExam", labelKey: "nav.academicsExam", href: "/admin/academics/exam" }],
+  },
   { key: "attendance", labelKey: "nav.attendance", href: "/admin/attendance", icon: CalendarIcon, hasSubmenu: true },
   { key: "conducts", labelKey: "nav.conducts", href: "/admin/conducts", icon: Warning2Icon, hasSubmenu: true },
   { key: "communications", labelKey: "nav.communications", href: "/admin/communications", icon: MessageTextIcon, hasSubmenu: true },
