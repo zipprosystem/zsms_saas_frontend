@@ -4,7 +4,7 @@ import { sidebarNavItems } from "@/components/layout/sidebar-nav";
 import { SETTINGS_SECTION_KEYS, settingsSectionHref, settingsSectionTitleKey } from "@/lib/settings/settingsSections";
 import { getShellCategories, setupCategories } from "@/lib/setup/setupConfig";
 import { setupScreenRegistry } from "@/lib/setup/screenRegistry";
-import { NAV_CHILD_KEYWORDS, SETUP_ITEM_KEYWORDS } from "./searchKeywords";
+import { NAV_CHILD_KEYWORDS, SEARCH_ACADEMIC_REPORT_KEYWORDS, SETUP_ITEM_KEYWORDS } from "./searchKeywords";
 import type { SearchGroup } from "./searchTypes";
 
 /**
@@ -108,6 +108,12 @@ export function useSearchIndex(): SearchGroup[] {
           title: t("search.exams.manageExamResult"),
           href: "/admin/academics/exam/results",
           keywords: ["marks", "scores", "enter marks", "enter grades", "CA", "exam result", "results", "gpa grades"],
+        },
+        {
+          id: "exams-academic-report",
+          title: t("search.exams.academicReport"),
+          href: "/admin/academics/exam/results/academic-report",
+          keywords: SEARCH_ACADEMIC_REPORT_KEYWORDS,
         },
       ],
     };

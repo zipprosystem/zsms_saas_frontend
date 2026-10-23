@@ -7,9 +7,16 @@ import type {
   ComponentScores,
   Exam,
   ExamEntryOptions,
+  GradeBasedStructure,
+  GradeMarkRow,
+  GradeScale,
+  GradeScores,
+  MarksSheet,
+  RatingScale,
+  SaveGradeMarksInput,
   SaveMarksInput,
+  ScaleLevel,
   SubjectMarkRow,
-  SubjectMarksSheet,
 } from "@/lib/exam/examTypes";
 
 /**
@@ -66,8 +73,34 @@ import type {
  *     The class-arm/subject pairs the CALLER may enter marks for
  *     (effective_scope: admin = all; teacher = their assignments).
  *
- * Stage 1b is raw entry only: no totals, grades or positions are stored
- * (Stage 2). Totals on screen are live display sums.
+ * GRADE-BASED (Stage 1c, British — Academic Report). Same two endpoints;
+ * the class's resolved structure decides the shape (assessment_mode):
+ *
+ *   GET  .../marks  -> { assessment_mode: "grade_based", exam, subject_id,
+ *          class_arm_id, assessment_structure_id, entry_open,
+ *          structure: { id, name,
+ *            attainment: { id, name, grade_scale_id },
+ *            rating_domains: [{ id, key, name, rating_scale_id }] } | null,
+ *          grade_scales: [{ id, name, grades: [{ code, label }] }],
+ *          rating_scales: [{ id, name, levels: [{ code, label }] }],
+ *          items: [{ …same row fields…, component_scores: { <leaf id>: code|null },
+ *                    mtg, grade_book }] }   (read-only references; mtg is
+ *                    the single target grade — no second/desired target)
+ *     component_scores carry the attainment grade + one rating per domain;
+ *     subject_remark is the subject comment. Score sheets answer with
+ *     assessment_mode: "component_based" and the shape above.
+ *   PUT  .../marks  same body as the score sheet, component_scores values
+ *     are codes: 422 when a key isn't a leaf of the resolved structure or a
+ *     code isn't on that leaf's scale.
+ *   entry-options: each class carries assessment_mode (proposed), so each
+ *     screen lists only its own classes.
+ *
+ * Reconcile with Muntajir (Matthew, 2026-10-23): attainment + ratings in
+ * component_scores, comment as subject_remark, MTG + Grade Book as
+ * per-student references on the marks GET.
+ *
+ * Stage 1b/1c are raw entry only: no totals, grades, VA, averages or
+ * positions are stored (Stage 2). Totals on screen are live display sums.
  */
 const USE_MOCK = true;
 
@@ -163,10 +196,74 @@ function markRowFromWire(value: unknown): SubjectMarkRow {
   };
 }
 
-function sheetFromWire(value: unknown): SubjectMarksSheet | null {
+function levelsFromWire(value: unknown): ScaleLevel[] {
+  return arr(value)
+    .map((item) => {
+      const x = rec(item);
+      return { code: typeof x.code === "string" ? x.code : String(x.code ?? ""), label: s(x.label) };
+    })
+    .filter((level) => level.code);
+}
+
+function gradeScoresFromWire(value: unknown): GradeScores {
+  const scores: GradeScores = {};
+  for (const [key, code] of Object.entries(rec(value))) {
+    scores[key] = typeof code === "string" && code ? code : typeof code === "number" ? String(code) : null;
+  }
+  return scores;
+}
+
+function gradeStructureFromWire(value: unknown): GradeBasedStructure | null {
+  const r = rec(value);
+  const attainment = rec(r.attainment);
+  if (!s(r.id) || !s(attainment.id)) return null;
+  return {
+    id: s(r.id),
+    name: s(r.name),
+    attainment: { id: s(attainment.id), name: s(attainment.name), grade_scale_id: s(attainment.grade_scale_id) },
+    rating_domains: arr(r.rating_domains)
+      .map((item) => {
+        const x = rec(item);
+        return { id: s(x.id), key: s(x.key), name: s(x.name), rating_scale_id: s(x.rating_scale_id) };
+      })
+      .filter((domain) => domain.id),
+  };
+}
+
+function gradeRowFromWire(value: unknown): GradeMarkRow {
+  const r = rec(value);
+  const code = (field: unknown) => (typeof field === "string" && field ? field : null);
+  return {
+    ...markRowFromWire(value),
+    component_scores: gradeScoresFromWire(r.component_scores),
+    mtg: code(r.mtg),
+    grade_book: code(r.grade_book),
+  };
+}
+
+function sheetFromWire(value: unknown): MarksSheet | null {
   const r = rec(value);
   if (!r.exam) return null;
+  const common = {
+    exam: examFromWire(r.exam),
+    subject_id: s(r.subject_id),
+    class_arm_id: s(r.class_arm_id),
+    assessment_structure_id: typeof r.assessment_structure_id === "string" && r.assessment_structure_id ? r.assessment_structure_id : null,
+    entry_open: r.entry_open !== false,
+  };
+  if (r.assessment_mode === "grade_based") {
+    return {
+      ...common,
+      assessment_mode: "grade_based",
+      structure: gradeStructureFromWire(r.structure),
+      grade_scales: arr(r.grade_scales).map((item): GradeScale => ({ id: s(rec(item).id), name: s(rec(item).name), grades: levelsFromWire(rec(item).grades) })),
+      rating_scales: arr(r.rating_scales).map((item): RatingScale => ({ id: s(rec(item).id), name: s(rec(item).name), levels: levelsFromWire(rec(item).levels) })),
+      items: arr(r.items).map(gradeRowFromWire),
+    };
+  }
+  // Absent mode = the Stage 1b score sheet (backwards compatible).
   return {
+    assessment_mode: "component_based",
     exam: examFromWire(r.exam),
     subject_id: s(r.subject_id),
     class_arm_id: s(r.class_arm_id),
@@ -187,7 +284,14 @@ function optionsFromWire(value: unknown): ExamEntryOptions | null {
     academic_year_id: s(r.academic_year_id),
     years: arr(r.years).map((item) => ({ ...idName(item), is_current: rec(item).is_current === true })),
     terms: arr(r.terms).map(idName),
-    classes: arr(r.classes).map((item) => ({ ...idName(item), arms: arr(rec(item).arms).map(idName) })),
+    classes: arr(r.classes).map((item) => {
+      const mode = rec(item).assessment_mode;
+      return {
+        ...idName(item),
+        arms: arr(rec(item).arms).map(idName),
+        assessment_mode: mode === "component_based" || mode === "grade_based" ? mode : null,
+      };
+    }),
     subjects: arr(r.subjects).map((item) => {
       const x = rec(item);
       return { class_arm_id: s(x.class_arm_id), subject_id: s(x.subject_id), subject_name: s(x.subject_name) };
@@ -210,11 +314,11 @@ export function listExams(yearId: string, termId: string): Promise<CrudResult<Ex
   return send("GET", `erp/exams?${query}`, undefined, (data) => arr(rec(data).items).map(examFromWire));
 }
 
-export function getMarks(examId: string, subjectId: string, armId: string): Promise<CrudResult<SubjectMarksSheet>> {
+export function getMarks(examId: string, subjectId: string, armId: string): Promise<CrudResult<MarksSheet>> {
   const query = new URLSearchParams({ subject_id: subjectId, class_arm_id: armId });
   return send("GET", `erp/exams/${encodeURIComponent(examId)}/marks?${query}`, undefined, sheetFromWire);
 }
 
-export function saveMarks(examId: string, input: SaveMarksInput): Promise<CrudResult<SubjectMarksSheet>> {
+export function saveMarks(examId: string, input: SaveMarksInput | SaveGradeMarksInput): Promise<CrudResult<MarksSheet>> {
   return send("PUT", `erp/exams/${encodeURIComponent(examId)}/marks`, input, sheetFromWire);
 }
