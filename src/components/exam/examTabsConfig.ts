@@ -11,3 +11,7 @@ export const EXAM_TABS = [
 export function examTabHref(slug: string): string {
   return `/admin/academics/exam/${slug}`;
 }
+
+/** The two subject-wise entry screens inside Results: scores (component_based) and the British Academic Report (grade_based). */
+export const MANAGE_EXAM_RESULT_HREF = "/admin/academics/exam/results";
+export const ACADEMIC_REPORT_HREF = "/admin/academics/exam/results/academic-report";

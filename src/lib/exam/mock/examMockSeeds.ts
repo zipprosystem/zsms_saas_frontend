@@ -1,4 +1,4 @@
-import type { Exam, ExamClassOption, ExamTermOption, ExamYearOption } from "@/lib/exam/examTypes";
+import type { Exam, ExamTermOption, ExamYearOption, GradeBasedStructure, GradeScale, RatingScale } from "@/lib/exam/examTypes";
 
 /**
  * Self-contained seed data for the Exam mock (Matthew, 2026-10-23: the
@@ -18,10 +18,13 @@ export function seedTerms(yearId: string): ExamTermOption[] {
   return TERM_NAMES.map((name, index) => ({ id: `${yearId}-t${index + 1}`, name }));
 }
 
-export const SEED_CLASSES: ExamClassOption[] = [
+/** assessment_mode comes from the structure in force (examMockBackend resolves it), not from here. */
+export const SEED_CLASSES: Array<{ id: string; name: string; arms: Array<{ id: string; name: string }> }> = [
   { id: "cls-jss1", name: "JSS 1", arms: [{ id: "arm-jss1-a", name: "A" }, { id: "arm-jss1-b", name: "B" }] },
   { id: "cls-ss1", name: "SS 1", arms: [{ id: "arm-ss1-sci", name: "Science" }, { id: "arm-ss1-art", name: "Arts" }] },
   { id: "cls-y11", name: "Year 11", arms: [{ id: "arm-y11-a", name: "A" }] },
+  // Appended (Stage 1c) so the existing arms' seeded rosters keep their ids.
+  { id: "cls-y9", name: "Year 9", arms: [{ id: "arm-y9-oak", name: "Oak" }, { id: "arm-y9-elm", name: "Elm" }] },
 ];
 
 export const SEED_SUBJECTS: Record<string, string> = {
@@ -34,6 +37,8 @@ export const SEED_SUBJECTS: Record<string, string> = {
   "sub-lit": "Literature in English",
   "sub-gov": "Government",
   "sub-bio": "Biology",
+  "sub-sci": "Science",
+  "sub-hist": "History",
 };
 
 /** Subjects offered per class-arm. `elective` = only some students take it (see enrolledIn). */
@@ -49,6 +54,8 @@ export const SEED_ARM_SUBJECTS: Record<string, Array<{ subject_id: string; elect
   ],
   "arm-ss1-art": [{ subject_id: "sub-math" }, { subject_id: "sub-eng" }, { subject_id: "sub-lit" }, { subject_id: "sub-gov" }],
   "arm-y11-a": [{ subject_id: "sub-math" }, { subject_id: "sub-eng" }, { subject_id: "sub-bio" }],
+  "arm-y9-oak": [{ subject_id: "sub-math" }, { subject_id: "sub-eng" }, { subject_id: "sub-sci" }, { subject_id: "sub-hist" }],
+  "arm-y9-elm": [{ subject_id: "sub-math" }, { subject_id: "sub-eng" }, { subject_id: "sub-sci" }, { subject_id: "sub-hist", elective: true }],
 };
 
 /**
@@ -61,6 +68,104 @@ export const SEED_CLASS_STRUCTURE: Record<string, string> = {
   "cls-jss1": "as-seed-standard",
   "cls-ss1": "as-seed-composite",
 };
+
+// ---------------------------------------------------------------------------
+// Grade-based (British) — Stage 1c. MOCK definitions the real backend will
+// own (grade-scale / trait masters are Stage 3; the grade_based structure
+// fields come with the Assessment Types grade_based mode).
+// ---------------------------------------------------------------------------
+
+export const SEED_GRADE_SCALES: GradeScale[] = [
+  {
+    id: "scale-gcse",
+    name: "GCSE 9–1",
+    grades: [
+      { code: "9", label: "9" },
+      { code: "8", label: "8" },
+      { code: "7", label: "7" },
+      { code: "6", label: "6" },
+      { code: "5", label: "5" },
+      { code: "4", label: "4" },
+      { code: "3", label: "3" },
+      { code: "2", label: "2" },
+      { code: "1", label: "1" },
+      { code: "U", label: "U" },
+    ],
+  },
+  {
+    id: "scale-ks3",
+    name: "KS3 attainment",
+    grades: [
+      { code: "M", label: "Mastering" },
+      { code: "S", label: "Secure" },
+      { code: "D", label: "Developing" },
+      { code: "E", label: "Emerging" },
+    ],
+  },
+];
+
+export const SEED_RATING_SCALES: RatingScale[] = [
+  {
+    id: "rating-1-4",
+    name: "1–4 rating",
+    levels: [
+      { code: "1", label: "Excellent" },
+      { code: "2", label: "Good" },
+      { code: "3", label: "Requires improvement" },
+      { code: "4", label: "Cause for concern" },
+    ],
+  },
+];
+
+export const SEED_GRADE_STRUCTURES: GradeBasedStructure[] = [
+  {
+    id: "gs-ks3",
+    name: "KS3 Academic Report",
+    attainment: { id: "gs-ks3-att", name: "Current Attainment", grade_scale_id: "scale-ks3" },
+    rating_domains: [
+      { id: "gs-ks3-eng", key: "engagement", name: "Engagement", rating_scale_id: "rating-1-4" },
+      { id: "gs-ks3-lb", key: "learning_behaviour", name: "Learning Behaviour", rating_scale_id: "rating-1-4" },
+    ],
+  },
+  {
+    // A boarding school's KS4 report: the extra Boarding Commitment domain is present.
+    id: "gs-ks4-boarding",
+    name: "KS4 Academic Report (boarding)",
+    attainment: { id: "gs-ks4-att", name: "Current Attainment", grade_scale_id: "scale-gcse" },
+    rating_domains: [
+      { id: "gs-ks4-eng", key: "engagement", name: "Engagement", rating_scale_id: "rating-1-4" },
+      { id: "gs-ks4-lb", key: "learning_behaviour", name: "Learning Behaviour", rating_scale_id: "rating-1-4" },
+      { id: "gs-ks4-bc", key: "boarding_commitment", name: "Boarding Commitment", rating_scale_id: "rating-1-4" },
+    ],
+  },
+];
+
+/** Classes that report grade-based (British). Everything else is component_based (SEED_CLASS_STRUCTURE / default). */
+export const SEED_CLASS_GRADE_STRUCTURE: Record<string, string> = {
+  "cls-y9": "gs-ks3",
+  "cls-y11": "gs-ks4-boarding",
+};
+
+/**
+ * Read-only per-student references for the Academic Report — Stage 3 owns
+ * MTG management/import and the Grade Book; here they're deterministic
+ * seeds on the class's grade scale. One target (mtg) per student/subject.
+ */
+export function seedReferences(
+  studentIndex: number,
+  subjectId: string,
+  scale: GradeScale,
+): { mtg: string | null; grade_book: string | null } {
+  const codes = scale.grades.map((grade) => grade.code).filter((code) => code !== "U");
+  if (codes.length === 0) return { mtg: null, grade_book: null };
+  const salt = subjectId.split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+  const at = (offset: number) => codes[Math.min(codes.length - 1, Math.max(0, offset))];
+  const mtgIndex = (studentIndex * 3 + salt) % Math.max(1, codes.length - 1);
+  return {
+    mtg: at(mtgIndex),
+    grade_book: at(mtgIndex + ((studentIndex + salt) % 3) - 1),
+  };
+}
 
 const FIRST_NAMES = [
   "Adebayo", "Chiamaka", "Ibrahim", "Ngozi", "Tobi", "Aisha", "Emeka", "Funmilayo", "Kelechi", "Zainab",
@@ -106,6 +211,8 @@ export const SEED_TEACHERS: Array<{ id: string; name: string; assignments: Array
       { subject_id: "sub-math", class_arm_id: "arm-jss1-a" },
       { subject_id: "sub-math", class_arm_id: "arm-jss1-b" },
       { subject_id: "sub-math", class_arm_id: "arm-y11-a" },
+      { subject_id: "sub-math", class_arm_id: "arm-y9-oak" },
+      { subject_id: "sub-math", class_arm_id: "arm-y9-elm" },
     ],
   },
   {
@@ -123,6 +230,8 @@ export const SEED_TEACHERS: Array<{ id: string; name: string; assignments: Array
     assignments: [
       { subject_id: "sub-eng", class_arm_id: "arm-jss1-a" },
       { subject_id: "sub-eng", class_arm_id: "arm-jss1-b" },
+      { subject_id: "sub-eng", class_arm_id: "arm-y9-oak" },
+      { subject_id: "sub-eng", class_arm_id: "arm-y11-a" },
     ],
   },
 ];

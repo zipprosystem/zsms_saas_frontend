@@ -24,3 +24,21 @@ export const NAV_CHILD_KEYWORDS: Record<string, string[]> = {
   hrPermissionGroups: ["roles", "permissions", "access", "RBAC", "user groups"],
   hrAssignmentReview: ["carry forward", "carried forward", "new year", "rollover", "unmatched", "remap", "teaching assignments", "class teacher"],
 };
+
+/** Exam › Results › Academic Report (British grade-based entry, Stage 1c). */
+export const SEARCH_ACADEMIC_REPORT_KEYWORDS = [
+  "british",
+  "attainment",
+  "current attainment",
+  "grades",
+  "MTG",
+  "minimum target grade",
+  "target grade",
+  "grade book",
+  "engagement",
+  "learning behaviour",
+  "boarding",
+  "report comment",
+  "GCSE",
+  "KS3",
+];

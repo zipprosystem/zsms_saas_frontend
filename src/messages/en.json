@@ -189,7 +189,8 @@
       "addStudent": "Add Student"
     },
     "exams": {
-      "manageExamResult": "Manage Exam Result"
+      "manageExamResult": "Manage Exam Result",
+      "academicReport": "Academic Report"
     }
   },
   "tenant": {
@@ -3036,6 +3037,59 @@
       },
       "toast": {
         "saved": "Marks saved for {count, plural, one {# student} other {# students}}"
+      },
+      "crossLink": {
+        "toAcademicReport": "This class reports with grades (British), not scores. Enter its results in the Academic Report.",
+        "openAcademicReport": "Open Academic Report"
+      }
+    },
+    "resultsTabs": {
+      "label": "Result entry",
+      "manageExamResult": "Manage Exam Result",
+      "academicReport": "Academic Report"
+    },
+    "academicReport": {
+      "title": "Academic Report",
+      "subtitle": "Enter each student's current attainment, ratings and comment for a subject. Value added and averages are worked out later.",
+      "crossLink": {
+        "toManageExamResult": "This class reports with scores, not grades. Enter its results in Manage Exam Result.",
+        "openManageExamResult": "Open Manage Exam Result"
+      },
+      "info": {
+        "gradeScale": "Grade scale",
+        "referencesNote": "Target (MTG) and Grade Book are for reference and can't be edited here."
+      },
+      "notices": {
+        "noStructure": "No grade-based report structure is in force for this class, so there's nothing to enter yet."
+      },
+      "columns": {
+        "sn": "S/N",
+        "student": "Students ({count})",
+        "seatNo": "Seat No.",
+        "target": "Target (MTG)",
+        "gradeBook": "Grade Book",
+        "present": "Present?",
+        "comment": "Comment",
+        "completed": "Mark as completed",
+        "actions": "Actions"
+      },
+      "notEntered": "—",
+      "unknownCode": "{code} (not on scale)",
+      "commentPlaceholder": "Add a comment",
+      "unsavedRow": "Unsaved changes",
+      "aria": {
+        "present": "{name} present",
+        "field": "{field} for {name}",
+        "comment": "Comment for {name}",
+        "completed": "Mark {name} as completed",
+        "rowActions": "Actions for {name}"
+      },
+      "actions": {
+        "clearEntries": "Clear grades and ratings",
+        "undoChanges": "Undo changes"
+      },
+      "toast": {
+        "saved": "Report entries saved for {count, plural, one {# student} other {# students}}"
       }
     }
   }

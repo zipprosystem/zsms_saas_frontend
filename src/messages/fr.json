@@ -189,7 +189,8 @@
       "addStudent": "Ajouter un élève"
     },
     "exams": {
-      "manageExamResult": "Gérer les résultats d'examen"
+      "manageExamResult": "Gérer les résultats d'examen",
+      "academicReport": "Bulletin académique"
     }
   },
   "tenant": {
@@ -3044,6 +3045,59 @@
       },
       "toast": {
         "saved": "Notes enregistrées pour {count, plural, one {# élève} other {# élèves}}"
+      },
+      "crossLink": {
+        "toAcademicReport": "Cette classe est évaluée par niveaux (système britannique), pas par notes. Saisissez ses résultats dans le bulletin académique.",
+        "openAcademicReport": "Ouvrir le bulletin académique"
+      }
+    },
+    "resultsTabs": {
+      "label": "Saisie des résultats",
+      "manageExamResult": "Gérer les résultats d'examen",
+      "academicReport": "Bulletin académique"
+    },
+    "academicReport": {
+      "title": "Bulletin académique",
+      "subtitle": "Saisissez le niveau actuel, les appréciations et le commentaire de chaque élève pour une matière. La valeur ajoutée et les moyennes sont calculées plus tard.",
+      "crossLink": {
+        "toManageExamResult": "Cette classe est évaluée par notes, pas par niveaux. Saisissez ses résultats dans Gérer les résultats d'examen.",
+        "openManageExamResult": "Ouvrir Gérer les résultats d'examen"
+      },
+      "info": {
+        "gradeScale": "Échelle de niveaux",
+        "referencesNote": "L'objectif (MTG) et le carnet de niveaux sont donnés à titre de référence et ne sont pas modifiables ici."
+      },
+      "notices": {
+        "noStructure": "Aucune structure de bulletin par niveaux ne s'applique à cette classe : il n'y a rien à saisir pour l'instant."
+      },
+      "columns": {
+        "sn": "N°",
+        "student": "Élèves ({count})",
+        "seatNo": "N° de place",
+        "target": "Objectif (MTG)",
+        "gradeBook": "Carnet de niveaux",
+        "present": "Présent ?",
+        "comment": "Commentaire",
+        "completed": "Marquer comme terminé",
+        "actions": "Actions"
+      },
+      "notEntered": "—",
+      "unknownCode": "{code} (hors échelle)",
+      "commentPlaceholder": "Ajouter un commentaire",
+      "unsavedRow": "Modifications non enregistrées",
+      "aria": {
+        "present": "{name} présent",
+        "field": "{field} pour {name}",
+        "comment": "Commentaire pour {name}",
+        "completed": "Marquer {name} comme terminé",
+        "rowActions": "Actions pour {name}"
+      },
+      "actions": {
+        "clearEntries": "Effacer niveaux et appréciations",
+        "undoChanges": "Annuler les modifications"
+      },
+      "toast": {
+        "saved": "Saisies du bulletin enregistrées pour {count, plural, one {# élève} other {# élèves}}"
       }
     }
   }
