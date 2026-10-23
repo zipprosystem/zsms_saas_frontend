@@ -220,6 +220,7 @@ export const setupCategories: SetupConfig = [
       {
         key: "assessmentTypes",
         name: "setup.items.assessmentTypes.name",
+        description: "setup.items.assessmentTypes.description",
         done: false,
         slug: "assessment-types",
       },

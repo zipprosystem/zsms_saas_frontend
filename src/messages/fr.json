@@ -299,7 +299,7 @@
       },
       "gradingSchemes": { "name": "Barèmes de notation" },
       "gradeScales": { "name": "Échelles de notes" },
-      "assessmentTypes": { "name": "Types d'évaluation" },
+      "assessmentTypes": { "name": "Types d'évaluation", "description": "Les composantes CC et examen qui forment les notes" },
       "resultTemplates": { "name": "Modèles de résultats" },
       "idCardTemplates": { "name": "Modèles de carte d'identité" },
       "commentBanks": { "name": "Banques de commentaires" },
@@ -522,6 +522,151 @@
       "empty": {
         "student": "Aucun modèle de carte élève pour le moment.",
         "staff": "Aucun modèle de carte personnel pour le moment."
+      }
+    },
+    "assessmentTypes": {
+      "title": "Types d'évaluation",
+      "subtitle": "Structures de notes : les composantes CC et examen sur lesquelles une matière est notée, pour un total de 100",
+      "addNew": "Ajouter un type d'évaluation",
+      "searchPlaceholder": "Rechercher des types d'évaluation…",
+      "empty": "Aucun type d'évaluation pour l'instant. Ajoutez-en un pour définir la composition des notes.",
+      "panel": {
+        "createTitle": "Nouveau type d'évaluation",
+        "editTitle": "Modifier le type d'évaluation",
+        "subtitle": "Construisez la structure de notes. Les totaux se mettent à jour pendant la saisie."
+      },
+      "columns": {
+        "sn": "N°",
+        "name": "Nom",
+        "mode": "Mode",
+        "components": "Composantes",
+        "total": "Total",
+        "default": "Par défaut",
+        "status": "Statut"
+      },
+      "modes": {
+        "component_based": "Par composantes",
+        "grade_based": "Par niveaux",
+        "comingNext": "Prochaine étape"
+      },
+      "modeHelp": {
+        "component_based": "Les notes des composantes CC et examen totalisent 100.",
+        "grade_based": "Niveaux d'acquisition et domaines d'appréciation (style britannique), sans total numérique."
+      },
+      "gradeBasedStub": {
+        "title": "Les structures par niveaux arrivent à la prochaine étape",
+        "body": "Les niveaux d'acquisition et domaines d'appréciation ne sont pas encore disponibles. Passez en mode Par composantes pour créer une structure dès maintenant."
+      },
+      "categories": {
+        "ca": "CC",
+        "exam": "Examen"
+      },
+      "breakdown": {
+        "sum": "Somme des notes",
+        "weighted": "Pondération %",
+        "sumHelp": "Chaque sous-champ est noté sur son propre maximum ; les maximums s'additionnent pour égaler le maximum de la composante.",
+        "weightedHelp": "Chaque sous-champ est noté sur son propre maximum et porte une pondération ; les pondérations totalisent 100 %."
+      },
+      "badges": {
+        "default": "Par défaut",
+        "active": "Actif",
+        "inactive": "Inactif"
+      },
+      "filters": {
+        "allModes": "Tous les modes",
+        "allStatuses": "Tous les statuts"
+      },
+      "fields": {
+        "name": {
+          "label": "Nom",
+          "placeholder": "ex. Standard (CC 40 / Examen 60)"
+        },
+        "mode": {
+          "label": "Mode"
+        },
+        "components": {
+          "label": "Composantes",
+          "helper": "Ajoutez chaque composante CC et examen. Leurs contributions doivent totaliser {total}."
+        },
+        "component": {
+          "heading": "Composante {number}",
+          "name": "Nom de la composante",
+          "namePlaceholder": "ex. CC 1",
+          "category": "Type",
+          "max": "Note maximale",
+          "weight": "Pondération (facultatif)",
+          "weightPlaceholder": "Identique au maximum"
+        },
+        "breakdown": {
+          "label": "Décomposer en sous-champs",
+          "helper": "ex. CC composé du Test 1, du Test 2 et d'un Devoir",
+          "rollup": "Agrégation"
+        },
+        "subfield": {
+          "name": "Sous-champ",
+          "namePlaceholder": "ex. Test 1",
+          "max": "Note maximale",
+          "weight": "Pondération %"
+        },
+        "isActive": {
+          "label": "Actif",
+          "helper": "Les structures inactives ne peuvent pas être choisies pour de nouveaux examens"
+        },
+        "isDefault": {
+          "label": "Structure par défaut",
+          "helper": "Utilisée lorsque rien d'autre n'est choisi. Une seule structure peut être par défaut."
+        }
+      },
+      "summary": {
+        "total": "Total {actual} / {target}",
+        "contributes": "Contribue pour {value} sur {total}",
+        "scaled": "Noté sur {max}, ramené à {weight} sur {total}",
+        "subSum": "Sous-champs {actual} / {target}",
+        "subWeight": "Pondérations {actual} % / {target} %"
+      },
+      "actions": {
+        "addComponent": "Ajouter une composante",
+        "addSubfield": "Ajouter un sous-champ",
+        "moveUp": "Monter",
+        "moveDown": "Descendre",
+        "removeComponent": "Retirer la composante",
+        "removeSubfield": "Retirer le sous-champ",
+        "setDefault": "Définir par défaut",
+        "alreadyDefault": "C'est déjà la structure par défaut",
+        "inactiveCannotBeDefault": "Activez cette structure avant de la définir par défaut",
+        "defaultCannotBeDeleted": "Définissez une autre structure par défaut avant de supprimer celle-ci"
+      },
+      "deleteConfirm": {
+        "title": "Supprimer le type d'évaluation ?",
+        "message": "« {name} » et ses composantes seront supprimés. Cette action est irréversible."
+      },
+      "errors": {
+        "fixBeforeSave": "Corrigez les problèmes signalés avant d'enregistrer.",
+        "grade_based_not_ready": "Les structures par niveaux ne peuvent pas encore être enregistrées. Passez en mode Par composantes.",
+        "name_required": "Saisissez un nom.",
+        "name_too_long": "Le nom doit comporter 100 caractères au maximum.",
+        "default_inactive": "La structure par défaut doit être active.",
+        "components_required": "Ajoutez au moins une composante.",
+        "total_mismatch": "Les composantes totalisent {actual}. Elles doivent totaliser exactement {target}.",
+        "component_name_required": "Saisissez un nom de composante.",
+        "component_name_too_long": "Le nom de la composante doit comporter 60 caractères au maximum.",
+        "component_name_duplicate": "Une autre composante porte déjà ce nom.",
+        "component_category_invalid": "Choisissez CC ou Examen.",
+        "component_max_invalid": "La note maximale doit être un nombre supérieur à 0.",
+        "component_weight_invalid": "La pondération doit être supérieure à 0 et au plus 100, ou laissée vide.",
+        "subfields_required": "Une décomposition nécessite au moins 2 sous-champs.",
+        "subfields_sum_mismatch": "Les maximums des sous-champs totalisent {actual}. Ils doivent égaler le maximum de la composante, soit {target}.",
+        "subfields_weight_mismatch": "Les pondérations des sous-champs totalisent {actual} %. Elles doivent totaliser {target} %.",
+        "subfield_name_required": "Saisissez un nom de sous-champ.",
+        "subfield_name_too_long": "Le nom du sous-champ doit comporter 60 caractères au maximum.",
+        "subfield_name_duplicate": "Un autre sous-champ de cette composante porte déjà ce nom.",
+        "subfield_max_invalid": "Le maximum du sous-champ doit être un nombre supérieur à 0.",
+        "subfield_weight_invalid": "La pondération du sous-champ doit être supérieure à 0 et au plus 100."
+      },
+      "toast": {
+        "created": "Type d'évaluation créé",
+        "updated": "Type d'évaluation mis à jour",
+        "deleted": "Type d'évaluation supprimé"
       }
     },
     "classes": {

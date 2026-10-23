@@ -11,6 +11,7 @@ import { ClassSubjectsScreen } from "@/components/setup/academicStructure/ClassS
 import { ClassSubjectGroupingScreen } from "@/components/setup/academicStructure/ClassSubjectGroupingScreen";
 import { StudentTermDetailsScreen } from "@/components/setup/academicStructure/StudentTermDetailsScreen";
 import { SubjectEnrolmentScreen } from "@/components/setup/academicStructure/SubjectEnrolmentScreen";
+import { AssessmentTypesScreen } from "@/components/setup/assessmentConfiguration/AssessmentTypesScreen";
 import { ResultTemplatesScreen } from "@/components/setup/assessmentConfiguration/ResultTemplatesScreen";
 import { IdCardTemplatesScreen } from "@/components/setup/assessmentConfiguration/IdCardTemplatesScreen";
 
@@ -54,6 +55,8 @@ export const setupScreenRegistry: Record<string, ComponentType> = {
   // already be placed in a class/arm for a term before subjects can be
   // enrolled for them).
   "academic-structure/subject-enrolment": SubjectEnrolmentScreen,
+  // Score-structure builder (Exam Stage 1a) — MOCK, see assessmentStructuresApi.ts.
+  "assessment-configuration/assessment-types": AssessmentTypesScreen,
   // Both catalogs are MOCK (frontend-ahead) and feed the School Types
   // form's template assignment dropdowns.
   "assessment-configuration/result-templates": ResultTemplatesScreen,

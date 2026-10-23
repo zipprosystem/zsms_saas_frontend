@@ -32,6 +32,8 @@ export type CrudScreenProps<T, CreateInput, UpdateInput, FormState> = {
   addNewLabel: string;
   panelTitle: { create: string; edit: string };
   panelSubtitle?: string;
+  /** Slide-over width — "wide" for builder-style forms. */
+  panelSize?: "default" | "wide";
   service: CrudService<T, CreateInput, UpdateInput>;
   display: CrudDisplay<T>;
   getRowId: (row: T) => string;
@@ -105,6 +107,7 @@ export function CrudScreen<T, CreateInput, UpdateInput, FormState>({
   addNewLabel,
   panelTitle,
   panelSubtitle,
+  panelSize,
   service,
   display,
   getRowId,
@@ -315,6 +318,7 @@ export function CrudScreen<T, CreateInput, UpdateInput, FormState>({
         onClose={closePanel}
         title={panel.mode === "edit" ? panelTitle.edit : panelTitle.create}
         subtitle={panelSubtitle}
+        size={panelSize}
         onSave={handleSave}
         isSaving={isSaving}
       >

@@ -299,7 +299,7 @@
       },
       "gradingSchemes": { "name": "Grading Schemes" },
       "gradeScales": { "name": "Grade Scales" },
-      "assessmentTypes": { "name": "Assessment Types" },
+      "assessmentTypes": { "name": "Assessment Types", "description": "The CA and exam components scores are made of" },
       "resultTemplates": { "name": "Result Templates" },
       "idCardTemplates": { "name": "ID Card Templates" },
       "commentBanks": { "name": "Comment Banks" },
@@ -522,6 +522,151 @@
       "empty": {
         "student": "No student ID card templates yet.",
         "staff": "No staff ID card templates yet."
+      }
+    },
+    "assessmentTypes": {
+      "title": "Assessment Types",
+      "subtitle": "Score structures: the CA and exam components a subject is marked on, totalling 100",
+      "addNew": "Add Assessment Type",
+      "searchPlaceholder": "Search assessment types…",
+      "empty": "No assessment types yet. Add one to define how scores are made up.",
+      "panel": {
+        "createTitle": "New Assessment Type",
+        "editTitle": "Edit Assessment Type",
+        "subtitle": "Build the score structure. Totals update as you type."
+      },
+      "columns": {
+        "sn": "S/N",
+        "name": "Name",
+        "mode": "Mode",
+        "components": "Components",
+        "total": "Total",
+        "default": "Default",
+        "status": "Status"
+      },
+      "modes": {
+        "component_based": "Component-based",
+        "grade_based": "Grade-based",
+        "comingNext": "Next stage"
+      },
+      "modeHelp": {
+        "component_based": "Marks from CA and exam components add up to 100.",
+        "grade_based": "Attainment grades and rating domains (British style), with no numeric total."
+      },
+      "gradeBasedStub": {
+        "title": "Grade-based structures are coming in the next stage",
+        "body": "Attainment grades and rating domains aren't built yet. Switch to Component-based to create a structure now."
+      },
+      "categories": {
+        "ca": "CA",
+        "exam": "Exam"
+      },
+      "breakdown": {
+        "sum": "Sum of marks",
+        "weighted": "Weighted %",
+        "sumHelp": "Each sub-field is marked out of its own max; the maxes add up to the component's max.",
+        "weightedHelp": "Each sub-field is marked out of its own max and carries a weight; weights add up to 100%."
+      },
+      "badges": {
+        "default": "Default",
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "filters": {
+        "allModes": "All modes",
+        "allStatuses": "All statuses"
+      },
+      "fields": {
+        "name": {
+          "label": "Name",
+          "placeholder": "e.g. Standard (CA 40 / Exam 60)"
+        },
+        "mode": {
+          "label": "Mode"
+        },
+        "components": {
+          "label": "Components",
+          "helper": "Add each CA and exam component. Their contributions must total {total}."
+        },
+        "component": {
+          "heading": "Component {number}",
+          "name": "Component name",
+          "namePlaceholder": "e.g. CA 1",
+          "category": "Type",
+          "max": "Max marks",
+          "weight": "Weight (optional)",
+          "weightPlaceholder": "Same as max"
+        },
+        "breakdown": {
+          "label": "Break down into sub-fields",
+          "helper": "e.g. CA made up of Test 1, Test 2 and Assignment",
+          "rollup": "Roll-up"
+        },
+        "subfield": {
+          "name": "Sub-field",
+          "namePlaceholder": "e.g. Test 1",
+          "max": "Max marks",
+          "weight": "Weight %"
+        },
+        "isActive": {
+          "label": "Active",
+          "helper": "Inactive structures can't be chosen for new exams"
+        },
+        "isDefault": {
+          "label": "Default structure",
+          "helper": "Used when nothing else is chosen. Only one structure can be the default."
+        }
+      },
+      "summary": {
+        "total": "Total {actual} / {target}",
+        "contributes": "Contributes {value} of {total}",
+        "scaled": "Marked out of {max}, scaled to {weight} of {total}",
+        "subSum": "Sub-fields {actual} / {target}",
+        "subWeight": "Weights {actual}% / {target}%"
+      },
+      "actions": {
+        "addComponent": "Add component",
+        "addSubfield": "Add sub-field",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "removeComponent": "Remove component",
+        "removeSubfield": "Remove sub-field",
+        "setDefault": "Make default",
+        "alreadyDefault": "This is already the default",
+        "inactiveCannotBeDefault": "Activate this structure before making it the default",
+        "defaultCannotBeDeleted": "Make another structure the default before deleting this one"
+      },
+      "deleteConfirm": {
+        "title": "Delete assessment type?",
+        "message": "\"{name}\" and its components will be removed. This can't be undone."
+      },
+      "errors": {
+        "fixBeforeSave": "Fix the highlighted issues before saving.",
+        "grade_based_not_ready": "Grade-based structures can't be saved yet. Switch to Component-based.",
+        "name_required": "Enter a name.",
+        "name_too_long": "Name must be 100 characters or fewer.",
+        "default_inactive": "The default structure must be active.",
+        "components_required": "Add at least one component.",
+        "total_mismatch": "Components total {actual}. They must total exactly {target}.",
+        "component_name_required": "Enter a component name.",
+        "component_name_too_long": "Component name must be 60 characters or fewer.",
+        "component_name_duplicate": "Another component already has this name.",
+        "component_category_invalid": "Choose CA or Exam.",
+        "component_max_invalid": "Max marks must be a number greater than 0.",
+        "component_weight_invalid": "Weight must be greater than 0 and at most 100, or left blank.",
+        "subfields_required": "A breakdown needs at least 2 sub-fields.",
+        "subfields_sum_mismatch": "Sub-field maxes total {actual}. They must equal the component's max of {target}.",
+        "subfields_weight_mismatch": "Sub-field weights total {actual}%. They must total {target}%.",
+        "subfield_name_required": "Enter a sub-field name.",
+        "subfield_name_too_long": "Sub-field name must be 60 characters or fewer.",
+        "subfield_name_duplicate": "Another sub-field in this component already has this name.",
+        "subfield_max_invalid": "Sub-field max must be a number greater than 0.",
+        "subfield_weight_invalid": "Sub-field weight must be greater than 0 and at most 100."
+      },
+      "toast": {
+        "created": "Assessment type created",
+        "updated": "Assessment type updated",
+        "deleted": "Assessment type deleted"
       }
     },
     "classes": {
