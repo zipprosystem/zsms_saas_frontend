@@ -1,5 +1,6 @@
-import { ModuleStub } from "@/components/layout/ModuleStub";
+import { redirect } from "next/navigation";
 
+/** Academics has no landing page of its own yet — Exam is its only built area. */
 export default function Page() {
-  return <ModuleStub titleKey="nav.academics" />;
+  redirect("/admin/academics/exam");
 }
