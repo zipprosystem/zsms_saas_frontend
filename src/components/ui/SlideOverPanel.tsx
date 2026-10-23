@@ -19,6 +19,8 @@ export type SlideOverPanelProps = {
   cancelLabel?: string;
   isSaving?: boolean;
   saveDisabled?: boolean;
+  /** "wide" for builder-style forms (e.g. Assessment Types); defaults to the standard narrow drawer. */
+  size?: "default" | "wide";
 };
 
 /**
@@ -38,6 +40,7 @@ export function SlideOverPanel({
   cancelLabel,
   isSaving,
   saveDisabled,
+  size = "default",
 }: SlideOverPanelProps) {
   const t = useTranslations();
   // isSettled: true once the open animation has finished and the panel is
@@ -63,7 +66,7 @@ export function SlideOverPanel({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`absolute inset-x-0 bottom-0 flex max-h-[90vh] flex-col rounded-t-2xl bg-surface shadow-xl outline-none sm:inset-y-0 sm:left-auto sm:right-0 sm:h-full sm:max-h-none sm:w-full sm:max-w-md sm:rounded-t-none ${
+        className={`absolute inset-x-0 bottom-0 flex max-h-[90vh] flex-col rounded-t-2xl bg-surface shadow-xl outline-none sm:inset-y-0 sm:left-auto sm:right-0 sm:h-full sm:max-h-none sm:w-full ${size === "wide" ? "sm:max-w-2xl" : "sm:max-w-md"} sm:rounded-t-none ${
           isSettled
             ? ""
             : `transition-transform duration-300 ease-out ${

@@ -16,6 +16,7 @@ import { createStudentTermDetailService } from "@/lib/setup/academicStructure/st
 import { listSubjectEnrolments, subjectEnrolmentsQueryKey } from "@/lib/setup/academicStructure/subjectEnrolmentApi";
 import { staffPostsService } from "@/lib/hr/staffPostsApi";
 import { permissionGroupsService } from "@/lib/hr/permissionGroupsApi";
+import { assessmentStructuresService } from "@/lib/setup/assessmentConfiguration/assessmentStructuresApi";
 import type { SetupItem } from "@/lib/setup/setupConfig";
 
 /**
@@ -61,6 +62,7 @@ const ITEMS_WITH_LIVE_CHECK = new Set([
   "subjectEnrolment",
   "staffPosts",
   "permissionGroups",
+  "assessmentTypes",
 ]);
 
 export type SetupProgressState =
@@ -219,6 +221,16 @@ export function useSetupProgress(): SetupProgressState {
     staleTime: PROGRESS_STALE_TIME_MS,
   });
 
+  // Assessment Types (score structures) — school-scoped, MOCK until the
+  // backend ships (dev-bypass on the real transport resolves to "not
+  // configured", never a throw).
+  const assessmentStructuresQuery = useQuery({
+    queryKey: assessmentStructuresService.queryKey,
+    queryFn: () => assessmentStructuresService.list().then(throwIfTransient),
+    select: (result) => result.ok && result.data.length > 0,
+    staleTime: PROGRESS_STALE_TIME_MS,
+  });
+
   const sectionsStillLoading = activeClassIds.length > 0 && sectionQueries.some((query) => query.isPending);
   const classTermsStillLoading = allClassIds.length > 0 && classTermQueries.some((query) => query.isPending);
   const isLoading =
@@ -229,6 +241,7 @@ export function useSetupProgress(): SetupProgressState {
     subjectsMasterQuery.isPending ||
     staffPostsQuery.isPending ||
     permissionGroupsQuery.isPending ||
+    assessmentStructuresQuery.isPending ||
     (!!yearId &&
       (classesQuery.isPending ||
         sectionsStillLoading ||
@@ -255,6 +268,7 @@ export function useSetupProgress(): SetupProgressState {
   if (subjectEnrolmentsQuery.data) completedKeys.add("subjectEnrolment");
   if (staffPostsQuery.data) completedKeys.add("staffPosts");
   if (permissionGroupsQuery.data) completedKeys.add("permissionGroups");
+  if (assessmentStructuresQuery.data) completedKeys.add("assessmentTypes");
 
   return { status: "loaded", completedKeys };
 }
