@@ -67,6 +67,7 @@ export const sidebarNavItems: SidebarNavItem[] = [
       { key: "hrStaffs", labelKey: "nav.hrStaffs", href: "/admin/hr/staffs" },
       { key: "hrStaffPosts", labelKey: "nav.hrStaffPosts", href: "/admin/hr/staff-posts" },
       { key: "hrPermissionGroups", labelKey: "nav.hrPermissionGroups", href: "/admin/hr/permission-groups" },
+      { key: "hrAssignmentReview", labelKey: "nav.hrAssignmentReview", href: "/admin/hr/assignment-review" },
     ],
   },
   { key: "clinic", labelKey: "nav.clinic", href: "/admin/clinic", icon: HospitalIcon },

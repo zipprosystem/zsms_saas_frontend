@@ -8,7 +8,7 @@ import { StudentStatusBadge } from "@/components/students/StudentStatusBadge";
 import { DevBypassNotice } from "@/components/students/wizard/DevBypassNotice";
 import { isDevBypassUnavailable, throwIfTransient } from "@/lib/setup/crudTypes";
 import { listStudentStatusEvents, studentStatusEventsQueryKey } from "@/lib/students/studentsApi";
-import { listStaff, staffQueryKey } from "@/lib/staff/staffApi";
+import { actorNamesByUserId, listStaff, staffQueryKey } from "@/lib/staff/staffApi";
 import {
   genderLabelKey,
   modeLabelKey,
@@ -93,11 +93,12 @@ export function StudentViewPanel({
   });
   const events = historyQuery.data?.ok ? historyQuery.data.data : [];
 
-  // acted_by_user_id is a users.id — the staff lookup's ids are users.id
+  // acted_by_user_id is a users.id — matched against the lookup's user_id
+  // (NOT its id, which is staff.id under Option B).
   // too, so it doubles as the name lookup. Anyone not in it (no access,
   // a non-staff actor, dev bypass) just shows no "by" line.
   const staffQuery = useQuery({ queryKey: staffQueryKey, queryFn: listStaff, enabled: events.length > 0 });
-  const staffNames = new Map((staffQuery.data ?? []).map((member) => [member.id, member.full_name]));
+  const staffNames = actorNamesByUserId(staffQuery.data ?? []);
 
   const primary = student.primary_contact ? student[student.primary_contact] : (student.guardian ?? student.father ?? student.mother);
 

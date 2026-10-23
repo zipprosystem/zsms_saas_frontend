@@ -1,5 +1,6 @@
 "use client";
 
+import { hasUsableEmail } from "@/lib/hr/hrTypes";
 import type { ReactNode } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { StaffStepSection } from "@/components/hr/wizard/StaffStepSection";
@@ -94,6 +95,12 @@ export function StaffReviewSection({ form, refs, mode, credentialsIssued, isActi
           value={loginIssued ? orDash(effectiveUsername(form)) : t("hr.wizard.review.notIssued")}
         />
         <ReviewItem label={t("hr.wizard.fields.loginActive.label")} value={loginOn ? t("hr.wizard.review.on") : t("hr.wizard.review.off")} />
+        {mode === "create" ? (
+          <ReviewItem
+            label={t("hr.credentials.reviewLabel")}
+            value={hasUsableEmail(form.email) ? t("hr.credentials.reviewLink", { email: form.email.trim() }) : t("hr.credentials.reviewDefault")}
+          />
+        ) : null}
         <ReviewItem label={t("hr.wizard.sections.qualifications.title")} value={rows(filled(form.qualifications))} />
         <ReviewItem label={t("hr.wizard.sections.references.title")} value={rows(filled(form.references))} />
         <ReviewItem label={t("hr.wizard.sections.experience.title")} value={rows(filled(form.experience))} />

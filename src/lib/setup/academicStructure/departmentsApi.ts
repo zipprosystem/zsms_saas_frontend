@@ -15,7 +15,9 @@ import type { CrudResult, CrudService } from "@/lib/setup/crudTypes";
  *   POST/PUT {API_BASE}/erp/departments[/:id]
  *     { name, hod_staff_id, senior_manager_staff_id? }
  *     hod_staff_id is required; senior_manager_staff_id is optional/null.
- *     Both are users.id values from GET /erp/staff (see staffApi.ts). The
+ *     Both are staff.id values (Option B, 2026-10-23) from GET /erp/staff
+ *     (see staffApi.ts) — NOT users.id; backend migration 036 remaps
+ *     legacy users.id values. The
  *     same person may be both HOD and Senior Manager, and may head
  *     several departments — no client-side uniqueness rule.
  *     -> { success: true, data: <entity> }

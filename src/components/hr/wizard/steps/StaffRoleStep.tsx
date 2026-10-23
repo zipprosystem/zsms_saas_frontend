@@ -15,6 +15,7 @@ type StepProps = {
   errors: FieldErrors;
   refs: HrReferenceData;
   /** The header's selected year (teaching assignments belong to it). Null = no year selected. */
+  yearId: string | null;
   yearName: string | null;
   carriedFromYearName: string | null;
 };
@@ -29,7 +30,7 @@ type StepProps = {
  * under dev-bypass. Groups own membership; picking them here sends
  * permission_group_ids and the backend updates the groups.
  */
-export function StaffRoleStep({ form, onChange, errors, refs, yearName, carriedFromYearName }: StepProps) {
+export function StaffRoleStep({ form, onChange, errors, refs, yearId, yearName, carriedFromYearName }: StepProps) {
   const t = useTranslations();
   const postOptions = refs.posts.filter((post) => post.is_active || post.id === form.post_id);
 
@@ -92,6 +93,7 @@ export function StaffRoleStep({ form, onChange, errors, refs, yearName, carriedF
       </StaffStepSection>
 
       <StaffTeachingAssignments
+        yearId={yearId}
         form={form}
         onChange={onChange}
         errors={errors}

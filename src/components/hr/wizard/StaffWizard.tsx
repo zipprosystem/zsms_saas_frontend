@@ -263,6 +263,7 @@ export function StaffWizard({ mode, initialStaff, initialStep, onClose }: StaffW
             onChange={change}
             errors={errors}
             refs={refs}
+            yearId={yearId}
             yearName={yearId ? (yearName ?? t("hr.wizard.assignments.selectedYear")) : null}
             carriedFromYearName={carriedFromYearName}
           />

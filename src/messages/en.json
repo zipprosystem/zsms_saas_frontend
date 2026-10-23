@@ -141,6 +141,7 @@
     "hrStaffs": "Staff",
     "hrStaffPosts": "Staff Posts",
     "hrPermissionGroups": "Permission Groups",
+    "hrAssignmentReview": "Assignment Review",
     "academicsExam": "Exam",
     "clinic": "Clinic",
     "adminPanel": "Admin Panel",
@@ -1385,7 +1386,8 @@
         "view": "View",
         "create": "Create",
         "edit": "Edit",
-        "delete": "Delete"
+        "delete": "Delete",
+        "manage": "Manage"
       }
     },
     "staffPosts": {
@@ -1450,8 +1452,7 @@
         },
         "permissions": {
           "label": "Permissions",
-          "helper": "Tick a module to grant all of its actions.",
-          "module": "Module"
+          "helper": "Tick a module to grant all of its actions."
         },
         "members": {
           "label": "Members",
@@ -1466,6 +1467,10 @@
         "created": "Permission group added",
         "updated": "Permission group updated",
         "deleted": "Permission group deleted"
+      },
+      "catalog": {
+        "loading": "Loading permissions…",
+        "unavailable": "Couldn't load the permission list. The group's current permissions are kept as they are; try again later to change them."
       }
     },
     "wizard": {
@@ -1632,7 +1637,8 @@
         "subject": {
           "label": "Subject",
           "placeholder": "Select subject",
-          "noneForClass": "No subjects set for this class"
+          "searchPlaceholder": "Search subjects…",
+          "noMatches": "No matching subjects for this class"
         },
         "country": {
           "label": "Country",
@@ -1736,8 +1742,6 @@
         "placeholder": "Salary and allowances are managed in Payroll (coming later)."
       },
       "login": {
-        "forcedChange": "The staff signs in with this password and must change it at first login (two-factor authentication is on for this school).",
-        "noForcedChange": "The staff signs in with this password. Passwords are never shown again or exported.",
         "editNote": "To reset this staff's password to the default, use the staff profile.",
         "notIssued": "Login credentials haven't been issued yet — issue them from the staff profile."
       },
@@ -1847,7 +1851,6 @@
         "resetAt": "Last reset",
         "neverReset": "Never",
         "password": "Password",
-        "passwordIndicator": "Starts as the default ({password}) — never shown or exported",
         "offWhileInactive": "Login stays off while the staff isn't active.",
         "issueTitle": "Issue credentials",
         "issueMessage": "The staff signs in with this username and the default password ({password}).",
@@ -1857,14 +1860,63 @@
           "issued": "Credentials issued",
           "reset": "Password reset to default",
           "activated": "Login activated",
-          "deactivated": "Login deactivated"
-        }
+          "deactivated": "Login deactivated",
+          "linkSent": "Set-password link sent"
+        },
+        "sendLink": "Send new set-password link",
+        "sendLinkTitle": "Send a new set-password link?",
+        "sendLinkMessage": "{name} will get an email at {email} with a secure link to set a new password. Their current password stops working.",
+        "issueMessageLink": "A secure link to set a password will be emailed to {email}."
       },
       "history": {
         "title": "Status history",
         "empty": "No status changes yet.",
-        "dates": "Effective {effective} · recorded {recorded}"
+        "dates": "Effective {effective} · recorded {recorded}",
+        "by": "by {name}"
       }
+    },
+    "credentials": {
+      "method": {
+        "emailLink": "Set by the staff through a secure link sent to {email}. Never shown here.",
+        "defaultPassword": "Default password ({password}) until the staff changes it. Never shown here once changed."
+      },
+      "createLink": "When you add this staff, a secure link is emailed to {email} so they can set their own password. No password is shown or stored here.",
+      "createDefault": "There's no email on file, so this staff signs in with the default password {password}. Share it with them directly, or add an email to send them a secure set-password link instead.",
+      "forcedChange": "Two-factor authentication is on for this school, so they must set a new password at first sign-in.",
+      "reviewLabel": "Password",
+      "reviewLink": "Set-password link emailed to {email}",
+      "reviewDefault": "Default password (no email on file)"
+    },
+    "assignmentReview": {
+      "title": "Assignment Review",
+      "subtitle": "Teaching assignments carried forward into {year} that couldn't be matched. Remap each one to this year's class and arm, or discard it.",
+      "noYear": "Select an academic year in the header to review its carried-forward assignments.",
+      "empty": "Nothing to review — every carried-forward assignment for {year} matched.",
+      "count": "{count, plural, one {# assignment needs} other {# assignments need}} review",
+      "wasSubject": "Was: {subject} · {arm}",
+      "wasClassTeacher": "Was: class teacher of {arm}",
+      "fromYear": "from {year}",
+      "remap": "Remap to this year",
+      "discard": "Discard",
+      "discardConfirm": {
+        "title": "Discard this assignment?",
+        "message": "{name} won't get this assignment in the new year. You can still add it from their staff record later."
+      },
+      "reasons": {
+        "CLASS_NOT_FOUND": "Class not in this year",
+        "ARM_NOT_FOUND": "Arm not in this year",
+        "SUBJECT_NOT_OFFERED": "Subject not offered",
+        "other": "Needs review"
+      },
+      "errors": {
+        "duplicate": "This staff already has that assignment for this year."
+      },
+      "toast": {
+        "remapped": "Assignment remapped",
+        "discarded": "Assignment discarded"
+      },
+      "banner": "{count, plural, one {# carried-forward assignment needs} other {# carried-forward assignments need}} review for this year.",
+      "bannerLink": "Review assignments"
     }
   },
   "students": {

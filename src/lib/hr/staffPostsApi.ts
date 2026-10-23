@@ -1,11 +1,10 @@
 import type { CrudResult, CrudService } from "@/lib/setup/crudTypes";
-import { asRecord, readEntity, readListItems, realTransport, sendHrRequest, str, type HrChannel } from "@/lib/hr/hrHttp";
-import { hrMockTransport } from "@/lib/hr/mock/hrMockBackend";
+import { asRecord, hrChannel, readEntity, readListItems, sendHrRequest, str, type HrChannel } from "@/lib/hr/hrHttp";
 import type { StaffPost, StaffPostInput } from "@/lib/hr/hrTypes";
 
 /**
- * Staff Posts (designations master) — MOCK until the backend ships it;
- * flip USE_MOCK to swap (nothing else changes, see hrHttp.ts).
+ * Staff Posts (designations master) — REAL /api/v1/erp (HR_USE_MOCK in
+ * hrHttp.ts switches every HR service back to the mock).
  *
  *   GET    erp/staff-posts         -> { items, total, page, limit, has_more }
  *   POST   erp/staff-posts         { name, is_active } -> entity
@@ -15,9 +14,7 @@ import type { StaffPost, StaffPostInput } from "@/lib/hr/hrTypes";
  * Label only — a post grants nothing; access comes from Permission Groups.
  * staff_count is backend-calculated.
  */
-const USE_MOCK = true;
-
-const channel: HrChannel = { transport: USE_MOCK ? hrMockTransport : realTransport, isMock: USE_MOCK };
+const channel: HrChannel = hrChannel;
 
 export const staffPostsQueryKey = ["hr", "staffPosts"] as const;
 

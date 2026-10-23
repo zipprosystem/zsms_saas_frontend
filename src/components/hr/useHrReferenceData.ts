@@ -7,22 +7,18 @@ import { createClassesService, type SchoolClass } from "@/lib/setup/academicStru
 import { fetchSectionsForClass, sectionsQueryKey, type Section } from "@/lib/setup/academicStructure/sectionsApi";
 import { departmentsService, type Department } from "@/lib/setup/academicStructure/departmentsApi";
 import { subjectsMasterService, type SubjectMaster } from "@/lib/setup/academicStructure/subjectsMasterApi";
-import {
-  classSubjectsQueryKey,
-  fetchClassSubjectsForYear,
-  type ClassSubject,
-} from "@/lib/setup/academicStructure/classSubjectsApi";
 import { staffPostsService } from "@/lib/hr/staffPostsApi";
 import { permissionGroupsService } from "@/lib/hr/permissionGroupsApi";
 import type { PermissionGroup, StaffPost } from "@/lib/hr/hrTypes";
 
 /**
  * Everything the Staff list and the Add/Edit wizard resolve names / pick
- * options from. HR masters (posts, groups) are MOCK; departments, subjects
- * and the year's classes / arms / class subjects are the REAL Academic
- * APIs — empty under dev-bypass (`academicUnavailable` says so, so the
+ * options from. Everything is the REAL API (HR masters included since the
+ * 2026-10-23 flip) — empty under dev-bypass (`academicUnavailable` says so, so the
  * wizard can show "not available locally" instead of a bare empty list).
- * Same query keys as the Setup screens, so caches are shared.
+ * Same query keys as the Setup screens, so caches are shared. The subject
+ * PICKER uses the server-side search (SubjectSearchSelect); `subjects`
+ * here only resolves names for saved assignments.
  */
 export function useHrReferenceData(yearId: string | null) {
   const postsQuery = useQuery({
@@ -63,19 +59,11 @@ export function useHrReferenceData(yearId: string | null) {
     })),
   });
 
-  const classSubjectsQuery = useQuery({
-    queryKey: yearId ? classSubjectsQueryKey(yearId) : ["setup", "classSubjects", "none"],
-    queryFn: () => fetchClassSubjectsForYear(yearId!).then(throwIfTransient),
-    enabled: !!yearId,
-    staleTime: STRUCTURAL_STALE_TIME_MS,
-  });
-
   const posts: StaffPost[] = postsQuery.data?.ok ? postsQuery.data.data : [];
   const groups: PermissionGroup[] = groupsQuery.data?.ok ? groupsQuery.data.data : [];
   const departments: Department[] = departmentsQuery.data?.ok ? departmentsQuery.data.data : [];
   const subjects: SubjectMaster[] = subjectsQuery.data?.ok ? subjectsQuery.data.data : [];
   const sections: Section[] = sectionQueries.flatMap((query) => (query.data?.ok ? query.data.data : []));
-  const classSubjects: ClassSubject[] = classSubjectsQuery.data?.ok ? classSubjectsQuery.data.data : [];
 
   return {
     posts,
@@ -84,7 +72,6 @@ export function useHrReferenceData(yearId: string | null) {
     subjects,
     classes,
     sections,
-    classSubjects,
     isLoadingPosts: postsQuery.isPending,
     isLoadingGroups: groupsQuery.isPending,
     academicUnavailable: isDevBypassUnavailable(departmentsQuery.data) || isDevBypassUnavailable(subjectsQuery.data),

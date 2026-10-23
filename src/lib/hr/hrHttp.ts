@@ -1,28 +1,40 @@
 import { DEV_AUTH_BYPASS } from "@/lib/auth/authBridge";
 import { extractErpError } from "@/lib/setup/erpError";
 import type { CrudResult } from "@/lib/setup/crudTypes";
-import type { HttpMethod, Transport, WireResponse } from "@/lib/setup/assessmentConfiguration/templateCatalog";
+import { realTransport, type HttpMethod, type Transport, type WireResponse } from "@/lib/setup/assessmentConfiguration/templateCatalog";
 
-export { realTransport } from "@/lib/setup/assessmentConfiguration/templateCatalog";
+export { realTransport };
 export type { HttpMethod, Transport, WireResponse };
 
 /**
  * Shared plumbing for the HR services (Staff, Staff Posts, Permission
- * Groups). Same model as the template catalogs (templateCatalog.ts): a
- * Transport returns the wire response ({ status, body } in the ERP
- * envelope), and each service runs it through the same fromWire /
- * toHrResult whether it came from the mock (mock/hrMockBackend.ts) or the
- * real API — so each service's USE_MOCK flag is the only thing that
- * changes at swap time.
+ * Groups, the permission catalog, assignment review). A Transport returns
+ * the wire response ({ status, body } in the ERP envelope), and each
+ * service runs it through the same fromWire / toHrResult whether it came
+ * from the mock or the real API.
  *
- * No HR backend exists yet (probed 2026-10-21: only the read-only
- * GET erp/staff lookup — see src/lib/staff/staffApi.ts). Every path and
- * error code below is the PROPOSED contract the mock answers to, for
- * Muntajir to confirm.
+ * REAL since 2026-10-23 (feature/staff-backend-integration): every HR
+ * service talks to /api/v1/erp. Under the local dev-auth bypass every call
+ * returns devBypassUnavailable (empty state + notice) — real data only on
+ * the deployed tenant. Paths/codes follow our mock contract plus
+ * Muntajir's documented names; reconcile against the live API there.
+ *
+ * HR_USE_MOCK is the ONE switch for all HR services. The in-browser mock
+ * (mock/hrMockBackend.ts) is kept only behind it and loaded lazily, so it
+ * isn't bundled while the flag is off.
  */
+export const HR_USE_MOCK = false;
 
 /** A service's mock-or-real switch, passed to every request. */
 export type HrChannel = { transport: Transport; isMock: boolean };
+
+const lazyMockTransport: Transport = async (method, path, payload) => {
+  const { hrMockTransport } = await import("@/lib/hr/mock/hrMockBackend");
+  return hrMockTransport(method, path, payload);
+};
+
+/** The channel every HR service uses — flip HR_USE_MOCK, nothing else. */
+export const hrChannel: HrChannel = { transport: HR_USE_MOCK ? lazyMockTransport : realTransport, isMock: HR_USE_MOCK };
 
 /**
  * Error codes -> CrudResult. Code names are GUESSED (by analogy to Student
@@ -52,6 +64,9 @@ const CONFLICT_CODES = new Set([
   "CREDENTIALS_ALREADY_ISSUED",
   "CREDENTIALS_NOT_ISSUED",
   "STAFF_NOT_ACTIVE",
+  // FLAGGED (proposed): carry-forward assignment review.
+  "ASSIGNMENT_REVIEW_NOT_FOUND",
+  "ASSIGNMENT_REVIEW_RESOLVED",
 ]);
 
 /** Body fields a 422 VALIDATION_ERROR can be pinned to; anything else stays a banner. The field name LEADS the message (Student Core's confirmed convention). */

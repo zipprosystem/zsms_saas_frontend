@@ -1,7 +1,15 @@
 /**
- * HR domain types — Staff, Staff Posts, Permission Groups. Field names are
- * the PROPOSED wire contract (snake_case, same as Student Core) the mock
- * implements; the backend owns them once it ships.
+ * HR domain types — Staff, Staff Posts, Permission Groups. Field names
+ * follow our mock contract plus the names Muntajir documented for the
+ * shipped backend (2026-10-23: staff.id + user_id, permission catalog,
+ * carry-forward review). Anything still unconfirmed is marked FLAGGED —
+ * reconcile against the live API on the deployed tenant.
+ *
+ * IDENTITY (Option B): every staff reference — the staff record, a
+ * department's HOD / senior manager, class-teacher and subject
+ * assignments, permission-group members — is staff.id. user_id (the login
+ * account, may be null) is used for ONE thing only: resolving who
+ * performed a status event (acted_by_user_id -> name).
  */
 
 export type StaffType = "teaching" | "non_teaching";
@@ -101,7 +109,10 @@ export type StaffExperience = {
 export type StaffGender = "male" | "female";
 
 export type Staff = {
+  /** staff.id — the id every other record references. */
   id: string;
+  /** The staff's login account (users.id), null until one exists. ONLY used to resolve status-event actors — never to reference the staff. */
+  user_id: string | null;
   /** Backend-assigned display id — read-only, never generated here. Null on a draft. */
   staff_no: string | null;
   status: StaffStatus;
@@ -163,6 +174,14 @@ export type Staff = {
   credentials_issued_at: string | null;
   /** Last reset to the default password, if any. */
   password_reset_at: string | null;
+  /**
+   * How the staff gets a password (hybrid): "email_link" = a secure
+   * set-password link is emailed (valid email on file); "default_password"
+   * = the school default (123456) is handed over in person. FLAGGED: field
+   * name proposed; when absent the UI derives it from whether an email
+   * exists (passwordSetupFor()).
+   */
+  password_setup: PasswordSetup | null;
   last_active_at: string | null;
 
   // Latest status change (Leaver / Reinstate)
@@ -191,6 +210,8 @@ export type StaffWriteBody = Omit<
   | "status_effective_date"
   | "credentials_issued_at"
   | "password_reset_at"
+  | "password_setup"
+  | "user_id"
   | "assignments_academic_year_id"
   | "assignments_carried_forward_from"
   | "created_at"
@@ -212,7 +233,52 @@ export type StaffStatusEvent = {
   reason: string | null;
   effective_date: string | null;
   created_at: string | null;
+  /** users.id of whoever recorded the event — resolved to a name via the staff lookup's user_id (never staff.id). */
+  acted_by_user_id: string | null;
+  /** FLAGGED: the backend may send the actor's name directly; preferred over the lookup when present. */
+  acted_by_name: string | null;
 };
+
+export type PasswordSetup = "email_link" | "default_password";
+
+/** Loose email check — enough to decide link vs default password; the backend validates properly. */
+export function hasUsableEmail(email: string | null | undefined): boolean {
+  return !!email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
+/** The backend's answer when it sends one, otherwise derived from the email on file. */
+export function passwordSetupFor(staff: Pick<Staff, "password_setup" | "email">): PasswordSetup {
+  return staff.password_setup ?? (hasUsableEmail(staff.email) ? "email_link" : "default_password");
+}
+
+/**
+ * A carried-forward assignment the backend couldn't match into the new
+ * year (e.g. the arm or class subject doesn't exist there) — kept for an
+ * admin to remap or discard. FLAGGED: shape proposed; names follow the
+ * staff assignment fields.
+ */
+export type AssignmentReviewKind = "subject" | "class_teacher";
+
+export type AssignmentReviewItem = {
+  id: string;
+  staff_id: string;
+  staff_name: string;
+  kind: AssignmentReviewKind;
+  /** The year the assignment came from, and the year it should be remapped into. */
+  from_academic_year_id: string | null;
+  academic_year_id: string;
+  /** The old year's ids + names (names sent by the backend — the old year's classes aren't loaded here). */
+  class_id: string | null;
+  class_name: string | null;
+  section_id: string | null;
+  section_name: string | null;
+  subject_id: string | null;
+  subject_name: string | null;
+  /** Backend's reason code, e.g. ARM_NOT_FOUND / CLASS_NOT_FOUND / SUBJECT_NOT_OFFERED. */
+  reason: string | null;
+};
+
+export type AssignmentRemapBody = { class_id: string; section_id: string; subject_id?: string };
 
 export type StaffPost = {
   id: string;
@@ -227,9 +293,15 @@ export type StaffPostInput = { name: string; is_active: boolean };
 export type PermissionGroup = {
   id: string;
   name: string;
-  /** "module.action" keys from PERMISSION_MODULES / PERMISSION_ACTIONS (permissionCatalog.ts). */
+  /** Permission keys ("module.action") from the backend's permission catalog (GET erp/permission-catalog). */
   permissions: string[];
+  /** staff.id of each member. */
   member_staff_ids: string[];
 };
+
+/** The backend permission catalog, normalized (permissionCatalog.ts reads its wire shape tolerantly). */
+export type PermissionCatalogEntry = { key: string; action: string; label: string | null };
+export type PermissionCatalogModule = { key: string; label: string | null; permissions: PermissionCatalogEntry[] };
+export type PermissionCatalog = { modules: PermissionCatalogModule[] };
 
 export type PermissionGroupInput = { name: string; permissions: string[]; member_staff_ids: string[] };

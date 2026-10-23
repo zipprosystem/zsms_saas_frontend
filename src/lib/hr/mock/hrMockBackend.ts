@@ -1,6 +1,5 @@
 import { mockDelay } from "@/lib/onboarding/mockDelay";
 import { academicYearsService } from "@/lib/setup/academicStructure/academicYearsApi";
-import { normalizePermissions } from "@/lib/hr/permissionCatalog";
 import {
   isLeaverStatus,
   LEAVER_CATEGORY_STATUS,
@@ -137,6 +136,8 @@ function toStored(staff: Staff): StoredStaff {
           reason: staff.status_reason,
           effective_date: staff.status_effective_date,
           created_at: staff.updated_at,
+          acted_by_user_id: null,
+          acted_by_name: null,
         },
       ]
     : [];
@@ -353,6 +354,8 @@ type StaffFields = Omit<
   | "must_change_password"
   | "credentials_issued_at"
   | "password_reset_at"
+  | "password_setup"
+  | "user_id"
   | "status_reason"
   | "status_effective_date"
 >;
@@ -651,6 +654,9 @@ async function recordStatusChange(
     reason: change.reason,
     effective_date: change.effectiveDate,
     created_at: now,
+    // The mock has no signed-in user to record.
+    acted_by_user_id: null,
+    acted_by_name: null,
   };
   const next: StoredStaff = {
     ...existing,
@@ -742,6 +748,8 @@ async function handleStaff(
     let created: StoredStaff = {
       ...parsed.fields,
       id: mockId(),
+      user_id: isDraft ? null : mockId(),
+      password_setup: null,
       staff_no: isDraft ? null : nextStaffNo(),
       status: isDraft ? "draft" : "active",
       draft_last_step: isDraft ? currentStep(payload) : null,
@@ -910,8 +918,22 @@ function cleanMembers(value: unknown): string[] {
   return Array.from(new Set(ids)).filter((id) => known.has(id));
 }
 
+/**
+ * The mock's stand-in for GET erp/permission-catalog (the real catalog is
+ * backend-owned). Same coarse grid the mock always used, except staff's
+ * create/edit/delete fold into staff.manage, matching the real catalog.
+ */
+const MOCK_PERMISSION_MODULES = ["students", "staff", "academics", "attendance", "assessments", "finance", "communications", "reports", "setup", "settings"];
+
+function mockCatalogKeys(): string[] {
+  return MOCK_PERMISSION_MODULES.flatMap((module) =>
+    (module === "staff" ? ["view", "manage"] : ["view", "create", "edit", "delete"]).map((action) => `${module}.${action}`),
+  );
+}
+
 function cleanPermissions(value: unknown): string[] {
-  return normalizePermissions(Array.isArray(value) ? value.filter((key): key is string => typeof key === "string") : []);
+  const wanted = new Set(Array.isArray(value) ? value.filter((key): key is string => typeof key === "string") : []);
+  return mockCatalogKeys().filter((key) => wanted.has(key));
 }
 
 function handlePermissionGroups(method: HttpMethod, id: string | null, payload: unknown): WireResponse {
@@ -975,6 +997,7 @@ const ROUTES: Array<{
   /** `rest` = everything after "<base>/" (e.g. "<id>" or "<id>/submit"), null for the base path itself. */
   handle: (method: HttpMethod, rest: string | null, payload: unknown, query: URLSearchParams) => WireResponse | Promise<WireResponse>;
 }> = [
+  { base: "erp/permission-catalog", handle: (method) => (method === "GET" ? ok(mockCatalogKeys()) : fail(405, "METHOD_NOT_ALLOWED", "Method not allowed")) },
   { base: "erp/staff-posts", handle: (method, id, payload) => handleStaffPosts(method, id, payload) },
   { base: "erp/permission-groups", handle: (method, id, payload) => handlePermissionGroups(method, id, payload) },
   { base: "erp/staff", handle: handleStaff },

@@ -141,6 +141,7 @@
     "hrStaffs": "Personnel",
     "hrStaffPosts": "Postes du personnel",
     "hrPermissionGroups": "Groupes de permissions",
+    "hrAssignmentReview": "Revue des attributions",
     "academicsExam": "Examen",
     "clinic": "Clinique",
     "adminPanel": "Panneau d'administration",
@@ -1393,7 +1394,8 @@
         "view": "Voir",
         "create": "Créer",
         "edit": "Modifier",
-        "delete": "Supprimer"
+        "delete": "Supprimer",
+        "manage": "Gérer"
       }
     },
     "staffPosts": {
@@ -1458,8 +1460,7 @@
         },
         "permissions": {
           "label": "Permissions",
-          "helper": "Cochez un module pour accorder toutes ses actions.",
-          "module": "Module"
+          "helper": "Cochez un module pour accorder toutes ses actions."
         },
         "members": {
           "label": "Membres",
@@ -1474,6 +1475,10 @@
         "created": "Groupe ajouté",
         "updated": "Groupe mis à jour",
         "deleted": "Groupe supprimé"
+      },
+      "catalog": {
+        "loading": "Chargement des permissions…",
+        "unavailable": "Impossible de charger la liste des permissions. Les permissions actuelles du groupe sont conservées telles quelles ; réessayez plus tard pour les modifier."
       }
     },
     "wizard": {
@@ -1640,7 +1645,8 @@
         "subject": {
           "label": "Matière",
           "placeholder": "Choisir une matière",
-          "noneForClass": "Aucune matière définie pour cette classe"
+          "searchPlaceholder": "Rechercher une matière…",
+          "noMatches": "Aucune matière correspondante pour cette classe"
         },
         "country": {
           "label": "Pays",
@@ -1744,8 +1750,6 @@
         "placeholder": "Le salaire et les indemnités sont gérés dans la Paie (à venir)."
       },
       "login": {
-        "forcedChange": "Le membre se connecte avec ce mot de passe et doit le changer à la première connexion (l'authentification à deux facteurs est activée pour l'école).",
-        "noForcedChange": "Le membre se connecte avec ce mot de passe. Les mots de passe ne sont plus jamais affichés ni exportés.",
         "editNote": "Pour réinitialiser le mot de passe de ce membre, utilisez sa fiche.",
         "notIssued": "Aucun identifiant n'a encore été créé — créez-les depuis la fiche du membre."
       },
@@ -1855,7 +1859,6 @@
         "resetAt": "Dernière réinitialisation",
         "neverReset": "Jamais",
         "password": "Mot de passe",
-        "passwordIndicator": "Mot de passe par défaut au départ ({password}) — jamais affiché ni exporté",
         "offWhileInactive": "La connexion reste désactivée tant que le membre n'est pas actif.",
         "issueTitle": "Créer les identifiants",
         "issueMessage": "Le membre se connecte avec ce nom d'utilisateur et le mot de passe par défaut ({password}).",
@@ -1865,14 +1868,63 @@
           "issued": "Identifiants créés",
           "reset": "Mot de passe réinitialisé",
           "activated": "Connexion activée",
-          "deactivated": "Connexion désactivée"
-        }
+          "deactivated": "Connexion désactivée",
+          "linkSent": "Lien de définition du mot de passe envoyé"
+        },
+        "sendLink": "Envoyer un nouveau lien",
+        "sendLinkTitle": "Envoyer un nouveau lien de définition du mot de passe ?",
+        "sendLinkMessage": "{name} recevra un e-mail à {email} avec un lien sécurisé pour définir un nouveau mot de passe. Son mot de passe actuel ne fonctionnera plus.",
+        "issueMessageLink": "Un lien sécurisé pour définir le mot de passe sera envoyé à {email}."
       },
       "history": {
         "title": "Historique du statut",
         "empty": "Aucun changement de statut.",
-        "dates": "Effet le {effective} · enregistré le {recorded}"
+        "dates": "Effet le {effective} · enregistré le {recorded}",
+        "by": "par {name}"
       }
+    },
+    "credentials": {
+      "method": {
+        "emailLink": "Défini par le membre du personnel via un lien sécurisé envoyé à {email}. Jamais affiché ici.",
+        "defaultPassword": "Mot de passe par défaut ({password}) jusqu'à ce que le membre du personnel le change. Jamais affiché ici une fois changé."
+      },
+      "createLink": "À l'ajout de ce membre du personnel, un lien sécurisé est envoyé à {email} pour qu'il définisse son propre mot de passe. Aucun mot de passe n'est affiché ni enregistré ici.",
+      "createDefault": "Aucun e-mail n'est renseigné : ce membre du personnel se connecte avec le mot de passe par défaut {password}. Communiquez-le-lui directement, ou ajoutez un e-mail pour lui envoyer un lien sécurisé de définition du mot de passe.",
+      "forcedChange": "L'authentification à deux facteurs est activée pour cet établissement : un nouveau mot de passe devra être défini à la première connexion.",
+      "reviewLabel": "Mot de passe",
+      "reviewLink": "Lien de définition envoyé à {email}",
+      "reviewDefault": "Mot de passe par défaut (aucun e-mail renseigné)"
+    },
+    "assignmentReview": {
+      "title": "Revue des attributions",
+      "subtitle": "Attributions reportées sur {year} qui n'ont pas pu être rapprochées. Réaffectez chacune à une classe et une section de cette année, ou abandonnez-la.",
+      "noYear": "Sélectionnez une année scolaire dans l'en-tête pour revoir ses attributions reportées.",
+      "empty": "Rien à revoir : toutes les attributions reportées sur {year} ont été rapprochées.",
+      "count": "{count, plural, one {# attribution à revoir} other {# attributions à revoir}}",
+      "wasSubject": "Avant : {subject} · {arm}",
+      "wasClassTeacher": "Avant : professeur principal de {arm}",
+      "fromYear": "depuis {year}",
+      "remap": "Réaffecter à cette année",
+      "discard": "Abandonner",
+      "discardConfirm": {
+        "title": "Abandonner cette attribution ?",
+        "message": "{name} n'aura pas cette attribution pour la nouvelle année. Vous pourrez toujours l'ajouter plus tard depuis sa fiche."
+      },
+      "reasons": {
+        "CLASS_NOT_FOUND": "Classe absente cette année",
+        "ARM_NOT_FOUND": "Section absente cette année",
+        "SUBJECT_NOT_OFFERED": "Matière non proposée",
+        "other": "À revoir"
+      },
+      "errors": {
+        "duplicate": "Ce membre du personnel a déjà cette attribution pour cette année."
+      },
+      "toast": {
+        "remapped": "Attribution réaffectée",
+        "discarded": "Attribution abandonnée"
+      },
+      "banner": "{count, plural, one {# attribution reportée est à revoir} other {# attributions reportées sont à revoir}} pour cette année.",
+      "bannerLink": "Revoir les attributions"
     }
   },
   "students": {
