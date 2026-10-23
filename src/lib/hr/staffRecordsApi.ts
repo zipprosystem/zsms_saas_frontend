@@ -6,14 +6,13 @@ import {
   readListItems,
   readData,
   readPageMeta,
-  realTransport,
+  hrChannel,
   sendHrRequest,
   str,
   stringIds,
   strOrNull,
   type HrChannel,
 } from "@/lib/hr/hrHttp";
-import { hrMockTransport } from "@/lib/hr/mock/hrMockBackend";
 import {
   STAFF_LEAVER_CATEGORIES,
   STAFF_STATUSES,
@@ -30,18 +29,18 @@ import {
   type StaffStatus,
   type StaffSubjectAssignment,
   type StaffType,
+  type AssignmentRemapBody,
+  type AssignmentReviewItem,
 } from "@/lib/hr/hrTypes";
 
 /**
- * Staff records (HR › Staff) — MOCK until the backend ships it; flip
- * USE_MOCK to swap (nothing else changes, see hrHttp.ts).
+ * Staff records (HR › Staff) — REAL /api/v1/erp (HR_USE_MOCK in hrHttp.ts
+ * switches every HR service back to the mock).
  *
- * NOT the same thing as src/lib/staff/staffApi.ts: that's the REAL,
- * read-only GET erp/staff lookup ({ id = users.id, full_name, role })
- * behind Departments' Head / Senior line manager selects and Student
- * status history — it stays on the real API regardless of this flag. When
- * the backend ships the full staff list on the same route, the two
- * reconcile (open item for Muntajir: is staff.id === users.id?).
+ * IDENTITY (Option B, Muntajir 2026-10-23): rows carry id = staff.id plus
+ * an optional user_id (the login account). Everything references staff.id;
+ * user_id only resolves status-event actors. src/lib/staff/staffApi.ts is
+ * the light name lookup built on this same list (Departments, actor names).
  *
  *   GET    erp/staff?academic_year_id=&staff_type=&status=&department_id=&subject_id=&search=&page=&limit=
  *                         -> { items, total, page, limit, has_more } (limit max 200)
@@ -60,12 +59,20 @@ import {
  *   PATCH  erp/staff/:id/credentials/activate                   { active }
  *
  * academic_year_id scopes the two assignment sets (subject /
- * class-teacher) on reads AND writes — see hrMockBackend.ts for the
- * carry-forward rule. Every save sends the COMPLETE record.
+ * class-teacher) on reads AND writes; each year is edited independently.
+ * Carry-forward: a year with no sets yet reads back the prior year's as
+ * editable defaults; rows that can't be matched into the new year are kept
+ * by the backend for review (listAssignmentReviews below). Every save sends
+ * the COMPLETE record.
+ *
+ * FLAGGED (proposed, confirm on deploy):
+ *   GET  erp/staff/assignment-reviews?academic_year_id=     -> { items }
+ *   POST erp/staff/assignment-reviews/:id/remap              { class_id, section_id, subject_id? }
+ *   POST erp/staff/assignment-reviews/:id/discard
+ *   GET  erp/subject-masters?search=&academic_year_id=&class_id=&page=&limit=  (server-side subject search)
+ *   staff.password_setup, status event acted_by_user_id / acted_by_name
  */
-const USE_MOCK = true;
-
-const channel: HrChannel = { transport: USE_MOCK ? hrMockTransport : realTransport, isMock: USE_MOCK };
+const channel: HrChannel = hrChannel;
 
 /** Prefix of every staff list/record cache entry — invalidate after any staff or membership change. */
 export const staffListQueryKeyRoot = ["hr", "staff"] as const;
@@ -103,6 +110,7 @@ export function fromWire(value: unknown): Staff {
   const staffType: StaffType = r.staff_type === "non_teaching" ? "non_teaching" : "teaching";
   return {
     id: str(r.id),
+    user_id: strOrNull(r.user_id),
     staff_no: strOrNull(r.staff_no),
     status,
     draft_last_step: typeof r.draft_last_step === "number" ? r.draft_last_step : null,
@@ -165,6 +173,7 @@ export function fromWire(value: unknown): Staff {
     must_change_password: r.must_change_password === true,
     credentials_issued_at: strOrNull(r.credentials_issued_at),
     password_reset_at: strOrNull(r.password_reset_at),
+    password_setup: r.password_setup === "email_link" || r.password_setup === "default_password" ? r.password_setup : null,
     last_active_at: strOrNull(r.last_active_at),
     status_reason: strOrNull(r.status_reason),
     status_effective_date: strOrNull(r.status_effective_date),
@@ -376,6 +385,8 @@ function statusEventFromWire(value: unknown): StaffStatusEvent {
     reason: strOrNull(r.reason),
     effective_date: strOrNull(r.effective_date),
     created_at: strOrNull(r.created_at),
+    acted_by_user_id: strOrNull(r.acted_by_user_id),
+    acted_by_name: strOrNull(r.acted_by_name),
   };
 }
 
@@ -400,4 +411,91 @@ export async function resetStaffCredentials(id: string): Promise<CrudResult<Staf
 /** Turn login on/off. On needs an active staff with credentials. */
 export async function setStaffLoginActive(id: string, active: boolean): Promise<CrudResult<Staff>> {
   return sendHrRequest(channel, "PATCH", `${staffPath(id)}/credentials/activate`, { active }, staffResult);
+}
+
+// ---------------------------------------------------------------------------
+// Carry-forward assignment review (FLAGGED: proposed paths — see header)
+// ---------------------------------------------------------------------------
+
+export function assignmentReviewsQueryKey(academicYearId: string | null): readonly unknown[] {
+  return [...staffListQueryKeyRoot, "assignmentReviews", academicYearId];
+}
+
+function reviewFromWire(value: unknown): AssignmentReviewItem {
+  const r = asRecord(value) ?? {};
+  return {
+    id: str(r.id),
+    staff_id: str(r.staff_id),
+    staff_name: str(r.staff_name),
+    kind: r.kind === "class_teacher" ? "class_teacher" : "subject",
+    from_academic_year_id: strOrNull(r.from_academic_year_id),
+    academic_year_id: str(r.academic_year_id),
+    class_id: strOrNull(r.class_id),
+    class_name: strOrNull(r.class_name),
+    section_id: strOrNull(r.section_id),
+    section_name: strOrNull(r.section_name),
+    subject_id: strOrNull(r.subject_id),
+    subject_name: strOrNull(r.subject_name),
+    reason: strOrNull(r.reason),
+  };
+}
+
+/** Carried-forward assignments the backend couldn't match into `academicYearId`, pending an admin decision. */
+export async function listAssignmentReviews(academicYearId: string): Promise<CrudResult<AssignmentReviewItem[]>> {
+  const query = new URLSearchParams({ academic_year_id: academicYearId, page: "1", limit: String(REQUEST_LIMIT_MAX) });
+  return sendHrRequest(channel, "GET", `${BASE_PATH}/assignment-reviews?${query}`, undefined, (body) => ({
+    ok: true,
+    data: readListItems(body).map(reviewFromWire),
+  }));
+}
+
+/** Remap into the review's target year (subject_id for subject assignments only). 409 DUPLICATE_* if the staff already holds it. */
+export async function remapAssignmentReview(id: string, body: AssignmentRemapBody): Promise<CrudResult<void>> {
+  return sendHrRequest(channel, "POST", `${BASE_PATH}/assignment-reviews/${encodeURIComponent(id)}/remap`, body, () => ({
+    ok: true,
+    data: undefined,
+  }));
+}
+
+/** Drop the unmatched assignment — nothing is written to the new year. */
+export async function discardAssignmentReview(id: string): Promise<CrudResult<void>> {
+  return sendHrRequest(channel, "POST", `${BASE_PATH}/assignment-reviews/${encodeURIComponent(id)}/discard`, {}, () => ({
+    ok: true,
+    data: undefined,
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Server-side subject search (assignment picker)
+// ---------------------------------------------------------------------------
+
+export type SubjectSearchResult = { id: string; name: string };
+
+export function subjectSearchQueryKey(params: { search: string; academicYearId: string; classId: string }): readonly unknown[] {
+  return ["hr", "subjectSearch", params];
+}
+
+/**
+ * The backend's subject search, scoped to a year (and the row's class, so
+ * only subjects offered to it come back). FLAGGED: param names proposed —
+ * search / academic_year_id / class_id on GET erp/subject-masters.
+ */
+export async function searchSubjects(params: {
+  search: string;
+  academicYearId: string;
+  classId: string;
+}): Promise<CrudResult<SubjectSearchResult[]>> {
+  const query = new URLSearchParams({ academic_year_id: params.academicYearId, page: "1", limit: "50" });
+  if (params.classId) query.set("class_id", params.classId);
+  const search = params.search.trim();
+  if (search) query.set("search", search);
+  return sendHrRequest(channel, "GET", `erp/subject-masters?${query}`, undefined, (body) => ({
+    ok: true,
+    data: readListItems(body)
+      .map((item) => {
+        const r = asRecord(item) ?? {};
+        return { id: str(r.id), name: str(r.name) };
+      })
+      .filter((subject) => subject.id),
+  }));
 }

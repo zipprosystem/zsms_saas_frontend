@@ -22,4 +22,5 @@ export const NAV_CHILD_KEYWORDS: Record<string, string[]> = {
   hrStaffs: ["staff", "teachers", "employees", "teaching", "non-teaching"],
   hrStaffPosts: ["designation", "post", "job title", "position"],
   hrPermissionGroups: ["roles", "permissions", "access", "RBAC", "user groups"],
+  hrAssignmentReview: ["carry forward", "carried forward", "new year", "rollover", "unmatched", "remap", "teaching assignments", "class teacher"],
 };

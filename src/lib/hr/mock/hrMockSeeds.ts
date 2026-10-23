@@ -86,6 +86,8 @@ export const SEED_STAFF: Staff[] = Array.from({ length: 64 }, (_unused, index): 
   const hasCredentials = status !== "draft" && !(status === "active" && n % 7 === 0);
   return {
     id: seedId("5a7f0002", n),
+    user_id: status === "draft" ? null : seedId("5a7f0009", n),
+    password_setup: null,
     staff_no: status === "draft" ? null : `STF/${String(1000 + n)}`,
     status,
     draft_last_step: status === "draft" ? 1 : null,

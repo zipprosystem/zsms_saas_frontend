@@ -22,6 +22,12 @@ type SearchableSelectProps = {
   noOptionsLabel?: string;
   hasError?: boolean;
   error?: string;
+  /**
+   * Server-side search: called with the typed text so the caller can fetch
+   * matching options (it should debounce). Options are still filtered
+   * locally too, which is harmless for already-matching server results.
+   */
+  onQueryChange?: (query: string) => void;
 };
 
 export function SearchableSelect({
@@ -37,6 +43,7 @@ export function SearchableSelect({
   noOptionsLabel,
   hasError,
   error,
+  onQueryChange,
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -120,6 +127,7 @@ export function SearchableSelect({
           }}
           onChange={(event) => {
             setQuery(event.target.value);
+            onQueryChange?.(event.target.value);
             setIsOpen(true);
             setHighlightedIndex(0);
           }}

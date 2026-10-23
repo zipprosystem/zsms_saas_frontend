@@ -1,22 +1,34 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import {
-  PERMISSION_ACTIONS,
-  PERMISSION_MODULES,
-  permissionKey,
-  type PermissionModule,
-} from "@/lib/hr/permissionCatalog";
+import type { PermissionCatalog } from "@/lib/hr/hrTypes";
 
 type PermissionMatrixProps = {
+  /** The backend catalog (GET erp/permission-catalog) — the only list of permissions the UI offers. */
+  catalog: PermissionCatalog;
   value: string[];
   onChange: (permissions: string[]) => void;
 };
 
-/** Module × action checkbox grid. A row's own checkbox toggles that whole module. Scrolls sideways on narrow screens rather than squashing. */
-export function PermissionMatrix({ value, onChange }: PermissionMatrixProps) {
+function humanize(key: string): string {
+  const spaced = key.replace(/[_-]+/g, " ").trim();
+  return spaced ? spaced[0].toUpperCase() + spaced.slice(1) : key;
+}
+
+/**
+ * One row per catalog module, with that module's own permissions as
+ * checkboxes (modules can differ — e.g. staff is just View + Manage). A
+ * row's own checkbox toggles the whole module. Labels: our EN/FR string
+ * when we have one for the key, else the backend's label, else the key.
+ */
+export function PermissionMatrix({ catalog, value, onChange }: PermissionMatrixProps) {
   const t = useTranslations();
   const selected = new Set(value);
+
+  const moduleLabel = (key: string, label: string | null) =>
+    t.has(`hr.permissions.modules.${key}`) ? t(`hr.permissions.modules.${key}`) : (label ?? humanize(key));
+  const actionLabel = (action: string, label: string | null) =>
+    t.has(`hr.permissions.actions.${action}`) ? t(`hr.permissions.actions.${action}`) : (label ?? humanize(action));
 
   const toggle = (key: string) => {
     const next = new Set(selected);
@@ -25,10 +37,7 @@ export function PermissionMatrix({ value, onChange }: PermissionMatrixProps) {
     onChange(Array.from(next));
   };
 
-  const moduleKeys = (module: PermissionModule) => PERMISSION_ACTIONS.map((action) => permissionKey(module, action));
-
-  const toggleModule = (module: PermissionModule) => {
-    const keys = moduleKeys(module);
+  const toggleModule = (keys: string[]) => {
     const allOn = keys.every((key) => selected.has(key));
     const next = new Set(selected);
     for (const key of keys) {
@@ -42,60 +51,43 @@ export function PermissionMatrix({ value, onChange }: PermissionMatrixProps) {
     <fieldset className="flex min-w-0 flex-col gap-2">
       <legend className="mb-2 text-sm font-medium text-text-primary">{t("hr.permissionGroups.fields.permissions.label")}</legend>
       <p className="-mt-1 text-xs text-text-muted">{t("hr.permissionGroups.fields.permissions.helper")}</p>
-      <div className="overflow-x-auto rounded-md border border-border">
-        <table className="w-full min-w-[420px] border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-border bg-background">
-              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-text-muted">
-                {t("hr.permissionGroups.fields.permissions.module")}
-              </th>
-              {PERMISSION_ACTIONS.map((action) => (
-                <th key={action} className="px-2 py-2 text-center text-xs font-semibold uppercase tracking-wide text-text-muted">
-                  {t(`hr.permissions.actions.${action}`)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {PERMISSION_MODULES.map((module) => {
-              const keys = moduleKeys(module);
-              const onCount = keys.filter((key) => selected.has(key)).length;
-              return (
-                <tr key={module} className="border-b border-border last:border-b-0">
-                  <td className="px-3 py-2">
-                    <label className="flex items-center gap-2.5 text-text-primary">
-                      <input
-                        type="checkbox"
-                        checked={onCount === keys.length}
-                        ref={(node) => {
-                          if (node) node.indeterminate = onCount > 0 && onCount < keys.length;
-                        }}
-                        onChange={() => toggleModule(module)}
-                        className="h-4 w-4 shrink-0 rounded border-border accent-accent"
-                      />
-                      {t(`hr.permissions.modules.${module}`)}
-                    </label>
-                  </td>
-                  {PERMISSION_ACTIONS.map((action) => {
-                    const key = permissionKey(module, action);
-                    return (
-                      <td key={action} className="px-2 py-2 text-center">
-                        <input
-                          type="checkbox"
-                          aria-label={`${t(`hr.permissions.modules.${module}`)} — ${t(`hr.permissions.actions.${action}`)}`}
-                          checked={selected.has(key)}
-                          onChange={() => toggle(key)}
-                          className="h-4 w-4 rounded border-border accent-accent"
-                        />
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <ul className="flex flex-col divide-y divide-border rounded-md border border-border">
+        {catalog.modules.map((module) => {
+          const keys = module.permissions.map((entry) => entry.key);
+          const onCount = keys.filter((key) => selected.has(key)).length;
+          const name = moduleLabel(module.key, module.label);
+          return (
+            <li key={module.key} className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+              <label className="flex items-center gap-2.5 text-sm font-medium text-text-primary">
+                <input
+                  type="checkbox"
+                  checked={keys.length > 0 && onCount === keys.length}
+                  ref={(node) => {
+                    if (node) node.indeterminate = onCount > 0 && onCount < keys.length;
+                  }}
+                  onChange={() => toggleModule(keys)}
+                  className="h-4 w-4 shrink-0 rounded border-border accent-accent"
+                />
+                {name}
+              </label>
+              <div className="flex flex-wrap gap-x-4 gap-y-1.5 pl-6 sm:pl-0">
+                {module.permissions.map((entry) => (
+                  <label key={entry.key} className="flex items-center gap-1.5 text-sm text-text-secondary">
+                    <input
+                      type="checkbox"
+                      aria-label={`${name} — ${actionLabel(entry.action, entry.label)}`}
+                      checked={selected.has(entry.key)}
+                      onChange={() => toggle(entry.key)}
+                      className="h-4 w-4 rounded border-border accent-accent"
+                    />
+                    {actionLabel(entry.action, entry.label)}
+                  </label>
+                ))}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </fieldset>
   );
 }

@@ -26,11 +26,16 @@ import {
   staffRecordQueryKey,
   staffStatusEventsQueryKey,
 } from "@/lib/hr/staffRecordsApi";
-import { isLeaverStatus, type Staff, type StaffAddress, type StaffStatusEventType } from "@/lib/hr/hrTypes";
+import { isLeaverStatus, passwordSetupFor, type Staff, type StaffAddress, type StaffStatusEventType } from "@/lib/hr/hrTypes";
+import { actorNamesByUserId, listStaff, staffQueryKey } from "@/lib/staff/staffApi";
 import { useHrReferenceData } from "@/components/hr/useHrReferenceData";
 import { ClassArmChip, StaffAvatar, StaffStatusBadge } from "@/components/hr/StaffBadges";
 
-/** The backend's default password — the only password the UI ever shows (as a read-only indicator). */
+/**
+ * The backend's default password — shown ONLY for staff without a usable
+ * email (they can't receive a set-password link). The UI never shows,
+ * stores or exports any other password.
+ */
 const DEFAULT_PASSWORD = "123456";
 
 function DetailItem({ label, value }: { label: string; value: ReactNode }) {
@@ -80,9 +85,12 @@ type StaffProfileProps = {
  * Read-only staff profile (opened from a list row), mirroring the wizard's
  * sections. Teaching assignments are the staff's OWN rows for the header's
  * selected year (no data-scope roll-up — that's backend-computed later).
- * The Login section carries the credential actions: Issue (never issued),
- * Reset to default, and the login on/off toggle — the password itself is
- * never shown beyond the default indicator, and never exported.
+ * The Login section carries the credential actions — HYBRID by email: a
+ * staff with a valid email gets a secure set-password link (Issue / Send
+ * new link); one without gets the default password 123456 (Issue / Reset
+ * to default). Forced-change copy shows only when the school has 2FA on.
+ * No real password is ever shown or exported. Status history names who
+ * recorded each event via acted_by_user_id -> the lookup's user_id.
  * Always loaded fresh (its own query, under the staff root key), so any
  * status / credential / edit change refreshes it.
  */
@@ -104,6 +112,16 @@ export function StaffProfile({ staffId, onClose, onEdit, onResume, onStatusActio
   });
   const staff = staffQuery.data?.ok ? staffQuery.data.data : null;
   const events = eventsQuery.data?.ok ? eventsQuery.data.data : [];
+  // Actor names: acted_by_user_id is a users.id, matched on the lookup's
+  // user_id — the one place user_id is used (Option B).
+  const lookupQuery = useQuery({
+    queryKey: staffQueryKey,
+    queryFn: listStaff,
+    enabled: events.some((event) => !event.acted_by_name && !!event.acted_by_user_id),
+  });
+  const actorNames = actorNamesByUserId(lookupQuery.data ?? []);
+  const actorName = (event: (typeof events)[number]) =>
+    event.acted_by_name ?? (event.acted_by_user_id ? (actorNames.get(event.acted_by_user_id) ?? null) : null);
 
   const [issueOpen, setIssueOpen] = useState(false);
   const [issueUsername, setIssueUsername] = useState("");
@@ -144,7 +162,7 @@ export function StaffProfile({ staffId, onClose, onEdit, onResume, onStatusActio
     const result = await resetStaffCredentials(staff.id);
     setIsWorking(false);
     setResetOpen(false);
-    finishCredentialAction(result, "hr.profile.login.toast.reset");
+    finishCredentialAction(result, viaLink ? "hr.profile.login.toast.linkSent" : "hr.profile.login.toast.reset");
   };
 
   const handleToggleLogin = async (active: boolean) => {
@@ -187,6 +205,8 @@ export function StaffProfile({ staffId, onClose, onEdit, onResume, onStatusActio
   const armLabel = (classId: string, sectionId: string) =>
     t("hr.staffs.classArm", { className: refs.className(classId), armName: refs.armName(sectionId) });
   const credentialsIssued = !!staff?.credentials_issued_at;
+  const setup = staff ? passwordSetupFor(staff) : "default_password";
+  const viaLink = setup === "email_link";
 
   return (
     <>
@@ -359,7 +379,7 @@ export function StaffProfile({ staffId, onClose, onEdit, onResume, onStatusActio
               action={
                 staff.status === "draft" ? null : credentialsIssued ? (
                   <Button type="button" variant="secondary" onClick={() => setResetOpen(true)} disabled={isWorking} className="h-9 px-3 text-sm">
-                    {t("hr.profile.login.reset")}
+                    {viaLink ? t("hr.profile.login.sendLink") : t("hr.profile.login.reset")}
                   </Button>
                 ) : staff.status === "active" ? (
                   <Button
@@ -388,8 +408,15 @@ export function StaffProfile({ staffId, onClose, onEdit, onResume, onStatusActio
                     <DetailItem label={t("hr.wizard.fields.username.label")} value={staff.username} />
                     <DetailItem label={t("hr.profile.login.issuedAt")} value={formatDate(staff.credentials_issued_at)} />
                     <DetailItem label={t("hr.profile.login.resetAt")} value={staff.password_reset_at ? formatDate(staff.password_reset_at) : t("hr.profile.login.neverReset")} />
-                    {/* Read-only default indicator only — the real password is never known to, shown or exported by the UI. */}
-                    <DetailItem label={t("hr.profile.login.password")} value={t("hr.profile.login.passwordIndicator", { password: DEFAULT_PASSWORD })} />
+                    {/* How the password is set — never the password itself (the UI never knows it). */}
+                    <DetailItem
+                      label={t("hr.profile.login.password")}
+                      value={
+                        viaLink
+                          ? t("hr.credentials.method.emailLink", { email: staff.email ?? "" })
+                          : t("hr.credentials.method.defaultPassword", { password: DEFAULT_PASSWORD })
+                      }
+                    />
                   </dl>
                   <Toggle
                     id="profile-login-active"
@@ -405,9 +432,7 @@ export function StaffProfile({ staffId, onClose, onEdit, onResume, onStatusActio
                       void handleToggleLogin(checked);
                     }}
                   />
-                  <p className="text-xs text-text-muted">
-                    {SCHOOL_TWO_FACTOR_ENABLED ? t("hr.wizard.login.forcedChange") : t("hr.wizard.login.noForcedChange")}
-                  </p>
+                  {SCHOOL_TWO_FACTOR_ENABLED ? <p className="text-xs text-text-muted">{t("hr.credentials.forcedChange")}</p> : null}
                 </div>
               )}
             </ProfileSection>
@@ -430,6 +455,7 @@ export function StaffProfile({ staffId, onClose, onEdit, onResume, onStatusActio
                       {event.reason ? <p className="text-sm text-text-secondary">{event.reason}</p> : null}
                       <p className="text-xs text-text-muted">
                         {t("hr.profile.history.dates", { effective: formatDate(event.effective_date), recorded: formatDate(event.created_at) })}
+                        {actorName(event) ? ` · ${t("hr.profile.history.by", { name: actorName(event) ?? "" })}` : ""}
                       </p>
                     </li>
                   ))}
@@ -448,7 +474,11 @@ export function StaffProfile({ staffId, onClose, onEdit, onResume, onStatusActio
               <h2 id="issue-credentials-title" className="text-base font-semibold text-text-primary">
                 {t("hr.profile.login.issueTitle")}
               </h2>
-              <p className="mt-1 text-sm text-text-secondary">{t("hr.profile.login.issueMessage", { password: DEFAULT_PASSWORD })}</p>
+              <p className="mt-1 text-sm text-text-secondary">
+                {viaLink
+                  ? t("hr.profile.login.issueMessageLink", { email: staff.email ?? "" })
+                  : t("hr.profile.login.issueMessage", { password: DEFAULT_PASSWORD })}
+              </p>
             </div>
             <InputField
               id="issue-username"
@@ -476,8 +506,12 @@ export function StaffProfile({ staffId, onClose, onEdit, onResume, onStatusActio
 
       <ConfirmDialog
         isOpen={resetOpen}
-        title={t("hr.profile.login.resetTitle")}
-        message={t("hr.profile.login.resetMessage", { name: staff ? staffFullName(staff) : "", password: DEFAULT_PASSWORD })}
+        title={viaLink ? t("hr.profile.login.sendLinkTitle") : t("hr.profile.login.resetTitle")}
+        message={
+          viaLink
+            ? t("hr.profile.login.sendLinkMessage", { name: staff ? staffFullName(staff) : "", email: staff?.email ?? "" })
+            : t("hr.profile.login.resetMessage", { name: staff ? staffFullName(staff) : "", password: DEFAULT_PASSWORD })
+        }
         isConfirming={isWorking}
         onConfirm={() => void handleReset()}
         onCancel={() => setResetOpen(false)}

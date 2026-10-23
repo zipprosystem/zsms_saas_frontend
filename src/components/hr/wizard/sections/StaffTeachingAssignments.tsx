@@ -8,6 +8,7 @@ import { CloseIcon } from "@/components/icons/CloseIcon";
 import { PlusIcon } from "@/components/icons/PlusIcon";
 import { DevBypassNotice } from "@/components/students/wizard/DevBypassNotice";
 import { StaffStepSection } from "@/components/hr/wizard/StaffStepSection";
+import { SubjectSearchSelect } from "@/components/hr/wizard/sections/SubjectSearchSelect";
 import type { HrReferenceData } from "@/components/hr/useHrReferenceData";
 import {
   classTeacherKey,
@@ -25,6 +26,8 @@ type StepProps = {
   onChange: (patch: Partial<StaffForm>) => void;
   errors: FieldErrors;
   refs: HrReferenceData;
+  /** The year these rows are written to (academic_year_id on save) and that subject search is scoped by. */
+  yearId: string | null;
   /** The header's selected year — every row here belongs to it. Null = no year selected. */
   yearName: string | null;
   /** Set when these rows were pre-filled from a prior year (nothing saved for this year yet). */
@@ -56,10 +59,12 @@ function RemoveRowButton({ label, onClick }: { label: string; onClick: () => voi
  * that would still repeat one is rejected with an inline notice on that
  * row (the backend 409s the same — see staffForm.ts).
  *
- * Classes / arms / class subjects are the real Academic APIs — empty under
- * dev-bypass, and there's no selected year there either.
+ * Classes / arms are the real Academic APIs; the subject picker uses the
+ * backend's server-side subject search scoped by academic_year_id + class
+ * (SubjectSearchSelect). All empty under dev-bypass, where there's no
+ * selected year either.
  */
-export function StaffTeachingAssignments({ form, onChange, errors, refs, yearName, carriedFromYearName }: StepProps) {
+export function StaffTeachingAssignments({ form, onChange, errors, refs, yearId, yearName, carriedFromYearName }: StepProps) {
   const t = useTranslations();
   /** Row key -> i18n key of a rejected duplicate change; cleared by that row's next accepted change. */
   const [rejected, setRejected] = useState<Record<string, string>>({});
@@ -86,13 +91,6 @@ export function StaffTeachingAssignments({ form, onChange, errors, refs, yearNam
   const classOptions = refs.classes.filter((cls) => cls.is_active);
   const armsFor = (classId: string) =>
     refs.sections.filter((section) => section.class_id === classId && section.is_active);
-  const subjectsFor = (classId: string) =>
-    refs.classSubjects
-      .filter((classSubject) => classSubject.class_id === classId)
-      .map((classSubject) => ({
-        id: classSubject.subject_master_id,
-        name: refs.subjectName(classSubject.subject_master_id),
-      }));
 
   const updateSubjectRow = (key: string, patch: Partial<SubjectAssignmentRow>) => {
     const current = form.subject_assignments.find((row) => row.key === key);
@@ -185,7 +183,6 @@ export function StaffTeachingAssignments({ form, onChange, errors, refs, yearNam
           <p className="text-sm text-text-muted">{t("hr.wizard.assignments.noSubjects")}</p>
         ) : (
           form.subject_assignments.map((row, index) => {
-            const subjectOptions = row.class_id ? subjectsFor(row.class_id) : [];
             return (
               <div key={row.key} className="flex flex-col gap-1">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -240,37 +237,16 @@ export function StaffTeachingAssignments({ form, onChange, errors, refs, yearNam
                         </option>
                       ))}
                     </SelectField>
-                    <SelectField
-                      id={`subject-subject-${row.key}`}
-                      label={t("hr.wizard.fields.subject.label")}
-                      value={row.subject_id}
-                      disabled={!row.class_id}
-                      onChange={(event) =>
-                        updateSubjectRow(row.key, {
-                          subject_id: event.target.value,
-                        })
-                      }
-                    >
-                      <option value="" disabled>
-                        {row.class_id && subjectOptions.length === 0
-                          ? t("hr.wizard.fields.subject.noneForClass")
-                          : t("hr.wizard.fields.subject.placeholder")}
-                      </option>
-                      {subjectOptions.map((subject) => (
-                        <option
-                          key={subject.id}
-                          value={subject.id}
-                          disabled={isTakenBy(
-                            form.subject_assignments,
-                            row.key,
-                            subjectAssignmentKey({ section_id: row.section_id, subject_id: subject.id }),
-                            subjectAssignmentKey,
-                          )}
-                        >
-                          {subject.name}
-                        </option>
-                      ))}
-                    </SelectField>
+                    {yearId ? (
+                      <SubjectSearchSelect
+                        id={`subject-subject-${row.key}`}
+                        yearId={yearId}
+                        classId={row.class_id}
+                        value={row.subject_id}
+                        valueName={row.subject_id && refs.subjectName(row.subject_id) !== "—" ? refs.subjectName(row.subject_id) : null}
+                        onChange={(subjectId) => updateSubjectRow(row.key, { subject_id: subjectId })}
+                      />
+                    ) : null}
                   </div>
                   <RemoveRowButton
                     label={t("hr.wizard.assignments.removeRow", {

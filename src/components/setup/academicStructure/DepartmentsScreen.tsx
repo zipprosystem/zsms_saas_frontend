@@ -33,8 +33,15 @@ export function DepartmentsScreen() {
     queryFn: listStaff,
     staleTime: STRUCTURAL_STALE_TIME_MS,
   });
+  // ids are staff.id (Option B) — hod_staff_id / senior_manager_staff_id
+  // store staff.id; legacy users.id values are remapped by backend
+  // migration 036. Names resolve for any non-draft staff (a head who has
+  // since left still shows); the pickers offer active staff only, plus the
+  // currently saved person so an edit never silently clears them.
   const staff: StaffMember[] = staffQuery.data ?? [];
   const staffName = (id: string): string | null => staff.find((member) => member.id === id)?.full_name ?? null;
+  const pickable = (currentId: string) => staff.filter((member) => member.status === "active" || member.id === currentId);
+  const optionLabel = (member: StaffMember) => (member.staff_no ? `${member.full_name} — ${member.staff_no}` : member.full_name);
 
   const columns: ColumnDef<Department>[] = [
     { key: "name", header: t("setup.departments.columns.name"), render: (row) => row.name },
@@ -161,9 +168,9 @@ export function DepartmentsScreen() {
                 <option value="" disabled>
                   {t("setup.departments.fields.hod.placeholder")}
                 </option>
-                {staff.map((member) => (
+                {pickable(data.hod_staff_id).map((member) => (
                   <option key={member.id} value={member.id}>
-                    {`${member.full_name} — ${member.role}`}
+                    {optionLabel(member)}
                   </option>
                 ))}
               </>
@@ -182,9 +189,9 @@ export function DepartmentsScreen() {
             ) : (
               <>
                 <option value="">{t("setup.departments.fields.seniorManager.none")}</option>
-                {staff.map((member) => (
+                {pickable(data.senior_manager_staff_id).map((member) => (
                   <option key={member.id} value={member.id}>
-                    {`${member.full_name} — ${member.role}`}
+                    {optionLabel(member)}
                   </option>
                 ))}
               </>

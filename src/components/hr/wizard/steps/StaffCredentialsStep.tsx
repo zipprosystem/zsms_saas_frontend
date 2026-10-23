@@ -7,10 +7,15 @@ import { StaffStepSection } from "@/components/hr/wizard/StaffStepSection";
 import { StaffBackgroundSections } from "@/components/hr/wizard/sections/StaffBackgroundSections";
 import { StaffReviewSection } from "@/components/hr/wizard/sections/StaffReviewSection";
 import { SCHOOL_TWO_FACTOR_ENABLED } from "@/lib/hr/schoolSecurity";
+import { hasUsableEmail } from "@/lib/hr/hrTypes";
 import type { HrReferenceData } from "@/components/hr/useHrReferenceData";
 import { effectiveUsername, type FieldErrors, type StaffForm, type StaffWizardStep } from "@/components/hr/wizard/staffForm";
 
-/** The backend's default initial password — shown so the admin can hand it over; never sent, stored or exported by the frontend. */
+/**
+ * The backend's default initial password — shown ONLY when the staff has no
+ * usable email (no set-password link can reach them), so the admin can
+ * hand it over. Never sent, stored or exported by the frontend.
+ */
 const DEFAULT_PASSWORD = "123456";
 
 type StepProps = {
@@ -33,6 +38,11 @@ type StepProps = {
  * placeholder, then a read-only review of the whole record before Add
  * Staff / Update. Username follows the email until edited. On edit,
  * credentials aren't re-issued (reset lives on the staff profile).
+ *
+ * Credentials are HYBRID: with a valid email the backend emails a secure
+ * set-password link (no password shown); without one the staff gets the
+ * default password 123456, which is shown here to hand over. Forced
+ * change at first login is mentioned only when the school has 2FA on.
  */
 export function StaffCredentialsStep({ form, onChange, errors, refs, mode, credentialsIssued, isActiveStaff, onEditStep }: StepProps) {
   const t = useTranslations();
@@ -83,6 +93,7 @@ function LoginFields({
 }: Pick<StepProps, "form" | "onChange" | "errors" | "mode" | "isActiveStaff"> & { username: string }) {
   const t = useTranslations();
   const loginLocked = mode === "edit" && !isActiveStaff;
+  const viaLink = hasUsableEmail(form.email);
   return (
     <>
       <Toggle
@@ -105,7 +116,7 @@ function LoginFields({
           hasError={!!errors.username}
           error={errors.username ? t(errors.username) : undefined}
         />
-        {mode === "create" ? (
+        {mode === "create" && !viaLink ? (
           <InputField
             id="staff-password"
             label={t("hr.wizard.fields.password.label")}
@@ -115,13 +126,21 @@ function LoginFields({
           />
         ) : null}
       </div>
-      <p className="text-xs text-text-muted">
-        {mode === "edit"
-          ? t("hr.wizard.login.editNote")
-          : SCHOOL_TWO_FACTOR_ENABLED
-            ? t("hr.wizard.login.forcedChange")
-            : t("hr.wizard.login.noForcedChange")}
-      </p>
+      {mode === "edit" ? (
+        <p className="text-xs text-text-muted">{t("hr.wizard.login.editNote")}</p>
+      ) : (
+        <div
+          role="note"
+          className={`rounded-md border px-3 py-2.5 text-xs ${viaLink ? "border-border text-text-secondary" : "border-border bg-category-amber-tint text-text-primary"}`}
+        >
+          <p>
+            {viaLink
+              ? t("hr.credentials.createLink", { email: form.email.trim() })
+              : t("hr.credentials.createDefault", { password: DEFAULT_PASSWORD })}
+          </p>
+          {SCHOOL_TWO_FACTOR_ENABLED ? <p className="mt-1">{t("hr.credentials.forcedChange")}</p> : null}
+        </div>
+      )}
     </>
   );
 }

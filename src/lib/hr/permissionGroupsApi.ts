@@ -3,34 +3,31 @@ import {
   asRecord,
   readEntity,
   readListItems,
-  realTransport,
+  hrChannel,
   sendHrRequest,
   str,
   stringIds,
   type HrChannel,
 } from "@/lib/hr/hrHttp";
-import { hrMockTransport } from "@/lib/hr/mock/hrMockBackend";
-import { normalizePermissions } from "@/lib/hr/permissionCatalog";
 import { staffListQueryKeyRoot } from "@/lib/hr/staffRecordsApi";
 import type { PermissionGroup, PermissionGroupInput } from "@/lib/hr/hrTypes";
 
 /**
- * Permission Groups — MOCK until the backend ships it; flip USE_MOCK to
- * swap (nothing else changes, see hrHttp.ts).
+ * Permission Groups — REAL /api/v1/erp (HR_USE_MOCK in hrHttp.ts switches
+ * every HR service back to the mock).
  *
  *   GET    erp/permission-groups        -> { items, total, page, limit, has_more }
  *   POST   erp/permission-groups        { name, permissions[], member_staff_ids[] } -> entity
  *   PUT    erp/permission-groups/:id    same body -> entity (members REPLACED)
  *   DELETE erp/permission-groups/:id    ends its memberships
  *
- * A group is name + coarse "module.action" permissions + members — there
- * is no separate role entity, and a one-member group is fine. The group
+ * A group is name + "module.action" permissions (from the backend catalog,
+ * permissionCatalog.ts) + members — there is no separate role entity, and
+ * a one-member group is fine. Members are staff.id (Option B). The group
  * OWNS membership; staff records read it back as permission_group_ids.
  * Nothing enforces these permissions yet (capture only).
  */
-const USE_MOCK = true;
-
-const channel: HrChannel = { transport: USE_MOCK ? hrMockTransport : realTransport, isMock: USE_MOCK };
+const channel: HrChannel = hrChannel;
 
 export const permissionGroupsQueryKey = ["hr", "permissionGroups"] as const;
 
@@ -41,7 +38,8 @@ export function fromWire(value: unknown): PermissionGroup {
   return {
     id: str(r.id),
     name: str(r.name),
-    permissions: normalizePermissions(stringIds(r.permissions)),
+    // Raw keys — mapped onto the backend catalog in the screen (canonicalizePermissions), never against a hardcoded list.
+    permissions: stringIds(r.permissions),
     member_staff_ids: stringIds(r.member_staff_ids),
   };
 }
@@ -49,7 +47,7 @@ export function fromWire(value: unknown): PermissionGroup {
 export function toWire(input: PermissionGroupInput): PermissionGroupInput {
   return {
     name: input.name,
-    permissions: normalizePermissions(input.permissions),
+    permissions: Array.from(new Set(input.permissions)),
     member_staff_ids: Array.from(new Set(input.member_staff_ids)),
   };
 }
