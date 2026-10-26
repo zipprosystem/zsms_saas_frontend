@@ -147,6 +147,11 @@ function toResult<T>(status: number, body: unknown): CrudResult<T> {
   return { ok: false, kind: "server", message: text, status };
 }
 
+/** Shared with resultsApi.ts (Stage 2a) — same transport, USE_MOCK flag and dev-bypass guard. */
+export async function examSend<T>(method: HttpMethod, path: string, payload: unknown, onSuccess: (body: unknown) => T | null): Promise<CrudResult<T>> {
+  return send(method, path, payload, onSuccess);
+}
+
 async function send<T>(method: HttpMethod, path: string, payload: unknown, onSuccess: (body: unknown) => T | null): Promise<CrudResult<T>> {
   if (!USE_MOCK && DEV_AUTH_BYPASS) return { ok: false, kind: "devBypassUnavailable" };
   let response: WireResponse;

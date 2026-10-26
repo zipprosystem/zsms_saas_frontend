@@ -1,4 +1,5 @@
 import type { Exam, ExamTermOption, ExamYearOption, GradeBasedStructure, GradeScale, RatingScale, ReportVariant } from "@/lib/exam/examTypes";
+import type { ScoreGradeScale } from "@/lib/exam/results/resultsTypes";
 
 /**
  * Self-contained seed data for the Exam mock (Matthew, 2026-10-23: the
@@ -193,12 +194,119 @@ export function seedRoster(armId: string): SeedStudent[] {
   });
 }
 
-/** Electives: every other student takes it. Core subjects: everyone in the arm. */
-export function enrolledIn(armId: string, subjectId: string): SeedStudent[] {
+// ---------------------------------------------------------------------------
+// Enrolment (Stage 2a) — per-term and per-subject, as the results engine reads it.
+// ---------------------------------------------------------------------------
+
+/** "y-2025-t3" -> 3. */
+export function termNumber(termId: string): number {
+  const match = termId.match(/-t(\d+)$/);
+  return match ? Number(match[1]) : 1;
+}
+
+export function yearOfTerm(termId: string): string {
+  return termId.replace(/-t\d+$/, "");
+}
+
+/**
+ * Mid-year joiners: the term (of that academic year) their enrolment starts.
+ * Everyone else is enrolled from term 1. Exercises the enrolment-aware
+ * cumulative divisor — joined term 2 -> ÷2 by term 3; joined term 3 -> ÷1.
+ */
+export const SEED_TERM_JOINERS: Record<string, { academic_year_id: string; from_term: number }> = {
+  "stu-arm-jss1-a-10": { academic_year_id: "y-2025", from_term: 2 },
+  "stu-arm-y9-oak-10": { academic_year_id: "y-2025", from_term: 3 },
+};
+
+/** Whether the student was enrolled in their arm for that term. */
+export function enrolledForTerm(studentId: string, termId: string): boolean {
+  const joiner = SEED_TERM_JOINERS[studentId];
+  if (!joiner || joiner.academic_year_id !== yearOfTerm(termId)) return true;
+  return termNumber(termId) >= joiner.from_term;
+}
+
+/**
+ * Explicit subject-enrolment record, or null when there's none. Electives:
+ * every other student takes it and the rest carry an explicit
+ * "not_enrolled" record (-> NE in results). A MISSING record means the
+ * student is treated as enrolled — never auto-NE.
+ */
+export function subjectEnrolment(armId: string, subjectId: string, studentIndex: number): "enrolled" | "not_enrolled" | null {
+  const offer = SEED_ARM_SUBJECTS[armId]?.find((item) => item.subject_id === subjectId);
+  if (!offer) return null;
+  if (offer.elective) return studentIndex % 2 === 0 ? "enrolled" : "not_enrolled";
+  return null;
+}
+
+/**
+ * Students taking the subject in that arm (no explicit not-enrolled
+ * record); with a termId, only those enrolled that term (joiners don't
+ * appear before they join).
+ */
+export function enrolledIn(armId: string, subjectId: string, termId?: string): SeedStudent[] {
   const offer = SEED_ARM_SUBJECTS[armId]?.find((item) => item.subject_id === subjectId);
   if (!offer) return [];
-  const roster = seedRoster(armId);
-  return offer.elective ? roster.filter((_, index) => index % 2 === 0) : roster;
+  return seedRoster(armId).filter(
+    (student, index) =>
+      subjectEnrolment(armId, subjectId, index) !== "not_enrolled" && (!termId || enrolledForTerm(student.id, termId)),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Score grade scales + subject units (Stage 2a) — MOCK; the real ones come
+// from Setup (Grade Scales, Class Subjects' unit).
+// ---------------------------------------------------------------------------
+
+export const SEED_SCORE_GRADE_SCALES: ScoreGradeScale[] = [
+  {
+    id: "scale-jss",
+    name: "Junior secondary (A–F)",
+    bands: [
+      { grade: "A", min: 70, max: 100, remark: "Excellent", grade_weight: 1, gpa: 5 },
+      { grade: "B", min: 60, max: 69.99, remark: "Very good", grade_weight: 2, gpa: 4 },
+      { grade: "C", min: 50, max: 59.99, remark: "Credit", grade_weight: 3, gpa: 3 },
+      { grade: "D", min: 45, max: 49.99, remark: "Pass", grade_weight: 4, gpa: 2 },
+      { grade: "E", min: 40, max: 44.99, remark: "Fair", grade_weight: 5, gpa: 1 },
+      { grade: "F", min: 0, max: 39.99, remark: "Fail", grade_weight: 6, gpa: 0 },
+    ],
+  },
+  {
+    id: "scale-waec",
+    name: "Senior secondary (A1–F9)",
+    bands: [
+      { grade: "A1", min: 75, max: 100, remark: "Excellent", grade_weight: 1, gpa: 5 },
+      { grade: "B2", min: 70, max: 74.99, remark: "Very good", grade_weight: 2, gpa: 4.5 },
+      { grade: "B3", min: 65, max: 69.99, remark: "Good", grade_weight: 3, gpa: 4 },
+      { grade: "C4", min: 60, max: 64.99, remark: "Credit", grade_weight: 4, gpa: 3.5 },
+      { grade: "C5", min: 55, max: 59.99, remark: "Credit", grade_weight: 5, gpa: 3 },
+      { grade: "C6", min: 50, max: 54.99, remark: "Credit", grade_weight: 6, gpa: 2.5 },
+      { grade: "D7", min: 45, max: 49.99, remark: "Pass", grade_weight: 7, gpa: 2 },
+      { grade: "E8", min: 40, max: 44.99, remark: "Pass", grade_weight: 8, gpa: 1 },
+      { grade: "F9", min: 0, max: 39.99, remark: "Fail", grade_weight: 9, gpa: 0 },
+    ],
+  },
+];
+
+/** The CLASS's score grade scale (General classes). */
+export const SEED_CLASS_SCORE_SCALE: Record<string, string> = {
+  "cls-jss1": "scale-jss",
+  "cls-ss1": "scale-waec",
+};
+
+/** Subject units per class; missing / null = not set (weighs 1 in GPA). */
+export const SEED_SUBJECT_UNITS: Record<string, Record<string, number | null>> = {
+  "cls-jss1": { "sub-math": 2, "sub-eng": 2, "sub-bsc": null },
+  "cls-ss1": { "sub-math": 3, "sub-eng": 3, "sub-phy": 2, "sub-chem": 2, "sub-fmath": null, "sub-lit": 2, "sub-gov": null },
+};
+
+/** Small deterministic hash for mock-generated marks. */
+export function seedHash(text: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
 }
 
 /** Mock teachers and their teaching assignments (subject + class-arm) — the effective_scope the mock simulates. */

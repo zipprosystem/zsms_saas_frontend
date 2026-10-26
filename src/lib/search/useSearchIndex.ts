@@ -4,7 +4,7 @@ import { sidebarNavItems } from "@/components/layout/sidebar-nav";
 import { SETTINGS_SECTION_KEYS, settingsSectionHref, settingsSectionTitleKey } from "@/lib/settings/settingsSections";
 import { getShellCategories, setupCategories } from "@/lib/setup/setupConfig";
 import { setupScreenRegistry } from "@/lib/setup/screenRegistry";
-import { NAV_CHILD_KEYWORDS, SEARCH_ACADEMIC_REPORT_KEYWORDS, SETUP_ITEM_KEYWORDS } from "./searchKeywords";
+import { NAV_CHILD_KEYWORDS, SEARCH_ACADEMIC_REPORT_KEYWORDS, SEARCH_VIEW_RESULTS_KEYWORDS, SETUP_ITEM_KEYWORDS } from "./searchKeywords";
 import type { SearchGroup } from "./searchTypes";
 
 /**
@@ -115,6 +115,12 @@ export function useSearchIndex(): SearchGroup[] {
           href: "/admin/academics/exam/results/academic-report",
           keywords: SEARCH_ACADEMIC_REPORT_KEYWORDS,
         },
+        ...(["all", "grades", "gpa"] as const).map((tab) => ({
+          id: `exams-results-${tab}`,
+          title: t(`search.exams.results.${tab}`),
+          href: `/admin/academics/exam/results/view?tab=${tab}`,
+          keywords: SEARCH_VIEW_RESULTS_KEYWORDS[tab],
+        })),
       ],
     };
 

@@ -116,9 +116,11 @@ export function examOptionLabel(exam: Exam, t: Translate): string {
 /**
  * Filter state over the scoped entry-options. `mode` keeps only the
  * classes this screen handles (classes without an assessment_mode show on
- * both). The first option at each level is pre-selected.
+ * both; null = every class — the Results view). The first option at each
+ * level is pre-selected. `withExam: false` (Results) drops the subject /
+ * exam levels: no exam list is fetched and examId stays "".
  */
-export function useExamEntryFilters(mode: AssessmentMode) {
+export function useExamEntryFilters(mode: AssessmentMode | null, { withExam = true }: { withExam?: boolean } = {}) {
   const [selection, setSelection] = useState<Selection>(EMPTY_SELECTION);
   const [actingAs, setActingAs] = useState<string>(MOCK_ADMIN);
 
@@ -136,7 +138,9 @@ export function useExamEntryFilters(mode: AssessmentMode) {
 
   const yearId = options?.academic_year_id ?? "";
   const allClasses = options?.classes ?? [];
-  const classes = allClasses.filter((cls) => !cls.assessment_mode || cls.assessment_mode === mode);
+  const classes = allClasses.filter((cls) => !mode || !cls.assessment_mode || cls.assessment_mode === mode);
+  const classMode = classes.find((cls) => cls.id === pick(classes, selection.classId))?.assessment_mode ?? null;
+  const examMode = mode ?? classMode ?? "component_based";
   const classId = pick(classes, selection.classId);
   const arms = classes.find((cls) => cls.id === classId)?.arms ?? [];
   const armId = pick(arms, selection.armId);
@@ -148,13 +152,13 @@ export function useExamEntryFilters(mode: AssessmentMode) {
   const subjectId = pick(subjects, selection.subjectId);
 
   const examsQuery = useQuery({
-    queryKey: examQueryKeys.exams(yearId, termId, mode),
-    queryFn: () => listExams(yearId, termId, mode).then(throwIfTransient),
-    enabled: !!yearId && !!termId,
+    queryKey: examQueryKeys.exams(yearId, termId, examMode),
+    queryFn: () => listExams(yearId, termId, examMode).then(throwIfTransient),
+    enabled: withExam && !!yearId && !!termId,
     staleTime: STRUCTURAL_STALE_TIME_MS,
   });
-  const exams = examsQuery.data?.ok ? examsQuery.data.data : [];
-  const examId = pick(exams, selection.examId);
+  const exams = withExam && examsQuery.data?.ok ? examsQuery.data.data : [];
+  const examId = withExam ? pick(exams, selection.examId) : "";
 
   const applySelection = (patch: Partial<Selection>, resetBelow: Array<keyof Selection>) =>
     setSelection((current) => {
@@ -170,6 +174,9 @@ export function useExamEntryFilters(mode: AssessmentMode) {
   };
 
   return {
+    withExam,
+    /** The selected class's assessment_mode (null = not tagged). */
+    classMode,
     actingAs,
     optionsQuery,
     options,
@@ -216,13 +223,14 @@ export function filterPreconditionNotice(filters: ExamEntryFilters, t: Translate
     if (filters.otherModeClassCount > 0) return <Notice>{otherScreen}</Notice>;
     return <Notice>{options?.full_scope ? k("empty.noClasses") : k("empty.noAssignments")}</Notice>;
   }
+  if (!filters.withExam) return filters.terms.length === 0 ? <Notice>{k("empty.noTerms")}</Notice> : null;
   if (examsQuery.isPending && !!filters.termId) return <Notice>{k("loading")}</Notice>;
   if (filters.exams.length === 0) return <Notice>{failureMessage(examsQuery.data, t) ?? k("empty.noExams")}</Notice>;
   if (filters.subjects.length === 0) return <Notice>{k("empty.noSubjects")}</Notice>;
   return null;
 }
 
-/** The mock "acting as" picker (mock only) + the six scope-aware filters. */
+/** The mock "acting as" picker (mock only) + the scope-aware filters (six for entry; year / class / arm / term when the filters have no exam level). */
 export function ExamEntryFilterBar({
   filters,
   onSelect,
@@ -234,7 +242,7 @@ export function ExamEntryFilterBar({
 }) {
   const t = useTranslations();
   const k = (key: string, values?: Record<string, string | number>) => t(`exam.marks.${key}`, values);
-  const { options, classes, arms, terms, subjects, exams } = filters;
+  const { options, classes, arms, terms, subjects, exams, withExam } = filters;
 
   return (
     <>
@@ -253,7 +261,7 @@ export function ExamEntryFilterBar({
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2 ${withExam ? "lg:grid-cols-3 xl:grid-cols-6" : "lg:grid-cols-4"}`}>
         <SelectField
           id="exam-filter-year"
           label={k("filters.year")}
@@ -306,32 +314,36 @@ export function ExamEntryFilterBar({
             </option>
           ))}
         </SelectField>
-        <SelectField
-          id="exam-filter-subject"
-          label={k("filters.subject")}
-          value={filters.subjectId}
-          disabled={subjects.length === 0}
-          onChange={(event) => onSelect({ subjectId: event.target.value }, [])}
-        >
-          {subjects.map((subject) => (
-            <option key={subject.id} value={subject.id}>
-              {subject.name}
-            </option>
-          ))}
-        </SelectField>
-        <SelectField
-          id="exam-filter-exam"
-          label={k("filters.exam")}
-          value={filters.examId}
-          disabled={exams.length === 0}
-          onChange={(event) => onSelect({ examId: event.target.value }, [])}
-        >
-          {exams.map((exam) => (
-            <option key={exam.id} value={exam.id}>
-              {examOptionLabel(exam, t)}
-            </option>
-          ))}
-        </SelectField>
+        {withExam ? (
+          <>
+            <SelectField
+              id="exam-filter-subject"
+              label={k("filters.subject")}
+              value={filters.subjectId}
+              disabled={subjects.length === 0}
+              onChange={(event) => onSelect({ subjectId: event.target.value }, [])}
+            >
+              {subjects.map((subject) => (
+                <option key={subject.id} value={subject.id}>
+                  {subject.name}
+                </option>
+              ))}
+            </SelectField>
+            <SelectField
+              id="exam-filter-exam"
+              label={k("filters.exam")}
+              value={filters.examId}
+              disabled={exams.length === 0}
+              onChange={(event) => onSelect({ examId: event.target.value }, [])}
+            >
+              {exams.map((exam) => (
+                <option key={exam.id} value={exam.id}>
+                  {examOptionLabel(exam, t)}
+                </option>
+              ))}
+            </SelectField>
+          </>
+        ) : null}
       </div>
     </>
   );
