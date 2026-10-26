@@ -190,7 +190,12 @@
     },
     "exams": {
       "manageExamResult": "Gérer les résultats d'examen",
-      "academicReport": "Bulletin académique"
+      "academicReport": "Bulletin académique",
+      "results": {
+        "all": "Tous les résultats",
+        "grades": "Résultats : niveaux",
+        "gpa": "Résultats : GPA"
+      }
     }
   },
   "tenant": {
@@ -3030,6 +3035,7 @@
         "noClasses": "Aucune classe avec des matières n'a encore été configurée.",
         "noAssignments": "Aucune matière ne vous est encore attribuée. Demandez à un administrateur d'ajouter vos attributions.",
         "noExams": "Aucun examen n'a encore été configuré pour ce trimestre.",
+        "noTerms": "Aucun trimestre n'a encore été configuré pour cette année scolaire.",
         "noSubjects": "Aucune matière n'est proposée à cette section.",
         "noStudents": "Aucun élève ne suit cette matière dans cette section.",
         "noSearchMatches": "Aucun élève ne correspond à votre recherche."
@@ -3057,9 +3063,93 @@
       }
     },
     "resultsTabs": {
-      "label": "Saisie des résultats",
+      "label": "Résultats",
       "manageExamResult": "Gérer les résultats d'examen",
-      "academicReport": "Bulletin académique"
+      "academicReport": "Bulletin académique",
+      "viewResults": "Consulter les résultats"
+    },
+    "results": {
+      "title": "Résultats",
+      "subtitle": "Résultats calculés pour une classe et un trimestre : totaux, niveaux, rangs et GPA, à partir des notes saisies. Sélectionnez un élève pour voir son résultat complet.",
+      "views": {
+        "label": "Vues des résultats",
+        "all": "Tous les résultats",
+        "grades": "Niveaux",
+        "gpa": "GPA"
+      },
+      "modes": {
+        "component_based": "Général (notes)",
+        "grade_based": "Britannique (niveaux)"
+      },
+      "info": {
+        "classArm": "Classe",
+        "term": "Trimestre",
+        "reporting": "Évaluation",
+        "gradeScale": "Échelle de niveaux",
+        "students": "Élèves",
+        "studentsRanked": "{total} ({ranked} classés)"
+      },
+      "columns": {
+        "sn": "N°",
+        "student": "Élève",
+        "subject": "Matière",
+        "unit": "Unités",
+        "total": "Total",
+        "grade": "Niveau",
+        "remark": "Appréciation",
+        "gpa": "GPA",
+        "subjectPosition": "Rang dans la matière",
+        "cumulativeAverage": "Moyenne cumulée",
+        "cumulativeAttainment": "Niveau cumulé",
+        "cumulativeShort": "Cum.",
+        "grandTotal": "Total général",
+        "average": "Moyenne",
+        "overallGrade": "Niveau global",
+        "overallGpa": "GPA global",
+        "position": "Rang dans la classe",
+        "status": "Statut",
+        "target": "Objectif (MTG)",
+        "cag": "Niveau actuel (CAG)",
+        "va": "VA"
+      },
+      "status": {
+        "ready": "Prêt",
+        "incomplete": "Incomplet",
+        "rng": "RNG",
+        "ne": "NI"
+      },
+      "statusHelp": {
+        "ready": "Tous les champs ont été saisis.",
+        "incomplete": "Certains champs sont encore vides ; ils comptent pour 0 jusqu'à leur saisie.",
+        "rng": "Résultat non communiqué : l'élève est inscrit, mais rien n'a encore été saisi.",
+        "ne": "Non inscrit à cette matière."
+      },
+      "va": {
+        "above": "{count, plural, one {# niveau au-dessus de l'objectif} other {# niveaux au-dessus de l'objectif}}",
+        "below": "{count, plural, one {# niveau en dessous de l'objectif} other {# niveaux en dessous de l'objectif}}",
+        "onTarget": "Objectif atteint"
+      },
+      "legend": {
+        "general": "† Incomplet : certains champs sont vides et comptent pour 0. RNG : résultat non communiqué. NI : non inscrit. Les rangs suivent le classement standard : les élèves à égalité partagent le même rang.",
+        "british": "† Incomplet : certains champs sont vides. La VA est le niveau actuel moins l'objectif, en nombre de niveaux (+ au-dessus, − en dessous). Cum. est le niveau cumulé. RNG : résultat non communiqué. NI : non inscrit."
+      },
+      "units": "{count, plural, one {# unité} other {# unités}}",
+      "unitDefault": "Non défini (compte pour 1)",
+      "positionOf": "{position} sur {count}",
+      "openStudent": "Ouvrir le résultat de {name}",
+      "notices": {
+        "gpaNotForBritish": "Le GPA n'est pas utilisé pour les classes évaluées par niveaux (britanniques). Consultez Tous les résultats ou Niveaux.",
+        "noStudents": "Aucun élève n'était inscrit dans cette classe pour ce trimestre."
+      },
+      "student": {
+        "subtitle": "{admissionNo} · {className} {arm} · {term}",
+        "subjectsCaption": "Résultats par matière de {name}",
+        "subjectsWithCag": "Matières avec un CAG",
+        "cumulativeAverage": "Moyenne cumulée",
+        "overTerms": "{count, plural, one {(# trimestre)} other {(# trimestres)}}",
+        "generalNote": "La moyenne cumulée additionne les totaux de la matière pour ce trimestre et les précédents, puis divise par le nombre de trimestres où l'élève était inscrit.",
+        "britishNote": "La VA est le niveau actuel moins l'objectif, en nombre de niveaux. Le niveau cumulé est la moyenne des niveaux sur les trimestres disposant d'un niveau actuel."
+      }
     },
     "academicReport": {
       "title": "Bulletin académique",

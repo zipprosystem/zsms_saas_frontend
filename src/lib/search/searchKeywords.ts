@@ -25,6 +25,13 @@ export const NAV_CHILD_KEYWORDS: Record<string, string[]> = {
   hrAssignmentReview: ["carry forward", "carried forward", "new year", "rollover", "unmatched", "remap", "teaching assignments", "class teacher"],
 };
 
+/** Exam › Results › View Results (computed, Stage 2a) — one entry per sub-tab. */
+export const SEARCH_VIEW_RESULTS_KEYWORDS: Record<"all" | "grades" | "gpa", string[]> = {
+  all: ["results", "class results", "positions", "position", "class position", "average", "grand total", "cumulative", "value added", "VA", "broadsheet results"],
+  grades: ["grades", "grade results", "overall grade", "attainment", "CAG"],
+  gpa: ["GPA", "grade point average", "units", "subject units"],
+};
+
 /** Exam › Results › Academic Report (British grade-based entry, Stage 1c). */
 export const SEARCH_ACADEMIC_REPORT_KEYWORDS = [
   "british",

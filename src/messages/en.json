@@ -190,7 +190,12 @@
     },
     "exams": {
       "manageExamResult": "Manage Exam Result",
-      "academicReport": "Academic Report"
+      "academicReport": "Academic Report",
+      "results": {
+        "all": "All Results",
+        "grades": "Results: Grades",
+        "gpa": "Results: GPA"
+      }
     }
   },
   "tenant": {
@@ -3022,6 +3027,7 @@
         "noClasses": "No classes with subjects have been set up yet.",
         "noAssignments": "You aren't assigned to any subjects yet. Ask an admin to add your teaching assignments.",
         "noExams": "No exams have been set up for this term yet.",
+        "noTerms": "No terms have been set up for this academic year yet.",
         "noSubjects": "No subjects are offered to this arm.",
         "noStudents": "No students take this subject in this arm.",
         "noSearchMatches": "No students match your search."
@@ -3049,9 +3055,93 @@
       }
     },
     "resultsTabs": {
-      "label": "Result entry",
+      "label": "Results",
       "manageExamResult": "Manage Exam Result",
-      "academicReport": "Academic Report"
+      "academicReport": "Academic Report",
+      "viewResults": "View Results"
+    },
+    "results": {
+      "title": "Results",
+      "subtitle": "Computed results for a class-arm and term: totals, grades, positions and GPA, worked out from the marks entered. Select a student to see their full result.",
+      "views": {
+        "label": "Results views",
+        "all": "All Results",
+        "grades": "Grades",
+        "gpa": "GPA"
+      },
+      "modes": {
+        "component_based": "General (scores)",
+        "grade_based": "British (grades)"
+      },
+      "info": {
+        "classArm": "Class-arm",
+        "term": "Term",
+        "reporting": "Reporting",
+        "gradeScale": "Grade scale",
+        "students": "Students",
+        "studentsRanked": "{total} ({ranked} ranked)"
+      },
+      "columns": {
+        "sn": "S/N",
+        "student": "Student",
+        "subject": "Subject",
+        "unit": "Units",
+        "total": "Total",
+        "grade": "Grade",
+        "remark": "Remark",
+        "gpa": "GPA",
+        "subjectPosition": "Subject position",
+        "cumulativeAverage": "Cumulative average",
+        "cumulativeAttainment": "Cumulative attainment",
+        "cumulativeShort": "Cum.",
+        "grandTotal": "Grand total",
+        "average": "Average",
+        "overallGrade": "Overall grade",
+        "overallGpa": "Overall GPA",
+        "position": "Class position",
+        "status": "Status",
+        "target": "Target (MTG)",
+        "cag": "Current attainment (CAG)",
+        "va": "VA"
+      },
+      "status": {
+        "ready": "Ready",
+        "incomplete": "Incomplete",
+        "rng": "RNG",
+        "ne": "NE"
+      },
+      "statusHelp": {
+        "ready": "Every field has been entered.",
+        "incomplete": "Some fields are still blank; blanks count as 0 until they're entered.",
+        "rng": "Result not given: enrolled, but nothing has been entered yet.",
+        "ne": "Not enrolled in this subject."
+      },
+      "va": {
+        "above": "{count, plural, one {# grade above target} other {# grades above target}}",
+        "below": "{count, plural, one {# grade below target} other {# grades below target}}",
+        "onTarget": "On target"
+      },
+      "legend": {
+        "general": "† Incomplete: some fields are blank and count as 0. RNG: result not given yet. NE: not enrolled. Positions use standard competition ranking, so tied students share a position.",
+        "british": "† Incomplete: some fields are blank. VA is current attainment minus target, in grade steps (+ above target, − below). Cum. is the cumulative attainment grade. RNG: result not given yet. NE: not enrolled."
+      },
+      "units": "{count, plural, one {# unit} other {# units}}",
+      "unitDefault": "Not set (counts as 1)",
+      "positionOf": "{position} of {count}",
+      "openStudent": "Open {name}'s result",
+      "notices": {
+        "gpaNotForBritish": "GPA isn't used for grade-based (British) classes. See All Results or Grades.",
+        "noStudents": "No students were enrolled in this class-arm for this term."
+      },
+      "student": {
+        "subtitle": "{admissionNo} · {className} {arm} · {term}",
+        "subjectsCaption": "Subject results for {name}",
+        "subjectsWithCag": "Subjects with a CAG",
+        "cumulativeAverage": "Cumulative average",
+        "overTerms": "{count, plural, one {(# term)} other {(# terms)}}",
+        "generalNote": "The cumulative average adds this subject's totals for this and earlier terms and divides by the number of terms the student was enrolled.",
+        "britishNote": "VA is current attainment minus target, in grade steps. Cumulative attainment is the average grade across the terms with a current attainment grade."
+      }
     },
     "academicReport": {
       "title": "Academic Report",

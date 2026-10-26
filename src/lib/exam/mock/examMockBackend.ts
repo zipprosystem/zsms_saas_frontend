@@ -1,7 +1,5 @@
 import { mockDelay } from "@/lib/onboarding/mockDelay";
 import type { HttpMethod, Transport, WireResponse } from "@/lib/setup/assessmentConfiguration/templateCatalog";
-import { assessmentStructuresService } from "@/lib/setup/assessmentConfiguration/assessmentStructuresApi";
-import type { AssessmentStructure } from "@/lib/setup/assessmentConfiguration/assessmentStructure";
 import { allLeaves, buildMarkColumns, isScoreValid } from "@/lib/exam/markColumns";
 import {
   SUBJECT_REMARK_MAX,
@@ -17,21 +15,34 @@ import {
 import {
   enrolledIn,
   SEED_ARM_SUBJECTS,
-  SEED_CLASS_GRADE_STRUCTURE,
-  SEED_CLASS_STRUCTURE,
   SEED_CLASSES,
   SEED_GRADE_SCALES,
-  SEED_GRADE_STRUCTURES,
   SEED_RATING_SCALES,
   seedReferences,
   seedRoster,
   SEED_EXAMS,
   SEED_SUBJECTS,
-  SEED_TEACHERS,
   SEED_YEARS,
   seedTerms,
 } from "@/lib/exam/mock/examMockSeeds";
 import { getMockActingAs, MOCK_ADMIN } from "@/lib/exam/mock/mockActingAs";
+import {
+  classOfArm,
+  inScope,
+  isGradeClass,
+  loadGradeMarks,
+  loadMarks,
+  markKey,
+  readGradeMark,
+  readScoreMark,
+  resolveGradeStructure,
+  resolveStructure,
+  saveGradeMarks,
+  saveMarks,
+  type StoredGradeMark,
+  type StoredMark,
+} from "@/lib/exam/mock/examMockStore";
+import { getResults, getStudentResult } from "@/lib/exam/mock/examResultsMock";
 
 /**
  * MOCK Exam backend (Stage 1b: marks entry) — localStorage-backed,
@@ -53,8 +64,12 @@ import { getMockActingAs, MOCK_ADMIN } from "@/lib/exam/mock/mockActingAs";
  *   - component_scores keys must be leaves of that structure for the
  *     exam's kind (CA vs Exam components) -> else 422; each value null or
  *     0..max -> else 422 (message led by the field path).
- *   - Roster = students enrolled in the subject for that arm (electives:
- *     only those who take it). A row for anyone else -> 422.
+ *   - Roster = students enrolled in the subject for that arm in the exam's
+ *     term (electives: only those who take it; mid-year joiners only from
+ *     their joining term). A row for anyone else -> 422.
+ *   - Marks live in examMockStore.ts (saved entries over generated seeds),
+ *     shared with the Stage 2a results engine (examResultsMock.ts), which
+ *     answers GET erp/results and erp/results/:student_id.
  *   - PUT upserts the rows it's given (others untouched) and stamps
  *     entered_by_staff_id with the caller. No totals/grades are stored —
  *     computation is Stage 2.
@@ -81,63 +96,6 @@ import { getMockActingAs, MOCK_ADMIN } from "@/lib/exam/mock/mockActingAs";
  *   - No VA, averages or any other computation (Stage 2).
  */
 
-const STORAGE_KEY = "zsms.mockExam.marks.v1";
-
-type StoredMark = Pick<
-  SubjectMarkRow,
-  "component_scores" | "present" | "mark_completed" | "subject_remark" | "entered_by_staff_id" | "updated_at"
->;
-
-/** A few marks so the first open grid isn't empty: 2026/2027 First Term CA, Mathematics, JSS 1 A (Standard structure CA 1 / CA 2). */
-function seedMarks(): Record<string, StoredMark> {
-  const marks: Record<string, StoredMark> = {};
-  enrolledIn("arm-jss1-a", "sub-math")
-    .slice(0, 4)
-    .forEach((student, i) => {
-      marks[markKey("y-2026-t1-ca", "sub-math", "arm-jss1-a", student.id)] = {
-        component_scores: { "as-seed-standard-ca1": 12 + i * 2, "as-seed-standard-ca2": i === 3 ? null : 14 + i },
-        present: true,
-        mark_completed: i < 2,
-        subject_remark: i === 0 ? "Steady improvement." : "",
-        entered_by_staff_id: "stf-okafor",
-        updated_at: "2026-10-20T09:00:00.000Z",
-      };
-    });
-  return marks;
-}
-
-let cache: Record<string, StoredMark> | null = null;
-
-function loadMarks(): Record<string, StoredMark> {
-  if (cache) return cache;
-  let marks = seedMarks();
-  if (typeof window !== "undefined") {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) : null;
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) marks = parsed as Record<string, StoredMark>;
-    } catch {
-      // Corrupt JSON / storage disabled — fall back to the seeds.
-    }
-  }
-  cache = marks;
-  return marks;
-}
-
-function saveMarks(marks: Record<string, StoredMark>): void {
-  cache = marks;
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(marks));
-  } catch {
-    // Best-effort; the in-memory copy still works for this session.
-  }
-}
-
-function markKey(examId: string, subjectId: string, armId: string, studentId: string): string {
-  return `${examId}|${subjectId}|${armId}|${studentId}`;
-}
-
 function ok(data: unknown, status = 200): WireResponse {
   return { status, body: { success: true, data } };
 }
@@ -154,13 +112,6 @@ function record(value: unknown): Record<string, unknown> {
 // Scope, cutoff, structure
 // ---------------------------------------------------------------------------
 
-function inScope(subjectId: string, armId: string): boolean {
-  const actor = getMockActingAs();
-  if (actor === MOCK_ADMIN) return true;
-  const teacher = SEED_TEACHERS.find((item) => item.id === actor);
-  return !!teacher?.assignments.some((a) => a.subject_id === subjectId && a.class_arm_id === armId);
-}
-
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -169,88 +120,9 @@ function entryOpen(exam: Exam): boolean {
   return !exam.entry_closes_on || todayIso() <= exam.entry_closes_on;
 }
 
-function classOfArm(armId: string): string | null {
-  return SEED_CLASSES.find((cls) => cls.arms.some((arm) => arm.id === armId))?.id ?? null;
-}
-
-async function resolveStructure(armId: string): Promise<AssessmentStructure | null> {
-  const result = await assessmentStructuresService.list();
-  if (!result.ok) return null;
-  const active = result.data.filter((structure) => structure.is_active);
-  const classId = classOfArm(armId);
-  const mappedId = classId ? SEED_CLASS_STRUCTURE[classId] : undefined;
-  return active.find((structure) => structure.id === mappedId) ?? active.find((structure) => structure.is_default) ?? null;
-}
-
 // ---------------------------------------------------------------------------
-// Grade-based (British) structure + store
+// Grade-based (British)
 // ---------------------------------------------------------------------------
-
-// v2: grade points moved to A/B per term and Boarding Commitment left the subject grid (2026-10-26).
-const GRADE_STORAGE_KEY = "zsms.mockExam.academicReport.v2";
-
-type StoredGradeMark = Pick<
-  GradeMarkRow,
-  "component_scores" | "present" | "mark_completed" | "subject_remark" | "entered_by_staff_id" | "updated_at"
->;
-
-let gradeCache: Record<string, StoredGradeMark> | null = null;
-
-/** A few entries so the first Academic Report isn't empty: 2026/2027 point 1A (progress), Mathematics, Year 9 Oak. */
-function seedGradeMarks(): Record<string, StoredGradeMark> {
-  const marks: Record<string, StoredGradeMark> = {};
-  const attainment = ["S", "D", "M"];
-  enrolledIn("arm-y9-oak", "sub-math")
-    .slice(0, 3)
-    .forEach((student, i) => {
-      marks[markKey("y-2026-t1-a", "sub-math", "arm-y9-oak", student.id)] = {
-        component_scores: { "gs-ks3-att": attainment[i], "gs-ks3-eng": String(1 + i), "gs-ks3-lb": i === 2 ? null : "2" },
-        present: true,
-        mark_completed: i === 0,
-        subject_remark: i === 0 ? "Works carefully and asks good questions." : "",
-        entered_by_staff_id: "stf-okafor",
-        updated_at: "2026-10-21T10:00:00.000Z",
-      };
-    });
-  return marks;
-}
-
-function loadGradeMarks(): Record<string, StoredGradeMark> {
-  if (gradeCache) return gradeCache;
-  let marks = seedGradeMarks();
-  if (typeof window !== "undefined") {
-    try {
-      const raw = window.localStorage.getItem(GRADE_STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) : null;
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) marks = parsed as Record<string, StoredGradeMark>;
-    } catch {
-      // Corrupt JSON / storage disabled — fall back to the seeds.
-    }
-  }
-  gradeCache = marks;
-  return marks;
-}
-
-function saveGradeMarks(marks: Record<string, StoredGradeMark>): void {
-  gradeCache = marks;
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(GRADE_STORAGE_KEY, JSON.stringify(marks));
-  } catch {
-    // Best-effort; the in-memory copy still works for this session.
-  }
-}
-
-/** The grade_based structure in force for the arm's class, or null when the class reports by scores. */
-function resolveGradeStructure(armId: string) {
-  const classId = classOfArm(armId);
-  const id = classId ? SEED_CLASS_GRADE_STRUCTURE[classId] : undefined;
-  return SEED_GRADE_STRUCTURES.find((structure) => structure.id === id) ?? null;
-}
-
-function isGradeClass(classId: string): boolean {
-  return !!SEED_CLASS_GRADE_STRUCTURE[classId];
-}
 
 /** Leaf id -> the codes allowed for it (attainment: its grade scale; domains: their rating scale). */
 function gradeLeafCodes(armId: string): Map<string, { name: string; codes: Set<string> }> {
@@ -270,10 +142,9 @@ function buildGradeSheet({ exam, subjectId, armId }: SheetContext): GradeMarksSh
   const structure = resolveGradeStructure(armId);
   const gradeScale = structure ? SEED_GRADE_SCALES.find((scale) => scale.id === structure.attainment.grade_scale_id) : undefined;
   const ratingIds = new Set(structure?.rating_domains.map((domain) => domain.rating_scale_id) ?? []);
-  const marks = loadGradeMarks();
   const rosterIndex = new Map(seedRoster(armId).map((student, index) => [student.id, index]));
-  const items: GradeMarkRow[] = enrolledIn(armId, subjectId).map((student) => {
-    const stored = marks[markKey(exam.id, subjectId, armId, student.id)];
+  const items: GradeMarkRow[] = enrolledIn(armId, subjectId, exam.term_id).map((student) => {
+    const stored = readGradeMark(exam, subjectId, armId, student.id, structure);
     const refs = gradeScale
       ? seedReferences(rosterIndex.get(student.id) ?? 0, subjectId, gradeScale)
       : { mtg: null, grade_book: null };
@@ -308,7 +179,7 @@ function buildGradeSheet({ exam, subjectId, armId }: SheetContext): GradeMarksSh
 async function putGradeMarks(context: SheetContext, body: Record<string, unknown>): Promise<WireResponse> {
   const leaves = gradeLeafCodes(context.armId);
   if (leaves.size === 0) return fail(409, "NO_ASSESSMENT_STRUCTURE", "No grade-based structure is in force for this class.");
-  const roster = new Set(enrolledIn(context.armId, context.subjectId).map((student) => student.id));
+  const roster = new Set(enrolledIn(context.armId, context.subjectId, context.exam.term_id).map((student) => student.id));
   if (!Array.isArray(body.rows)) return fail(422, "VALIDATION_ERROR", "rows must be an array");
 
   const parsed: Array<{ studentId: string; mark: Omit<StoredGradeMark, "entered_by_staff_id" | "updated_at"> }> = [];
@@ -422,9 +293,8 @@ function sheetContext(examId: string, subjectId: string, armId: string): SheetCo
 
 async function buildSheet({ exam, subjectId, armId }: SheetContext): Promise<SubjectMarksSheet> {
   const structure = await resolveStructure(armId);
-  const marks = loadMarks();
-  const items: SubjectMarkRow[] = enrolledIn(armId, subjectId).map((student) => {
-    const stored = marks[markKey(exam.id, subjectId, armId, student.id)];
+  const items: SubjectMarkRow[] = enrolledIn(armId, subjectId, exam.term_id).map((student) => {
+    const stored = readScoreMark(exam, subjectId, armId, student.id, structure);
     return {
       student_id: student.id,
       student_name: student.name,
@@ -468,7 +338,7 @@ async function putMarks(examId: string, payload: unknown): Promise<WireResponse>
   const structure = await resolveStructure(context.armId);
   if (!structure) return fail(409, "NO_ASSESSMENT_STRUCTURE", "No active assessment structure is in force for this class.");
   const leaves = new Map(allLeaves(buildMarkColumns(structure, context.exam.kind ?? "exam")).map((leaf) => [leaf.id, leaf]));
-  const roster = new Set(enrolledIn(context.armId, context.subjectId).map((student) => student.id));
+  const roster = new Set(enrolledIn(context.armId, context.subjectId, context.exam.term_id).map((student) => student.id));
 
   if (!Array.isArray(body.rows)) return fail(422, "VALIDATION_ERROR", "rows must be an array");
   const parsed: Array<{ studentId: string; mark: Omit<StoredMark, "entered_by_staff_id" | "updated_at"> }> = [];
@@ -520,6 +390,9 @@ async function putMarks(examId: string, payload: unknown): Promise<WireResponse>
 async function handle(method: HttpMethod, path: string, query: URLSearchParams, payload: unknown): Promise<WireResponse> {
   if (path === "erp/exams" && method === "GET") return listExams(query);
   if (path === "erp/exams/entry-options" && method === "GET") return entryOptions(query);
+  if (path === "erp/results" && method === "GET") return getResults(query);
+  const studentMatch = path.match(/^erp\/results\/([^/]+)$/);
+  if (studentMatch && method === "GET") return getStudentResult(decodeURIComponent(studentMatch[1]), query);
   const match = path.match(/^erp\/exams\/([^/]+)\/marks$/);
   if (match) {
     const examId = decodeURIComponent(match[1]);

@@ -3,14 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ACADEMIC_REPORT_HREF, MANAGE_EXAM_RESULT_HREF } from "@/components/exam/examTabsConfig";
+import { ACADEMIC_REPORT_HREF, MANAGE_EXAM_RESULT_HREF, VIEW_RESULTS_HREF } from "@/components/exam/examTabsConfig";
 
 const SUB_TABS = [
   { href: MANAGE_EXAM_RESULT_HREF, labelKey: "exam.resultsTabs.manageExamResult" },
   { href: ACADEMIC_REPORT_HREF, labelKey: "exam.resultsTabs.academicReport" },
+  { href: VIEW_RESULTS_HREF, labelKey: "exam.resultsTabs.viewResults" },
 ] as const;
 
-/** Pill sub-tabs inside Results (Figma's Results pills) — score entry vs British grade entry. Each is its own route. */
+/** Pill sub-tabs inside Results (Figma's Results pills) — score entry, British grade entry, and the computed results. Each is its own route. */
 export function ResultsSubTabs() {
   const t = useTranslations();
   const pathname = usePathname();
