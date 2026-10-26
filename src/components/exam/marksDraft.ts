@@ -1,5 +1,6 @@
 import { isScoreValid, type MarkLeaf } from "@/lib/exam/markColumns";
 import type { ComponentScores, SubjectMarkInput, SubjectMarkRow } from "@/lib/exam/examTypes";
+import type { AutoTickRule } from "@/components/exam/examEntryShared";
 
 /**
  * Editable copy of one student's mark. Scores stay strings while typing
@@ -64,5 +65,18 @@ export function toMarkInput(studentId: string, row: DraftRow, leaves: MarkLeaf[]
     present: row.present,
     mark_completed: row.mark_completed,
     subject_remark: row.subject_remark.trim(),
+  };
+}
+
+/**
+ * Manage Exam Result auto-ticks: Present once any score is in; Mark as
+ * completed once every score column holds a valid score.
+ */
+export function scoreAutoTickRule(leaves: MarkLeaf[]): AutoTickRule<DraftRow> {
+  const filled = (row: DraftRow, leaf: MarkLeaf) => (row.scores[leaf.id] ?? "").trim() !== "";
+  return {
+    attended: (row) => leaves.some((leaf) => filled(row, leaf)),
+    complete: (row) =>
+      leaves.length > 0 && leaves.every((leaf) => filled(row, leaf) && isScoreTextValid(row.scores[leaf.id] ?? "", leaf.max)),
   };
 }

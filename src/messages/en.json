@@ -2956,6 +2956,10 @@
         "ca": "CA",
         "exam": "Exam"
       },
+      "variants": {
+        "progress": "Progress report",
+        "full": "Full report"
+      },
       "filters": {
         "year": "Academic year",
         "currentYear": "{name} (current)",
@@ -2978,7 +2982,8 @@
         "totalMarks": "Total marks",
         "marks": "{value} marks",
         "progress": "{done} of {total} marked as completed",
-        "closesOn": "Entry closes {date}"
+        "closesOn": "Entry closes {date}",
+        "autoTick": "Present ticks once a score is entered, and Mark as completed once every score is in. You can still change either by hand."
       },
       "cbt": {
         "label": "Fill marks from CBT",
@@ -3057,6 +3062,9 @@
       },
       "info": {
         "gradeScale": "Grade scale",
+        "point": "Assessment point",
+        "reportVariant": "Report variant",
+        "autoTick": "Present ticks once Current Attainment is entered. Mark as completed ticks once {fields} are in. You can still change either by hand (for example, for an absence).",
         "referencesNote": "Target (MTG) and Grade Book are for reference and can't be edited here."
       },
       "notices": {

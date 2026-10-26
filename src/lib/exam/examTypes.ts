@@ -32,10 +32,27 @@ export type ExamEntryOptions = {
   full_scope: boolean;
 };
 
+/**
+ * Which Academic Report a grade-based (British) point produces: a short
+ * "progress" report or the "full" report. It drives the completed rule
+ * (gradeDraft.ts). A school may use the same variant at both of a term's points.
+ */
+export type ReportVariant = "progress" | "full";
+
+/**
+ * An exam point. Each term auto-creates exactly two per assessment mode;
+ * names are school-editable. component_based points are framed CA / Exam
+ * (`kind`); grade_based (British) points have no CA/Exam framing — they're
+ * labelled A/B per term (1A, 1B, 2A…) and carry a `report_variant`.
+ */
 export type Exam = {
   id: string;
   name: string;
-  kind: ExamKind;
+  assessment_mode: AssessmentMode;
+  /** component_based only: which of the structure's components the point shows. null on grade_based points. */
+  kind: ExamKind | null;
+  /** grade_based only: which report this point produces. null on component_based points. */
+  report_variant: ReportVariant | null;
   academic_year_id: string;
   term_id: string;
   /** Last day marks may be entered (cutoff). null = no cutoff. */
@@ -90,13 +107,21 @@ export type ScaleLevel = { code: string; label: string };
 export type GradeScale = { id: string; name: string; grades: ScaleLevel[] };
 export type RatingScale = { id: string; name: string; levels: ScaleLevel[] };
 
-/** A rating domain leaf (Engagement, Learning Behaviour, Boarding Commitment…). `key` is the stable domain key; `id` keys component_scores. */
+/** A subject-wise rating domain leaf (Engagement, Learning Behaviour). `key` is the stable domain key; `id` keys component_scores. */
 export type RatingDomainLeaf = { id: string; key: string; name: string; rating_scale_id: string };
+
+/**
+ * The rating domains the subject-wise Academic Report grid carries. Student-wise
+ * domains (Boarding Commitment, Form Tutor, House…) belong to Report
+ * Progression (Stage 3), never to a subject grid.
+ */
+export const SUBJECT_RATING_DOMAIN_KEYS = ["engagement", "learning_behaviour"] as const;
 
 /**
  * The resolved grade_based structure (server-authoritative): one Current
  * Attainment leaf graded on the class's grade scale, plus one leaf per
- * rating domain present. Leaf ids key component_scores.
+ * subject-wise rating domain (SUBJECT_RATING_DOMAIN_KEYS). Leaf ids key
+ * component_scores.
  */
 export type GradeBasedStructure = {
   id: string;

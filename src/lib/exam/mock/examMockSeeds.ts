@@ -1,4 +1,4 @@
-import type { Exam, ExamTermOption, ExamYearOption, GradeBasedStructure, GradeScale, RatingScale } from "@/lib/exam/examTypes";
+import type { Exam, ExamTermOption, ExamYearOption, GradeBasedStructure, GradeScale, RatingScale, ReportVariant } from "@/lib/exam/examTypes";
 
 /**
  * Self-contained seed data for the Exam mock (Matthew, 2026-10-23: the
@@ -128,14 +128,13 @@ export const SEED_GRADE_STRUCTURES: GradeBasedStructure[] = [
     ],
   },
   {
-    // A boarding school's KS4 report: the extra Boarding Commitment domain is present.
-    id: "gs-ks4-boarding",
-    name: "KS4 Academic Report (boarding)",
+    // Subject-wise domains only — Boarding Commitment is student-wise (Report Progression, Stage 3).
+    id: "gs-ks4",
+    name: "KS4 Academic Report",
     attainment: { id: "gs-ks4-att", name: "Current Attainment", grade_scale_id: "scale-gcse" },
     rating_domains: [
       { id: "gs-ks4-eng", key: "engagement", name: "Engagement", rating_scale_id: "rating-1-4" },
       { id: "gs-ks4-lb", key: "learning_behaviour", name: "Learning Behaviour", rating_scale_id: "rating-1-4" },
-      { id: "gs-ks4-bc", key: "boarding_commitment", name: "Boarding Commitment", rating_scale_id: "rating-1-4" },
     ],
   },
 ];
@@ -143,7 +142,7 @@ export const SEED_GRADE_STRUCTURES: GradeBasedStructure[] = [
 /** Classes that report grade-based (British). Everything else is component_based (SEED_CLASS_STRUCTURE / default). */
 export const SEED_CLASS_GRADE_STRUCTURE: Record<string, string> = {
   "cls-y9": "gs-ks3",
-  "cls-y11": "gs-ks4-boarding",
+  "cls-y11": "gs-ks4",
 };
 
 /**
@@ -246,12 +245,29 @@ const CLOSES_ON: Record<string, [string, string]> = {
   "y-2025-t3": ["2026-06-12", "2026-07-24"],
 };
 
+/**
+ * Each term auto-creates exactly two points per assessment mode (names are
+ * school-editable; these are the defaults). Score classes: CA + Examination.
+ * British (grade-based) classes: A/B per term (1A, 1B, 2A…), each carrying a
+ * report_variant — Third Term uses "full" at both points (a school may).
+ */
+const GRADE_VARIANTS: Record<number, [ReportVariant, ReportVariant]> = {
+  1: ["progress", "full"],
+  2: ["progress", "full"],
+  3: ["full", "full"],
+};
+
 export const SEED_EXAMS: Exam[] = SEED_YEARS.flatMap((year) =>
-  seedTerms(year.id).flatMap((term) => {
-    const [caCloses, examCloses] = CLOSES_ON[term.id];
+  seedTerms(year.id).flatMap((term, index) => {
+    const [firstCloses, secondCloses] = CLOSES_ON[term.id];
+    const n = index + 1;
+    const [variantA, variantB] = GRADE_VARIANTS[n];
+    const base = { academic_year_id: year.id, term_id: term.id };
     return [
-      { id: `${term.id}-ca`, name: `${term.name} CA`, kind: "ca" as const, academic_year_id: year.id, term_id: term.id, entry_closes_on: caCloses },
-      { id: `${term.id}-exam`, name: `${term.name} Examination`, kind: "exam" as const, academic_year_id: year.id, term_id: term.id, entry_closes_on: examCloses },
+      { ...base, id: `${term.id}-ca`, name: `${term.name} CA`, assessment_mode: "component_based" as const, kind: "ca" as const, report_variant: null, entry_closes_on: firstCloses },
+      { ...base, id: `${term.id}-exam`, name: `${term.name} Examination`, assessment_mode: "component_based" as const, kind: "exam" as const, report_variant: null, entry_closes_on: secondCloses },
+      { ...base, id: `${term.id}-a`, name: `${n}A`, assessment_mode: "grade_based" as const, kind: null, report_variant: variantA, entry_closes_on: firstCloses },
+      { ...base, id: `${term.id}-b`, name: `${n}B`, assessment_mode: "grade_based" as const, kind: null, report_variant: variantB, entry_closes_on: secondCloses },
     ];
   }),
 );

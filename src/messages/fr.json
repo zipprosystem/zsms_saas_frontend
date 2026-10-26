@@ -2964,6 +2964,10 @@
         "ca": "CC",
         "exam": "Examen"
       },
+      "variants": {
+        "progress": "Bulletin d'étape",
+        "full": "Bulletin complet"
+      },
       "filters": {
         "year": "Année scolaire",
         "currentYear": "{name} (en cours)",
@@ -2986,7 +2990,8 @@
         "totalMarks": "Total des points",
         "marks": "{value} points",
         "progress": "{done} sur {total} marqués comme terminés",
-        "closesOn": "Saisie close le {date}"
+        "closesOn": "Saisie close le {date}",
+        "autoTick": "« Présent » se coche dès qu'une note est saisie, et « Marquer comme terminé » dès que toutes les notes sont saisies. Vous pouvez toujours les modifier à la main."
       },
       "cbt": {
         "label": "Remplir les notes depuis le CBT",
@@ -3065,6 +3070,9 @@
       },
       "info": {
         "gradeScale": "Échelle de niveaux",
+        "point": "Point d'évaluation",
+        "reportVariant": "Type de bulletin",
+        "autoTick": "« Présent » se coche dès que le niveau actuel est saisi. « Marquer comme terminé » se coche dès que les champs suivants sont saisis : {fields}. Vous pouvez toujours les modifier à la main (par exemple en cas d'absence).",
         "referencesNote": "L'objectif (MTG) et le carnet de niveaux sont donnés à titre de référence et ne sont pas modifiables ici."
       },
       "notices": {

@@ -1,4 +1,5 @@
-import type { GradeBasedStructure, GradeMarkInput, GradeMarkRow, GradeScores } from "@/lib/exam/examTypes";
+import type { GradeBasedStructure, GradeMarkInput, GradeMarkRow, GradeScores, ReportVariant } from "@/lib/exam/examTypes";
+import type { AutoTickRule } from "@/components/exam/examEntryShared";
 
 /**
  * Editable copy of one student's Academic Report row. Selects hold codes
@@ -49,5 +50,25 @@ export function toGradeInput(studentId: string, row: GradeDraftRow, leafIds: str
     present: row.present,
     mark_completed: row.mark_completed,
     subject_remark: row.subject_remark.trim(),
+  };
+}
+
+/** Whether the point's report variant makes the Comment required for completion (full; also when the variant is unknown). */
+export function commentRequired(variant: ReportVariant | null): boolean {
+  return variant !== "progress";
+}
+
+/**
+ * Academic Report auto-ticks: Present once Current Attainment (CAG) is in;
+ * Mark as completed once the variant's required fields are in —
+ * progress = CAG + Engagement + Learning Behaviour (every leaf of the
+ * subject-wise structure); full = those + Comment.
+ */
+export function gradeAutoTickRule(structure: GradeBasedStructure, variant: ReportVariant | null): AutoTickRule<GradeDraftRow> {
+  const leafIds = gradeLeafIds(structure);
+  const needsComment = commentRequired(variant);
+  return {
+    attended: (row) => !!row.scores[structure.attainment.id],
+    complete: (row) => leafIds.every((id) => !!row.scores[id]) && (!needsComment || row.subject_remark.trim() !== ""),
   };
 }

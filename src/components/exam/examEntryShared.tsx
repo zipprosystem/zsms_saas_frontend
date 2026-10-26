@@ -10,14 +10,16 @@ import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import { isDevBypassUnavailable, throwIfTransient, type CrudResult } from "@/lib/setup/crudTypes";
 import type { AssessmentMode } from "@/lib/setup/assessmentConfiguration/assessmentStructure";
 import { EXAM_USES_MOCK, examQueryKeys, getEntryOptions, listExams } from "@/lib/exam/examApi";
+import type { Exam } from "@/lib/exam/examTypes";
 import { getMockActingAs, mockActors, MOCK_ADMIN, setMockActingAs } from "@/lib/exam/mock/mockActingAs";
 
 /**
  * Shared by the two subject-wise entry screens — Manage Exam Result
  * (component_based scores, Stage 1b) and Academic Report (grade_based,
  * Stage 1c): the scope-aware filter bar, the mock "acting as" picker, the
- * unsaved-changes guard, the save bar and the notice blocks. Strings live
- * under exam.marks.* (they're generic to both screens).
+ * unsaved-changes guard, the save bar, the notice blocks and the Present /
+ * Mark-as-completed auto-ticks. Strings live under exam.marks.* (they're
+ * generic to both screens).
  */
 
 type Translate = ReturnType<typeof useTranslations>;
@@ -59,6 +61,55 @@ export function InfoItem({ label, value }: { label: string; value: ReactNode }) 
 }
 
 // ---------------------------------------------------------------------------
+// Present / Mark-as-completed auto-ticks (shared by both screens)
+// ---------------------------------------------------------------------------
+
+type EntryFlags = { present: boolean | null; mark_completed: boolean };
+
+/**
+ * When a row counts as attended (Present) and as complete (Mark as
+ * completed). Each screen supplies its own: scores = any score in / every
+ * score in; Academic Report = CAG in / the report variant's required fields in.
+ */
+export type AutoTickRule<R> = { attended: (row: R) => boolean; complete: (row: R) => boolean };
+
+/**
+ * Applies the auto-ticks to an entry edit (prev -> next). Edge-triggered,
+ * so the boxes stay manually overridable: Present ticks the moment the row
+ * becomes attended (untick it afterwards for a genuine absence); Mark as
+ * completed ticks the moment the row becomes complete and unticks if a
+ * required entry is then cleared. An edit that sets either box itself is
+ * left alone — call this only for entry changes.
+ */
+export function applyAutoTicks<R extends EntryFlags>(prev: R, next: R, rule: AutoTickRule<R>): R {
+  let row = next;
+  if (!rule.attended(prev) && rule.attended(next) && next.present !== true) row = { ...row, present: true };
+  const wasComplete = rule.complete(prev);
+  const isComplete = rule.complete(next);
+  if (!wasComplete && isComplete && !row.mark_completed) row = { ...row, mark_completed: true };
+  else if (wasComplete && !isComplete && row.mark_completed) row = { ...row, mark_completed: false };
+  return row;
+}
+
+/**
+ * Draft-row updater for either screen: merges the patch and, unless the
+ * patch sets Present / Mark as completed directly, applies the auto-ticks.
+ */
+export function patchRowWithAutoTicks<R extends EntryFlags>(current: R, patch: Partial<R>, rule: AutoTickRule<R>): R {
+  const next = { ...current, ...patch };
+  if ("present" in patch || "mark_completed" in patch) return next;
+  return applyAutoTicks(current, next, rule);
+}
+
+/** "First Term CA (CA)" / "1A (Progress report)" — the CA/Exam framing for score points, the report variant for British ones. */
+export function examOptionLabel(exam: Exam, t: Translate): string {
+  if (exam.assessment_mode === "grade_based") {
+    return exam.report_variant ? `${exam.name} (${t(`exam.marks.variants.${exam.report_variant}`)})` : exam.name;
+  }
+  return exam.kind ? `${exam.name} (${t(`exam.marks.kinds.${exam.kind}`)})` : exam.name;
+}
+
+// ---------------------------------------------------------------------------
 // Filters
 // ---------------------------------------------------------------------------
 
@@ -97,8 +148,8 @@ export function useExamEntryFilters(mode: AssessmentMode) {
   const subjectId = pick(subjects, selection.subjectId);
 
   const examsQuery = useQuery({
-    queryKey: examQueryKeys.exams(yearId, termId),
-    queryFn: () => listExams(yearId, termId).then(throwIfTransient),
+    queryKey: examQueryKeys.exams(yearId, termId, mode),
+    queryFn: () => listExams(yearId, termId, mode).then(throwIfTransient),
     enabled: !!yearId && !!termId,
     staleTime: STRUCTURAL_STALE_TIME_MS,
   });
@@ -277,7 +328,7 @@ export function ExamEntryFilterBar({
         >
           {exams.map((exam) => (
             <option key={exam.id} value={exam.id}>
-              {`${exam.name} (${k(`kinds.${exam.kind}`)})`}
+              {examOptionLabel(exam, t)}
             </option>
           ))}
         </SelectField>

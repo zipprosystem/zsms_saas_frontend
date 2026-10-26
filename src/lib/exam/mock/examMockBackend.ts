@@ -69,6 +69,15 @@ import { getMockActingAs, MOCK_ADMIN } from "@/lib/exam/mock/mockActingAs";
  *     value null or a code on the leaf's scale -> else 422. Comment =
  *     subject_remark. Stored apart from score marks (own localStorage key).
  *   - entry-options tags each class with its assessment_mode.
+ *   - Exam points are per mode: each term has exactly two of each
+ *     (score: CA + Examination; British: A/B, e.g. 1A / 1B, each with a
+ *     report_variant "progress" | "full"). GET erp/exams filters by
+ *     ?assessment_mode=; marks for a point of the other mode -> 409
+ *     EXAM_MODE_MISMATCH.
+ *   - Only subject-wise rating domains (Engagement, Learning Behaviour) —
+ *     student-wise ones (Boarding Commitment…) are Report Progression.
+ *   - Present / Mark-as-completed are stored as sent; the auto-ticks are
+ *     screen behaviour (examEntryShared.applyAutoTicks), not derived here.
  *   - No VA, averages or any other computation (Stage 2).
  */
 
@@ -177,7 +186,8 @@ async function resolveStructure(armId: string): Promise<AssessmentStructure | nu
 // Grade-based (British) structure + store
 // ---------------------------------------------------------------------------
 
-const GRADE_STORAGE_KEY = "zsms.mockExam.academicReport.v1";
+// v2: grade points moved to A/B per term and Boarding Commitment left the subject grid (2026-10-26).
+const GRADE_STORAGE_KEY = "zsms.mockExam.academicReport.v2";
 
 type StoredGradeMark = Pick<
   GradeMarkRow,
@@ -186,14 +196,14 @@ type StoredGradeMark = Pick<
 
 let gradeCache: Record<string, StoredGradeMark> | null = null;
 
-/** A few entries so the first Academic Report isn't empty: 2026/2027 First Term Examination, Mathematics, Year 9 Oak. */
+/** A few entries so the first Academic Report isn't empty: 2026/2027 point 1A (progress), Mathematics, Year 9 Oak. */
 function seedGradeMarks(): Record<string, StoredGradeMark> {
   const marks: Record<string, StoredGradeMark> = {};
   const attainment = ["S", "D", "M"];
   enrolledIn("arm-y9-oak", "sub-math")
     .slice(0, 3)
     .forEach((student, i) => {
-      marks[markKey("y-2026-t1-exam", "sub-math", "arm-y9-oak", student.id)] = {
+      marks[markKey("y-2026-t1-a", "sub-math", "arm-y9-oak", student.id)] = {
         component_scores: { "gs-ks3-att": attainment[i], "gs-ks3-eng": String(1 + i), "gs-ks3-lb": i === 2 ? null : "2" },
         present: true,
         mark_completed: i === 0,
@@ -380,8 +390,12 @@ function entryOptions(query: URLSearchParams): WireResponse {
 function listExams(query: URLSearchParams): WireResponse {
   const yearId = query.get("academic_year_id");
   const termId = query.get("term_id");
+  const mode = query.get("assessment_mode");
   const items = SEED_EXAMS.filter(
-    (exam) => (!yearId || exam.academic_year_id === yearId) && (!termId || exam.term_id === termId),
+    (exam) =>
+      (!yearId || exam.academic_year_id === yearId) &&
+      (!termId || exam.term_id === termId) &&
+      (!mode || exam.assessment_mode === mode),
   );
   return ok({ items, total: items.length, page: 1, limit: Math.max(1, items.length), has_more: false });
 }
@@ -397,6 +411,11 @@ function sheetContext(examId: string, subjectId: string, armId: string): SheetCo
   }
   if (!inScope(subjectId, armId)) {
     return fail(403, "OUT_OF_SCOPE", "You aren't assigned to this subject for this class-arm.");
+  }
+  const classId = classOfArm(armId);
+  const classMode = classId && isGradeClass(classId) ? "grade_based" : "component_based";
+  if (exam.assessment_mode !== classMode) {
+    return fail(409, "EXAM_MODE_MISMATCH", `${exam.name} is a ${exam.assessment_mode === "grade_based" ? "grade-based" : "score-based"} exam point; this class reports the other way.`);
   }
   return { exam, subjectId, armId };
 }
@@ -448,7 +467,7 @@ async function putMarks(examId: string, payload: unknown): Promise<WireResponse>
 
   const structure = await resolveStructure(context.armId);
   if (!structure) return fail(409, "NO_ASSESSMENT_STRUCTURE", "No active assessment structure is in force for this class.");
-  const leaves = new Map(allLeaves(buildMarkColumns(structure, context.exam.kind)).map((leaf) => [leaf.id, leaf]));
+  const leaves = new Map(allLeaves(buildMarkColumns(structure, context.exam.kind ?? "exam")).map((leaf) => [leaf.id, leaf]));
   const roster = new Set(enrolledIn(context.armId, context.subjectId).map((student) => student.id));
 
   if (!Array.isArray(body.rows)) return fail(422, "VALIDATION_ERROR", "rows must be an array");

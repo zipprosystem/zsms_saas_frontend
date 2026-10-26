@@ -9,7 +9,16 @@ import { throwIfTransient } from "@/lib/setup/crudTypes";
 import { examQueryKeys, getMarks, saveMarks } from "@/lib/exam/examApi";
 import type { GradeMarksSheet, ScaleLevel } from "@/lib/exam/examTypes";
 import { AcademicReportGrid } from "@/components/exam/AcademicReportGrid";
-import { gradeLeafIds, isGradeRowDirty, toGradeDraft, toGradeInput, type GradeDraft, type GradeDraftRow } from "@/components/exam/gradeDraft";
+import {
+  commentRequired,
+  gradeAutoTickRule,
+  gradeLeafIds,
+  isGradeRowDirty,
+  toGradeDraft,
+  toGradeInput,
+  type GradeDraft,
+  type GradeDraftRow,
+} from "@/components/exam/gradeDraft";
 import { MANAGE_EXAM_RESULT_HREF } from "@/components/exam/examTabsConfig";
 import {
   ExamEntryFilterBar,
@@ -18,6 +27,7 @@ import {
   filterPreconditionNotice,
   InfoItem,
   Notice,
+  patchRowWithAutoTicks,
   searchRows,
   StudentSearch,
   useExamEntryFilters,
@@ -28,11 +38,17 @@ import {
  * Academics › Exam › Results › Academic Report (Exam Stage 1c) — the
  * British, grade-based counterpart to Manage Exam Result. Same filters,
  * scope and save flow; the grid is driven by the class's resolved
- * grade_based structure (server-authoritative, inline on the marks GET):
- * Current Attainment on the class grade scale, one rating per domain
- * present (Engagement, Learning Behaviour, Boarding Commitment…), the
- * subject comment, Present? and Mark as completed. Target (MTG) and
- * Grade Book are read-only references.
+ * grade_based structure (server-authoritative, inline on the marks GET).
+ * Subject-wise columns only: Current Attainment on the class grade scale,
+ * Engagement, Learning Behaviour and the subject Comment, plus Present?
+ * and Mark as completed (student-wise domains — Boarding Commitment, Form
+ * Tutor, House — are Report Progression, Stage 3). Target (MTG) and Grade
+ * Book are read-only references.
+ *
+ * No CA/Exam framing: each point (1A, 1B…) carries a report_variant, which
+ * sets the completed rule — progress = CAG + Engagement + Learning
+ * Behaviour; full = those + Comment. Present and Mark as completed
+ * auto-tick through the shared rule (examEntryShared) and stay overridable.
  *
  * Raw entry only — no VA, averages or any other computation (Stage 2);
  * MTG / grade-book / trait management is Stage 3. MOCK until the backend
@@ -92,14 +108,15 @@ export function AcademicReportScreen() {
 
   const { guarded, dialog } = useUnsavedGuard(dirtyIds.length);
 
+  const variant = sheet?.exam.report_variant ?? null;
+  const autoTickRule = useMemo(() => (structure ? gradeAutoTickRule(structure, variant) : null), [structure, variant]);
   const updateRow = (studentId: string, patch: Partial<GradeDraftRow>) =>
-    setDraft((current) => ({ ...current, [studentId]: { ...current[studentId], ...patch } }));
+    setDraft((current) => {
+      const row = current[studentId];
+      return { ...current, [studentId]: autoTickRule ? patchRowWithAutoTicks(row, patch, autoTickRule) : { ...row, ...patch } };
+    });
   const revertRow = (studentId: string) => setDraft((current) => ({ ...current, [studentId]: baseline[studentId] }));
-  const clearEntries = (studentId: string) =>
-    setDraft((current) => ({
-      ...current,
-      [studentId]: { ...current[studentId], scores: Object.fromEntries(leafIds.map((id) => [id, ""])) },
-    }));
+  const clearEntries = (studentId: string) => updateRow(studentId, { scores: Object.fromEntries(leafIds.map((id) => [id, ""])) });
 
   const handleSave = async () => {
     if (!sheet || dirtyIds.length === 0) return;
@@ -125,6 +142,11 @@ export function AcademicReportScreen() {
   const visibleRows = searchRows(sheet?.items ?? [], search);
   const subjectName = filters.subjects.find((subject) => subject.id === subjectId)?.name ?? "";
   const termName = filters.terms.find((term) => term.id === filters.termId)?.name ?? "";
+  const variantLabel = variant ? m(`variants.${variant}`) : "—";
+  // "Current Attainment, Engagement, Learning Behaviour" (+ "Comment" on a full report) — the fields completion waits for.
+  const requiredFields = structure
+    ? [structure.attainment.name, ...structure.rating_domains.map((domain) => domain.name), ...(commentRequired(variant) ? [k("columns.comment")] : [])].join(", ")
+    : "";
 
   const otherScreen = (
     <>
@@ -183,9 +205,10 @@ export function AcademicReportScreen() {
       {sheet && structure ? (
         <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:p-5">
           <h3 className="text-base font-semibold text-text-primary">{subjectName}</h3>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3 lg:grid-cols-5">
             <InfoItem label={m("info.term")} value={termName} />
-            <InfoItem label={m("info.exam")} value={sheet.exam.name} />
+            <InfoItem label={k("info.point")} value={sheet.exam.name} />
+            <InfoItem label={k("info.reportVariant")} value={variantLabel} />
             <InfoItem label={m("info.structure")} value={structure.name} />
             <InfoItem label={k("info.gradeScale")} value={gradeScale?.name ?? "—"} />
           </div>
@@ -193,6 +216,7 @@ export function AcademicReportScreen() {
             {m("info.progress", { done: completedCount, total: sheet.items.length })}
             {sheet.exam.entry_closes_on ? ` · ${m("info.closesOn", { date: sheet.exam.entry_closes_on })}` : ""}
           </p>
+          <p className="text-xs text-text-muted">{k("info.autoTick", { fields: requiredFields })}</p>
           <p className="text-xs text-text-muted">{k("info.referencesNote")}</p>
         </div>
       ) : null}
