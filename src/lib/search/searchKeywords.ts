@@ -37,8 +37,11 @@ export const SEARCH_ACADEMIC_REPORT_KEYWORDS = [
   "grade book",
   "engagement",
   "learning behaviour",
-  "boarding",
   "report comment",
+  "progress report",
+  "full report",
+  "report variant",
+  "assessment point",
   "GCSE",
   "KS3",
 ];

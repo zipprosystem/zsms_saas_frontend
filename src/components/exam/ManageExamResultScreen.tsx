@@ -14,7 +14,7 @@ import { examQueryKeys, getMarks, saveMarks } from "@/lib/exam/examApi";
 import type { SubjectMarksSheet } from "@/lib/exam/examTypes";
 import { MarksGrid } from "@/components/exam/MarksGrid";
 import { ACADEMIC_REPORT_HREF } from "@/components/exam/examTabsConfig";
-import { isRowDirty, rowErrorCount, toDraft, toMarkInput, type Draft, type DraftRow } from "@/components/exam/marksDraft";
+import { isRowDirty, rowErrorCount, scoreAutoTickRule, toDraft, toMarkInput, type Draft, type DraftRow } from "@/components/exam/marksDraft";
 import {
   ExamEntryFilterBar,
   ExamSaveBar,
@@ -22,6 +22,7 @@ import {
   filterPreconditionNotice,
   InfoItem,
   Notice,
+  patchRowWithAutoTicks,
   searchRows,
   StudentSearch,
   useExamEntryFilters,
@@ -77,7 +78,10 @@ export function ManageExamResultScreen() {
     sheet?.assessment_structure_id && structuresQuery.data?.ok
       ? (structuresQuery.data.data.find((item) => item.id === sheet.assessment_structure_id) ?? null)
       : null;
-  const groups = useMemo(() => (structure && sheet ? buildMarkColumns(structure, sheet.exam.kind) : []), [structure, sheet]);
+  const groups = useMemo(
+    () => (structure && sheet?.exam.kind ? buildMarkColumns(structure, sheet.exam.kind) : []),
+    [structure, sheet],
+  );
   const leaves = useMemo(() => allLeaves(groups), [groups]);
   const baseline = useMemo(() => (sheet ? toDraft(sheet.items, leaves) : {}), [sheet, leaves]);
 
@@ -99,17 +103,15 @@ export function ManageExamResultScreen() {
   const { guarded, dialog } = useUnsavedGuard(dirtyIds.length);
 
   // --- Changes ---------------------------------------------------------------
+  // Present / Mark as completed auto-tick as scores go in (shared rule — examEntryShared).
+  const autoTickRule = useMemo(() => scoreAutoTickRule(leaves), [leaves]);
   const updateRow = (studentId: string, patch: Partial<DraftRow>) =>
-    setDraft((current) => ({ ...current, [studentId]: { ...current[studentId], ...patch } }));
+    setDraft((current) => ({ ...current, [studentId]: patchRowWithAutoTicks(current[studentId], patch, autoTickRule) }));
 
   const revertRow = (studentId: string) =>
     setDraft((current) => ({ ...current, [studentId]: baseline[studentId] }));
 
-  const clearScores = (studentId: string) =>
-    setDraft((current) => ({
-      ...current,
-      [studentId]: { ...current[studentId], scores: Object.fromEntries(leaves.map((leaf) => [leaf.id, ""])) },
-    }));
+  const clearScores = (studentId: string) => updateRow(studentId, { scores: Object.fromEntries(leaves.map((leaf) => [leaf.id, ""])) });
 
   const handleSave = async () => {
     if (!sheet || dirtyIds.length === 0 || invalidCount > 0) return;
@@ -135,7 +137,7 @@ export function ManageExamResultScreen() {
   const visibleRows = searchRows(sheet?.items ?? [], search);
   const subjectName = filters.subjects.find((subject) => subject.id === subjectId)?.name ?? "";
   const termName = filters.terms.find((term) => term.id === filters.termId)?.name ?? "";
-  const kindLabel = sheet ? k(`kinds.${sheet.exam.kind}`) : "";
+  const kindLabel = sheet?.exam.kind ? k(`kinds.${sheet.exam.kind}`) : "";
 
   const otherScreen = (
     <>
@@ -215,6 +217,7 @@ export function ManageExamResultScreen() {
               {k("info.progress", { done: completedCount, total: sheet.items.length })}
               {sheet.exam.entry_closes_on ? ` · ${k("info.closesOn", { date: sheet.exam.entry_closes_on })}` : ""}
             </p>
+            <p className="text-xs text-text-muted">{k("info.autoTick")}</p>
           </div>
           <div className="w-full lg:max-w-xs">
             {/* CBT is deferred — the control is shown so the layout matches Figma, but does nothing yet. */}

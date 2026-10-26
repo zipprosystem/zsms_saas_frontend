@@ -3,6 +3,8 @@ import { extractErpError } from "@/lib/setup/erpError";
 import type { CrudResult } from "@/lib/setup/crudTypes";
 import { realTransport, type HttpMethod, type WireResponse } from "@/lib/setup/assessmentConfiguration/templateCatalog";
 import { examMockTransport } from "@/lib/exam/mock/examMockBackend";
+import type { AssessmentMode } from "@/lib/setup/assessmentConfiguration/assessmentStructure";
+import { SUBJECT_RATING_DOMAIN_KEYS } from "@/lib/exam/examTypes";
 import type {
   ComponentScores,
   Exam,
@@ -15,6 +17,7 @@ import type {
   RatingScale,
   SaveGradeMarksInput,
   SaveMarksInput,
+  ReportVariant,
   ScaleLevel,
   SubjectMarkRow,
 } from "@/lib/exam/examTypes";
@@ -64,9 +67,15 @@ import type {
  *     409 NO_ASSESSMENT_STRUCTURE  nothing in force for the class
  *
  *   Filter support (new — confirm or replace with existing endpoints):
- *   GET /api/v1/erp/exams?academic_year_id=&term_id=
- *     -> { items: [{ id, name, kind: "ca"|"exam", academic_year_id,
- *                    term_id, entry_closes_on }] }   (Exam List, later)
+ *   GET /api/v1/erp/exams?academic_year_id=&term_id=&assessment_mode=
+ *     -> { items: [{ id, name, assessment_mode, kind: "ca"|"exam"|null,
+ *                    report_variant: "progress"|"full"|null,
+ *                    academic_year_id, term_id, entry_closes_on }] }
+ *     Each term auto-creates exactly two points per mode (names
+ *     school-editable): component_based = CA + Exam (kind); grade_based
+ *     (British) = A/B, e.g. 1A / 1B, no CA/Exam framing, each carrying
+ *     report_variant (exam.report_variant, Exam-Backend-Spec v1.5 §2.3,
+ *     §7.13–7.16). assessment_mode filter is (new).
  *   GET /api/v1/erp/exams/entry-options?academic_year_id=
  *     -> { academic_year_id, years, terms, classes[{id,name,arms[]}],
  *          subjects[{class_arm_id, subject_id, subject_name}], full_scope }
@@ -94,6 +103,13 @@ import type {
  *     code isn't on that leaf's scale.
  *   entry-options: each class carries assessment_mode (proposed), so each
  *     screen lists only its own classes.
+ *   Rating domains on this subject-wise grid are Engagement + Learning
+ *     Behaviour only; student-wise domains (Boarding Commitment, Form Tutor,
+ *     House) are Report Progression (Stage 3) — the reader drops any others.
+ *   Present / mark_completed: stored as sent. The screens auto-tick them
+ *     (Present once CAG is in; completed once the variant's required fields
+ *     are in: progress = CAG + Engagement + Learning Behaviour, full = those
+ *     + Comment) — UI behaviour, no server derivation.
  *
  * Reconcile with Muntajir (Matthew, 2026-10-23): attainment + ratings in
  * component_scores, comment as subject_remark, MTG + Grade Book as
@@ -112,7 +128,7 @@ export const EXAM_USES_MOCK = USE_MOCK;
 export const examQueryKeys = {
   all: ["exam"] as const,
   entryOptions: (yearId: string | null) => ["exam", "entryOptions", yearId ?? "current"] as const,
-  exams: (yearId: string, termId: string) => ["exam", "exams", yearId, termId] as const,
+  exams: (yearId: string, termId: string, mode: AssessmentMode) => ["exam", "exams", yearId, termId, mode] as const,
   marks: (examId: string, subjectId: string, armId: string) => ["exam", "marks", examId, subjectId, armId] as const,
 };
 
@@ -165,7 +181,9 @@ function examFromWire(value: unknown): Exam {
   return {
     id: s(r.id),
     name: s(r.name),
-    kind: r.kind === "exam" ? "exam" : "ca",
+    assessment_mode: r.assessment_mode === "grade_based" ? "grade_based" : "component_based",
+    kind: r.kind === "exam" ? "exam" : r.kind === "ca" ? "ca" : null,
+    report_variant: r.report_variant === "progress" || r.report_variant === "full" ? (r.report_variant as ReportVariant) : null,
     academic_year_id: s(r.academic_year_id),
     term_id: s(r.term_id),
     entry_closes_on: typeof r.entry_closes_on === "string" && r.entry_closes_on ? r.entry_closes_on : null,
@@ -226,7 +244,8 @@ function gradeStructureFromWire(value: unknown): GradeBasedStructure | null {
         const x = rec(item);
         return { id: s(x.id), key: s(x.key), name: s(x.name), rating_scale_id: s(x.rating_scale_id) };
       })
-      .filter((domain) => domain.id),
+      // Subject-wise domains only — anything student-wise belongs to Report Progression.
+      .filter((domain) => domain.id && (SUBJECT_RATING_DOMAIN_KEYS as readonly string[]).includes(domain.key)),
   };
 }
 
@@ -309,8 +328,8 @@ export function getEntryOptions(yearId: string | null): Promise<CrudResult<ExamE
   return send("GET", `erp/exams/entry-options${query}`, undefined, optionsFromWire);
 }
 
-export function listExams(yearId: string, termId: string): Promise<CrudResult<Exam[]>> {
-  const query = new URLSearchParams({ academic_year_id: yearId, term_id: termId });
+export function listExams(yearId: string, termId: string, mode: AssessmentMode): Promise<CrudResult<Exam[]>> {
+  const query = new URLSearchParams({ academic_year_id: yearId, term_id: termId, assessment_mode: mode });
   return send("GET", `erp/exams?${query}`, undefined, (data) => arr(rec(data).items).map(examFromWire));
 }
 
