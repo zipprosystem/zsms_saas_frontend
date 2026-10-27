@@ -200,6 +200,8 @@ function studentIndexOf(armId: string, studentId: string): number {
   return seedRoster(armId).findIndex((student) => student.id === studentId);
 }
 
+const SEED_COMMENTS = ["Consistent effort this term.", "Good progress; keep practising.", "Needs to revise core topics.", "Participates well in class."];
+
 function generatedScoreMark(exam: Exam, subjectId: string, armId: string, studentId: string, structure: AssessmentStructure | null): StoredMark | null {
   if (!structure || !exam.kind) return null;
   const index = studentIndexOf(armId, studentId);
@@ -217,13 +219,12 @@ function generatedScoreMark(exam: Exam, subjectId: string, armId: string, studen
     component_scores: scores,
     present: true,
     mark_completed: !policy.blankLeaf,
-    subject_remark: "",
+    // The Exam point carries the subject comment (it prints on the Full report).
+    subject_remark: exam.kind === "exam" ? SEED_COMMENTS[seedHash(studentId + subjectId + exam.id) % SEED_COMMENTS.length] : "",
     entered_by_staff_id: null,
     updated_at: "2026-07-20T09:00:00.000Z",
   };
 }
-
-const SEED_COMMENTS = ["Consistent effort this term.", "Good progress; keep practising.", "Needs to revise core topics.", "Participates well in class."];
 
 function generatedGradeMark(exam: Exam, subjectId: string, armId: string, studentId: string, structure: GradeBasedStructure | null): StoredGradeMark | null {
   if (!structure) return null;

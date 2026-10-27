@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>White Pearl Report</title>
+<meta name="zsms-report-pages" content="1">
 <meta name="description" content="White Pearl International School (JSS) report — CA (component) and Exam (CA+Exam → term final, GPA units & points) variants, with percent-grade and GPA scales.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -109,6 +110,7 @@
   @media (max-width:800px){.sheet{width:100%;min-height:0;padding:12px;}.wmk b{font-size:48px;}}
   @media print{@page{size:A4 portrait;margin:0;}body{background:#fff;padding:0;}.controls,.hint{display:none!important;}
     .sheet{width:auto;min-height:auto;margin:0;border:0;box-shadow:none;padding:7mm;}}
+  .zsms-redacted td{opacity:.38}
 </style>
 </head>
 <body>
@@ -193,6 +195,90 @@
   </div>
 
 <script>
+  window.__ZSMS_PAGES__ = 1;
+  /* ---- ZSMS report data hook ----------------------------------------
+     The app injects one student's report payload as window.__ZSMS_REPORT__
+     (contract: src/lib/exam/report/reportPayload.ts) before this file runs.
+     With it, the template renders from the payload; without it (catalog
+     preview), it shows its own sample data. The template does no
+     arithmetic — every number is the payload's. */
+  var Z = window.__ZSMS_REPORT__ || null;
+  if (Z) document.documentElement.classList.add("zsms-live");
+  function zEsc(v){return v==null?"":String(v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  function zTxt(v){return v==null||v===""?"—":zEsc(v);}
+  function zNum(v,dp){if(v==null||typeof v!=="number"||!isFinite(v))return "—";return dp==null?String(Math.round(v*100)/100):v.toFixed(dp);}
+  function zOrd(n){if(n==null)return "—";var s=["th","st","nd","rd"],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}
+  function zDate(iso){if(!iso)return "—";var p=String(iso).split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:zEsc(iso);}
+  function zMax(v){return v==null?"":zNum(v%1>=0.9?Math.floor(v):v);}
+  function zRange(b){return b.min==null?"":zNum(b.min)+"–"+zMax(b.max);}
+  function zKey(){return (Z.grade_key||[]).filter(function(b){return b.show_on_report;});}
+  function zPoint(kind){var p=Z.meta.points||[];for(var i=0;i<p.length;i++)if(p[i].kind===kind)return p[i];return null;}
+  /* The class's leaves of one kind (ca|exam|rating), from the first subject that has them. */
+  function zLeaves(kind){var s=(Z.subjects||[]).filter(function(x){return !x.redacted&&(x.components||[]).some(function(c){return c.kind===kind;});})[0];return s?s.components.filter(function(c){return c.kind===kind;}):[];}
+  function zComp(s,kind,i){var c=(s.components||[]).filter(function(x){return x.kind===kind;})[i];return c?c.score:null;}
+  function zImg(url,fallback){return url?'<img src="'+zEsc(url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':fallback;}
+  function zRow(s){return s.redacted?' class="zsms-redacted"':"";}
+  function zAddress(){return [Z.school.address,Z.school.motto].filter(Boolean).map(zEsc).join(" &middot; ");}
+
+  var Z_MONTHS=["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"];
+  function zRender(){
+    var isFull=Z.meta.variant==="full", st=Z.student, ag=Z.aggregate;
+    document.querySelector(".controls").style.display="none";
+    document.querySelector(".hint").style.display="none";
+    document.querySelector(".sheet").setAttribute("data-zsms-page","1");
+    var motto=String(Z.school.motto||"").toUpperCase();
+    document.querySelector(".wmk b").textContent=motto||String(Z.school.name).toUpperCase();
+    document.querySelector(".head .logo").innerHTML=Z.school.logo_url?zImg(Z.school.logo_url,""):'<div class="l1">'+zEsc(Z.school.name)+'</div><div class="l2">'+zEsc(motto)+"</div>";
+    document.querySelector(".sch h1").textContent=Z.school.name;
+    document.querySelector(".sch .ad").innerHTML=zTxt(Z.school.address);
+    var gen=new Date(Z.meta.generated_at);
+    document.getElementById("bMonth").textContent=isNaN(gen)?"":Z_MONTHS[gen.getMonth()]+", "+gen.getFullYear();
+    document.querySelector(".bio .photo").innerHTML=zImg(st.photo_url,"PHOTO");
+
+    function c(k,v,id){return '<div class="c"><span class="k">'+k+'</span><span class="v"'+(id?' id="'+id+'"':"")+">"+v+"</span></div>";}
+    document.querySelector(".biogrid").innerHTML=
+      '<div class="r">'+c("Student's Name:",zTxt(st.full_name))+c("Reg. No:",zTxt(st.admission_no))+"</div>"+
+      '<div class="r">'+c("School Session:",zTxt(Z.meta.academic_year.name))+c("Class:",zTxt(st["class"])+" "+zTxt(st.arm))+"</div>"+
+      '<div class="r">'+c("Class Average:",ag.class_average==null?"—":zNum(ag.class_average,2)+"%")+c("No. in Class:",zNum(ag.out_of))+"</div>"+
+      '<div class="r">'+c("Term:",zTxt(Z.meta.term.name)+(isFull?"":" — CA"))+(isFull?c("Next Term Begins On:",zDate(st.resumption_date)):c("&nbsp;","&nbsp;"))+"</div>";
+
+    function gcls(g){if(!g)return "";return g==="F"?"g-fail":(String(g).charAt(0)==="D"?"g-pass":"g-ok");}
+    var caP=zPoint("ca"), exP=zPoint("exam"), ca=zLeaves("ca");
+    var head=document.getElementById("subHead"), body=document.getElementById("subBody"), foot=document.getElementById("subFoot");
+    if(!isFull){
+      head.innerHTML='<tr><th class="s">Subject</th>'+ca.map(function(l){return "<th>"+zEsc(l.label)+"</th>";}).join("")+
+        "<th>Score<br>Obtained</th><th>Score<br>[%]</th><th>Grade</th><th>Units</th><th>Grade<br>Weight</th><th>Remark</th><th>Subject Teacher</th></tr>";
+      body.innerHTML='<tr class="max"><td class="s">Maximum Score</td>'+ca.map(function(l){return "<td>"+zNum(l.max)+"</td>";}).join("")+"<td>"+zNum(caP&&caP.max)+'</td><td>100</td><td colspan="5"></td></tr>'+
+        Z.subjects.map(function(s){return "<tr"+zRow(s)+'><td class="s">'+zEsc(s.name)+"</td>"+ca.map(function(l,i){return '<td class="num">'+zNum(zComp(s,"ca",i),2)+"</td>";}).join("")+
+          '<td class="num">'+zNum(s.ca)+'</td><td class="num">'+zNum(s.total,2)+'</td><td class="'+gcls(s.grade)+'">'+zTxt(s.grade)+
+          '</td><td class="num">—</td><td class="num">'+zNum(s.grade_weight)+"</td><td>"+zTxt(s.remark&&String(s.remark).toUpperCase())+'</td><td class="sig">'+zTxt(s.teacher_name)+"</td></tr>";}).join("");
+      foot.innerHTML='<tr class="tot"><td class="s">TOTAL</td><td colspan="'+(ca.length+3)+'"></td><td class="num">—</td><td class="num">—</td><td colspan="2"></td></tr>';
+    } else {
+      head.innerHTML='<tr><th class="s">Subject</th><th>Subject<br>Units (S.u)</th><th>CA<br>Marks ('+zNum(caP&&caP.max)+")</th><th>Exam<br>Marks ("+zNum(exP&&exP.max)+")</th>"+
+        "<th>Term Final<br>Score (100)</th><th>Term Final<br>Grade</th><th>Grade<br>Point (G.p.)</th><th>Total<br>Point (T.p.)</th><th>Remark</th><th>Teacher</th></tr>";
+      body.innerHTML='<tr class="max"><td class="s">Maximum Score</td><td></td><td>'+zNum(caP&&caP.max)+"</td><td>"+zNum(exP&&exP.max)+'</td><td>100</td><td colspan="5"></td></tr>'+
+        Z.subjects.map(function(s){return "<tr"+zRow(s)+'><td class="s">'+zEsc(s.name)+'</td><td class="num">—</td><td class="num">'+zNum(s.ca)+'</td><td class="num">'+zNum(s.exam,2)+
+          '</td><td class="num"><b>'+zNum(s.total,2)+'</b></td><td class="'+gcls(s.grade)+'">'+zTxt(s.grade)+'</td><td class="num">'+zNum(s.gpa)+'</td><td class="num">—</td><td class="'+(s.grade==="F"?"g-fail":"")+'">'+
+          zTxt(s.remark&&String(s.remark).toUpperCase())+'</td><td class="sig">'+zTxt(s.teacher_name)+"</td></tr>";}).join("");
+      foot.innerHTML='<tr class="tot"><td class="s">TOTAL</td><td class="num">—</td><td colspan="4"></td><td class="num">—</td><td class="num">—</td><td colspan="2"></td></tr>';
+    }
+    document.getElementById("band").innerHTML="<div>Student Average: "+(ag.average==null?"—":zNum(ag.average,2)+"%")+"</div><div>GPA: "+zNum(ag.gpa,2)+"</div><div>Overall Grade: "+zTxt(ag.overall_grade)+"</div>";
+    document.getElementById("passfail").innerHTML="<div>Number of Subjects Passed: <b>—</b></div><div>Number of Subjects Failed: <b>—</b></div>";
+    document.getElementById("ranks").classList.toggle("hide",!isFull);
+    function rr(list){return list.map(function(t){return '<div class="rr"><span>'+zEsc(t.skill)+"</span><span>"+zTxt(t.rating)+"</span></div>";}).join("");}
+    document.getElementById("affBody").innerHTML=rr(Z.traits.affective||[]);
+    document.getElementById("psyBody").innerHTML=rr(Z.traits.psychomotor||[]);
+    document.querySelector(".ratingkey").innerHTML=(Z.traits.rating_key||[]).map(function(r){return "<div>"+zEsc(r.rating)+" — "+zEsc(String(r.descriptor).toUpperCase())+"</div>";}).join("");
+    var key=zKey();
+    function scaleRow(id,cells){document.getElementById(id).innerHTML="<tr>"+key.map(function(b){return '<td class="h">'+zEsc(b.grade)+"</td>";}).join("")+"</tr><tr>"+key.map(function(b){return '<td class="num">'+cells(b)+"</td>";}).join("")+"</tr>";}
+    scaleRow("pctScale",function(b){return zRange(b).replace("–","-");});
+    scaleRow("gpaScale",function(b){return b.gpa==null?"—":zNum(b.gpa);});
+    document.getElementById("ctRem").textContent=Z.remarks.class_teacher||"—";
+    document.getElementById("htRem").textContent=Z.remarks.head_teacher||"—";
+    document.querySelectorAll(".signs .ln").forEach(function(e){e.innerHTML="&nbsp;";});
+    document.getElementById("ctDate").textContent=""; document.getElementById("htDate").textContent="";
+  }
+
   // CA report: [subject, test1,test2,asgmt,note,attnd, score40, pct100, grade, units, gradeWeight, remark, teacher]
   var CA=[
     ["Business Studies",5,6,10,5,5,31,51.67,"C-",2,4.6,"GOOD","A. Teacher"],
@@ -289,7 +375,7 @@
 
   document.getElementById("typeCtl").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;
     state.type=b.dataset.type;[].forEach.call(this.querySelectorAll("button"),function(x){x.classList.toggle("on",x===b);});render();});
-  render();
+  if (Z) zRender(); else render();
 </script>
 </body>
 </html>

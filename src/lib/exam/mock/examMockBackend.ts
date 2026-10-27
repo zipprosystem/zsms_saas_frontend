@@ -44,6 +44,7 @@ import {
 } from "@/lib/exam/mock/examMockStore";
 import { getResultArms, getResults, getStudentResult, getStudentTraits, putStudentTraits } from "@/lib/exam/mock/examResultsMock";
 import { handleGrades } from "@/lib/exam/mock/gradesMock";
+import { getStudentReport, postGenerateClassPdf } from "@/lib/exam/mock/reportPayloadMock";
 
 /**
  * MOCK Exam backend (Stage 1b: marks entry) — localStorage-backed,
@@ -70,7 +71,9 @@ import { handleGrades } from "@/lib/exam/mock/gradesMock";
  *     their joining term). A row for anyone else -> 422.
  *   - Marks live in examMockStore.ts (saved entries over generated seeds),
  *     shared with the Stage 2a results engine (examResultsMock.ts), which
- *     answers GET erp/results and erp/results/:student_id.
+ *     answers GET erp/results and erp/results/:student_id; the report
+ *     payload (GET erp/results/:student_id/report) and the class PDF stub
+ *     (POST erp/report-cards/generate) are reportPayloadMock.ts.
  *   - PUT upserts the rows it's given (others untouched) and stamps
  *     entered_by_staff_id with the caller. No totals/grades are stored —
  *     computation is Stage 2.
@@ -400,6 +403,9 @@ async function handle(method: HttpMethod, path: string, query: URLSearchParams, 
     if (method === "PUT") return putStudentTraits(studentId, payload);
     return fail(405, "METHOD_NOT_ALLOWED", "Method not allowed");
   }
+  const reportMatch = path.match(/^erp\/results\/([^/]+)\/report$/);
+  if (reportMatch && method === "GET") return getStudentReport(decodeURIComponent(reportMatch[1]), query);
+  if (path === "erp/report-cards/generate" && method === "POST") return postGenerateClassPdf(payload);
   const grades = handleGrades(method, path, query, payload);
   if (grades) return grades;
   const studentMatch = path.match(/^erp\/results\/([^/]+)$/);

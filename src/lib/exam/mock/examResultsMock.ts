@@ -114,14 +114,29 @@ const EMPTY_SUBJECT: Omit<SubjectResult, "subject_id" | "status"> = {
   cumulative_terms: null,
 };
 
-type ComputedRow = {
+export type ComputedRow = {
   student: SeedStudent;
   subjects: Record<string, SubjectResult>;
   aggregate: StudentTermResult;
 };
 
-type Computed = {
+/**
+ * Which part of the term a computation covers. "full" = the whole term
+ * (CA + Exam, or both British points) — what the results screens show.
+ * "progress" = the mid-term report: General classes run the engine over
+ * the CA part of the structure only (so totals are CA scaled to 100);
+ * British classes read the term's first point only.
+ */
+export type ComputeStage = "full" | "progress";
+
+export type Computed = {
   mode: AssessmentMode;
+  stage: ComputeStage;
+  /** The structure the engine ran over (CA-only for a General progress run). */
+  structure: AssessmentStructure | null;
+  gradeStructure: GradeBasedStructure | null;
+  scale: ScoreGradeScale | null;
+  levels: ScaleLevel[];
   classId: string;
   className: string;
   armName: string;
@@ -133,14 +148,14 @@ type Computed = {
 };
 
 /** This term and the earlier terms of the same academic year, oldest first. */
-function termsUpTo(termId: string): string[] {
+export function termsUpTo(termId: string): string[] {
   const year = yearOfTerm(termId);
   return seedTerms(year)
     .map((term) => term.id)
     .filter((id) => termNumber(id) <= termNumber(termId));
 }
 
-function termPoints(termId: string, mode: AssessmentMode): Exam[] {
+export function termPoints(termId: string, mode: AssessmentMode): Exam[] {
   return SEED_EXAMS.filter((exam) => exam.term_id === termId && exam.assessment_mode === mode);
 }
 
@@ -251,10 +266,11 @@ function computeGeneral(
 // British (grade_based)
 // ---------------------------------------------------------------------------
 
-function britishTerm(structure: GradeBasedStructure, termId: string, subjectId: string, armId: string, studentId: string) {
+function britishTerm(structure: GradeBasedStructure, termId: string, subjectId: string, armId: string, studentId: string, firstOnly = false) {
   const leafIds = [structure.attainment.id, ...structure.rating_domains.map((domain) => domain.id)];
   // Points in order (A then B): the CAG is the latest point's attainment.
-  const entries = termPoints(termId, "grade_based").map((exam) => readGradeMark(exam, subjectId, armId, studentId, structure));
+  const points = termPoints(termId, "grade_based");
+  const entries = (firstOnly ? points.slice(0, 1) : points).map((exam) => readGradeMark(exam, subjectId, armId, studentId, structure));
   let filled = 0;
   let cag: string | null = null;
   for (const entry of entries) {
@@ -272,6 +288,7 @@ function computeBritish(
   columns: ResultSubjectColumn[],
   structure: GradeBasedStructure | null,
   levels: ScaleLevel[],
+  firstOnly = false,
 ): ComputedRow[] {
   const earlierTerms = termsUpTo(termId);
   const scale = structure ? SEED_GRADE_SCALES.find((item) => item.id === structure.attainment.grade_scale_id) : undefined;
@@ -288,10 +305,10 @@ function computeBritish(
         subjects[id] = { ...EMPTY_SUBJECT, subject_id: id, status: "rng" };
         continue;
       }
-      const now = britishTerm(structure, termId, id, armId, student.id);
+      const now = britishTerm(structure, termId, id, armId, student.id, firstOnly);
       const mtg = scale ? seedReferences(rosterIndex.get(student.id) ?? 0, id, scale).mtg : null;
       const enrolledTerms = earlierTerms.filter((term) => enrolledForTerm(student.id, term));
-      const cags = enrolledTerms.map((term) => (term === termId ? now.cag : britishTerm(structure, term, id, armId, student.id).cag));
+      const cags = enrolledTerms.map((term) => (term === termId ? now.cag : britishTerm(structure, term, id, armId, student.id, firstOnly).cag));
       const cumulative = cumulativeAttainment(levels, cags);
       subjects[id] = {
         ...EMPTY_SUBJECT,
@@ -320,7 +337,12 @@ function computeBritish(
 // Compute + handlers
 // ---------------------------------------------------------------------------
 
-async function compute(armId: string, termId: string): Promise<Computed | WireResponse> {
+/** The structure with only its CA components — the engine then normalises CA to 100. */
+function caOnly(structure: AssessmentStructure | null): AssessmentStructure | null {
+  return structure ? { ...structure, components: structure.components.filter((component) => component.category === "ca") } : null;
+}
+
+export async function compute(armId: string, termId: string, stage: ComputeStage = "full"): Promise<Computed | WireResponse> {
   const classId = classOfArm(armId);
   const cls = SEED_CLASSES.find((item) => item.id === classId);
   const arm = cls?.arms.find((item) => item.id === armId);
@@ -343,15 +365,33 @@ async function compute(armId: string, termId: string): Promise<Computed | WireRe
   if (isGradeClass(cls.id)) {
     const structure = resolveGradeStructure(armId);
     const scale = structure ? SEED_GRADE_SCALES.find((item) => item.id === structure.attainment.grade_scale_id) : undefined;
-    const rows = computeBritish(armId, termId, students, columns, structure, scale?.grades ?? []);
-    return { ...base, mode: "grade_based", scaleName: scale?.name ?? null, rows, rankedCount: 0 };
+    const levels = scale?.grades ?? [];
+    const rows = computeBritish(armId, termId, students, columns, structure, levels, stage === "progress");
+    return {
+      ...base,
+      mode: "grade_based",
+      stage,
+      structure: null,
+      gradeStructure: structure,
+      scale: null,
+      levels,
+      scaleName: scale?.name ?? null,
+      rows,
+      rankedCount: 0,
+    };
   }
-  const structure = await resolveStructure(armId);
+  const full = await resolveStructure(armId);
+  const structure = stage === "progress" ? caOnly(full) : full;
   const scale = classGradeScale(cls.id);
   const rows = computeGeneral(armId, termId, students, columns, structure, scale);
   return {
     ...base,
     mode: "component_based",
+    stage,
+    structure,
+    gradeStructure: null,
+    scale,
+    levels: [],
     scaleName: scale?.name || null,
     rows,
     rankedCount: rows.filter((row) => row.aggregate.class_position !== null).length,
@@ -359,14 +399,14 @@ async function compute(armId: string, termId: string): Promise<Computed | WireRe
 }
 
 /** Mean of the students' averages (those with one) — the arm's class average. null for grade-based classes. */
-function classAverage(computed: Computed): number | null {
+export function classAverage(computed: Computed): number | null {
   if (computed.mode === "grade_based") return null;
   const averages = computed.rows.map((row) => row.aggregate.average).filter((value): value is number => value !== null);
   return averages.length > 0 ? round2(averages.reduce((a, b) => a + b, 0) / averages.length) : null;
 }
 
 /** The caller's report view on this arm (role from the acting-as picker). */
-function viewerFor(armId: string): ResultsViewer {
+export function viewerFor(armId: string): ResultsViewer {
   const role = armRole(armId) ?? "subject_teacher";
   if (role === "subject_teacher") {
     return { role, report_scope: "own_subjects", visible_subject_ids: taughtSubjects(armId), can_enter_traits: false };
@@ -379,7 +419,7 @@ function viewerFor(armId: string): ResultsViewer {
 const TRAITS_STORAGE_KEY = "zsms.mockExam.traits.v1";
 const TRAIT_REMARK_MAX = 500;
 
-type StoredTraits = {
+export type StoredTraits = {
   ratings: Record<string, number | null>;
   class_teacher_remark: string;
   head_teacher_remark: string;
@@ -407,7 +447,12 @@ function traitsStatus(stored: StoredTraits | undefined): TraitsStatus {
   return rated + remarks > 0 ? "partial" : "none";
 }
 
-function armOfStudent(studentId: string): string | undefined {
+/** The stored student-wise traits + remarks for a term (undefined = nothing entered). */
+export function storedTraits(termId: string, studentId: string): StoredTraits | undefined {
+  return loadTraits()[traitsKey(termId, studentId)];
+}
+
+export function armOfStudent(studentId: string): string | undefined {
   return SEED_CLASSES.flatMap((cls) => cls.arms).find((arm) => seedRoster(arm.id).some((student) => student.id === studentId))?.id;
 }
 
