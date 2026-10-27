@@ -191,11 +191,8 @@
     "exams": {
       "manageExamResult": "Gérer les résultats d'examen",
       "academicReport": "Bulletin académique",
-      "results": {
-        "all": "Tous les résultats",
-        "grades": "Résultats : niveaux",
-        "gpa": "Résultats : GPA"
-      }
+      "viewResults": "Voir les résultats",
+      "broadSheet": "Tableau récapitulatif"
     }
   },
   "tenant": {
@@ -310,7 +307,7 @@
         "description": "Supports pédagogiques associés à une classe"
       },
       "gradingSchemes": { "name": "Barèmes de notation" },
-      "gradeScales": { "name": "Échelles de notes" },
+      "grades": { "name": "Mentions", "description": "Barèmes par classe : mention, poids, GPA, plage de notes et appréciation" },
       "assessmentTypes": { "name": "Types d'évaluation", "description": "Les composantes CC et examen qui forment les notes" },
       "resultTemplates": { "name": "Modèles de résultats" },
       "idCardTemplates": { "name": "Modèles de carte d'identité" },
@@ -534,6 +531,64 @@
       "empty": {
         "student": "Aucun modèle de carte élève pour le moment.",
         "staff": "Aucun modèle de carte personnel pour le moment."
+      }
+    },
+    "grades": {
+      "title": "Mentions",
+      "subtitle": "Les barèmes de mentions de chaque classe. Les résultats utilisent la tranche où tombe une note pour la mention, l'appréciation, le poids et le GPA. Une tranche s'applique à toutes les sections des classes concernées.",
+      "addNew": "Ajouter une mention",
+      "adminOnly": "Seul un administrateur peut gérer les mentions. Passez le sélecteur « connecté en tant que » (Examen › Résultats) sur Administrateur pour tester cet écran.",
+      "searchPlaceholder": "Rechercher par mention ou appréciation",
+      "empty": "Aucune mention pour l'instant. Ajoutez les tranches utilisées pour noter vos classes.",
+      "range": "{min} – {max} %",
+      "gpaNotUsed": "Non utilisé",
+      "columns": {
+        "grade": "Mention",
+        "gradeWeight": "Poids",
+        "gpa": "GPA",
+        "range": "Plage de notes",
+        "remark": "Appréciation",
+        "classes": "S'applique à"
+      },
+      "filters": {
+        "class": "Classe",
+        "allClasses": "Toutes les classes"
+      },
+      "panel": {
+        "createTitle": "Ajouter une mention",
+        "editTitle": "Modifier la mention",
+        "subtitle": "Les notes sont des pourcentages (0–100). Les plages ne peuvent pas se chevaucher dans une classe."
+      },
+      "fields": {
+        "grade": "Mention",
+        "gradePlaceholder": "ex. A1",
+        "gradeWeight": "Poids de la mention",
+        "minScore": "Note minimale (%)",
+        "maxScore": "Note maximale (%)",
+        "gpa": "GPA (facultatif)",
+        "gpaPlaceholder": "Laisser vide si vous n'utilisez pas le GPA",
+        "gpaHelp": "Vide signifie que votre école n'utilise pas le GPA pour cette mention — les bulletins ne l'affichent pas.",
+        "remark": "Appréciation",
+        "remarkPlaceholder": "ex. Excellent",
+        "applyTo": "Appliquer aux classes",
+        "applyToHelp": "La mention s'applique à toutes les sections des classes choisies.",
+        "selectAll": "Tout sélectionner"
+      },
+      "errors": {
+        "required": "Obligatoire",
+        "notNegative": "Saisissez un nombre supérieur ou égal à 0",
+        "max": "Doit être inférieur ou égal à {max}",
+        "minAboveMax": "Le minimum ne peut pas dépasser le maximum",
+        "classesRequired": "Choisissez au moins une classe"
+      },
+      "confirmDelete": {
+        "title": "Supprimer la mention ?",
+        "message": "Supprimer la mention {grade} ? Les résultats de ses classes ne l'utiliseront plus."
+      },
+      "toast": {
+        "created": "Mention ajoutée",
+        "updated": "Mention mise à jour",
+        "deleted": "Mention supprimée"
       }
     },
     "assessmentTypes": {
@@ -2986,6 +3041,7 @@
         "actingAs": "Simulation : connecté en tant que",
         "admin": "Administrateur (toutes les matières)",
         "teacher": "{name} (enseignant)",
+        "sectionalHead": "{name} (responsable de cycle)",
         "hint": "Données de test uniquement. Un enseignant ne voit que les matières qui lui sont attribuées ; ce sélecteur disparaîtra une fois le vrai backend connecté."
       },
       "info": {
@@ -3068,9 +3124,94 @@
       "academicReport": "Bulletin académique",
       "viewResults": "Consulter les résultats"
     },
+    "broadSheet": {
+      "title": "Tableau récapitulatif",
+      "subtitle": "Les totaux et mentions par matière de chaque élève pour une classe-section et un trimestre, avec total général, moyenne et rang. Sélectionnez un élève pour voir son résultat complet."
+    },
+    "viewResults": {
+      "title": "Voir les résultats",
+      "subtitle": "Choisissez une classe-section pour voir les résultats de ses élèves et ouvrir leurs bulletins.",
+      "armName": "{class} {arm}",
+      "filters": {
+        "allClasses": "Toutes les classes"
+      },
+      "empty": {
+        "noClasses": "Aucune classe n'a encore de résultats pour ce trimestre.",
+        "noScope": "Aucune classe de votre périmètre n'a de résultats pour ce trimestre."
+      },
+      "card": {
+        "students": "Élèves",
+        "classAverage": "Moyenne de la classe",
+        "gradeBased": "Par niveaux",
+        "viewClassResult": "Voir les résultats de la classe"
+      },
+      "list": {
+        "backToClasses": "Toutes les classes",
+        "armNotInScope": "Cette classe-section ne fait pas partie de votre périmètre de résultats pour le trimestre choisi.",
+        "exportTitle": "Résultats {arm} — {term}",
+        "classAverage": "Moyenne de la classe",
+        "yourView": "Votre vue du bulletin",
+        "reportUnavailable": "Les bulletins ne peuvent pas encore être ouverts : l'affichage du résultat d'un élève dans le modèle de bulletin de l'école n'est pas construit. « Voir le bulletin », ses actions d'impression / PDF et le PDF de la classe s'activeront ensuite.",
+        "reportUnavailableShort": "Pas encore disponible — l'affichage dans le modèle n'est pas construit",
+        "generateClassPdf": "Générer le PDF de la classe",
+        "caption": "Résultats des élèves de la classe-section",
+        "subjectsGraded": "{graded} matières sur {total}",
+        "averageDetail": "{total} ÷ {count, plural, one {# matière} other {# matières}} · {percent} %",
+        "viewReport": "Voir le bulletin",
+        "viewReportFor": "Voir le bulletin de {name} (pas encore disponible)"
+      },
+      "columns": {
+        "sn": "N°",
+        "student": "Élève",
+        "id": "Matricule",
+        "rank": "Rang",
+        "totalAverage": "Moyenne générale",
+        "grandTotal": "Total général",
+        "subjectsCounted": "Matières comptées",
+        "subjectsGraded": "Matières évaluées",
+        "status": "Statut",
+        "traits": "Aptitudes et appréciations",
+        "actions": "Actions"
+      },
+      "roles": {
+        "admin": "Administrateur",
+        "sectional_head": "Responsable de cycle",
+        "class_teacher": "Professeur principal",
+        "subject_teacher": "Enseignant de matière"
+      },
+      "scope": {
+        "full": "{role} · bulletin complet",
+        "fullHelp": "Vous voyez toutes les matières de ces bulletins.",
+        "own": "{role} · vos matières uniquement ({subjects})",
+        "ownHelp": "Sur ces bulletins, vous ne voyez que les matières que vous enseignez ; les autres sont grisées."
+      },
+      "traits": {
+        "status": {
+          "none": "Non saisi",
+          "partial": "En cours",
+          "complete": "Complet"
+        },
+        "enter": "Saisir",
+        "edit": "Modifier",
+        "openFor": "Aptitudes et appréciations de {name}",
+        "title": "Aptitudes et appréciations",
+        "saved": "Aptitudes et appréciations enregistrées pour {name}",
+        "notRated": "Non évalué",
+        "level": "{value} — {label}",
+        "readOnly": "Seul le professeur principal peut saisir les aptitudes et appréciations.",
+        "psychomotor": "Compétences psychomotrices",
+        "affective": "Domaine affectif",
+        "classTeacherRemark": "Appréciation du professeur principal",
+        "headTeacherRemark": "Appréciation du chef d'établissement",
+        "remarkTooLong": "{max} caractères maximum",
+        "remarkCount": "{count}/{max}",
+        "discard": {
+          "title": "Abandonner les modifications ?",
+          "message": "Les notes et appréciations non enregistrées pour cet élève seront perdues."
+        }
+      }
+    },
     "results": {
-      "title": "Résultats",
-      "subtitle": "Résultats calculés pour une classe et un trimestre : totaux, niveaux, rangs et GPA, à partir des notes saisies. Sélectionnez un élève pour voir son résultat complet.",
       "views": {
         "label": "Vues des résultats",
         "all": "Tous les résultats",
@@ -3087,7 +3228,8 @@
         "reporting": "Évaluation",
         "gradeScale": "Échelle de niveaux",
         "students": "Élèves",
-        "studentsRanked": "{total} ({ranked} classés)"
+        "studentsRanked": "{total} ({ranked} classés)",
+        "classGrades": "Mentions de la classe (Configuration)"
       },
       "columns": {
         "sn": "N°",
@@ -3138,7 +3280,6 @@
       "positionOf": "{position} sur {count}",
       "openStudent": "Ouvrir le résultat de {name}",
       "notices": {
-        "gpaNotForBritish": "Le GPA n'est pas utilisé pour les classes évaluées par niveaux (britanniques). Consultez Tous les résultats ou Niveaux.",
         "noStudents": "Aucun élève n'était inscrit dans cette classe pour ce trimestre."
       },
       "student": {

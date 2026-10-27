@@ -1,150 +1,94 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
-import { SetupPagination } from "@/components/setup/SetupPagination";
 import { isDevBypassUnavailable, throwIfTransient } from "@/lib/setup/crudTypes";
-import { getClassResults, resultsQueryKeys } from "@/lib/exam/resultsApi";
-import { RESULTS_VIEWS, type ResultsView } from "@/lib/exam/results/resultsTypes";
-import { ExamEntryFilterBar, failureMessage, filterPreconditionNotice, InfoItem, Notice, useExamEntryFilters } from "@/components/exam/examEntryShared";
-import { ResultsTable } from "@/components/exam/results/ResultsTable";
-import { StudentResultPanel } from "@/components/exam/results/StudentResultPanel";
+import { getResultArms, resultsQueryKeys } from "@/lib/exam/resultsApi";
+import { failureMessage, MockActingAsPicker, Notice, useMockActingAs } from "@/components/exam/examEntryShared";
+import { ArmCardsView } from "@/components/exam/results/ArmCardsView";
+import { ClassResultList } from "@/components/exam/results/ClassResultList";
 
-function viewFromParam(value: string | null): ResultsView {
-  return (RESULTS_VIEWS as readonly string[]).includes(value ?? "") ? (value as ResultsView) : "all";
-}
+/** URL state for View Results (so reloads, back/forward and search deep links work). */
+export type ResultsParams = { year: string; term: string; class: string; arm: string };
+export type ResultsNavigate = (patch: Partial<ResultsParams>, mode?: "push" | "replace") => void;
 
 /**
- * Academics › Exam › Results › View Results (Exam Stage 2a) — the first
- * COMPUTED read side: pick year / class / arm / term (same scope-aware
- * entry-options + mock "acting as" picker as mark entry), then read the
- * class's results in three views (All Results / Grades / GPA, in the URL as
- * ?tab= so search can deep-link). A student opens their full result in a
- * slide-over. Every number comes from the backend engine (mock today —
- * resultsApi.ts); both General and British classes have results, with
- * different columns. Pages of 25 students; positions are over the whole arm.
+ * Academics › Exam › Results › View Results (results reframe, 2026-10-27)
+ * — a report drill-down, not a matrix (the matrix moved to Broad Sheet):
+ *
+ *   1. Arm cards grouped by class (?year&term&class), each with its size
+ *      and class average and a "View Class Result" action.
+ *   2. The arm's student list (?arm=) — rank, total average, class average
+ *      on top; per student View Report (template render: NOT BUILT YET,
+ *      disabled) and, for the class teacher only, traits + remarks entry.
+ *
+ * One arms query feeds both levels (the cards, and the list's class / arm
+ * filters). Scope and role come from the backend (mock: the acting-as
+ * picker). Every number is computed by the engine (resultsApi.ts).
  */
 export function ResultsScreen() {
   const t = useTranslations();
-  const k = (key: string, values?: Record<string, string | number>) => t(`exam.results.${key}`, values);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const view = viewFromParam(searchParams.get("tab"));
+  const [actingAs, setActingAs] = useMockActingAs();
 
-  const filters = useExamEntryFilters(null, { withExam: false });
-  const { armId, termId, actingAs } = filters;
-  const [page, setPage] = useState(1);
-  const [student, setStudent] = useState<{ id: string; name: string } | null>(null);
-  const [panelOpen, setPanelOpen] = useState(false);
+  const params: ResultsParams = {
+    year: searchParams.get("year") ?? "",
+    term: searchParams.get("term") ?? "",
+    class: searchParams.get("class") ?? "",
+    arm: searchParams.get("arm") ?? "",
+  };
 
-  useEffect(() => {
-    setPage(1);
-  }, [armId, termId, view, actingAs]);
+  const navigate: ResultsNavigate = (patch, mode = "replace") => {
+    const next = new URLSearchParams(searchParams.toString());
+    for (const [key, value] of Object.entries(patch)) {
+      if (value) next.set(key, value);
+      else next.delete(key);
+    }
+    const query = next.toString();
+    const href = query ? `${pathname}?${query}` : pathname;
+    if (mode === "push") router.push(href, { scroll: false });
+    else router.replace(href, { scroll: false });
+  };
 
-  const query = useQuery({
-    queryKey: [...resultsQueryKeys.classResults(armId, termId, view, page), actingAs],
-    queryFn: () => getClassResults(armId, termId, view, page).then(throwIfTransient),
-    enabled: !!armId && !!termId,
+  const armsQuery = useQuery({
+    queryKey: [...resultsQueryKeys.arms(params.year, params.term), actingAs],
+    queryFn: () => getResultArms(params.year, params.term).then(throwIfTransient),
   });
-  const data = query.data?.ok ? query.data.data : null;
-  const british = data?.assessment_mode === "grade_based";
+  const arms = armsQuery.data?.ok ? armsQuery.data.data : null;
 
-  const setView = (next: ResultsView) => router.replace(`${pathname}?tab=${next}`, { scroll: false });
-
-  const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit), data.has_more ? page + 1 : 1) : 1;
-
-  let body: ReactNode = filterPreconditionNotice(filters, t, null);
-  if (body) {
-    // A filter-level notice wins.
-  } else if (query.isPending) {
+  let body;
+  if (armsQuery.isPending) {
     body = <Notice>{t("exam.marks.loading")}</Notice>;
-  } else if (!data) {
+  } else if (!arms) {
     body = (
-      <Notice tone={isDevBypassUnavailable(query.data) ? "warning" : "error"}>
-        {failureMessage(query.data, t) ?? t("setup.dataTable.errors.loadFailed")}
+      <Notice tone={isDevBypassUnavailable(armsQuery.data) ? "warning" : "error"}>
+        {failureMessage(armsQuery.data, t) ?? t("setup.dataTable.errors.loadFailed")}
       </Notice>
     );
-  } else if (british && view === "gpa") {
-    body = <Notice>{k("notices.gpaNotForBritish")}</Notice>;
-  } else if (data.items.length === 0) {
-    body = <Notice>{k("notices.noStudents")}</Notice>;
+  } else if (params.arm) {
+    body = <ClassResultList arms={arms} params={params} navigate={navigate} actingAs={actingAs} />;
   } else {
-    body = (
-      <>
-        <ResultsTable
-          data={data}
-          firstSerial={(data.page - 1) * data.limit + 1}
-          onOpenStudent={(row) => {
-            setStudent({ id: row.student_id, name: row.student_name });
-            setPanelOpen(true);
-          }}
-        />
-        {totalPages > 1 ? (
-          <SetupPagination
-            page={page}
-            totalPages={totalPages}
-            onPreviousPage={() => setPage((current) => Math.max(1, current - 1))}
-            onNextPage={() => setPage((current) => current + 1)}
-          />
-        ) : null}
-      </>
-    );
+    body = <ArmCardsView arms={arms} params={params} navigate={navigate} />;
   }
 
   return (
     <div className="flex min-w-0 flex-col gap-5">
       <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold text-text-primary">{k("title")}</h2>
-        <p className="text-sm text-text-secondary">{k("subtitle")}</p>
+        <h2 className="text-lg font-semibold text-text-primary">{t("exam.viewResults.title")}</h2>
+        <p className="text-sm text-text-secondary">{t("exam.viewResults.subtitle")}</p>
       </div>
-
-      <ExamEntryFilterBar
-        filters={filters}
-        onSelect={(patch, resetBelow) => filters.applySelection(patch, resetBelow)}
-        onActorChange={(id) => filters.applyActor(id)}
+      <MockActingAsPicker
+        value={actingAs}
+        onChange={(id) => {
+          setActingAs(id);
+          // The new caller's scope may not include this class / arm.
+          navigate({ class: "", arm: "" });
+        }}
       />
-
-      <div role="tablist" aria-label={k("views.label")} className="flex items-center gap-1 overflow-x-auto border-b border-border">
-        {RESULTS_VIEWS.map((item) => {
-          const active = item === view;
-          return (
-            <button
-              key={item}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setView(item)}
-              className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-                active ? "border-accent text-accent" : "border-transparent text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              {k(`views.${item}`)}
-            </button>
-          );
-        })}
-      </div>
-
-      {data ? (
-        <div className="grid grid-cols-2 gap-x-8 gap-y-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-3 sm:p-5 lg:grid-cols-5">
-          <InfoItem label={k("info.classArm")} value={`${data.class_name} · ${data.arm_name}`} />
-          <InfoItem label={k("info.term")} value={data.term_name} />
-          <InfoItem label={k("info.reporting")} value={k(`modes.${data.assessment_mode}`)} />
-          <InfoItem label={k("info.gradeScale")} value={data.grade_scale_name ?? "—"} />
-          <InfoItem
-            label={k("info.students")}
-            value={british ? String(data.total) : k("info.studentsRanked", { total: data.total, ranked: data.ranked_count })}
-          />
-        </div>
-      ) : null}
-
-      <div role="tabpanel" aria-label={k(`views.${view}`)} className="flex min-w-0 flex-col gap-3">
-        {body}
-      </div>
-
-      <StudentResultPanel student={student} isOpen={panelOpen} termId={termId} actingAs={actingAs} onClose={() => setPanelOpen(false)} />
+      {body}
     </div>
   );
 }

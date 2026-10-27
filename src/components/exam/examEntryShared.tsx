@@ -120,14 +120,22 @@ export function examOptionLabel(exam: Exam, t: Translate): string {
  * level is pre-selected. `withExam: false` (Results) drops the subject /
  * exam levels: no exam list is fetched and examId stays "".
  */
-export function useExamEntryFilters(mode: AssessmentMode | null, { withExam = true }: { withExam?: boolean } = {}) {
-  const [selection, setSelection] = useState<Selection>(EMPTY_SELECTION);
+/** The mock caller (acting-as picker), synced from localStorage after mount — it isn't readable during SSR. */
+export function useMockActingAs() {
   const [actingAs, setActingAs] = useState<string>(MOCK_ADMIN);
-
-  // localStorage isn't readable during SSR — sync the mock caller after mount.
   useEffect(() => {
     if (EXAM_USES_MOCK) setActingAs(getMockActingAs());
   }, []);
+  const change = (id: string) => {
+    setMockActingAs(id);
+    setActingAs(id);
+  };
+  return [actingAs, change] as const;
+}
+
+export function useExamEntryFilters(mode: AssessmentMode | null, { withExam = true }: { withExam?: boolean } = {}) {
+  const [selection, setSelection] = useState<Selection>(EMPTY_SELECTION);
+  const [actingAs, setActingAs] = useMockActingAs();
 
   const optionsQuery = useQuery({
     queryKey: [...examQueryKeys.entryOptions(selection.yearId || null), actingAs],
@@ -168,7 +176,6 @@ export function useExamEntryFilters(mode: AssessmentMode | null, { withExam = tr
     });
 
   const applyActor = (id: string) => {
-    setMockActingAs(id);
     setActingAs(id);
     setSelection((current) => ({ ...EMPTY_SELECTION, yearId: current.yearId }));
   };
@@ -230,6 +237,31 @@ export function filterPreconditionNotice(filters: ExamEntryFilters, t: Translate
   return null;
 }
 
+/** The dev-only "acting as" picker — renders nothing when the module talks to the real backend. */
+export function MockActingAsPicker({ value, onChange }: { value: string; onChange: (id: string) => void }) {
+  const t = useTranslations();
+  const k = (key: string, values?: Record<string, string | number>) => t(`exam.marks.${key}`, values);
+  if (!EXAM_USES_MOCK) return null;
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-dashed border-border bg-surface p-4 sm:flex-row sm:items-end sm:gap-4">
+      <div className="w-full sm:max-w-xs">
+        <SelectField id="exam-acting-as" label={k("mock.actingAs")} value={value} onChange={(event) => onChange(event.target.value)}>
+          {mockActors().map((actor) => (
+            <option key={actor.id} value={actor.id}>
+              {actor.kind === "admin"
+                ? k("mock.admin")
+                : actor.kind === "sectionalHead"
+                  ? k("mock.sectionalHead", { name: actor.name ?? "" })
+                  : k("mock.teacher", { name: actor.name ?? "" })}
+            </option>
+          ))}
+        </SelectField>
+      </div>
+      <p className="text-xs text-text-muted sm:pb-3">{k("mock.hint")}</p>
+    </div>
+  );
+}
+
 /** The mock "acting as" picker (mock only) + the scope-aware filters (six for entry; year / class / arm / term when the filters have no exam level). */
 export function ExamEntryFilterBar({
   filters,
@@ -246,20 +278,7 @@ export function ExamEntryFilterBar({
 
   return (
     <>
-      {EXAM_USES_MOCK ? (
-        <div className="flex flex-col gap-2 rounded-xl border border-dashed border-border bg-surface p-4 sm:flex-row sm:items-end sm:gap-4">
-          <div className="w-full sm:max-w-xs">
-            <SelectField id="exam-acting-as" label={k("mock.actingAs")} value={filters.actingAs} onChange={(event) => onActorChange(event.target.value)}>
-              {mockActors().map((actor) => (
-                <option key={actor.id} value={actor.id}>
-                  {actor.name ? k("mock.teacher", { name: actor.name }) : k("mock.admin")}
-                </option>
-              ))}
-            </SelectField>
-          </div>
-          <p className="text-xs text-text-muted sm:pb-3">{k("mock.hint")}</p>
-        </div>
-      ) : null}
+      <MockActingAsPicker value={filters.actingAs} onChange={onActorChange} />
 
       <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2 ${withExam ? "lg:grid-cols-3 xl:grid-cols-6" : "lg:grid-cols-4"}`}>
         <SelectField

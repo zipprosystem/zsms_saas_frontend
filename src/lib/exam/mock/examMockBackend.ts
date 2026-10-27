@@ -42,7 +42,8 @@ import {
   type StoredGradeMark,
   type StoredMark,
 } from "@/lib/exam/mock/examMockStore";
-import { getResults, getStudentResult } from "@/lib/exam/mock/examResultsMock";
+import { getResultArms, getResults, getStudentResult, getStudentTraits, putStudentTraits } from "@/lib/exam/mock/examResultsMock";
+import { handleGrades } from "@/lib/exam/mock/gradesMock";
 
 /**
  * MOCK Exam backend (Stage 1b: marks entry) — localStorage-backed,
@@ -391,6 +392,16 @@ async function handle(method: HttpMethod, path: string, query: URLSearchParams, 
   if (path === "erp/exams" && method === "GET") return listExams(query);
   if (path === "erp/exams/entry-options" && method === "GET") return entryOptions(query);
   if (path === "erp/results" && method === "GET") return getResults(query);
+  if (path === "erp/results/arms" && method === "GET") return getResultArms(query);
+  const traitsMatch = path.match(/^erp\/results\/([^/]+)\/traits$/);
+  if (traitsMatch) {
+    const studentId = decodeURIComponent(traitsMatch[1]);
+    if (method === "GET") return getStudentTraits(studentId, query);
+    if (method === "PUT") return putStudentTraits(studentId, payload);
+    return fail(405, "METHOD_NOT_ALLOWED", "Method not allowed");
+  }
+  const grades = handleGrades(method, path, query, payload);
+  if (grades) return grades;
   const studentMatch = path.match(/^erp\/results\/([^/]+)$/);
   if (studentMatch && method === "GET") return getStudentResult(decodeURIComponent(studentMatch[1]), query);
   const match = path.match(/^erp\/exams\/([^/]+)\/marks$/);

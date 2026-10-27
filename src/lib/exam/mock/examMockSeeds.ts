@@ -343,6 +343,22 @@ export const SEED_TEACHERS: Array<{ id: string; name: string; assignments: Array
   },
 ];
 
+/**
+ * Results-reframe roles (2026-10-27). A class teacher owns one arm's
+ * report (full view + the student-wise traits / remarks entry); a
+ * sectional head oversees whole classes (full view, read-only). Both are
+ * mock stand-ins for the backend's staff roles — FLAGGED.
+ */
+export const SEED_CLASS_TEACHERS: Record<string, string> = {
+  "arm-jss1-a": "stf-eze",
+  "arm-y9-oak": "stf-eze",
+  "arm-ss1-sci": "stf-bello",
+};
+
+export const SEED_SECTIONAL_HEADS: Array<{ id: string; name: string; class_ids: string[] }> = [
+  { id: "stf-sani", name: "Musa Sani", class_ids: ["cls-jss1", "cls-ss1"] },
+];
+
 /** Cutoffs: the current year's first term is open; last year's exams are closed (read-only grid). */
 const CLOSES_ON: Record<string, [string, string]> = {
   "y-2026-t1": ["2026-11-30", "2026-12-18"],
@@ -379,3 +395,33 @@ export const SEED_EXAMS: Exam[] = SEED_YEARS.flatMap((year) =>
     ];
   }),
 );
+
+// ---------------------------------------------------------------------------
+// Student-wise traits (results reframe) — MOCK. The skill lists and the
+// 5–1 rating key are school-configurable data in the real backend (FLAGGED:
+// no Setup screen for them yet). Labels follow the result templates.
+// ---------------------------------------------------------------------------
+
+export const SEED_TRAIT_SCALE = [
+  { value: 5, label: "Excellent" },
+  { value: 4, label: "Very good" },
+  { value: 3, label: "Good" },
+  { value: 2, label: "Fair" },
+  { value: 1, label: "Poor" },
+];
+
+export const SEED_PSYCHOMOTOR = [
+  { key: "psy-games", label: "Games" },
+  { key: "psy-tools", label: "Handling of tools" },
+  { key: "psy-handwriting", label: "Handwriting" },
+  { key: "psy-sport", label: "Sport" },
+  { key: "psy-verbal", label: "Verbal fluency" },
+];
+
+export const SEED_AFFECTIVE = [
+  { key: "aff-attentiveness", label: "Attentiveness" },
+  { key: "aff-attitude", label: "Attitude to school work" },
+  { key: "aff-relationships", label: "Relationship with others" },
+  { key: "aff-neatness", label: "Neatness" },
+  { key: "aff-punctuality", label: "Punctuality" },
+];

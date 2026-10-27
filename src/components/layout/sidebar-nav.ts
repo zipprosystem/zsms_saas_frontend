@@ -17,6 +17,7 @@ import { PeopleIcon } from "@/components/icons/sidebar/PeopleIcon";
 import { Profile2UserIcon } from "@/components/icons/sidebar/Profile2UserIcon";
 import { ShoppingCartIcon } from "@/components/icons/sidebar/ShoppingCartIcon";
 import { Warning2Icon } from "@/components/icons/sidebar/Warning2Icon";
+import { canSeeNavEntry, NAV_PERMISSIONS, type NavPermission } from "@/lib/auth/navPermissions";
 
 export type SidebarIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -24,6 +25,10 @@ export type SidebarNavChild = {
   key: string;
   labelKey: string;
   href: string;
+  /** Submenu-level gate (see navPermissions.ts). */
+  permission?: NavPermission;
+  /** Deferred feature: kept out of the nav (and search) while its route stays in place. */
+  hidden?: boolean;
 };
 
 export type SidebarNavItem = {
@@ -67,7 +72,14 @@ export const sidebarNavItems: SidebarNavItem[] = [
       { key: "hrStaffs", labelKey: "nav.hrStaffs", href: "/admin/hr/staffs" },
       { key: "hrStaffPosts", labelKey: "nav.hrStaffPosts", href: "/admin/hr/staff-posts" },
       { key: "hrPermissionGroups", labelKey: "nav.hrPermissionGroups", href: "/admin/hr/permission-groups" },
-      { key: "hrAssignmentReview", labelKey: "nav.hrAssignmentReview", href: "/admin/hr/assignment-review" },
+      // Deferred (Matthew, 2026-10-27) — hidden from the nav; the route still exists.
+      {
+        key: "hrAssignmentReview",
+        labelKey: "nav.hrAssignmentReview",
+        href: "/admin/hr/assignment-review",
+        permission: NAV_PERMISSIONS.hrAssignmentReview,
+        hidden: true,
+      },
     ],
   },
   { key: "clinic", labelKey: "nav.clinic", href: "/admin/clinic", icon: HospitalIcon },
@@ -81,6 +93,11 @@ export const sidebarNavItems: SidebarNavItem[] = [
   // with the day-to-day modules above.
   { key: "setup", labelKey: "nav.setup", href: "/admin/setup", icon: GearIcon },
 ];
+
+/** The submenu entries a user should see: not deferred, and allowed by their own permission key. */
+export function visibleNavChildren(item: SidebarNavItem, granted: ReadonlySet<string> | null): SidebarNavChild[] {
+  return (item.children ?? []).filter((child) => !child.hidden && canSeeNavEntry(child.permission, granted));
+}
 
 const settingsTitleItem = { href: "/admin/settings", labelKey: "nav.schoolSettings" };
 

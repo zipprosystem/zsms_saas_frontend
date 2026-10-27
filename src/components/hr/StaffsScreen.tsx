@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useFormatter, useNow, useTranslations } from "next-intl";
@@ -35,7 +34,6 @@ import {
   type StaffStatusEventType,
 } from "@/lib/hr/hrTypes";
 import { StaffsHeader } from "@/components/hr/StaffsHeader";
-import { useAssignmentReviewsQuery } from "@/components/hr/AssignmentReviewScreen";
 import { StaffTypeTabs, type StaffListView } from "@/components/hr/StaffTypeTabs";
 import { ClassArmChip, StaffAvatar, StaffStatusBadge } from "@/components/hr/StaffBadges";
 import { useHrReferenceData } from "@/components/hr/useHrReferenceData";
@@ -105,9 +103,6 @@ export function StaffsScreen() {
   const { school } = useAuth();
   const { selectedYearId } = useAcademicYear();
   const refs = useHrReferenceData(selectedYearId);
-  // Carry-forward rows the backend couldn't match into this year — a nudge to HR › Assignment Review.
-  const reviewsQuery = useAssignmentReviewsQuery(selectedYearId);
-  const reviewCount = reviewsQuery.data?.ok ? reviewsQuery.data.data.length : 0;
 
   // ---- Table state (all server-side) --------------------------------------
   const [view, setView] = useState<StaffListView>("teaching");
@@ -444,14 +439,6 @@ export function StaffsScreen() {
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <StaffsHeader />
-      {reviewCount > 0 ? (
-        <div role="status" className="flex flex-col gap-2 rounded-lg border border-border bg-category-amber-tint px-4 py-3 text-sm text-text-primary sm:flex-row sm:items-center sm:justify-between">
-          <span>{t("hr.assignmentReview.banner", { count: reviewCount })}</span>
-          <Link href="/admin/hr/assignment-review" className="shrink-0 font-medium text-accent hover:underline">
-            {t("hr.assignmentReview.bannerLink")}
-          </Link>
-        </div>
-      ) : null}
       <StaffTypeTabs activeView={view} onChange={handleViewChange} />
 
       <section className="flex min-w-0 flex-col gap-4 rounded-xl border border-border bg-surface p-4 shadow-sm">

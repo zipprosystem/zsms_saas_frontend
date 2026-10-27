@@ -6,8 +6,9 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { ChevronDownIcon } from "@/components/icons/sidebar/ChevronDownIcon";
 import { Setting2Icon } from "@/components/icons/sidebar/Setting2Icon";
-import { sidebarNavItems } from "@/components/layout/sidebar-nav";
+import { sidebarNavItems, visibleNavChildren } from "@/components/layout/sidebar-nav";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { readUserPermissions } from "@/lib/auth/navPermissions";
 
 type SidebarProps = {
   isOpen: boolean;
@@ -17,6 +18,8 @@ type SidebarProps = {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const t = useTranslations();
   const pathname = usePathname();
+  const { user } = useAuth();
+  const granted = readUserPermissions(user);
   // A parent whose real submenu holds the current page starts expanded.
   const [expandedKeys, setExpandedKeys] = useState<string[]>(() =>
     sidebarNavItems
@@ -40,12 +43,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     >
       <SidebarBrand />
 
-      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden">
+      {/* min-h-0 + shrink-0 rows: when a submenu opens and the list outgrows
+          the sidebar, the nav scrolls instead of flex-shrinking every row
+          (which squeezed their height and spacing). */}
+      <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden">
         {sidebarNavItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
           const expanded = expandedKeys.includes(item.key);
-          const rowClasses = `flex h-11 w-full items-center gap-3 rounded-2xl text-sm transition-colors ${
+          const children = visibleNavChildren(item, granted);
+          const rowClasses = `flex h-11 w-full shrink-0 items-center gap-3 rounded-2xl text-sm transition-colors ${
             active
               ? "bg-white/10 text-white"
               : "text-[#94a3b8] hover:bg-white/5 hover:text-white"
@@ -66,7 +73,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           }
 
           return (
-            <div key={item.key} className="flex flex-col gap-0.5">
+            <div key={item.key} className="flex shrink-0 flex-col gap-0.5">
               <div className={`${rowClasses} pl-3 pr-2`}>
                 <Link
                   href={item.href}
@@ -91,14 +98,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </button>
               </div>
               {expanded && (
-                <div className="ml-[44px] flex flex-col gap-0.5 border-l border-white/10 pb-1 pl-3">
-                  {item.children ? (
-                    item.children.map((child) => (
+                <div className="ml-[44px] flex shrink-0 flex-col gap-0.5 border-l border-white/10 pb-1 pl-3">
+                  {children.length > 0 ? (
+                    children.map((child) => (
                       <Link
                         key={child.key}
                         href={child.href}
                         onClick={onClose}
-                        className={`truncate rounded-lg px-2 py-1.5 text-xs transition-colors ${
+                        className={`shrink-0 truncate rounded-lg px-2 py-1.5 text-xs transition-colors ${
                           isActive(child.href) ? "bg-white/10 text-white" : "text-[#94a3b8] hover:bg-white/5 hover:text-white"
                         }`}
                       >
@@ -141,7 +148,7 @@ function SidebarBrand() {
   const logoUrl = typeof school?.logo_url === "string" && school.logo_url ? school.logo_url : null;
 
   return (
-    <div className="flex items-center gap-2.5 pl-3">
+    <div className="flex shrink-0 items-center gap-2.5 pl-3">
       {/* Kept white behind the logo (not just a bare <img>) so a
           dark-on-transparent upload still shows up against the sidebar's
           dark background. Revisit once a real uploaded logo is visible on

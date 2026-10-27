@@ -14,6 +14,7 @@ import { SubjectEnrolmentScreen } from "@/components/setup/academicStructure/Sub
 import { AssessmentTypesScreen } from "@/components/setup/assessmentConfiguration/AssessmentTypesScreen";
 import { ResultTemplatesScreen } from "@/components/setup/assessmentConfiguration/ResultTemplatesScreen";
 import { IdCardTemplatesScreen } from "@/components/setup/assessmentConfiguration/IdCardTemplatesScreen";
+import { GradesScreen } from "@/components/setup/assessmentConfiguration/GradesScreen";
 
 /**
  * Keyed by "{categorySlug}/{screenSlug}". A screen not listed here falls
@@ -57,6 +58,9 @@ export const setupScreenRegistry: Record<string, ComponentType> = {
   "academic-structure/subject-enrolment": SubjectEnrolmentScreen,
   // Score-structure builder (Exam Stage 1a) — MOCK, see assessmentStructuresApi.ts.
   "assessment-configuration/assessment-types": AssessmentTypesScreen,
+  // Per-class grade bands (admin-gated) — read by the results engine. MOCK
+  // on the exam module's transport, see gradesApi.ts.
+  "assessment-configuration/grades": GradesScreen,
   // Both catalogs are MOCK (frontend-ahead) and feed the School Types
   // form's template assignment dropdowns.
   "assessment-configuration/result-templates": ResultTemplatesScreen,
