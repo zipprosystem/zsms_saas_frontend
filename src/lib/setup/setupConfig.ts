@@ -1,3 +1,5 @@
+import { NAV_PERMISSIONS, type NavPermission } from "@/lib/auth/navPermissions";
+
 export type SetupItem = {
   key: string;
   /** i18n key resolving to the item's display name */
@@ -13,6 +15,8 @@ export type SetupItem = {
    * live under HR. Takes precedence over the category's default link.
    */
   href?: string;
+  /** Submenu-level gate (see navPermissions.ts) — hides the item from Setup's sub-nav and search. */
+  permission?: NavPermission;
 };
 
 export type SetupCategoryIconKey =
@@ -211,11 +215,15 @@ export const setupCategories: SetupConfig = [
         done: false,
         slug: "grading-schemes",
       },
+      // Per-class grade bands (results reframe, 2026-10-27) — what results
+      // computation reads. Replaces the unbuilt "Grade Scales" placeholder.
       {
-        key: "gradeScales",
-        name: "setup.items.gradeScales.name",
+        key: "grades",
+        name: "setup.items.grades.name",
+        description: "setup.items.grades.description",
         done: false,
-        slug: "grade-scales",
+        slug: "grades",
+        permission: NAV_PERMISSIONS.setupGrades,
       },
       {
         key: "assessmentTypes",

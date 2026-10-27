@@ -17,7 +17,13 @@ import {
   RESULTS_VIEWS,
   type ClassResultRow,
   type ClassResults,
+  type ArmResultSummary,
   type RankingRules,
+  type ResultsArms,
+  type ResultsViewer,
+  type SaveStudentTraitsInput,
+  type StudentTraits,
+  type TraitsStatus,
   type ResultsView,
   type ResultSubjectColumn,
   type ScoreGradeScale,
@@ -27,13 +33,15 @@ import {
 } from "@/lib/exam/results/resultsTypes";
 import {
   enrolledForTerm,
+  SEED_AFFECTIVE,
   SEED_ARM_SUBJECTS,
-  SEED_CLASS_SCORE_SCALE,
   SEED_CLASSES,
   SEED_EXAMS,
   SEED_GRADE_SCALES,
-  SEED_SCORE_GRADE_SCALES,
+  SEED_PSYCHOMOTOR,
   SEED_SUBJECT_UNITS,
+  SEED_TRAIT_SCALE,
+  SEED_YEARS,
   SEED_SUBJECTS,
   seedReferences,
   seedRoster,
@@ -45,13 +53,19 @@ import {
 } from "@/lib/exam/mock/examMockSeeds";
 import {
   armInScope,
+  armRole,
   classOfArm,
   isGradeClass,
   readGradeMark,
   readScoreMark,
   resolveGradeStructure,
+  readStore,
   resolveStructure,
+  taughtSubjects,
+  writeStore,
 } from "@/lib/exam/mock/examMockStore";
+import { classGradeScale } from "@/lib/exam/mock/gradesMock";
+import { getMockActingAs, MOCK_ADMIN } from "@/lib/exam/mock/mockActingAs";
 
 /**
  * MOCK computed results (Exam Stage 2a). Runs the pure engine
@@ -61,6 +75,11 @@ import {
  *
  *   GET erp/results?class_arm_id&term_id&view=all|grades|gpa&page&limit
  *   GET erp/results/:student_id?term_id
+ *   GET erp/results/arms?academic_year_id&term_id          (arm cards)
+ *   GET / PUT erp/results/:student_id/traits?term_id       (class teacher)
+ *
+ * General classes take their grade bands from Setup › Grades
+ * (gradesMock.ts) — no bands for a class = no grades / GPA computed.
  *
  * Scope: admin = every arm; a teacher = arms they teach a subject in
  * (FLAGGED — see resultsApi.ts). Outside it -> 403 OUT_OF_SCOPE.
@@ -328,15 +347,68 @@ async function compute(armId: string, termId: string): Promise<Computed | WireRe
     return { ...base, mode: "grade_based", scaleName: scale?.name ?? null, rows, rankedCount: 0 };
   }
   const structure = await resolveStructure(armId);
-  const scale = SEED_SCORE_GRADE_SCALES.find((item) => item.id === SEED_CLASS_SCORE_SCALE[cls.id]) ?? null;
+  const scale = classGradeScale(cls.id);
   const rows = computeGeneral(armId, termId, students, columns, structure, scale);
   return {
     ...base,
     mode: "component_based",
-    scaleName: scale?.name ?? null,
+    scaleName: scale?.name || null,
     rows,
     rankedCount: rows.filter((row) => row.aggregate.class_position !== null).length,
   };
+}
+
+/** Mean of the students' averages (those with one) — the arm's class average. null for grade-based classes. */
+function classAverage(computed: Computed): number | null {
+  if (computed.mode === "grade_based") return null;
+  const averages = computed.rows.map((row) => row.aggregate.average).filter((value): value is number => value !== null);
+  return averages.length > 0 ? round2(averages.reduce((a, b) => a + b, 0) / averages.length) : null;
+}
+
+/** The caller's report view on this arm (role from the acting-as picker). */
+function viewerFor(armId: string): ResultsViewer {
+  const role = armRole(armId) ?? "subject_teacher";
+  if (role === "subject_teacher") {
+    return { role, report_scope: "own_subjects", visible_subject_ids: taughtSubjects(armId), can_enter_traits: false };
+  }
+  return { role, report_scope: "full", visible_subject_ids: null, can_enter_traits: role === "class_teacher" };
+}
+
+// ----- Student-wise traits + remarks (class teacher) -----
+
+const TRAITS_STORAGE_KEY = "zsms.mockExam.traits.v1";
+const TRAIT_REMARK_MAX = 500;
+
+type StoredTraits = {
+  ratings: Record<string, number | null>;
+  class_teacher_remark: string;
+  head_teacher_remark: string;
+  updated_at: string;
+};
+
+let traitsCache: Record<string, StoredTraits> | null = null;
+
+function loadTraits(): Record<string, StoredTraits> {
+  if (!traitsCache) traitsCache = readStore<StoredTraits>(TRAITS_STORAGE_KEY);
+  return traitsCache;
+}
+
+function traitsKey(termId: string, studentId: string): string {
+  return `${termId}|${studentId}`;
+}
+
+const TRAIT_KEYS = [...SEED_PSYCHOMOTOR, ...SEED_AFFECTIVE].map((item) => item.key);
+
+function traitsStatus(stored: StoredTraits | undefined): TraitsStatus {
+  if (!stored) return "none";
+  const rated = TRAIT_KEYS.filter((key) => typeof stored.ratings[key] === "number").length;
+  const remarks = [stored.class_teacher_remark, stored.head_teacher_remark].filter((text) => text.trim()).length;
+  if (rated === TRAIT_KEYS.length && remarks === 2) return "complete";
+  return rated + remarks > 0 ? "partial" : "none";
+}
+
+function armOfStudent(studentId: string): string | undefined {
+  return SEED_CLASSES.flatMap((cls) => cls.arms).find((arm) => seedRoster(arm.id).some((student) => student.id === studentId))?.id;
 }
 
 /** Lean payloads: each view sends only the fields its columns show. */
@@ -383,6 +455,7 @@ export async function getResults(query: URLSearchParams): Promise<WireResponse> 
         Object.entries(row.subjects).map(([id, result]) => [id, leanSubject(result, view, computed.mode) as SubjectResult]),
       ),
       aggregate: leanAggregate(row.aggregate, view) as StudentTermResult,
+      traits_status: traitsStatus(loadTraits()[traitsKey(termId, row.student.id)]),
     }),
   );
   const data: ClassResults = {
@@ -397,6 +470,8 @@ export async function getResults(query: URLSearchParams): Promise<WireResponse> 
     grade_scale_name: computed.scaleName,
     subjects: computed.columns,
     ranked_count: computed.rankedCount,
+    class_average: classAverage(computed),
+    viewer: viewerFor(armId),
     items,
     total: computed.rows.length,
     page,
@@ -409,7 +484,7 @@ export async function getResults(query: URLSearchParams): Promise<WireResponse> 
 export async function getStudentResult(studentId: string, query: URLSearchParams): Promise<WireResponse> {
   const termId = query.get("term_id") ?? "";
   if (!termId) return fail(422, "VALIDATION_ERROR", "term_id is required");
-  const armId = SEED_CLASSES.flatMap((cls) => cls.arms).find((arm) => seedRoster(arm.id).some((student) => student.id === studentId))?.id;
+  const armId = armOfStudent(studentId);
   if (!armId) return fail(404, "STUDENT_NOT_FOUND", "Student not found");
   const computed = await compute(armId, termId);
   if ("status" in computed) return computed;
@@ -433,4 +508,100 @@ export async function getStudentResult(studentId: string, query: URLSearchParams
     ranked_count: computed.rankedCount,
   };
   return ok(data);
+}
+
+/** Arm cards: every arm in the caller's results scope for the term, with its size and class average. */
+export async function getResultArms(query: URLSearchParams): Promise<WireResponse> {
+  const yearId = query.get("academic_year_id") || SEED_YEARS.find((year) => year.is_current)?.id || SEED_YEARS[0].id;
+  if (!SEED_YEARS.some((year) => year.id === yearId)) return fail(404, "ACADEMIC_YEAR_NOT_FOUND", "Academic year not found");
+  const terms = seedTerms(yearId);
+  const termId = query.get("term_id") || terms[0].id;
+  if (!terms.some((term) => term.id === termId)) return fail(404, "TERM_NOT_FOUND", "Term not found");
+
+  const items: ArmResultSummary[] = [];
+  for (const cls of SEED_CLASSES) {
+    for (const arm of cls.arms) {
+      if (!armInScope(arm.id)) continue;
+      const computed = await compute(arm.id, termId);
+      if ("status" in computed) continue;
+      items.push({
+        class_id: cls.id,
+        class_name: cls.name,
+        class_arm_id: arm.id,
+        arm_name: arm.name,
+        assessment_mode: computed.mode,
+        student_count: computed.rows.length,
+        class_average: classAverage(computed),
+      });
+    }
+  }
+  const data: ResultsArms = { academic_year_id: yearId, years: SEED_YEARS, terms, term_id: termId, items, full_scope: getMockActingAs() === MOCK_ADMIN };
+  return ok(data);
+}
+
+function traitsPayload(studentId: string, studentName: string, termId: string, armId: string): StudentTraits {
+  const stored = loadTraits()[traitsKey(termId, studentId)];
+  const item = ({ key, label }: { key: string; label: string }) => ({ key, label, rating: stored?.ratings[key] ?? null });
+  return {
+    student_id: studentId,
+    student_name: studentName,
+    term_id: termId,
+    rating_scale: SEED_TRAIT_SCALE,
+    psychomotor: SEED_PSYCHOMOTOR.map(item),
+    affective: SEED_AFFECTIVE.map(item),
+    class_teacher_remark: stored?.class_teacher_remark ?? "",
+    head_teacher_remark: stored?.head_teacher_remark ?? "",
+    updated_at: stored?.updated_at ?? null,
+    editable: armRole(armId) === "class_teacher",
+  };
+}
+
+function traitsContext(studentId: string, termId: string): { armId: string; name: string } | WireResponse {
+  if (!termId) return fail(422, "VALIDATION_ERROR", "term_id is required");
+  const armId = armOfStudent(studentId);
+  if (!armId) return fail(404, "STUDENT_NOT_FOUND", "Student not found");
+  if (!seedTerms(yearOfTerm(termId)).some((term) => term.id === termId)) return fail(404, "TERM_NOT_FOUND", "Term not found");
+  if (!enrolledForTerm(studentId, termId)) return fail(404, "NOT_ENROLLED_FOR_TERM", "This student wasn't enrolled in their class for that term.");
+  if (!armInScope(armId)) return fail(403, "OUT_OF_SCOPE", "You don't have access to this class-arm's results.");
+  const name = seedRoster(armId).find((student) => student.id === studentId)?.name ?? "";
+  return { armId, name };
+}
+
+export function getStudentTraits(studentId: string, query: URLSearchParams): WireResponse {
+  const termId = query.get("term_id") ?? "";
+  const context = traitsContext(studentId, termId);
+  if ("status" in context) return context;
+  return ok(traitsPayload(studentId, context.name, termId, context.armId));
+}
+
+export function putStudentTraits(studentId: string, payload: unknown): WireResponse {
+  const body = (payload && typeof payload === "object" ? payload : {}) as Partial<SaveStudentTraitsInput>;
+  const termId = typeof body.term_id === "string" ? body.term_id : "";
+  const context = traitsContext(studentId, termId);
+  if ("status" in context) return context;
+  if (armRole(context.armId) !== "class_teacher") return fail(403, "FORBIDDEN", "Only the class teacher can enter traits and remarks.");
+
+  const levels = new Set(SEED_TRAIT_SCALE.map((level) => level.value));
+  const ratings: Record<string, number | null> = {};
+  const sent = body.ratings && typeof body.ratings === "object" ? body.ratings : {};
+  for (const [key, value] of Object.entries(sent)) {
+    if (!TRAIT_KEYS.includes(key)) return fail(422, "VALIDATION_ERROR", `ratings.${key}: unknown trait`);
+    if (value !== null && !(typeof value === "number" && levels.has(value))) return fail(422, "VALIDATION_ERROR", `ratings.${key}: not on the rating scale`);
+    ratings[key] = value;
+  }
+  const remark = (field: "class_teacher_remark" | "head_teacher_remark") => (typeof body[field] === "string" ? (body[field] as string).trim() : "");
+  for (const field of ["class_teacher_remark", "head_teacher_remark"] as const) {
+    if (remark(field).length > TRAIT_REMARK_MAX) return fail(422, "VALIDATION_ERROR", `${field}: must be ${TRAIT_REMARK_MAX} characters or fewer`);
+  }
+
+  const store = { ...loadTraits() };
+  store[traitsKey(termId, studentId)] = {
+    ratings,
+    class_teacher_remark: remark("class_teacher_remark"),
+    head_teacher_remark: remark("head_teacher_remark"),
+    updated_at: new Date().toISOString(),
+  };
+  traitsCache = store;
+  writeStore(TRAITS_STORAGE_KEY, store);
+  return ok(traitsPayload(studentId, context.name, termId, context.armId));
 }

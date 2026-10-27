@@ -4,10 +4,10 @@ import { EXAM_TABS } from "@/components/exam/examTabsConfig";
 
 type PageProps = { params: Promise<{ tab: string }> };
 
-/** Placeholder for the Exam tabs that aren't built yet (Results has its own route). */
+/** Placeholder for the Exam tabs that aren't built yet (Results and Broad Sheet have their own routes). */
 export default async function ExamTabStubPage({ params }: PageProps) {
   const { tab } = await params;
-  const config = EXAM_TABS.find((item) => item.slug === tab && item.slug !== "results");
+  const config = EXAM_TABS.find((item) => item.slug === tab && item.slug !== "results" && item.slug !== "broad-sheet");
   if (!config) notFound();
   const t = await getTranslations();
   return (

@@ -191,11 +191,8 @@
     "exams": {
       "manageExamResult": "Manage Exam Result",
       "academicReport": "Academic Report",
-      "results": {
-        "all": "All Results",
-        "grades": "Results: Grades",
-        "gpa": "Results: GPA"
-      }
+      "viewResults": "View Results",
+      "broadSheet": "Broad Sheet"
     }
   },
   "tenant": {
@@ -310,7 +307,7 @@
         "description": "Learning materials attached to a class"
       },
       "gradingSchemes": { "name": "Grading Schemes" },
-      "gradeScales": { "name": "Grade Scales" },
+      "grades": { "name": "Grades", "description": "Per-class grade bands: grade, weight, GPA, score range and remark" },
       "assessmentTypes": { "name": "Assessment Types", "description": "The CA and exam components scores are made of" },
       "resultTemplates": { "name": "Result Templates" },
       "idCardTemplates": { "name": "ID Card Templates" },
@@ -534,6 +531,64 @@
       "empty": {
         "student": "No student ID card templates yet.",
         "staff": "No staff ID card templates yet."
+      }
+    },
+    "grades": {
+      "title": "Grades",
+      "subtitle": "Grade bands for each class. Results use the band a score falls in for the grade, remark, weight and GPA. A band applies to every arm of the classes it's assigned to.",
+      "addNew": "Add Grade",
+      "adminOnly": "Only an administrator can manage grades. Switch the “acting as” picker (Exam › Results) to Admin to test this screen.",
+      "searchPlaceholder": "Search by grade or remark",
+      "empty": "No grades yet. Add the bands your classes are graded on.",
+      "range": "{min} – {max}%",
+      "gpaNotUsed": "Not used",
+      "columns": {
+        "grade": "Grade",
+        "gradeWeight": "Grade weight",
+        "gpa": "GPA",
+        "range": "Score range",
+        "remark": "Remark",
+        "classes": "Applies to"
+      },
+      "filters": {
+        "class": "Class",
+        "allClasses": "All classes"
+      },
+      "panel": {
+        "createTitle": "Add Grade",
+        "editTitle": "Edit Grade",
+        "subtitle": "Scores are percentages (0–100). Ranges can't overlap within a class."
+      },
+      "fields": {
+        "grade": "Grade",
+        "gradePlaceholder": "e.g. A1",
+        "gradeWeight": "Grade weight",
+        "minScore": "Minimum score (%)",
+        "maxScore": "Maximum score (%)",
+        "gpa": "GPA (optional)",
+        "gpaPlaceholder": "Leave blank if you don't use GPA",
+        "gpaHelp": "Blank means your school doesn't use GPA for this grade — reports leave GPA out.",
+        "remark": "Remark",
+        "remarkPlaceholder": "e.g. Excellent",
+        "applyTo": "Apply to classes",
+        "applyToHelp": "The grade applies to every arm of the selected classes.",
+        "selectAll": "Select all"
+      },
+      "errors": {
+        "required": "Required",
+        "notNegative": "Enter a number of 0 or more",
+        "max": "Must be {max} or less",
+        "minAboveMax": "Minimum can't be above the maximum",
+        "classesRequired": "Pick at least one class"
+      },
+      "confirmDelete": {
+        "title": "Delete grade?",
+        "message": "Delete grade {grade}? Results for its classes will no longer use it."
+      },
+      "toast": {
+        "created": "Grade added",
+        "updated": "Grade updated",
+        "deleted": "Grade deleted"
       }
     },
     "assessmentTypes": {
@@ -2978,6 +3033,7 @@
         "actingAs": "Mock: acting as",
         "admin": "Admin (all subjects)",
         "teacher": "{name} (teacher)",
+        "sectionalHead": "{name} (sectional head)",
         "hint": "Test data only. A teacher sees only the subjects they're assigned; this picker goes away when the real backend is connected."
       },
       "info": {
@@ -3060,9 +3116,94 @@
       "academicReport": "Academic Report",
       "viewResults": "View Results"
     },
+    "broadSheet": {
+      "title": "Broad Sheet",
+      "subtitle": "Every student's subject totals and grades for a class-arm and term, with grand total, average and position. Select a student to see their full result."
+    },
+    "viewResults": {
+      "title": "View Results",
+      "subtitle": "Pick a class-arm to see its students' results and open their reports.",
+      "armName": "{class} {arm}",
+      "filters": {
+        "allClasses": "All classes"
+      },
+      "empty": {
+        "noClasses": "No classes have results for this term yet.",
+        "noScope": "You don't have any classes in your results scope for this term."
+      },
+      "card": {
+        "students": "Students",
+        "classAverage": "Class average",
+        "gradeBased": "Grade-based",
+        "viewClassResult": "View Class Result"
+      },
+      "list": {
+        "backToClasses": "All classes",
+        "armNotInScope": "This class-arm isn't in your results scope for the selected term.",
+        "exportTitle": "{arm} results — {term}",
+        "classAverage": "Class average",
+        "yourView": "Your report view",
+        "reportUnavailable": "Reports can't be opened yet: rendering a student's result into the school's result template isn't built. View Report, its print / PDF actions and the class PDF switch on once it is.",
+        "reportUnavailableShort": "Not available yet — template rendering isn't built",
+        "generateClassPdf": "Generate class PDF",
+        "caption": "Students' results for the class-arm",
+        "subjectsGraded": "{graded} of {total} subjects",
+        "averageDetail": "{total} ÷ {count, plural, one {# subject} other {# subjects}} · {percent}%",
+        "viewReport": "View report",
+        "viewReportFor": "View report for {name} (not available yet)"
+      },
+      "columns": {
+        "sn": "S/N",
+        "student": "Student",
+        "id": "ID",
+        "rank": "Rank",
+        "totalAverage": "Total average",
+        "grandTotal": "Grand total",
+        "subjectsCounted": "Subjects counted",
+        "subjectsGraded": "Subjects graded",
+        "status": "Status",
+        "traits": "Traits & remarks",
+        "actions": "Actions"
+      },
+      "roles": {
+        "admin": "Admin",
+        "sectional_head": "Sectional head",
+        "class_teacher": "Class teacher",
+        "subject_teacher": "Subject teacher"
+      },
+      "scope": {
+        "full": "{role} · full report",
+        "fullHelp": "You see every subject on these reports.",
+        "own": "{role} · your subjects only ({subjects})",
+        "ownHelp": "On these reports you see only the subjects you teach; the others are greyed out."
+      },
+      "traits": {
+        "status": {
+          "none": "Not entered",
+          "partial": "In progress",
+          "complete": "Complete"
+        },
+        "enter": "Enter",
+        "edit": "Edit",
+        "openFor": "Traits and remarks for {name}",
+        "title": "Traits & remarks",
+        "saved": "Saved traits and remarks for {name}",
+        "notRated": "Not rated",
+        "level": "{value} — {label}",
+        "readOnly": "Only the class teacher can enter traits and remarks.",
+        "psychomotor": "Psychomotor skills",
+        "affective": "Affective domain",
+        "classTeacherRemark": "Class teacher's remarks",
+        "headTeacherRemark": "Head teacher's remarks",
+        "remarkTooLong": "Keep it to {max} characters or fewer",
+        "remarkCount": "{count}/{max}",
+        "discard": {
+          "title": "Discard changes?",
+          "message": "Your unsaved ratings and remarks for this student will be lost."
+        }
+      }
+    },
     "results": {
-      "title": "Results",
-      "subtitle": "Computed results for a class-arm and term: totals, grades, positions and GPA, worked out from the marks entered. Select a student to see their full result.",
       "views": {
         "label": "Results views",
         "all": "All Results",
@@ -3079,7 +3220,8 @@
         "reporting": "Reporting",
         "gradeScale": "Grade scale",
         "students": "Students",
-        "studentsRanked": "{total} ({ranked} ranked)"
+        "studentsRanked": "{total} ({ranked} ranked)",
+        "classGrades": "Class grades (Setup)"
       },
       "columns": {
         "sn": "S/N",
@@ -3130,7 +3272,6 @@
       "positionOf": "{position} of {count}",
       "openStudent": "Open {name}'s result",
       "notices": {
-        "gpaNotForBritish": "GPA isn't used for grade-based (British) classes. See All Results or Grades.",
         "noStudents": "No students were enrolled in this class-arm for this term."
       },
       "student": {

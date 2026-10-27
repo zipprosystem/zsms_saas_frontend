@@ -12,6 +12,8 @@ import { LocationPinIcon } from "@/components/icons/setup/LocationPinIcon";
 import { ClockIcon } from "@/components/icons/setup/ClockIcon";
 import type { SetupCategory, SetupCategoryIconKey } from "@/lib/setup/setupConfig";
 import { setupScreenRegistry } from "@/lib/setup/screenRegistry";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { canSeeNavEntry, readUserPermissions } from "@/lib/auth/navPermissions";
 
 const categoryIcons: Record<SetupCategoryIconKey, typeof GearIcon> = {
   gear: GearIcon,
@@ -40,6 +42,8 @@ export function SetupShell({
   const t = useTranslations();
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(() => new Set([activeCategory.key]));
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const { user } = useAuth();
+  const granted = readUserPermissions(user);
 
   const toggleCategory = (key: string) => {
     setExpandedKeys((current) => {
@@ -85,7 +89,7 @@ export function SetupShell({
 
             {isExpanded ? (
               <div className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-border pl-3">
-                {category.items.map((item) => {
+                {category.items.filter((item) => canSeeNavEntry(item.permission, granted)).map((item) => {
                   const isActiveItem = isActiveCategory && item.slug === activeScreenSlug;
                   const isLink = isAcademicStructure || `${category.slug}/${item.slug}` in setupScreenRegistry;
 

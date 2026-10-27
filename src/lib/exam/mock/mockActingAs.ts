@@ -1,4 +1,4 @@
-import { SEED_TEACHERS } from "@/lib/exam/mock/examMockSeeds";
+import { SEED_SECTIONAL_HEADS, SEED_TEACHERS } from "@/lib/exam/mock/examMockSeeds";
 
 /**
  * MOCK-ONLY "who am I" for the Exam mock. The real backend reads the
@@ -10,17 +10,21 @@ export const MOCK_ADMIN = "admin";
 
 const STORAGE_KEY = "zsms.mockExam.actingAs";
 
-export type MockActor = { id: string; name: string | null };
+export type MockActor = { id: string; name: string | null; kind: "admin" | "teacher" | "sectionalHead" };
 
 export function mockActors(): MockActor[] {
-  return [{ id: MOCK_ADMIN, name: null }, ...SEED_TEACHERS.map((teacher) => ({ id: teacher.id, name: teacher.name }))];
+  return [
+    { id: MOCK_ADMIN, name: null, kind: "admin" },
+    ...SEED_TEACHERS.map((teacher): MockActor => ({ id: teacher.id, name: teacher.name, kind: "teacher" })),
+    ...SEED_SECTIONAL_HEADS.map((head): MockActor => ({ id: head.id, name: head.name, kind: "sectionalHead" })),
+  ];
 }
 
 export function getMockActingAs(): string {
   if (typeof window === "undefined") return MOCK_ADMIN;
   try {
     const value = window.localStorage.getItem(STORAGE_KEY);
-    return value && (value === MOCK_ADMIN || SEED_TEACHERS.some((teacher) => teacher.id === value)) ? value : MOCK_ADMIN;
+    return value && mockActors().some((actor) => actor.id === value) ? value : MOCK_ADMIN;
   } catch {
     return MOCK_ADMIN;
   }

@@ -3,11 +3,14 @@ import type { AssessmentStructure } from "@/lib/setup/assessmentConfiguration/as
 import { allLeaves, buildMarkColumns } from "@/lib/exam/markColumns";
 import type { Exam, GradeBasedStructure, GradeMarkRow, SubjectMarkRow } from "@/lib/exam/examTypes";
 import {
+  SEED_ARM_SUBJECTS,
   SEED_CLASS_GRADE_STRUCTURE,
+  SEED_CLASS_TEACHERS,
   SEED_CLASS_STRUCTURE,
   SEED_CLASSES,
   SEED_GRADE_SCALES,
   SEED_GRADE_STRUCTURES,
+  SEED_SECTIONAL_HEADS,
   SEED_TEACHERS,
   seedHash,
   seedRoster,
@@ -51,7 +54,7 @@ export function markKey(examId: string, subjectId: string, armId: string, studen
   return `${examId}|${subjectId}|${armId}|${studentId}`;
 }
 
-function readStore<T>(key: string): Record<string, T> {
+export function readStore<T>(key: string): Record<string, T> {
   if (typeof window === "undefined") return {};
   try {
     const raw = window.localStorage.getItem(key);
@@ -63,7 +66,7 @@ function readStore<T>(key: string): Record<string, T> {
   return {};
 }
 
-function writeStore(key: string, value: unknown): void {
+export function writeStore(key: string, value: unknown): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
@@ -108,12 +111,33 @@ export function inScope(subjectId: string, armId: string): boolean {
   return !!teacher?.assignments.some((a) => a.subject_id === subjectId && a.class_arm_id === armId);
 }
 
-/** Arm-level scope for results: admin = every arm; a teacher = arms they teach any subject in. */
-export function armInScope(armId: string): boolean {
+/** The caller's role on one arm's results (null = no access). Most senior role wins. */
+export type ArmRole = "admin" | "sectional_head" | "class_teacher" | "subject_teacher";
+
+export function armRole(armId: string): ArmRole | null {
   const actor = getMockActingAs();
-  if (actor === MOCK_ADMIN) return true;
+  if (actor === MOCK_ADMIN) return "admin";
+  const classId = classOfArm(armId);
+  if (classId && SEED_SECTIONAL_HEADS.some((head) => head.id === actor && head.class_ids.includes(classId))) return "sectional_head";
+  if (SEED_CLASS_TEACHERS[armId] === actor) return "class_teacher";
   const teacher = SEED_TEACHERS.find((item) => item.id === actor);
-  return !!teacher?.assignments.some((a) => a.class_arm_id === armId);
+  return teacher?.assignments.some((a) => a.class_arm_id === armId) ? "subject_teacher" : null;
+}
+
+/**
+ * Arm-level scope for results: admin = every arm; sectional head = their
+ * classes' arms; class teacher = their arm; a subject teacher = arms they
+ * teach any subject in.
+ */
+export function armInScope(armId: string): boolean {
+  return armRole(armId) !== null;
+}
+
+/** The subjects the caller teaches in the arm (what a subject teacher's report view is limited to). */
+export function taughtSubjects(armId: string): string[] {
+  const teacher = SEED_TEACHERS.find((item) => item.id === getMockActingAs());
+  const offered = new Set((SEED_ARM_SUBJECTS[armId] ?? []).map((offer) => offer.subject_id));
+  return (teacher?.assignments ?? []).filter((a) => a.class_arm_id === armId && offered.has(a.subject_id)).map((a) => a.subject_id);
 }
 
 export function classOfArm(armId: string): string | null {

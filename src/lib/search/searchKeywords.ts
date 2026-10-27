@@ -10,6 +10,7 @@ export const SETUP_ITEM_KEYWORDS: Record<string, string[]> = {
   awardBodies: ["WAEC", "NECO", "Cambridge", "IB", "Edexcel", "exam board", "examining body"],
   schoolTypes: ["Creche", "Nursery", "Primary", "JSS", "SSS", "Junior Secondary", "Senior Secondary"],
   departments: ["HOD", "head of department", "line manager"],
+  grades: ["grade", "grades", "grade bands", "grading", "grade weight", "GPA", "GPA grades", "score range", "remark", "A1", "F9"],
   classSubjects: ["core", "elective"],
   studentTermDetails: ["roll number", "roll no", "promotion", "class placement"],
   assessmentTypes: ["score structure", "CA", "continuous assessment", "exam", "test", "assignment", "marks", "weighting"],
@@ -25,12 +26,27 @@ export const NAV_CHILD_KEYWORDS: Record<string, string[]> = {
   hrAssignmentReview: ["carry forward", "carried forward", "new year", "rollover", "unmatched", "remap", "teaching assignments", "class teacher"],
 };
 
-/** Exam › Results › View Results (computed, Stage 2a) — one entry per sub-tab. */
-export const SEARCH_VIEW_RESULTS_KEYWORDS: Record<"all" | "grades" | "gpa", string[]> = {
-  all: ["results", "class results", "positions", "position", "class position", "average", "grand total", "cumulative", "value added", "VA", "broadsheet results"],
-  grades: ["grades", "grade results", "overall grade", "attainment", "CAG"],
-  gpa: ["GPA", "grade point average", "units", "subject units"],
-};
+/** Exam › Results › View Results (results reframe: arm cards -> student list -> report). */
+export const SEARCH_VIEW_RESULTS_KEYWORDS = [
+  "results",
+  "class results",
+  "report",
+  "report card",
+  "student report",
+  "rank",
+  "position",
+  "class average",
+  "total average",
+  "class PDF",
+  "psychomotor",
+  "affective",
+  "traits",
+  "class teacher remarks",
+  "head teacher remarks",
+];
+
+/** Exam › Broad Sheet (the students × subjects matrix, moved from Results). */
+export const SEARCH_BROAD_SHEET_KEYWORDS = ["broadsheet", "broad sheet", "matrix", "all subjects", "grand total", "cumulative", "value added", "VA", "CAG"];
 
 /** Exam › Results › Academic Report (British grade-based entry, Stage 1c). */
 export const SEARCH_ACADEMIC_REPORT_KEYWORDS = [

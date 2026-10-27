@@ -27,7 +27,8 @@ export type ScoreBand = {
   max: number;
   remark: string;
   grade_weight: number;
-  gpa: number;
+  /** null = the school doesn't use GPA for this band (Setup › Grades). */
+  gpa: number | null;
 };
 
 export type ScoreGradeScale = { id: string; name: string; bands: ScoreBand[] };
@@ -97,6 +98,7 @@ export type ClassResultRow = {
   /** Keyed by subject_id; a subject with no entry here isn't offered to the student. */
   subjects: Record<string, SubjectResult>;
   aggregate: StudentTermResult;
+  traits_status: TraitsStatus;
 };
 
 /** GET erp/results — the computed class results for one arm and term (one page of students). */
@@ -114,6 +116,9 @@ export type ClassResults = {
   subjects: ResultSubjectColumn[];
   /** Students ranked in this arm (positions are "of" this). */
   ranked_count: number;
+  /** Mean of the students' averages (those with one); null for grade-based classes. */
+  class_average: number | null;
+  viewer: ResultsViewer;
   items: ClassResultRow[];
   total: number;
   page: number;
@@ -135,4 +140,77 @@ export type StudentResult = {
   subjects: Array<SubjectResult & ResultSubjectColumn>;
   aggregate: StudentTermResult;
   ranked_count: number;
+};
+
+// ---------------------------------------------------------------------------
+// Results reframe (2026-10-27): arm cards, viewer role, student-wise traits
+// ---------------------------------------------------------------------------
+
+/** The caller's role on an arm's results — decides the report view and who enters traits. */
+export const RESULTS_VIEWER_ROLES = ["admin", "sectional_head", "class_teacher", "subject_teacher"] as const;
+export type ResultsViewerRole = (typeof RESULTS_VIEWER_ROLES)[number];
+
+/**
+ * What the caller may see / do on this arm's reports. A subject teacher's
+ * report shows only their subjects (`visible_subject_ids`; the rest greyed
+ * out); class teacher, sectional head and admin see the full report. Only
+ * the class teacher enters the student-wise traits and remarks.
+ */
+export type ResultsViewer = {
+  role: ResultsViewerRole;
+  report_scope: "full" | "own_subjects";
+  /** null = every subject (full report). */
+  visible_subject_ids: string[] | null;
+  can_enter_traits: boolean;
+};
+
+/** none = nothing entered; partial = some ratings / remarks; complete = every rating + both remarks. */
+export const TRAITS_STATUSES = ["none", "partial", "complete"] as const;
+export type TraitsStatus = (typeof TRAITS_STATUSES)[number];
+
+/** One arm card: GET erp/results/arms. */
+export type ArmResultSummary = {
+  class_id: string;
+  class_name: string;
+  class_arm_id: string;
+  arm_name: string;
+  assessment_mode: AssessmentMode;
+  student_count: number;
+  /** Mean of the averages of the students who have one; null for grade-based classes or when nobody has a result. */
+  class_average: number | null;
+};
+
+export type ResultsArms = {
+  academic_year_id: string;
+  years: Array<{ id: string; name: string; is_current: boolean }>;
+  terms: Array<{ id: string; name: string }>;
+  term_id: string;
+  /** Arms in the caller's results scope, classes in school order. */
+  items: ArmResultSummary[];
+  full_scope: boolean;
+};
+
+export type TraitRatingLevel = { value: number; label: string };
+export type TraitItem = { key: string; label: string; rating: number | null };
+
+/** GET / PUT erp/results/:student_id/traits?term_id= — the class teacher's student-wise entry. */
+export type StudentTraits = {
+  student_id: string;
+  student_name: string;
+  term_id: string;
+  rating_scale: TraitRatingLevel[];
+  psychomotor: TraitItem[];
+  affective: TraitItem[];
+  class_teacher_remark: string;
+  head_teacher_remark: string;
+  updated_at: string | null;
+  /** Whether the caller may save (class teacher of the arm). */
+  editable: boolean;
+};
+
+export type SaveStudentTraitsInput = {
+  term_id: string;
+  ratings: Record<string, number | null>;
+  class_teacher_remark: string;
+  head_teacher_remark: string;
 };
