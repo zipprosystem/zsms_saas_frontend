@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { SelectField } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { ExportMenu } from "@/components/setup/ExportMenu";
@@ -18,6 +18,8 @@ import { failureMessage, InfoItem, Notice } from "@/components/exam/examEntrySha
 import { PositionValue, ResultStatusBadge, useResultNumber } from "@/components/exam/results/resultsDisplay";
 import { classesOf, YearTermSelects } from "@/components/exam/results/ArmCardsView";
 import { StudentTraitsPanel } from "@/components/exam/results/StudentTraitsPanel";
+import { StudentReportViewer } from "@/components/exam/results/StudentReportViewer";
+import { generateClassReportPdf, type ClassPdfJob } from "@/lib/exam/report/reportPayload";
 import type { ResultsNavigate, ResultsParams } from "@/components/exam/results/ResultsScreen";
 
 const TH = "px-3 py-2.5 text-left text-xs font-semibold text-text-secondary align-bottom";
@@ -55,10 +57,21 @@ export function ClassResultList({
   const [page, setPage] = useState(1);
   const [traitsFor, setTraitsFor] = useState<{ id: string; name: string } | null>(null);
   const [traitsOpen, setTraitsOpen] = useState(false);
+  const [reportFor, setReportFor] = useState<{ id: string; name: string } | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [classPdf, setClassPdf] = useState<{ job: ClassPdfJob | null; error: string | null } | null>(null);
 
   useEffect(() => {
     setPage(1);
+    setClassPdf(null);
   }, [params.arm, termId, actingAs]);
+
+  // Class PDF = the backend's batch job (async, cached); this asks for it and shows where it stands.
+  const classPdfMutation = useMutation({
+    mutationFn: () => generateClassReportPdf(params.arm, termId),
+    onSuccess: (result) => setClassPdf(result.ok ? { job: result.data, error: null } : { job: null, error: failureMessage(result, t) }),
+    onError: () => setClassPdf({ job: null, error: t("setup.dataTable.errors.loadFailed") }),
+  });
 
   const query = useQuery({
     queryKey: [...resultsQueryKeys.classResults(params.arm, termId, "all", page), "list", actingAs],
@@ -107,6 +120,10 @@ export function ClassResultList({
           onEnterTraits={(row) => {
             setTraitsFor({ id: row.student_id, name: row.student_name });
             setTraitsOpen(true);
+          }}
+          onViewReport={(row) => {
+            setReportFor({ id: row.student_id, name: row.student_name });
+            setReportOpen(true);
           }}
         />
         {totalPages > 1 ? (
@@ -195,21 +212,53 @@ export function ClassResultList({
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-category-amber-tint px-4 py-3 text-sm text-text-primary sm:flex-row sm:items-center sm:justify-between">
-        <p>{k("list.reportUnavailable")}</p>
-        <div className="flex shrink-0 flex-wrap gap-2">
-          <span title={k("list.reportUnavailableShort")}>
-            <Button type="button" variant="secondary" disabled className="h-10 px-4 text-sm">
-              {k("list.generateClassPdf")}
-            </Button>
-          </span>
-          {exportConfig ? <ExportMenu config={exportConfig} /> : null}
+      {data ? (
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap justify-end gap-2">
+            {data.viewer.report_scope === "full" ? (
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={classPdfMutation.isPending || data.items.length === 0}
+                onClick={() => classPdfMutation.mutate()}
+                className="h-10 px-4 text-sm"
+              >
+                {classPdfMutation.isPending ? k("classPdf.requesting") : k("list.generateClassPdf")}
+              </Button>
+            ) : null}
+            {exportConfig ? <ExportMenu config={exportConfig} /> : null}
+          </div>
+          {classPdf ? <ClassPdfNotice state={classPdf} /> : null}
         </div>
-      </div>
+      ) : null}
 
       <div className="flex min-w-0 flex-col gap-3">{body}</div>
 
       <StudentTraitsPanel student={traitsFor} termId={termId} isOpen={traitsOpen} onClose={() => setTraitsOpen(false)} />
+      <StudentReportViewer student={reportFor} termId={termId} isOpen={reportOpen} onClose={() => setReportOpen(false)} />
+    </div>
+  );
+}
+
+/** Where the class PDF request stands (the mock always answers "runs on the server, not here"). */
+function ClassPdfNotice({ state }: { state: { job: ClassPdfJob | null; error: string | null } }) {
+  const t = useTranslations("exam.viewResults.classPdf");
+  if (state.error || !state.job) {
+    return (
+      <p role="alert" className="rounded-md border border-error px-3 py-2 text-sm text-error">
+        {state.error ?? t("failed")}
+      </p>
+    );
+  }
+  const { job } = state;
+  return (
+    <div role="status" className="flex flex-col gap-2 rounded-lg border border-border bg-category-amber-tint px-4 py-3 text-sm text-text-primary sm:flex-row sm:items-center sm:justify-between">
+      <span>{job.message ?? t(job.status)}</span>
+      {job.status === "ready" && job.download_url ? (
+        <a href={job.download_url} className="shrink-0 font-medium text-accent hover:underline" target="_blank" rel="noopener noreferrer">
+          {t("download")}
+        </a>
+      ) : null}
     </div>
   );
 }
@@ -230,10 +279,12 @@ function StudentTable({
   data,
   firstSerial,
   onEnterTraits,
+  onViewReport,
 }: {
   data: ClassResults;
   firstSerial: number;
   onEnterTraits: (row: ClassResultRow) => void;
+  onViewReport: (row: ClassResultRow) => void;
 }) {
   const t = useTranslations();
   const k = (key: string, values?: Record<string, string | number>) => t(`exam.viewResults.${key}`, values);
@@ -317,16 +368,14 @@ function StudentTable({
                 </td>
               ) : null}
               <td className={`${TD} text-right`}>
-                <span title={k("list.reportUnavailableShort")} className="inline-block">
-                  <button
-                    type="button"
-                    disabled
-                    aria-label={k("list.viewReportFor", { name: row.student_name })}
-                    className="cursor-not-allowed whitespace-nowrap rounded-md border border-border px-3 py-1.5 text-sm text-text-muted opacity-60"
-                  >
-                    {k("list.viewReport")}
-                  </button>
-                </span>
+                <button
+                  type="button"
+                  onClick={() => onViewReport(row)}
+                  aria-label={k("list.viewReportFor", { name: row.student_name })}
+                  className="whitespace-nowrap rounded-md border border-border px-3 py-1.5 text-sm font-medium text-accent transition-colors hover:bg-brand-tint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  {k("list.viewReport")}
+                </button>
               </td>
             </tr>
           ))}

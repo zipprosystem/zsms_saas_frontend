@@ -88,6 +88,9 @@ import {
  *     403 FORBIDDEN unless the caller is the arm's class teacher; 422 for
  *     an unknown trait key, a value off the scale, or a remark > 500 chars.
  *
+ * REPORT RENDER (2026-10-27): the per-student report payload and the
+ * class PDF request — contract in report/reportPayload.ts.
+ *
  * Rules: resultsEngine.ts (the reference implementation).
  *
  * FLAGGED for confirmation (Matthew / Muntajir):

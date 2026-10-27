@@ -3143,14 +3143,47 @@
         "exportTitle": "{arm} results — {term}",
         "classAverage": "Class average",
         "yourView": "Your report view",
-        "reportUnavailable": "Reports can't be opened yet: rendering a student's result into the school's result template isn't built. View Report, its print / PDF actions and the class PDF switch on once it is.",
-        "reportUnavailableShort": "Not available yet — template rendering isn't built",
         "generateClassPdf": "Generate class PDF",
         "caption": "Students' results for the class-arm",
         "subjectsGraded": "{graded} of {total} subjects",
         "averageDetail": "{total} ÷ {count, plural, one {# subject} other {# subjects}} · {percent}%",
         "viewReport": "View report",
-        "viewReportFor": "View report for {name} (not available yet)"
+        "viewReportFor": "View report for {name}"
+      },
+      "report": {
+        "title": "Report — {name}",
+        "documentTitle": "{name} — {term} report",
+        "frameTitle": "Report card for {name}",
+        "variant": {
+          "label": "Report",
+          "progress": "Progress (mid-term)",
+          "full": "Full (end of term)"
+        },
+        "pages": {
+          "label": "Pages",
+          "page": "Page {n}",
+          "all": "All pages"
+        },
+        "template": {
+          "label": "Template (mock preview)",
+          "assigned": "{name} (assigned)",
+          "help": "Mock only: see this student in any template. The real report always uses the class's assigned template."
+        },
+        "print": "Print / save as PDF",
+        "printPage": "Print page {n} / save as PDF",
+        "printHelp": "To download, choose “Save as PDF” in the print dialog.",
+        "ownScope": "You're viewing as a subject teacher: only your subjects' scores are shown. The other subjects are greyed out and their scores aren't sent to you.",
+        "noTemplate": "No result template is assigned to this class yet, so the report can't be shown. Assign one in Setup › School Types.",
+        "templateLoadFailed": "The result template couldn't be loaded. Try again."
+      },
+      "classPdf": {
+        "requesting": "Requesting…",
+        "unavailable": "The class PDF is generated on the server, and that isn't available in this preview yet. To print now, open each student's report.",
+        "queued": "The class PDF is queued. It will be ready to download shortly.",
+        "processing": "The class PDF is being generated…",
+        "ready": "The class PDF is ready.",
+        "failed": "The class PDF couldn't be generated. Try again later.",
+        "download": "Download class PDF"
       },
       "columns": {
         "sn": "S/N",

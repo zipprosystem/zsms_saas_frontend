@@ -3151,14 +3151,47 @@
         "exportTitle": "Résultats {arm} — {term}",
         "classAverage": "Moyenne de la classe",
         "yourView": "Votre vue du bulletin",
-        "reportUnavailable": "Les bulletins ne peuvent pas encore être ouverts : l'affichage du résultat d'un élève dans le modèle de bulletin de l'école n'est pas construit. « Voir le bulletin », ses actions d'impression / PDF et le PDF de la classe s'activeront ensuite.",
-        "reportUnavailableShort": "Pas encore disponible — l'affichage dans le modèle n'est pas construit",
         "generateClassPdf": "Générer le PDF de la classe",
         "caption": "Résultats des élèves de la classe-section",
         "subjectsGraded": "{graded} matières sur {total}",
         "averageDetail": "{total} ÷ {count, plural, one {# matière} other {# matières}} · {percent} %",
         "viewReport": "Voir le bulletin",
-        "viewReportFor": "Voir le bulletin de {name} (pas encore disponible)"
+        "viewReportFor": "Voir le bulletin de {name}"
+      },
+      "report": {
+        "title": "Bulletin — {name}",
+        "documentTitle": "{name} — bulletin du {term}",
+        "frameTitle": "Bulletin de {name}",
+        "variant": {
+          "label": "Bulletin",
+          "progress": "Intermédiaire (mi-trimestre)",
+          "full": "Complet (fin de trimestre)"
+        },
+        "pages": {
+          "label": "Pages",
+          "page": "Page {n}",
+          "all": "Toutes les pages"
+        },
+        "template": {
+          "label": "Modèle (aperçu simulé)",
+          "assigned": "{name} (attribué)",
+          "help": "Simulation uniquement : voir cet élève dans n'importe quel modèle. Le vrai bulletin utilise toujours le modèle attribué à la classe."
+        },
+        "print": "Imprimer / enregistrer en PDF",
+        "printPage": "Imprimer la page {n} / enregistrer en PDF",
+        "printHelp": "Pour télécharger, choisissez « Enregistrer au format PDF » dans la fenêtre d'impression.",
+        "ownScope": "Vous consultez en tant qu'enseignant de matière : seules les notes de vos matières s'affichent. Les autres matières sont grisées et leurs notes ne vous sont pas envoyées.",
+        "noTemplate": "Aucun modèle de bulletin n'est encore attribué à cette classe ; le bulletin ne peut pas s'afficher. Attribuez-en un dans Configuration › Types d'école.",
+        "templateLoadFailed": "Le modèle de bulletin n'a pas pu être chargé. Réessayez."
+      },
+      "classPdf": {
+        "requesting": "Demande en cours…",
+        "unavailable": "Le PDF de la classe est généré sur le serveur, ce qui n'est pas encore disponible dans cet aperçu. Pour imprimer maintenant, ouvrez le bulletin de chaque élève.",
+        "queued": "Le PDF de la classe est en file d'attente. Il sera bientôt prêt à télécharger.",
+        "processing": "Le PDF de la classe est en cours de génération…",
+        "ready": "Le PDF de la classe est prêt.",
+        "failed": "Le PDF de la classe n'a pas pu être généré. Réessayez plus tard.",
+        "download": "Télécharger le PDF de la classe"
       },
       "columns": {
         "sn": "N°",

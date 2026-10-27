@@ -33,10 +33,15 @@ function buildSrcDoc(html: string, focus: PreviewFocus | undefined, variant: "th
   return `<!doctype html><html data-theme="light">${html}<style>${css}</style>`;
 }
 
-async function fetchPreviewHtml(path: string): Promise<string> {
+/** The design file's HTML — shared (and cached under one query key) with the report viewer. */
+export async function fetchPreviewHtml(path: string): Promise<string> {
   const response = await fetch(path);
   if (!response.ok) throw new Error(`Preview ${response.status}`);
   return response.text();
+}
+
+export function templateHtmlQueryKey(path: string | null): readonly unknown[] {
+  return ["templatePreviewHtml", path];
 }
 
 /** Keeps a fixed virtual viewport scaled to the container's width. */
@@ -73,7 +78,7 @@ export function TemplatePreviewFrame({ previewPath, title, focus, variant, virtu
   const t = useTranslations();
   const { containerRef, scale } = useScaleToWidth(virtualWidth);
   const query = useQuery({
-    queryKey: ["templatePreviewHtml", previewPath],
+    queryKey: templateHtmlQueryKey(previewPath),
     queryFn: () => fetchPreviewHtml(previewPath as string),
     enabled: !!previewPath,
     staleTime: Infinity,

@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lela Blossom Report</title>
-<meta name="description" content="LeLa Blossom Schools JSS terminal report — CA (five-component) and Exam variants, with a Term toggle; in 2nd/3rd term the Exam view adds prior-term totals and the cumulative average.">
+<meta name="zsms-report-pages" content="2">
+<meta name="description" content="LeLa Blossom Schools JSS terminal report — CA (five-component) and Exam variants, with a Term toggle; in 2nd/3rd term the Exam view adds prior-term totals and the cumulative average. Page 2 holds the subject teachers' comments.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
@@ -96,9 +97,19 @@
   .remarks .txt{padding:6px 9px;line-height:1.4;}
   .remarks .sig{padding:6px 9px;border-left:1px solid var(--rule);color:var(--ink-soft);font-size:8.5px;}
 
+  /* Page 2 — subject teachers' comments */
+  .sheet + .sheet{margin-top:24px;}
+  .p2title{font-family:"Playfair Display";font-weight:800;font-size:20px;color:var(--navy);text-align:center;padding:2px 4px 8px;border-bottom:3px solid var(--blue);}
+  .subs.comments tbody td{text-align:left;vertical-align:top;}
+  .subs.comments td.cm{font-size:8.6px;line-height:1.45;}
+  .subs.comments td.tn{font-size:8.4px;color:var(--ink-soft);white-space:nowrap;}
+  .subs.comments th:nth-child(1){width:30%;} .subs.comments th:nth-child(3){width:22%;}
+  .zsms-redacted td{opacity:.38;}
+
   @media (max-width:800px){.sheet{width:100%;min-height:0;padding:12px;}.wmk b{font-size:58px;}}
   @media print{@page{size:A4 portrait;margin:0;}body{background:#fff;padding:0;}.controls,.hint{display:none!important;}
-    .sheet{width:auto;min-height:auto;margin:0;border:0;box-shadow:none;padding:7mm;}}
+    .sheet{width:auto;min-height:auto;margin:0;border:0;box-shadow:none;padding:7mm;}
+    .sheet + .sheet{margin-top:0;break-before:page;}}
 </style>
 </head>
 <body>
@@ -118,7 +129,7 @@
   </div>
   <p class="hint">LeLa Blossom JSS report — <b>sample data</b>: pupil, teacher and contact details are placeholders. In the <b>Exam</b> view the term columns grow — 1st term shows Subject Average; <b>3rd term</b> adds Second Term Total, First Term Total and <b>Cumulative Average</b>.</p>
 
-  <div class="sheet">
+  <div class="sheet" data-zsms-page="1">
     <div class="wmk"><b>Nurturing Excellent Minds</b></div>
 
     <div class="head">
@@ -187,7 +198,127 @@
     </div>
   </div>
 
+  <!-- ===================== PAGE 2 — subject comments ===================== -->
+  <div class="sheet p2" data-zsms-page="2">
+    <div class="wmk"><b id="p2Wmk">Nurturing Excellent Minds</b></div>
+
+    <div class="p2title">Subject Teachers&rsquo; Comments</div>
+
+    <div class="bio">
+      <div class="r">
+        <div class="c"><span class="k">Admission No.:</span><span class="v" id="p2Adm">LBS/JS/0000</span></div>
+        <div class="c"><span class="k">Term:</span><span class="v" id="p2Term">First Term (07/09/2025 – 12/12/2025)</span></div>
+        <div class="c"><span class="k">Time School Opened:</span><span class="v" id="p2Opened">130</span></div>
+      </div>
+      <div class="r">
+        <div class="c"><span class="k">Attendance:</span><span class="v" id="p2Attend">126</span></div>
+        <div class="c"><span class="k">Resumption Date:</span><span class="v" id="p2Resume">07/01/2026</span></div>
+        <div class="c"></div>
+      </div>
+    </div>
+
+    <table class="subs comments">
+      <thead><tr><th class="s">Subject</th><th class="s">Comments</th><th class="s">Teacher Name</th></tr></thead>
+      <tbody id="cmtBody"></tbody>
+    </table>
+  </div>
+
 <script>
+  window.__ZSMS_PAGES__ = 2;
+  /* ---- ZSMS report data hook ----------------------------------------
+     The app injects one student's report payload as window.__ZSMS_REPORT__
+     (contract: src/lib/exam/report/reportPayload.ts) before this file runs.
+     With it, the template renders from the payload; without it (catalog
+     preview), it shows its own sample data. The template does no
+     arithmetic — every number is the payload's. */
+  var Z = window.__ZSMS_REPORT__ || null;
+  if (Z) document.documentElement.classList.add("zsms-live");
+  function zEsc(v){return v==null?"":String(v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  function zTxt(v){return v==null||v===""?"—":zEsc(v);}
+  function zNum(v,dp){if(v==null||typeof v!=="number"||!isFinite(v))return "—";return dp==null?String(Math.round(v*100)/100):v.toFixed(dp);}
+  function zOrd(n){if(n==null)return "—";var s=["th","st","nd","rd"],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}
+  function zDate(iso){if(!iso)return "—";var p=String(iso).split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:zEsc(iso);}
+  function zMax(v){return v==null?"":zNum(v%1>=0.9?Math.floor(v):v);}
+  function zRange(b){return b.min==null?"":zNum(b.min)+"–"+zMax(b.max);}
+  function zKey(){return (Z.grade_key||[]).filter(function(b){return b.show_on_report;});}
+  function zPoint(kind){var p=Z.meta.points||[];for(var i=0;i<p.length;i++)if(p[i].kind===kind)return p[i];return null;}
+  /* The class's leaves of one kind (ca|exam|rating), from the first subject that has them. */
+  function zLeaves(kind){var s=(Z.subjects||[]).filter(function(x){return !x.redacted&&(x.components||[]).some(function(c){return c.kind===kind;});})[0];return s?s.components.filter(function(c){return c.kind===kind;}):[];}
+  function zComp(s,kind,i){var c=(s.components||[]).filter(function(x){return x.kind===kind;})[i];return c?c.score:null;}
+  function zImg(url,fallback){return url?'<img src="'+zEsc(url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':fallback;}
+  function zRow(s){return s.redacted?' class="zsms-redacted"':"";}
+  function zAddress(){return [Z.school.address,Z.school.motto].filter(Boolean).map(zEsc).join(" &middot; ");}
+
+  function zRender(){
+    var isFull=Z.meta.variant==="full", st=Z.student, ag=Z.aggregate, at=Z.attendance, n=Math.min(3,Z.meta.term.number||1);
+    document.querySelector(".controls").style.display="none";
+    document.querySelector(".hint").style.display="none";
+    var motto=Z.school.motto||"";
+    document.querySelectorAll(".wmk b").forEach(function(b){b.textContent=motto||Z.school.name;});
+    document.querySelector(".head .logo").innerHTML=Z.school.logo_url?zImg(Z.school.logo_url,""):
+      '<div class="l1">'+zEsc(String(Z.school.name).toUpperCase())+'</div><div class="l2">'+zEsc(motto)+"</div>";
+    document.querySelector(".sch h1").textContent=Z.school.name;
+    document.querySelector(".sch .mt").textContent=motto?"Motto: "+motto:"";
+    document.querySelector(".sch .ad").innerHTML=zTxt(Z.school.address);
+    document.querySelector(".head .photo").innerHTML=zImg(st.photo_url,"PHOTO");
+
+    var t=Z.meta.term, termText=zEsc(t.name)+(t.start_date?" ("+zDate(t.start_date)+" – "+zDate(t.end_date)+")":"");
+    function c(k,v){return '<div class="c"><span class="k">'+k+'</span><span class="v">'+v+"</span></div>";}
+    document.querySelector(".sheet .bio").innerHTML=
+      '<div class="r">'+c("Admission No.:",zTxt(st.admission_no))+c("Term:",termText)+c("Time School Opened:",zNum(at.time_school_opened))+"</div>"+
+      '<div class="r">'+c("Fullname:",zTxt(st.full_name))+c("Class:",zTxt(st["class"])+" "+zTxt(st.arm))+c("Attendance:",zNum(at.present))+"</div>"+
+      '<div class="r">'+c("Gender:",zTxt(st.gender))+c("Date of Birth:",zDate(st.dob))+c("Resumption Date:",zDate(st.resumption_date))+"</div>";
+
+    function rem(s){return s.grade?zEsc(s.grade)+(s.remark?" · "+zEsc(String(s.remark).toUpperCase()):""):"—";}
+    function num(v){return '<td class="num">'+zNum(v,2)+"</td>";}
+    var head=document.getElementById("subHead"), body=document.getElementById("subBody"), foot=document.getElementById("subFoot");
+    var ca=zLeaves("ca"), ex=zLeaves("exam"), avg=ag.average==null?"—":zNum(ag.average,2)+"%", cavg=ag.class_average==null?"—":zNum(ag.class_average,2)+"%";
+    var count=ag.subjects_counted==null?"—":ag.subjects_counted;
+    if(!isFull){
+      head.innerHTML='<tr><th class="s">Subject</th>'+ca.map(function(l){return "<th>"+zEsc(l.label)+"<br>("+zNum(l.max)+")</th>";}).join("")+"<th>Total<br>(100%)</th><th>Remarks</th></tr>";
+      body.innerHTML=Z.subjects.map(function(s){return "<tr"+zRow(s)+'><td class="s">'+zEsc(String(s.name).toUpperCase())+"</td>"+ca.map(function(l,i){return num(zComp(s,"ca",i));}).join("")+
+        '<td class="num"><b>'+zNum(s.total,2)+'</b></td><td class="rem">'+rem(s)+"</td></tr>";}).join("");
+      foot.innerHTML='<tr><td colspan="'+(ca.length+3)+'">No of Subjects: '+count+" &nbsp;·&nbsp; Total Score: "+zNum(ag.grand_total,2)+
+        " &nbsp;·&nbsp; Student’s Average: "+avg+" &nbsp;·&nbsp; Class Average: "+cavg+"</td></tr>";
+    } else {
+      // Columns grow by term (design): prior-term totals / class highest-lowest aren't in the payload yet -> "—".
+      var extra=n===1?["Subject<br>Average"]:n===2?["First Term<br>Total","Cumulative<br>Average"]:["Second Term<br>Total","First Term<br>Total","Cumulative<br>Average"];
+      var leaves=ca.concat(ex);
+      head.innerHTML='<tr><th class="s">Subject</th>'+leaves.map(function(l){return "<th>"+zEsc(l.label)+"<br>("+zNum(l.max)+")</th>";}).join("")+
+        "<th>Exam<br>Total (100)</th>"+extra.map(function(h){return "<th>"+h+"</th>";}).join("")+"<th>Class<br>Highest</th><th>Class<br>Lowest</th><th>Remarks</th></tr>";
+      body.innerHTML=Z.subjects.map(function(s){
+        var cells=ca.map(function(l,i){return num(zComp(s,"ca",i));}).join("")+ex.map(function(l,i){return num(zComp(s,"exam",i));}).join("");
+        var more=extra.map(function(h,i){return '<td class="num'+(n>1&&i===extra.length-1?" cum":"")+'">—</td>';}).join("");
+        return "<tr"+zRow(s)+'><td class="s">'+zEsc(String(s.name).toUpperCase())+"</td>"+cells+'<td class="num"><b>'+zNum(s.total,2)+"</b></td>"+more+
+          '<td class="num">—</td><td class="num">—</td><td class="rem">'+rem(s)+"</td></tr>";}).join("");
+      var span=leaves.length+extra.length+5;
+      foot.innerHTML='<tr><td colspan="'+span+'">No of Subjects: '+count+" &nbsp;·&nbsp; Obtained: "+zNum(ag.grand_total,2)+" &nbsp;·&nbsp; Obtainable: "+zNum(ag.marks_obtainable)+
+        " &nbsp;·&nbsp; Student’s Average: "+avg+" &nbsp;·&nbsp; Class Average: "+cavg+"</td></tr>"+
+        (n>1?'<tr><td class="cumline" colspan="'+span+'">Student cumulative average: '+zNum(ag.cumulative_average,2)+"</td></tr>":"");
+    }
+
+    function rr(list){return list.map(function(x){return '<div class="rr"><span>'+zEsc(x.skill)+"</span><span>"+zTxt(x.rating)+"</span></div>";}).join("");}
+    document.getElementById("affBody").innerHTML=rr(Z.traits.affective||[]);
+    document.getElementById("psyBody").innerHTML=rr(Z.traits.psychomotor||[]);
+    document.getElementById("gradeTbl").innerHTML=zKey().map(function(b){return '<tr><td class="g">'+zEsc(b.grade)+'</td><td class="rg num">'+zRange(b).replace("–"," – ")+'</td><td class="nm">'+zEsc(String(b.remark).toUpperCase())+"</td></tr>";}).join("");
+    // Distribution bands have no rule in the payload yet -> shown empty.
+    document.querySelector(".donut i").textContent="—";
+    document.querySelectorAll(".chart .legend div").forEach(function(d){d.lastChild.textContent=d.lastChild.textContent.replace(/\(\d+\)/,"(—)");});
+    document.querySelector(".ratingkey").innerHTML=(Z.traits.rating_key||[]).map(function(r){return "<div>"+zEsc(r.rating)+" — "+zEsc(String(r.descriptor).toUpperCase())+"</div>";}).join("");
+    document.getElementById("ctRem").textContent=Z.remarks.class_teacher||"—";
+    document.querySelectorAll(".remarks .rrow .txt")[1].textContent=Z.remarks.head_teacher||"—";
+    document.querySelectorAll(".remarks .sig b").forEach(function(b){b.innerHTML="&nbsp;";});
+    document.getElementById("sig1").textContent=""; document.getElementById("sig2").textContent="";
+
+    // Page 2: header band + Subject · Comments · Teacher name.
+    document.getElementById("p2Adm").innerHTML=zTxt(st.admission_no);
+    document.getElementById("p2Term").innerHTML=termText;
+    document.getElementById("p2Opened").innerHTML=zNum(at.time_school_opened);
+    document.getElementById("p2Attend").innerHTML=zNum(at.present);
+    document.getElementById("p2Resume").innerHTML=zDate(st.resumption_date);
+    document.getElementById("cmtBody").innerHTML=Z.subjects.map(function(s){return "<tr"+zRow(s)+'><td class="s">'+zEsc(String(s.name).toUpperCase())+'</td><td class="cm">'+zTxt(s.comment)+'</td><td class="tn">'+zTxt(s.teacher_name)+"</td></tr>";}).join("");
+  }
+
   // Subjects. e1 = first-term exam [ca1,ca2,exam60,total,subjAvg,high,low,rem]
   //           e3 = third-term exam  [ca1,ca2,exam60,total,high,low,rem]
   //           t2 = second-term total ; ca = CA 5-component [cw,hw,wk,ca,pj,total,rem]
@@ -291,6 +422,12 @@
       : "Sample remark — a good term; keep up the effort.";
   }
 
+  // Page 2 sample (preview only): one comment row per subject.
+  var CMT=["Sample comment — steady, careful work this term.","Sample comment — good participation; keep revising.","Sample comment — strong results; aim higher next term."];
+  document.getElementById("cmtBody").innerHTML=S.map(function(r,i){return '<tr><td class="s">'+r.n+'</td><td class="cm">'+CMT[i%CMT.length]+'</td><td class="tn">'+String.fromCharCode(65+i%8)+'. Teacher</td></tr>';}).join("");
+  function syncPage2(){var t=TERM[state.term-1];document.getElementById("p2Term").textContent=t.name;document.getElementById("p2Opened").textContent=t.opened;
+    document.getElementById("p2Attend").textContent=t.attend;document.getElementById("p2Resume").textContent=t.resume;}
+
   document.getElementById("affBody").innerHTML=AFF.map(function(r){return '<div class="rr"><span>'+r[0]+'</span><span>'+r[1]+'</span></div>';}).join("");
   document.getElementById("psyBody").innerHTML=PSY.map(function(r){return '<div class="rr"><span>'+r[0]+'</span><span>'+r[1]+'</span></div>';}).join("");
   document.getElementById("gradeTbl").innerHTML=GRADE.map(function(r){return '<tr><td class="g">'+r[0]+'</td><td class="rg num">'+r[1]+'</td><td class="nm">'+r[2]+'</td></tr>';}).join("");
@@ -298,8 +435,8 @@
   document.getElementById("typeCtl").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;
     state.type=b.dataset.type;[].forEach.call(this.querySelectorAll("button"),function(x){x.classList.toggle("on",x===b);});render();});
   document.getElementById("termCtl").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;
-    state.term=parseInt(b.dataset.term,10);[].forEach.call(this.querySelectorAll("button"),function(x){x.classList.toggle("on",x===b);});render();});
-  render();
+    state.term=parseInt(b.dataset.term,10);[].forEach.call(this.querySelectorAll("button"),function(x){x.classList.toggle("on",x===b);});render();syncPage2();});
+  if (Z) zRender(); else { render(); syncPage2(); }
 </script>
 </body>
 </html>

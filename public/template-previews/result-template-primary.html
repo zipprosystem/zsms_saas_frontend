@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Primary Terminal Report</title>
+<meta name="zsms-report-pages" content="1">
 <meta name="description" content="Nigerian primary-school terminal report (Damdel style) — CA and Exam variants, with a cumulative 3-term table that appears in third term.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -147,6 +148,7 @@
 
   @media (max-width:800px){ .sheet{width:100%;min-height:0;padding:14px;} .wm b{font-size:72px;} }
 
+  .zsms-redacted td{opacity:.38}
   @media print{
     @page{size:A4 portrait;margin:0;}
     body{background:#fff;padding:0;}
@@ -267,6 +269,97 @@
   </div>
 
 <script>
+  window.__ZSMS_PAGES__ = 1;
+  /* ---- ZSMS report data hook ----------------------------------------
+     The app injects one student's report payload as window.__ZSMS_REPORT__
+     (contract: src/lib/exam/report/reportPayload.ts) before this file runs.
+     With it, the template renders from the payload; without it (catalog
+     preview), it shows its own sample data. The template does no
+     arithmetic — every number is the payload's. */
+  var Z = window.__ZSMS_REPORT__ || null;
+  if (Z) document.documentElement.classList.add("zsms-live");
+  function zEsc(v){return v==null?"":String(v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  function zTxt(v){return v==null||v===""?"—":zEsc(v);}
+  function zNum(v,dp){if(v==null||typeof v!=="number"||!isFinite(v))return "—";return dp==null?String(Math.round(v*100)/100):v.toFixed(dp);}
+  function zOrd(n){if(n==null)return "—";var s=["th","st","nd","rd"],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}
+  function zDate(iso){if(!iso)return "—";var p=String(iso).split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:zEsc(iso);}
+  function zMax(v){return v==null?"":zNum(v%1>=0.9?Math.floor(v):v);}
+  function zRange(b){return b.min==null?"":zNum(b.min)+"–"+zMax(b.max);}
+  function zKey(){return (Z.grade_key||[]).filter(function(b){return b.show_on_report;});}
+  function zPoint(kind){var p=Z.meta.points||[];for(var i=0;i<p.length;i++)if(p[i].kind===kind)return p[i];return null;}
+  /* The class's leaves of one kind (ca|exam|rating), from the first subject that has them. */
+  function zLeaves(kind){var s=(Z.subjects||[]).filter(function(x){return !x.redacted&&(x.components||[]).some(function(c){return c.kind===kind;});})[0];return s?s.components.filter(function(c){return c.kind===kind;}):[];}
+  function zComp(s,kind,i){var c=(s.components||[]).filter(function(x){return x.kind===kind;})[i];return c?c.score:null;}
+  function zImg(url,fallback){return url?'<img src="'+zEsc(url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':fallback;}
+  function zRow(s){return s.redacted?' class="zsms-redacted"':"";}
+  function zAddress(){return [Z.school.address,Z.school.motto].filter(Boolean).map(zEsc).join(" &middot; ");}
+
+  function zRender(){
+    var isFull=Z.meta.variant==="full", st=Z.student, ag=Z.aggregate, at=Z.attendance, n=Z.meta.term.number||1;
+    document.querySelector(".controls").style.display="none";
+    document.querySelector(".hint").style.display="none";
+    var sheet=document.querySelector(".sheet");
+    sheet.setAttribute("data-zsms-page","1");
+    var termUpper=String(Z.meta.term.name||"").toUpperCase();
+
+    document.querySelector(".wm b").textContent=String(Z.school.motto||Z.school.name).toUpperCase();
+    document.querySelector(".head .badge").innerHTML=Z.school.logo_url?zImg(Z.school.logo_url,""):
+      '<div class="bk">'+zEsc(String(Z.school.name).toUpperCase())+"</div>"+(Z.school.motto?'<div class="bm">MOTTO: '+zEsc(String(Z.school.motto).toUpperCase())+"</div>":"");
+    document.querySelector(".school h1").textContent=Z.school.name;
+    document.querySelector(".school .motto").textContent=Z.school.motto?"..."+Z.school.motto+"...":"";
+    document.querySelector(".school .meta").innerHTML=zTxt(Z.school.address);
+    document.getElementById("docTitle").textContent=termUpper+(isFull?" EXAMINATION":" CONTINUOUS ASSESSMENT");
+    document.querySelector(".head .photo").innerHTML=zImg(st.photo_url,"PHOTO");
+
+    function cell(k,v,accent){return '<div class="cell"><span class="k">'+k+'</span><span class="v'+(accent?" accent":"")+'">'+v+"</span></div>";}
+    document.querySelector(".bio").innerHTML=
+      '<div class="row">'+cell("Name:",zTxt(String(st.full_name||"").toUpperCase()),1)+cell("Class:",zTxt((st["class"]+" "+st.arm).toUpperCase()))+cell("Term Average:",zNum(ag.average,2),1)+"</div>"+
+      '<div class="row">'+cell("Admission No:",zTxt(st.admission_no))+cell("Session:",zTxt(Z.meta.academic_year.name))+cell("Term:",zTxt(termUpper))+"</div>";
+
+    var caP=zPoint("ca"), exP=zPoint("exam");
+    var head=document.getElementById("subHead"), body=document.getElementById("subBody");
+    if(!isFull){
+      head.innerHTML='<tr><th class="sub">Subject</th><th>CA<br>('+zNum(caP&&caP.max)+"%)</th><th>CA<br>(100%)</th><th>Grade</th><th>Remarks</th></tr>";
+      body.innerHTML=Z.subjects.map(function(s){return "<tr"+zRow(s)+'><td class="sub">'+zEsc(String(s.name).toUpperCase())+'</td><td class="num">'+zNum(s.ca,2)+
+        '</td><td class="num">'+zNum(s.total,2)+'</td><td class="grade">'+zTxt(s.grade)+'</td><td class="rem">'+zTxt(s.remark&&String(s.remark).toUpperCase())+"</td></tr>";}).join("");
+    } else {
+      head.innerHTML='<tr><th class="sub">Subject</th><th>Test<br>('+zNum(caP&&caP.max)+")</th><th>Exam<br>("+zNum(exP&&exP.max)+")</th><th>Total<br>(100)</th><th>Grade</th><th>Remarks</th></tr>";
+      body.innerHTML=Z.subjects.map(function(s){return "<tr"+zRow(s)+'><td class="sub">'+zEsc(String(s.name).toUpperCase())+'</td><td class="num">'+zNum(s.ca)+
+        '</td><td class="num">'+zNum(s.exam,2)+'</td><td class="num">'+zNum(s.total,2)+'</td><td class="grade">'+zTxt(s.grade)+'</td><td class="rem">'+zTxt(s.remark&&String(s.remark).toUpperCase())+"</td></tr>";}).join("");
+    }
+
+    function kv(k,v,style){return '<div class="kv"><span class="k">'+k+'</span><span class="v"'+(style?' style="'+style+'"':"")+">"+v+"</span></div>";}
+    var boxes=document.querySelectorAll(".lower .box");
+    boxes[0].innerHTML="<h3>Term Performance Summary</h3>"+kv("No of Subjects",zNum(ag.subjects_counted))+kv("Marks Obtainable",zNum(ag.marks_obtainable))+
+      kv("Marks Obtained",zNum(ag.grand_total))+kv("No In Class",zNum(ag.out_of))+kv("Overall Grade",zTxt(ag.overall_grade),"color:var(--accent)");
+    boxes[1].innerHTML="<h3>Attendance Table</h3>"+kv("School Days",zNum(at.total_days))+kv("Days Attended",zNum(at.present))+kv("Days Absent",zNum(at.absent))+
+      kv("School Opened",zTxt(Z.meta.term.start_date))+kv("School Close",zTxt(Z.meta.term.end_date));
+    // A tally of the grades shown above (a count of rows, not a computed result).
+    var tally={}, shown=0;
+    Z.subjects.forEach(function(s){if(s.grade){tally[s.grade]=(tally[s.grade]||0)+1;shown++;}});
+    boxes[2].innerHTML='<h3>Grade Distribution</h3><table class="gd"><thead><tr><th>Grade</th><th>No</th><th>Remarks</th></tr></thead><tbody>'+
+      zKey().filter(function(b){return tally[b.grade];}).map(function(b){return '<tr><td class="gl" style="color:var(--accent-dark)">'+zEsc(b.grade)+"</td><td>"+tally[b.grade]+
+        '</td><td style="color:var(--ok);font-weight:700">'+zEsc(String(b.remark).toUpperCase())+"</td></tr>";}).join("")+
+      '<tr><td class="gl">Total</td><td>'+shown+"</td><td></td></tr></tbody></table>";
+
+    // Term / cumulative block: the payload carries this term's figures (earlier terms' columns show —).
+    var labels=["1st","2nd","3rd"].slice(0,Math.min(3,n));
+    function col(v){return labels.map(function(l,i){return '<td class="num">'+(i===labels.length-1?v:"—")+"</td>";}).join("");}
+    var out='<tr><th class="lbl">Term</th>'+labels.map(function(l){return "<th>"+l+"</th>";}).join("")+"</tr>";
+    if(!isFull) out+='<tr><td class="lbl">Total Score ('+zNum(caP&&caP.max)+'%)</td>'+col("—")+'</tr><tr><td class="lbl">Total Score (100%)</td>'+col(zNum(ag.grand_total))+"</tr>";
+    else out+='<tr><td class="lbl">Total Score</td>'+col(zNum(ag.grand_total))+"</tr>";
+    out+='<tr><td class="lbl">No of Subjects</td>'+col(zNum(ag.subjects_counted))+'</tr><tr><td class="lbl">Term Average</td>'+col(zNum(ag.average,2))+"</tr>";
+    if(n===3&&isFull) out+='<tr class="cum"><td class="lbl">Total Cumulative Average</td><td class="num" colspan="3">'+zNum(ag.cumulative_average,2)+"</td></tr>";
+    document.getElementById("termTable").innerHTML=out;
+
+    document.querySelector(".scale").innerHTML='<div class="lab">Grade Scale</div>'+zKey().map(function(b){return '<div class="b">'+zEsc(b.grade)+"&nbsp;&nbsp;"+zRange(b).replace("–"," – ")+"</div>";}).join("");
+    document.getElementById("cTeacher").textContent=Z.remarks.class_teacher||"—";
+    document.getElementById("cHead").textContent=Z.remarks.head_teacher||"—";
+    document.querySelectorAll(".comments .cr .cv")[2].textContent=Z.student.resumption_date||"—";
+    document.querySelectorAll(".signs .nm").forEach(function(e){e.innerHTML="&nbsp;";});
+    document.getElementById("sDate1").textContent=""; document.getElementById("sDate2").textContent="";
+  }
+
   // ---- sample data (placeholders) ----
   var SUBJECTS = [
     ["BASIC SCIENCE & TECHNOLOGY",35,87.50,35,58,93],
@@ -391,7 +484,7 @@
     render();
   });
 
-  render();
+  if (Z) zRender(); else render();
 </script>
 </body>
 </html>
