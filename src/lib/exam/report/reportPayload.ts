@@ -1,6 +1,7 @@
 import type { CrudResult } from "@/lib/setup/crudTypes";
 import { examSend } from "@/lib/exam/examApi";
 import type { AttainmentDisplay } from "@/lib/exam/settings/examSettingsApi";
+import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progressGradesApi";
 
 /**
  * REPORT PAYLOAD — the one JSON shape every result template reads.
@@ -95,13 +96,24 @@ import type { AttainmentDisplay } from "@/lib/exam/settings/examSettingsApi";
  *                                            earlier term of the year)
  *       traits: { psychomotor: [{ skill, rating, descriptor? }],
  *                 affective:   [{ skill, rating, descriptor? }],
+ *                   rating = the General Progress Grade's value;
+ *                   descriptor = its psychomotor / affective descriptor,
+ *                   else its name. Both null when not rated OR the level
+ *                   is hidden in reports (hide_in_report).
  *                 engagement: { rating, descriptor? } | null,
  *                 learning_behaviour: { rating, descriptor? } | null,
  *                 boarding: { rating, comment? } | null,
  *                 form_tutor_comment,
-                 rating_key: [{ rating, descriptor }] },  (addition: the
-                                            school's trait rating scale, for
-                                            the template's legend)
+ *                 rating_key: [{ rating, descriptor, descriptors }] },
+ *                   (addition) the Progress Grades level key for the
+ *                   template's legend — General classes: the General
+ *                   scale; British: the British scale. Visible levels
+ *                   only, best first. rating = value, descriptor = name,
+ *                   descriptors = { <domain>: text } (engagement,
+ *                   learning_behaviour, boarding | psychomotor,
+ *                   affective; missing = none).
+ *                 British subjects[].components (rating) and history
+ *                 ratings: a level hidden in reports comes back null.
  *       remarks: { class_teacher, head_teacher },
  *       grade_key: [{ grade, min, max, remark, show_on_report,
                      gpa, weight }]           (gpa: addition, the band's GPA
@@ -110,7 +122,10 @@ import type { AttainmentDisplay } from "@/lib/exam/settings/examSettingsApi";
                                             weight: addition, British — the
                                             level's weight (ScaleLevel
                                             .weight, else position from the
-                                            bottom); null for General)
+                                            bottom); null for General.
+                                            British min / max /
+                                            show_on_report come from the
+                                            class's attainment bands)
  *     }
  *     Progress (mid-term) variant: CA only — the engine runs over the CA
  *     part of the structure, so total = CA scaled to 100 and grade,
@@ -221,7 +236,7 @@ export type ReportPayload = {
     learning_behaviour: ReportRating | null;
     boarding: { rating: number | null; comment?: string | null } | null;
     form_tutor_comment: string | null;
-    rating_key: Array<{ rating: number; descriptor: string }>;
+    rating_key: Array<{ rating: number; descriptor: string; descriptors: Partial<Record<ProgressDomain, string>> }>;
   };
   remarks: { class_teacher: string | null; head_teacher: string | null };
   grade_key: Array<{ grade: string; min: number | null; max: number | null; remark: string; show_on_report: boolean; gpa: number | null; weight: number | null }>;

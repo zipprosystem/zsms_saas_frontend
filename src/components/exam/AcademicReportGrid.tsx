@@ -58,8 +58,12 @@ function CodeChip({ code, levels, display }: { code: string | null; levels: Scal
   );
 }
 
-/** A select option: weight mode reads "4 · Mastering" (or just "9" when the label is the code); label mode "M · Mastering". */
+/**
+ * A select option: weight mode reads "4 · Mastering" (or just "9" when the label is the code); label mode "M · Mastering".
+ * A rating level (British Progress Grade — its code is an id) reads "value · name", e.g. "1 · Excellent".
+ */
 function optionText(level: ScaleLevel, levels: ScaleLevel[], display: AttainmentDisplay): string {
+  if (level.value !== undefined) return level.label ? `${level.value} · ${level.label}` : String(level.value);
   const lead = display === "weight" ? String(weightOf(levels, level.code) ?? level.code) : level.code;
   return level.label && level.label !== level.code ? `${lead} · ${level.label}` : lead;
 }
@@ -77,7 +81,7 @@ function LevelSelect({
   disabled: boolean;
   label: string;
   onChange: (code: string) => void;
-  /** Attainment selects follow the school's display setting; rating selects keep their codes. */
+  /** Attainment selects follow the school's display setting; rating selects show the Progress Grade's value + name. */
   display?: AttainmentDisplay;
 }) {
   const t = useTranslations("exam.academicReport");

@@ -91,7 +91,12 @@ import type {
  *            attainment: { id, name, grade_scale_id },
  *            rating_domains: [{ id, key, name, rating_scale_id }] } | null,
  *          grade_scales: [{ id, name, grades: [{ code, label, weight }] }],  weight = the grade's numeric value (see examSettingsApi)
- *          rating_scales: [{ id, name, levels: [{ code, label }] }],
+ *          rating_scales: [{ id, name, levels: [{ code, label, value }] }],
+ *            the rating domains' scale = the BRITISH Progress Grades (Setup ›
+ *            Progress Grades): code = progress_grade_id, label = its name,
+ *            value = its value. A rating domain's component_score is that
+ *            progress_grade_id (same as the traits entry); 422 for an id
+ *            that isn't a British level.
  *          items: [{ …same row fields…, component_scores: { <leaf id>: code|null },
  *                    mtg, grade_book }] }   (read-only references; mtg is
  *                    the single target grade — no second/desired target)
@@ -225,6 +230,7 @@ function levelsFromWire(value: unknown): ScaleLevel[] {
       const x = rec(item);
       const level: ScaleLevel = { code: typeof x.code === "string" ? x.code : String(x.code ?? ""), label: s(x.label) };
       if (typeof x.weight === "number" && Number.isFinite(x.weight)) level.weight = x.weight;
+      if (typeof x.value === "number" && Number.isFinite(x.value)) level.value = x.value;
       return level;
     })
     .filter((level) => level.code);

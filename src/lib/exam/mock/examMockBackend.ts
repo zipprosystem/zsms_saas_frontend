@@ -9,6 +9,7 @@ import {
   type GradeMarkRow,
   type GradeMarksSheet,
   type GradeScores,
+  type RatingScale,
   type SubjectMarkRow,
   type SubjectMarksSheet,
 } from "@/lib/exam/examTypes";
@@ -33,6 +34,7 @@ import {
   loadGradeMarks,
   loadMarks,
   markKey,
+  gradeMarksReference,
   readGradeMark,
   readScoreMark,
   resolveGradeStructure,
@@ -42,8 +44,9 @@ import {
   type StoredGradeMark,
   type StoredMark,
 } from "@/lib/exam/mock/examMockStore";
-import { getResultArms, getResults, getStudentResult, getStudentTraits, putStudentTraits } from "@/lib/exam/mock/examResultsMock";
-import { handleGrades } from "@/lib/exam/mock/gradesMock";
+import { getResultArms, getResults, getStudentResult, getStudentTraits, progressGradeInUse, putStudentTraits } from "@/lib/exam/mock/examResultsMock";
+import { handleGrades, resolveGradeScale } from "@/lib/exam/mock/gradesMock";
+import { handleProgressGrades, progressGrades } from "@/lib/exam/mock/progressGradesMock";
 import { handleExamSettings } from "@/lib/exam/mock/examSettingsMock";
 import { getStudentReport, postGenerateClassPdf } from "@/lib/exam/mock/reportPayloadMock";
 import { getBroadsheet, getCumulativeBroadsheet, getProgressionBroadsheet } from "@/lib/exam/mock/broadsheetMock";
@@ -137,18 +140,30 @@ function gradeLeafCodes(armId: string): Map<string, { name: string; codes: Set<s
   const structure = resolveGradeStructure(armId);
   const leaves = new Map<string, { name: string; codes: Set<string> }>();
   if (!structure) return leaves;
-  const scale = SEED_GRADE_SCALES.find((item) => item.id === structure.attainment.grade_scale_id);
+  const scale = resolveGradeScale(classOfArm(armId), SEED_GRADE_SCALES.find((item) => item.id === structure.attainment.grade_scale_id));
   leaves.set(structure.attainment.id, { name: structure.attainment.name, codes: new Set(scale?.grades.map((grade) => grade.code) ?? []) });
+  // Rating domains take a British Progress Grades level, by id.
+  const britishLevels = new Set(progressGrades("british").map((level) => level.id));
   for (const domain of structure.rating_domains) {
-    const rating = SEED_RATING_SCALES.find((item) => item.id === domain.rating_scale_id);
-    leaves.set(domain.id, { name: domain.name, codes: new Set(rating?.levels.map((level) => level.code) ?? []) });
+    leaves.set(domain.id, { name: domain.name, codes: britishLevels });
   }
   return leaves;
 }
 
+/**
+ * The rating domains' scale = the British Progress Grades (Setup ›
+ * Progress Grades): each level's code is its progress_grade_id, label its
+ * name, value its value. Keeps the structure's rating_scale_id so the
+ * domains still find it.
+ */
+function ratingScalesFor(ids: Set<string>): RatingScale[] {
+  const levels = progressGrades("british").map((level) => ({ code: level.id, label: level.name, value: level.value }));
+  return SEED_RATING_SCALES.filter((scale) => ids.has(scale.id)).map((scale) => ({ ...scale, levels }));
+}
+
 function buildGradeSheet({ exam, subjectId, armId }: SheetContext): GradeMarksSheet {
   const structure = resolveGradeStructure(armId);
-  const gradeScale = structure ? SEED_GRADE_SCALES.find((scale) => scale.id === structure.attainment.grade_scale_id) : undefined;
+  const gradeScale = structure ? resolveGradeScale(classOfArm(armId), SEED_GRADE_SCALES.find((scale) => scale.id === structure.attainment.grade_scale_id)) : undefined;
   const ratingIds = new Set(structure?.rating_domains.map((domain) => domain.rating_scale_id) ?? []);
   const rosterIndex = new Map(seedRoster(armId).map((student, index) => [student.id, index]));
   const items: GradeMarkRow[] = enrolledIn(armId, subjectId, exam.term_id).map((student) => {
@@ -178,7 +193,7 @@ function buildGradeSheet({ exam, subjectId, armId }: SheetContext): GradeMarksSh
     assessment_structure_id: structure?.id ?? null,
     structure,
     grade_scales: gradeScale ? [gradeScale] : [],
-    rating_scales: SEED_RATING_SCALES.filter((scale) => ratingIds.has(scale.id)),
+    rating_scales: ratingScalesFor(ratingIds),
     entry_open: entryOpen(exam),
     items,
   };
@@ -415,6 +430,8 @@ async function handle(method: HttpMethod, path: string, query: URLSearchParams, 
   if (path === "erp/report-cards/generate" && method === "POST") return postGenerateClassPdf(payload);
   const grades = handleGrades(method, path, query, payload);
   if (grades) return grades;
+  const progress = handleProgressGrades(method, path, query, payload, (id) => progressGradeInUse(id) || gradeMarksReference(id));
+  if (progress) return progress;
   const settings = handleExamSettings(method, path, payload);
   if (settings) return settings;
   const studentMatch = path.match(/^erp\/results\/([^/]+)$/);

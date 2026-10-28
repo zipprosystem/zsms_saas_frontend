@@ -16,6 +16,7 @@ import {
   type StudentResult,
   type StudentTraits,
   type TraitItem,
+  type TraitRatingLevel,
   type StudentTermResult,
   type SubjectResult,
 } from "@/lib/exam/results/resultsTypes";
@@ -80,15 +81,19 @@ import {
  *
  *   GET /api/v1/erp/results/:student_id/traits?term_id=
  *     -> { student_id, student_name, term_id,
- *          rating_scale: [{ value, label }],
- *          psychomotor: [{ key, label, rating|null }],
- *          affective:   [{ key, label, rating|null }],
+ *          rating_scale: [{ id, value, label, hide_in_report }],
+ *            the General Progress Grades scale (Setup › Progress Grades),
+ *            best level first
+ *          psychomotor: [{ key, label, progress_grade_id|null }],
+ *          affective:   [{ key, label, progress_grade_id|null }],
  *          class_teacher_remark, head_teacher_remark, updated_at|null,
  *          editable }
- *   PUT  same path, body { term_id, ratings: { <key>: value|null },
+ *   PUT  same path, body { term_id, ratings: { <key>: progress_grade_id|null },
  *          class_teacher_remark, head_teacher_remark } -> same shape.
- *     403 FORBIDDEN unless the caller is the arm's class teacher; 422 for
- *     an unknown trait key, a value off the scale, or a remark > 500 chars.
+ *     Ratings reference a Progress Grade BY ID (renaming a level or
+ *     changing its value never orphans a rating). 403 FORBIDDEN unless the
+ *     caller is the arm's class teacher; 422 for an unknown trait key, an
+ *     id that isn't a level of the General scale, or a remark > 500 chars.
  *
  * REPORT RENDER (2026-10-27): the per-student report payload and the
  * class PDF request — contract in report/reportPayload.ts.
@@ -294,7 +299,7 @@ function traitItemsFromWire(value: unknown): TraitItem[] {
   return arr(value)
     .map((item) => {
       const x = rec(item);
-      return { key: s(x.key), label: s(x.label), rating: num(x.rating) };
+      return { key: s(x.key), label: s(x.label), progress_grade_id: str(x.progress_grade_id) };
     })
     .filter((item) => item.key);
 }
@@ -307,8 +312,11 @@ function traitsFromWire(value: unknown): StudentTraits | null {
     student_name: s(r.student_name),
     term_id: s(r.term_id),
     rating_scale: arr(r.rating_scale)
-      .map((item) => ({ value: num(rec(item).value), label: s(rec(item).label) }))
-      .filter((level): level is { value: number; label: string } => level.value !== null),
+      .map((item) => {
+        const x = rec(item);
+        return { id: s(x.id), value: num(x.value), label: s(x.label), hide_in_report: x.hide_in_report === true };
+      })
+      .filter((level): level is TraitRatingLevel => !!level.id && level.value !== null),
     psychomotor: traitItemsFromWire(r.psychomotor),
     affective: traitItemsFromWire(r.affective),
     class_teacher_remark: s(r.class_teacher_remark),

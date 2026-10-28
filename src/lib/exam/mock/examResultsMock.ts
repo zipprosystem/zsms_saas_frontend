@@ -40,7 +40,6 @@ import {
   SEED_GRADE_SCALES,
   SEED_PSYCHOMOTOR,
   SEED_SUBJECT_UNITS,
-  SEED_TRAIT_SCALE,
   SEED_YEARS,
   SEED_SUBJECTS,
   seedReferences,
@@ -64,7 +63,8 @@ import {
   taughtSubjects,
   writeStore,
 } from "@/lib/exam/mock/examMockStore";
-import { classGradeScale } from "@/lib/exam/mock/gradesMock";
+import { classGradeScale, resolveGradeScale } from "@/lib/exam/mock/gradesMock";
+import { progressGradeById, progressGrades, seededProgressGradeId } from "@/lib/exam/mock/progressGradesMock";
 import { getMockActingAs, MOCK_ADMIN } from "@/lib/exam/mock/mockActingAs";
 
 /**
@@ -296,7 +296,7 @@ function computeBritish(
   firstOnly = false,
 ): ComputedRow[] {
   const earlierTerms = termsUpTo(termId);
-  const scale = structure ? SEED_GRADE_SCALES.find((item) => item.id === structure.attainment.grade_scale_id) : undefined;
+  const scale = structure ? resolveGradeScale(classOfArm(armId), SEED_GRADE_SCALES.find((item) => item.id === structure.attainment.grade_scale_id)) : undefined;
   const rosterIndex = new Map(seedRoster(armId).map((student, index) => [student.id, index]));
   return students.map(({ student, index }) => {
     const subjects: Record<string, SubjectResult> = {};
@@ -370,7 +370,7 @@ export async function compute(armId: string, termId: string, stage: ComputeStage
   const base = { classId: cls.id, className: cls.name, armName: arm.name, termName: term.name, columns };
   if (isGradeClass(cls.id)) {
     const structure = resolveGradeStructure(armId);
-    const scale = structure ? SEED_GRADE_SCALES.find((item) => item.id === structure.attainment.grade_scale_id) : undefined;
+    const scale = structure ? resolveGradeScale(cls.id, SEED_GRADE_SCALES.find((item) => item.id === structure.attainment.grade_scale_id)) : undefined;
     const levels = scale?.grades ?? [];
     const rows = computeBritish(armId, termId, students, columns, structure, levels, stage === "progress");
     return {
@@ -425,8 +425,9 @@ export function viewerFor(armId: string): ResultsViewer {
 const TRAITS_STORAGE_KEY = "zsms.mockExam.traits.v1";
 const TRAIT_REMARK_MAX = 500;
 
+/** ratings: trait key -> progress_grade_id (Setup › Progress Grades, General scale). */
 export type StoredTraits = {
-  ratings: Record<string, number | null>;
+  ratings: Record<string, string | null>;
   class_teacher_remark: string;
   head_teacher_remark: string;
   updated_at: string;
@@ -434,9 +435,27 @@ export type StoredTraits = {
 
 let traitsCache: Record<string, StoredTraits> | null = null;
 
+/** Ratings saved before Progress Grades were stored as the level's value (5…1) — map them to the seeded level's id. */
+function normaliseRatings(ratings: Record<string, unknown>): Record<string, string | null> {
+  return Object.fromEntries(
+    Object.entries(ratings ?? {}).map(([key, value]) => [
+      key,
+      typeof value === "number" ? seededProgressGradeId("general", value) : typeof value === "string" ? value : null,
+    ]),
+  );
+}
+
 function loadTraits(): Record<string, StoredTraits> {
-  if (!traitsCache) traitsCache = readStore<StoredTraits>(TRAITS_STORAGE_KEY);
+  if (!traitsCache) {
+    const stored = readStore<StoredTraits>(TRAITS_STORAGE_KEY);
+    traitsCache = Object.fromEntries(Object.entries(stored).map(([key, entry]) => [key, { ...entry, ratings: normaliseRatings(entry.ratings) }]));
+  }
   return traitsCache;
+}
+
+/** Whether any saved trait rating references this progress grade (it can't be deleted then). */
+export function progressGradeInUse(id: string): boolean {
+  return Object.values(loadTraits()).some((entry) => Object.values(entry.ratings).includes(id));
 }
 
 function traitsKey(termId: string, studentId: string): string {
@@ -447,7 +466,7 @@ const TRAIT_KEYS = [...SEED_PSYCHOMOTOR, ...SEED_AFFECTIVE].map((item) => item.k
 
 function traitsStatus(stored: StoredTraits | undefined): TraitsStatus {
   if (!stored) return "none";
-  const rated = TRAIT_KEYS.filter((key) => typeof stored.ratings[key] === "number").length;
+  const rated = TRAIT_KEYS.filter((key) => !!progressGradeById(stored.ratings[key])).length;
   const remarks = [stored.class_teacher_remark, stored.head_teacher_remark].filter((text) => text.trim()).length;
   if (rated === TRAIT_KEYS.length && remarks === 2) return "complete";
   return rated + remarks > 0 ? "partial" : "none";
@@ -593,12 +612,16 @@ export async function getResultArms(query: URLSearchParams): Promise<WireRespons
 
 function traitsPayload(studentId: string, studentName: string, termId: string, armId: string): StudentTraits {
   const stored = loadTraits()[traitsKey(termId, studentId)];
-  const item = ({ key, label }: { key: string; label: string }) => ({ key, label, rating: stored?.ratings[key] ?? null });
+  const item = ({ key, label }: { key: string; label: string }) => ({
+    key,
+    label,
+    progress_grade_id: progressGradeById(stored?.ratings[key]) ? (stored?.ratings[key] ?? null) : null,
+  });
   return {
     student_id: studentId,
     student_name: studentName,
     term_id: termId,
-    rating_scale: SEED_TRAIT_SCALE,
+    rating_scale: progressGrades("general").map((level) => ({ id: level.id, value: level.value, label: level.name, hide_in_report: level.hide_in_report })),
     psychomotor: SEED_PSYCHOMOTOR.map(item),
     affective: SEED_AFFECTIVE.map(item),
     class_teacher_remark: stored?.class_teacher_remark ?? "",
@@ -633,12 +656,14 @@ export function putStudentTraits(studentId: string, payload: unknown): WireRespo
   if ("status" in context) return context;
   if (armRole(context.armId) !== "class_teacher") return fail(403, "FORBIDDEN", "Only the class teacher can enter traits and remarks.");
 
-  const levels = new Set(SEED_TRAIT_SCALE.map((level) => level.value));
-  const ratings: Record<string, number | null> = {};
+  const levels = new Set(progressGrades("general").map((level) => level.id));
+  const ratings: Record<string, string | null> = {};
   const sent = body.ratings && typeof body.ratings === "object" ? body.ratings : {};
   for (const [key, value] of Object.entries(sent)) {
     if (!TRAIT_KEYS.includes(key)) return fail(422, "VALIDATION_ERROR", `ratings.${key}: unknown trait`);
-    if (value !== null && !(typeof value === "number" && levels.has(value))) return fail(422, "VALIDATION_ERROR", `ratings.${key}: not on the rating scale`);
+    if (value !== null && !(typeof value === "string" && levels.has(value))) {
+      return fail(422, "VALIDATION_ERROR", `ratings.${key}: not a level of the General progress grades`);
+    }
     ratings[key] = value;
   }
   const remark = (field: "class_teacher_remark" | "head_teacher_remark") => (typeof body[field] === "string" ? (body[field] as string).trim() : "");
