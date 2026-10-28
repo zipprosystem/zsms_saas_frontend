@@ -14,7 +14,9 @@ import type { RankingRules, ResultStatus, ScoreBand, ScoreGradeScale } from "@/l
  *                   Σ[(sub_score / sub_max) × (sub_weight / 100)] × component_max;
  *                   a component weight scales it to its share of the 100.
  *                   A blank leaf counts 0 but flags the row incomplete.
- *                   Normalised to /100 over the structure's max.
+ *                   Normalised to /100 over the structure's max; the CA
+ *                   and Exam parts are reported on the same basis
+ *                   (CA + Exam = Total).
  *   Grade et al.    the total's band in the CLASS's grade scale -> grade,
  *                   remark, grade_weight, gpa.
  *   Positions       standard competition ranking (1, 2, 2, 4) unless a
@@ -38,27 +40,38 @@ export type TermScores = Partial<Record<ComponentCategory, ComponentScores>>;
 export type SubjectTotal = {
   /** Out of 100; null when nothing has been entered. */
   total: number | null;
+  /**
+   * The CA and Exam parts of `total`, on the same /100 basis (so
+   * ca + exam = total). null when nothing was entered for that part; the
+   * exam part is total − ca, so the two always add up at 2 dp.
+   */
+  ca: number | null;
+  exam: number | null;
   filled: number;
   leaves: number;
 };
 
 /** The subject total for one term from both points' scores (blank = 0, still counted as a leaf to fill). */
 export function subjectTotal(structure: AssessmentStructure, scores: TermScores): SubjectTotal {
-  let points = 0;
   let filled = 0;
   let leaves = 0;
+  const part: Record<ComponentCategory, { points: number; filled: number }> = { ca: { points: 0, filled: 0 }, exam: { points: 0, filled: 0 } };
   for (const category of ["ca", "exam"] as const) {
     const entered = scores[category] ?? {};
     const groups = buildMarkColumns(structure, category);
     for (const leaf of allLeaves(groups)) {
       leaves += 1;
-      if (typeof entered[leaf.id] === "number") filled += 1;
+      if (typeof entered[leaf.id] === "number") part[category].filled += 1;
     }
-    for (const group of groups) points += componentPoints(group, entered) ?? 0;
+    for (const group of groups) part[category].points += componentPoints(group, entered) ?? 0;
+    filled += part[category].filled;
   }
   const max = structureTotal(structure.components);
-  if (filled === 0 || max <= 0) return { total: null, filled, leaves };
-  return { total: round2((points / max) * 100), filled, leaves };
+  if (filled === 0 || max <= 0) return { total: null, ca: null, exam: null, filled, leaves };
+  const total = round2(((part.ca.points + part.exam.points) / max) * 100);
+  const ca = part.ca.filled > 0 ? round2((part.ca.points / max) * 100) : null;
+  const exam = part.exam.filled > 0 ? round2(total - (ca ?? 0)) : null;
+  return { total, ca, exam, filled, leaves };
 }
 
 export function statusOf(filled: number, leaves: number): ResultStatus {
@@ -126,34 +139,50 @@ export function cumulativeAverage(termTotals: Array<number | null>, termsEnrolle
   return round2(present.reduce((sum, total) => sum + total, 0) / termsEnrolled);
 }
 
-/** Position of a code on a best-first scale, or -1. */
-function stepIndex(levels: ScaleLevel[], code: string | null): number {
-  return code === null ? -1 : levels.findIndex((level) => level.code === code);
+/**
+ * A grade's numeric weight on a best-first scale: the level's own weight,
+ * else its position counted from the bottom (lowest = 1). null when the
+ * code is missing or not on the scale.
+ */
+export function levelWeight(levels: ScaleLevel[], code: string | null): number | null {
+  if (code === null) return null;
+  const index = levels.findIndex((level) => level.code === code);
+  if (index < 0) return null;
+  return levels[index].weight ?? levels.length - index;
 }
 
 /**
- * VA = CAG − MTG in grade steps on the class's (best-first) scale: positive
- * when attainment is above target, negative below, 0 on target. null when
- * either grade is missing or not on the scale.
+ * VA = CAG weight − MTG weight: positive when attainment is above target,
+ * negative below, 0 on target. null when either grade is missing or not
+ * on the scale.
  */
 export function valueAdded(levels: ScaleLevel[], cag: string | null, mtg: string | null): number | null {
-  const cagIndex = stepIndex(levels, cag);
-  const mtgIndex = stepIndex(levels, mtg);
-  if (cagIndex < 0 || mtgIndex < 0) return null;
-  return mtgIndex - cagIndex;
+  const cagWeight = levelWeight(levels, cag);
+  const mtgWeight = levelWeight(levels, mtg);
+  if (cagWeight === null || mtgWeight === null) return null;
+  return round2(cagWeight - mtgWeight);
 }
 
 /**
- * British cumulative attainment: the mean grade step of the term CAGs the
+ * British cumulative attainment: the mean weight of the term CAGs the
  * student has, rounded to the nearest grade on the scale (ties go to the
  * better grade). Grades have no zero, so terms without a CAG can't be
  * averaged in — the divisor is the terms that have one. (FLAGGED for
  * confirmation — see resultsApi.ts.)
  */
 export function cumulativeAttainment(levels: ScaleLevel[], cags: Array<string | null>): { grade: string | null; terms: number } {
-  const indexes = cags.map((code) => stepIndex(levels, code)).filter((index) => index >= 0);
-  if (indexes.length === 0) return { grade: null, terms: 0 };
-  const mean = indexes.reduce((sum, index) => sum + index, 0) / indexes.length;
-  const rounded = Math.min(levels.length - 1, Math.max(0, Math.round(mean - 1e-9)));
-  return { grade: levels[rounded]?.code ?? null, terms: indexes.length };
+  const weights = cags.map((code) => levelWeight(levels, code)).filter((weight): weight is number => weight !== null);
+  if (weights.length === 0) return { grade: null, terms: 0 };
+  const mean = weights.reduce((sum, weight) => sum + weight, 0) / weights.length;
+  // Nearest level by weight; on a tie the better (earlier, best-first) level wins.
+  let grade: string | null = null;
+  let nearest = Infinity;
+  for (const level of levels) {
+    const distance = Math.abs((levelWeight(levels, level.code) ?? 0) - mean);
+    if (distance < nearest - 1e-9) {
+      grade = level.code;
+      nearest = distance;
+    }
+  }
+  return { grade, terms: weights.length };
 }

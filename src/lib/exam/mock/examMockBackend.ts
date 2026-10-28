@@ -44,7 +44,9 @@ import {
 } from "@/lib/exam/mock/examMockStore";
 import { getResultArms, getResults, getStudentResult, getStudentTraits, putStudentTraits } from "@/lib/exam/mock/examResultsMock";
 import { handleGrades } from "@/lib/exam/mock/gradesMock";
+import { handleExamSettings } from "@/lib/exam/mock/examSettingsMock";
 import { getStudentReport, postGenerateClassPdf } from "@/lib/exam/mock/reportPayloadMock";
+import { getBroadsheet, getCumulativeBroadsheet, getProgressionBroadsheet } from "@/lib/exam/mock/broadsheetMock";
 
 /**
  * MOCK Exam backend (Stage 1b: marks entry) — localStorage-backed,
@@ -73,7 +75,9 @@ import { getStudentReport, postGenerateClassPdf } from "@/lib/exam/mock/reportPa
  *     shared with the Stage 2a results engine (examResultsMock.ts), which
  *     answers GET erp/results and erp/results/:student_id; the report
  *     payload (GET erp/results/:student_id/report) and the class PDF stub
- *     (POST erp/report-cards/generate) are reportPayloadMock.ts.
+ *     (POST erp/report-cards/generate) are reportPayloadMock.ts; the Broad
+ *     Sheet (GET erp/broadsheets, …/cumulative, …/progression) is
+ *     broadsheetMock.ts.
  *   - PUT upserts the rows it's given (others untouched) and stamps
  *     entered_by_staff_id with the caller. No totals/grades are stored —
  *     computation is Stage 2.
@@ -394,6 +398,9 @@ async function putMarks(examId: string, payload: unknown): Promise<WireResponse>
 async function handle(method: HttpMethod, path: string, query: URLSearchParams, payload: unknown): Promise<WireResponse> {
   if (path === "erp/exams" && method === "GET") return listExams(query);
   if (path === "erp/exams/entry-options" && method === "GET") return entryOptions(query);
+  if (path === "erp/broadsheets" && method === "GET") return getBroadsheet(query);
+  if (path === "erp/broadsheets/cumulative" && method === "GET") return getCumulativeBroadsheet(query);
+  if (path === "erp/broadsheets/progression" && method === "GET") return getProgressionBroadsheet(query);
   if (path === "erp/results" && method === "GET") return getResults(query);
   if (path === "erp/results/arms" && method === "GET") return getResultArms(query);
   const traitsMatch = path.match(/^erp\/results\/([^/]+)\/traits$/);
@@ -408,6 +415,8 @@ async function handle(method: HttpMethod, path: string, query: URLSearchParams, 
   if (path === "erp/report-cards/generate" && method === "POST") return postGenerateClassPdf(payload);
   const grades = handleGrades(method, path, query, payload);
   if (grades) return grades;
+  const settings = handleExamSettings(method, path, payload);
+  if (settings) return settings;
   const studentMatch = path.match(/^erp\/results\/([^/]+)$/);
   if (studentMatch && method === "GET") return getStudentResult(decodeURIComponent(studentMatch[1]), query);
   const match = path.match(/^erp\/exams\/([^/]+)\/marks$/);

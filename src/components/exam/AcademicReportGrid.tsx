@@ -5,6 +5,7 @@ import { MoreVerticalIcon } from "@/components/icons/students/MoreVerticalIcon";
 import { ActionsMenu } from "@/components/ui/ActionsMenu";
 import { SUBJECT_REMARK_MAX, type GradeBasedStructure, type GradeMarkRow, type ScaleLevel } from "@/lib/exam/examTypes";
 import { isGradeRowDirty, type GradeDraft, type GradeDraftRow } from "@/components/exam/gradeDraft";
+import { attainmentText, useAttainmentDisplay, weightOf, type AttainmentDisplay } from "@/lib/exam/settings/examSettingsApi";
 
 type AcademicReportGridProps = {
   structure: GradeBasedStructure;
@@ -37,16 +38,30 @@ function Initials({ name }: { name: string }) {
   );
 }
 
-/** A grade code shown read-only, labelled from the scale when its label differs (e.g. "S · Secure"). */
-function CodeChip({ code, levels }: { code: string | null; levels: ScaleLevel[] }) {
+/**
+ * An attainment grade shown read-only, as the school displays attainment:
+ * its weight (default; the code and label on hover) or its code, labelled
+ * from the scale when the label differs (e.g. "S · Secure").
+ */
+function CodeChip({ code, levels, display }: { code: string | null; levels: ScaleLevel[]; display: AttainmentDisplay }) {
   if (!code) return <span className="text-text-muted">—</span>;
   const label = levels.find((level) => level.code === code)?.label;
+  const named = label && label !== code ? `${code} · ${label}` : code;
   return (
-    <span className="inline-flex items-center rounded-md border border-border px-2 py-0.5 text-sm font-medium text-text-primary" title={label}>
-      {code}
-      {label && label !== code ? <span className="ml-1 font-normal text-text-muted">· {label}</span> : null}
+    <span
+      className="inline-flex items-center rounded-md border border-border px-2 py-0.5 text-sm font-medium text-text-primary"
+      title={display === "weight" ? named : label}
+    >
+      {attainmentText(code, levels, display)}
+      {display === "label" && label && label !== code ? <span className="ml-1 font-normal text-text-muted">· {label}</span> : null}
     </span>
   );
+}
+
+/** A select option: weight mode reads "4 · Mastering" (or just "9" when the label is the code); label mode "M · Mastering". */
+function optionText(level: ScaleLevel, levels: ScaleLevel[], display: AttainmentDisplay): string {
+  const lead = display === "weight" ? String(weightOf(levels, level.code) ?? level.code) : level.code;
+  return level.label && level.label !== level.code ? `${lead} · ${level.label}` : lead;
 }
 
 function LevelSelect({
@@ -55,12 +70,15 @@ function LevelSelect({
   disabled,
   label,
   onChange,
+  display = "label",
 }: {
   value: string;
   levels: ScaleLevel[];
   disabled: boolean;
   label: string;
   onChange: (code: string) => void;
+  /** Attainment selects follow the school's display setting; rating selects keep their codes. */
+  display?: AttainmentDisplay;
 }) {
   const t = useTranslations("exam.academicReport");
   // A saved code no longer on the scale stays visible (and selected) rather than silently disappearing.
@@ -77,7 +95,7 @@ function LevelSelect({
       {unknown ? <option value={value}>{t("unknownCode", { code: value })}</option> : null}
       {levels.map((level) => (
         <option key={level.code} value={level.code}>
-          {level.label && level.label !== level.code ? `${level.code} · ${level.label}` : level.code}
+          {optionText(level, levels, display)}
         </option>
       ))}
     </select>
@@ -103,6 +121,7 @@ export function AcademicReportGrid({
   onClearEntries,
 }: AcademicReportGridProps) {
   const t = useTranslations("exam.academicReport");
+  const display = useAttainmentDisplay();
   const gradeLevels = levelsByLeaf[structure.attainment.id] ?? [];
 
   return (
@@ -160,10 +179,10 @@ export function AcademicReportGrid({
                 </td>
                 <td className={`${TD} text-text-secondary`}>{row.seat_no || "—"}</td>
                 <td className={TD}>
-                  <CodeChip code={row.mtg} levels={gradeLevels} />
+                  <CodeChip code={row.mtg} levels={gradeLevels} display={display} />
                 </td>
                 <td className={TD}>
-                  <CodeChip code={row.grade_book} levels={gradeLevels} />
+                  <CodeChip code={row.grade_book} levels={gradeLevels} display={display} />
                 </td>
                 <td className={`${TD} text-center`}>
                   <input
@@ -182,6 +201,7 @@ export function AcademicReportGrid({
                     disabled={readOnly}
                     label={t("aria.field", { field: structure.attainment.name, name: row.student_name })}
                     onChange={(code) => setScore(structure.attainment.id, code)}
+                    display={display}
                   />
                 </td>
                 {structure.rating_domains.map((domain) => (

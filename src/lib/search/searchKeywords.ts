@@ -45,8 +45,52 @@ export const SEARCH_VIEW_RESULTS_KEYWORDS = [
   "head teacher remarks",
 ];
 
-/** Exam › Broad Sheet (the students × subjects matrix, moved from Results). */
-export const SEARCH_BROAD_SHEET_KEYWORDS = ["broadsheet", "broad sheet", "matrix", "all subjects", "grand total", "cumulative", "value added", "VA", "CAG"];
+/** Exam › Broad Sheet › Broadsheet (General, one term: CA · Exam · Total per subject). */
+export const SEARCH_BROAD_SHEET_KEYWORDS = [
+  "broadsheet",
+  "broad sheet",
+  "matrix",
+  "all subjects",
+  "CA",
+  "exam score",
+  "subject average",
+  "highest score",
+  "lowest score",
+  "class average",
+  "cumulative score",
+  "ranking",
+  "position",
+];
+
+/** Exam › Broad Sheet › Cumulative Broadsheet (the year's terms side by side). */
+export const SEARCH_CUMULATIVE_BROADSHEET_KEYWORDS = [
+  "cumulative broadsheet",
+  "cumulative",
+  "1st term",
+  "2nd term",
+  "3rd term",
+  "term average",
+  "yearly average",
+  "annual result",
+  "trend",
+  "overall average",
+];
+
+/** Exam › Broad Sheet › Progression (British / grade-based classes). */
+export const SEARCH_PROGRESSION_KEYWORDS = [
+  "progression",
+  "british broadsheet",
+  "grade book",
+  "GB",
+  "MTG",
+  "target grade",
+  "CAG",
+  "current attainment",
+  "value added",
+  "VA",
+  "CEM",
+  "GL SAS",
+];
 
 /** Exam › Results › Academic Report (British grade-based entry, Stage 1c). */
 export const SEARCH_ACADEMIC_REPORT_KEYWORDS = [

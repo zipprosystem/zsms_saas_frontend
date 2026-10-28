@@ -102,8 +102,14 @@ export type SaveMarksInput = { subject_id: string; class_arm_id: string; rows: S
 // score sheet; GET answers with assessment_mode "grade_based" and this shape.
 // ---------------------------------------------------------------------------
 
-/** One grade or rating level, best first (e.g. 9…1, U; or 1 Excellent … 4 Cause for concern). */
-export type ScaleLevel = { code: string; label: string };
+/**
+ * One grade or rating level, best first (e.g. 9…1, U; or 1 Excellent … 4
+ * Cause for concern). weight = the grade's numeric value (GCSE 9 → 9, U →
+ * 0; KS3 M → 4 … E → 1). Attainment shows as the weight by default (the
+ * school's attainment_display setting), and VA = CAG weight − MTG weight.
+ * Absent → the level's position counted from the bottom (lowest = 1).
+ */
+export type ScaleLevel = { code: string; label: string; weight?: number };
 export type GradeScale = { id: string; name: string; grades: ScaleLevel[] };
 export type RatingScale = { id: string; name: string; levels: ScaleLevel[] };
 

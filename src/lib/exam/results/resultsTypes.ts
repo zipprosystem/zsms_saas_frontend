@@ -176,6 +176,8 @@ export type ArmResultSummary = {
   arm_name: string;
   assessment_mode: AssessmentMode;
   student_count: number;
+  /** Subjects offered in the arm (Broad Sheet cards). */
+  subject_count: number;
   /** Mean of the averages of the students who have one; null for grade-based classes or when nobody has a result. */
   class_average: number | null;
 };

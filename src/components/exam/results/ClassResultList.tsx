@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { SelectField } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { ExportMenu } from "@/components/setup/ExportMenu";
 import { SetupPagination } from "@/components/setup/SetupPagination";
@@ -16,7 +15,7 @@ import { getClassResults, RESULTS_MAX_LIMIT, resultsQueryKeys } from "@/lib/exam
 import type { ClassResultRow, ClassResults, ResultsArms, ResultsViewer, TraitsStatus } from "@/lib/exam/results/resultsTypes";
 import { failureMessage, InfoItem, Notice } from "@/components/exam/examEntryShared";
 import { PositionValue, ResultStatusBadge, useResultNumber } from "@/components/exam/results/resultsDisplay";
-import { classesOf, YearTermSelects } from "@/components/exam/results/ArmCardsView";
+import { ClassArmSelects, YearTermSelects } from "@/components/exam/results/ArmCardsView";
 import { StudentTraitsPanel } from "@/components/exam/results/StudentTraitsPanel";
 import { StudentReportViewer } from "@/components/exam/results/StudentReportViewer";
 import { generateClassReportPdf, type ClassPdfJob } from "@/lib/exam/report/reportPayload";
@@ -50,8 +49,6 @@ export function ClassResultList({
   const n = useResultNumber();
 
   const current = arms.items.find((item) => item.class_arm_id === params.arm) ?? null;
-  const classes = classesOf(arms.items);
-  const classArms = current ? arms.items.filter((item) => item.class_id === current.class_id) : [];
   const termId = arms.term_id;
 
   const [page, setPage] = useState(1);
@@ -169,28 +166,7 @@ export function ClassResultList({
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <YearTermSelects arms={arms} navigate={(patch) => navigate({ ...patch })} />
-        <SelectField
-          id="results-filter-class"
-          label={t("exam.marks.filters.class")}
-          value={current.class_id}
-          onChange={(event) => {
-            const first = arms.items.find((item) => item.class_id === event.target.value);
-            if (first) navigate({ arm: first.class_arm_id });
-          }}
-        >
-          {classes.map((cls) => (
-            <option key={cls.id} value={cls.id}>
-              {cls.name}
-            </option>
-          ))}
-        </SelectField>
-        <SelectField id="results-filter-arm" label={t("exam.marks.filters.arm")} value={current.class_arm_id} onChange={(event) => navigate({ arm: event.target.value })}>
-          {classArms.map((item) => (
-            <option key={item.class_arm_id} value={item.class_arm_id}>
-              {item.arm_name}
-            </option>
-          ))}
-        </SelectField>
+        <ClassArmSelects arms={arms} current={current} navigate={navigate} />
       </div>
 
       {data ? (

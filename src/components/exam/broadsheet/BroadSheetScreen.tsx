@@ -1,89 +1,87 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
-import { SetupPagination } from "@/components/setup/SetupPagination";
 import { isDevBypassUnavailable, throwIfTransient } from "@/lib/setup/crudTypes";
-import { getClassResults, resultsQueryKeys } from "@/lib/exam/resultsApi";
-import { ExamEntryFilterBar, failureMessage, filterPreconditionNotice, InfoItem, Notice, useExamEntryFilters } from "@/components/exam/examEntryShared";
-import { ResultsTable } from "@/components/exam/results/ResultsTable";
-import { StudentResultPanel } from "@/components/exam/results/StudentResultPanel";
+import { getResultArms, resultsQueryKeys } from "@/lib/exam/resultsApi";
+import type { ResultsArms } from "@/lib/exam/results/resultsTypes";
+import { failureMessage, MockActingAsPicker, Notice, useMockActingAs } from "@/components/exam/examEntryShared";
+import { ArmCardsView, ClassArmSelects, YearTermSelects } from "@/components/exam/results/ArmCardsView";
+import type { ResultsNavigate, ResultsParams } from "@/components/exam/results/ResultsScreen";
+import { GeneralBroadsheet } from "@/components/exam/broadsheet/GeneralBroadsheet";
+import { CumulativeBroadsheet } from "@/components/exam/broadsheet/CumulativeBroadsheet";
+import { ProgressionBroadsheet } from "@/components/exam/broadsheet/ProgressionBroadsheet";
+
+/** The class view's sub-tabs. Component classes: Broadsheet + Cumulative Broadsheet. Grade classes: Progression. */
+export const BROADSHEET_VIEWS = ["broadsheet", "cumulative", "progression"] as const;
+export type BroadsheetView = (typeof BROADSHEET_VIEWS)[number];
+
+const VIEWS_BY_MODE: Record<ResultsArms["items"][number]["assessment_mode"], BroadsheetView[]> = {
+  component_based: ["broadsheet", "cumulative"],
+  grade_based: ["progression"],
+};
 
 /**
- * Academics › Exam › Broad Sheet — the students × subjects matrix, moved
- * here from Results (results reframe, 2026-10-27) as the initial
- * Broadsheet view. Pick year / class / arm / term (scope-aware
- * entry-options + mock "acting as" picker), read the arm's computed
- * results; a student opens their full result in a slide-over. Every number
- * comes from the backend engine (mock today — resultsApi.ts). Pages of 25;
- * positions are over the whole arm.
+ * Academics › Exam › Broad Sheet (Stage 2b) — a drill-down like View
+ * Results:
  *
- * Only relocated for now. The full Broadsheet (per-subject CA / Exam /
- * Total, subject + class averages, above/below colouring, the Cumulative
- * Broadsheet with term columns and trend arrows, arm-card landing,
- * "Analyze with AI") is Stage 2b.
+ *   1. Arm cards grouped by class (?year&term&class): students, subjects,
+ *      "View Broadsheet".
+ *   2. The arm's broadsheet (?arm=&view=), with sub-tabs routed by the
+ *      class's assessment mode — General: Broadsheet + Cumulative
+ *      Broadsheet; British: Progression.
+ *
+ * Arm cards reuse GET erp/results/arms (same scope as View Results). Every
+ * number comes from the engine via the backend (broadsheetApi.ts).
  */
-const view = "all" as const;
-
 export function BroadSheetScreen() {
   const t = useTranslations();
-  const k = (key: string, values?: Record<string, string | number>) => t(`exam.results.${key}`, values);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [actingAs, setActingAs] = useMockActingAs();
 
-  const filters = useExamEntryFilters(null, { withExam: false });
-  const { armId, termId, actingAs } = filters;
-  const [page, setPage] = useState(1);
-  const [student, setStudent] = useState<{ id: string; name: string } | null>(null);
-  const [panelOpen, setPanelOpen] = useState(false);
+  const params: ResultsParams = {
+    year: searchParams.get("year") ?? "",
+    term: searchParams.get("term") ?? "",
+    class: searchParams.get("class") ?? "",
+    arm: searchParams.get("arm") ?? "",
+  };
+  const viewParam = searchParams.get("view") ?? "";
 
-  useEffect(() => {
-    setPage(1);
-  }, [armId, termId, actingAs]);
+  const navigate = (patch: Partial<ResultsParams & { view: string }>, mode: "push" | "replace" = "replace") => {
+    const next = new URLSearchParams(searchParams.toString());
+    for (const [key, value] of Object.entries(patch)) {
+      if (value) next.set(key, value);
+      else next.delete(key);
+    }
+    const query = next.toString();
+    const href = query ? `${pathname}?${query}` : pathname;
+    if (mode === "push") router.push(href, { scroll: false });
+    else router.replace(href, { scroll: false });
+  };
 
-  const query = useQuery({
-    queryKey: [...resultsQueryKeys.classResults(armId, termId, view, page), actingAs],
-    queryFn: () => getClassResults(armId, termId, view, page).then(throwIfTransient),
-    enabled: !!armId && !!termId,
+  const armsQuery = useQuery({
+    queryKey: [...resultsQueryKeys.arms(params.year, params.term), actingAs],
+    queryFn: () => getResultArms(params.year, params.term).then(throwIfTransient),
   });
-  const data = query.data?.ok ? query.data.data : null;
-  const british = data?.assessment_mode === "grade_based";
+  const arms = armsQuery.data?.ok ? armsQuery.data.data : null;
 
-  const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit), data.has_more ? page + 1 : 1) : 1;
-
-  let body: ReactNode = filterPreconditionNotice(filters, t, null);
-  if (body) {
-    // A filter-level notice wins.
-  } else if (query.isPending) {
+  let body;
+  if (armsQuery.isPending) {
     body = <Notice>{t("exam.marks.loading")}</Notice>;
-  } else if (!data) {
+  } else if (!arms) {
     body = (
-      <Notice tone={isDevBypassUnavailable(query.data) ? "warning" : "error"}>
-        {failureMessage(query.data, t) ?? t("setup.dataTable.errors.loadFailed")}
+      <Notice tone={isDevBypassUnavailable(armsQuery.data) ? "warning" : "error"}>
+        {failureMessage(armsQuery.data, t) ?? t("setup.dataTable.errors.loadFailed")}
       </Notice>
     );
-  } else if (data.items.length === 0) {
-    body = <Notice>{k("notices.noStudents")}</Notice>;
+  } else if (params.arm) {
+    body = <BroadsheetClassView arms={arms} params={params} viewParam={viewParam} navigate={navigate} actingAs={actingAs} />;
   } else {
-    body = (
-      <>
-        <ResultsTable
-          data={data}
-          firstSerial={(data.page - 1) * data.limit + 1}
-          onOpenStudent={(row) => {
-            setStudent({ id: row.student_id, name: row.student_name });
-            setPanelOpen(true);
-          }}
-        />
-        {totalPages > 1 ? (
-          <SetupPagination
-            page={page}
-            totalPages={totalPages}
-            onPreviousPage={() => setPage((current) => Math.max(1, current - 1))}
-            onNextPage={() => setPage((current) => current + 1)}
-          />
-        ) : null}
-      </>
-    );
+    body = <ArmCardsView arms={arms} params={params} navigate={navigate} variant="broadsheet" />;
   }
 
   return (
@@ -92,29 +90,97 @@ export function BroadSheetScreen() {
         <h2 className="text-lg font-semibold text-text-primary">{t("exam.broadSheet.title")}</h2>
         <p className="text-sm text-text-secondary">{t("exam.broadSheet.subtitle")}</p>
       </div>
-
-      <ExamEntryFilterBar
-        filters={filters}
-        onSelect={(patch, resetBelow) => filters.applySelection(patch, resetBelow)}
-        onActorChange={(id) => filters.applyActor(id)}
+      <MockActingAsPicker
+        value={actingAs}
+        onChange={(id) => {
+          setActingAs(id);
+          // The new caller's scope may not include this class / arm.
+          navigate({ class: "", arm: "" });
+        }}
       />
+      {body}
+    </div>
+  );
+}
 
-      {data ? (
-        <div className="grid grid-cols-2 gap-x-8 gap-y-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-3 sm:p-5 lg:grid-cols-5">
-          <InfoItem label={k("info.classArm")} value={`${data.class_name} · ${data.arm_name}`} />
-          <InfoItem label={k("info.term")} value={data.term_name} />
-          <InfoItem label={k("info.reporting")} value={k(`modes.${data.assessment_mode}`)} />
-          <InfoItem label={k("info.gradeScale")} value={british ? (data.grade_scale_name ?? "—") : k("info.classGrades")} />
-          <InfoItem
-            label={k("info.students")}
-            value={british ? String(data.total) : k("info.studentsRanked", { total: data.total, ranked: data.ranked_count })}
-          />
-        </div>
-      ) : null}
+function BroadsheetClassView({
+  arms,
+  params,
+  viewParam,
+  navigate,
+  actingAs,
+}: {
+  arms: ResultsArms;
+  params: ResultsParams;
+  viewParam: string;
+  navigate: (patch: Partial<ResultsParams & { view: string }>) => void;
+  actingAs: string;
+}) {
+  const t = useTranslations();
+  const pathname = usePathname();
+  const current = arms.items.find((item) => item.class_arm_id === params.arm) ?? null;
 
-      <div className="flex min-w-0 flex-col gap-3">{body}</div>
+  const backHref = `${pathname}?${new URLSearchParams({ year: arms.academic_year_id, term: arms.term_id })}`;
+  const back = (
+    <Link href={backHref} className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent hover:underline">
+      <span aria-hidden>←</span> {t("exam.viewResults.list.backToClasses")}
+    </Link>
+  );
 
-      <StudentResultPanel student={student} isOpen={panelOpen} termId={termId} actingAs={actingAs} onClose={() => setPanelOpen(false)} />
+  if (!current) {
+    return (
+      <div className="flex flex-col gap-4">
+        {back}
+        <Notice>{t("exam.viewResults.list.armNotInScope")}</Notice>
+      </div>
+    );
+  }
+
+  const views = VIEWS_BY_MODE[current.assessment_mode];
+  const view = views.find((item) => item === viewParam) ?? views[0];
+  const navigateArm: ResultsNavigate = (patch) => navigate(patch);
+  const armLabel = t("exam.viewResults.armName", { class: current.class_name, arm: current.arm_name });
+
+  return (
+    <div className="flex min-w-0 flex-col gap-5">
+      {back}
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <YearTermSelects arms={arms} navigate={navigateArm} />
+        <ClassArmSelects arms={arms} current={current} navigate={navigateArm} />
+      </div>
+
+      <div className="flex gap-1 overflow-x-auto border-b border-border" role="tablist" aria-label={t("exam.broadSheet.tabs.label")}>
+        {views.map((item) => {
+          const active = item === view;
+          return (
+            <button
+              key={item}
+              type="button"
+              role="tab"
+              id={`broadsheet-tab-${item}`}
+              aria-selected={active}
+              aria-controls="broadsheet-panel"
+              onClick={() => navigate({ view: item })}
+              className={`shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+                active ? "border-accent text-accent" : "border-transparent text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              {t(`exam.broadSheet.tabs.${item}`)}
+            </button>
+          );
+        })}
+      </div>
+
+      <div id="broadsheet-panel" role="tabpanel" aria-labelledby={`broadsheet-tab-${view}`} className="flex min-w-0 flex-col gap-4">
+        {view === "broadsheet" ? (
+          <GeneralBroadsheet armId={current.class_arm_id} termId={arms.term_id} armLabel={armLabel} actingAs={actingAs} />
+        ) : view === "cumulative" ? (
+          <CumulativeBroadsheet armId={current.class_arm_id} termId={arms.term_id} armLabel={armLabel} actingAs={actingAs} />
+        ) : (
+          <ProgressionBroadsheet armId={current.class_arm_id} termId={arms.term_id} armLabel={armLabel} actingAs={actingAs} />
+        )}
+      </div>
     </div>
   );
 }

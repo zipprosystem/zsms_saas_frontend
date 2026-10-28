@@ -86,7 +86,7 @@ import { getMockActingAs, MOCK_ADMIN } from "@/lib/exam/mock/mockActingAs";
  */
 
 /** No Ranking Rules config exists yet (Setup) — the engine's default (competition) applies. */
-const RANKING_RULES: RankingRules | null = null;
+export const RANKING_RULES: RankingRules | null = null;
 
 const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 100;
@@ -118,6 +118,8 @@ export type ComputedRow = {
   student: SeedStudent;
   subjects: Record<string, SubjectResult>;
   aggregate: StudentTermResult;
+  /** General: each subject total's CA and Exam parts (/100 basis, CA + Exam = Total). Empty for British. */
+  split: Record<string, { ca: number | null; exam: number | null }>;
 };
 
 /**
@@ -188,6 +190,7 @@ function computeGeneral(
   const earlierTerms = termsUpTo(termId);
   const rows: ComputedRow[] = students.map(({ student, index }) => {
     const subjects: Record<string, SubjectResult> = {};
+    const split: ComputedRow["split"] = {};
     for (const column of columns) {
       const id = column.subject_id;
       if (subjectEnrolment(armId, id, index) === "not_enrolled") {
@@ -199,6 +202,7 @@ function computeGeneral(
         continue;
       }
       const now = generalTermTotal(structure, termId, id, armId, student.id);
+      split[id] = { ca: now.ca, exam: now.exam };
       const band = bandFor(scale, now.total);
       const enrolledTerms = earlierTerms.filter((term) => enrolledForTerm(student.id, term));
       const totals = enrolledTerms.map((term) => (term === termId ? now.total : generalTermTotal(structure, term, id, armId, student.id).total));
@@ -227,6 +231,7 @@ function computeGeneral(
     return {
       student,
       subjects,
+      split,
       aggregate: {
         status: studentStatus(results.map((result) => result.status)),
         grand_total: grandTotal,
@@ -325,6 +330,7 @@ function computeBritish(
     return {
       student,
       subjects,
+      split: {},
       aggregate: {
         ...emptyAggregate(studentStatus(results.map((result) => result.status))),
         subjects_counted: results.filter((result) => result.cag !== null).length,
@@ -576,6 +582,7 @@ export async function getResultArms(query: URLSearchParams): Promise<WireRespons
         arm_name: arm.name,
         assessment_mode: computed.mode,
         student_count: computed.rows.length,
+        subject_count: computed.columns.length,
         class_average: classAverage(computed),
       });
     }
