@@ -310,6 +310,8 @@
       },
       "gradingSchemes": { "name": "Grading Schemes" },
       "grades": { "name": "Grades", "description": "Per-class grade bands: grade, weight, GPA, score range and remark" },
+      "attainmentGrades": { "name": "Attainment Grades", "description": "British attainment grade scale: grade, weight, score range, pass and report key" },
+      "progressGrades": { "name": "Progress Grades", "description": "Rating levels for traits and British engagement, behaviour and boarding, with descriptors" },
       "assessmentTypes": { "name": "Assessment Types", "description": "The CA and exam components scores are made of" },
       "resultTemplates": { "name": "Result Templates" },
       "idCardTemplates": { "name": "ID Card Templates" },
@@ -559,13 +561,17 @@
       "empty": "No grades yet. Add the bands your classes are graded on.",
       "range": "{min} – {max}%",
       "gpaNotUsed": "Not used",
+      "yes": "Yes",
+      "no": "No",
       "columns": {
         "grade": "Grade",
         "gradeWeight": "Grade weight",
         "gpa": "GPA",
         "range": "Score range",
         "remark": "Remark",
-        "classes": "Applies to"
+        "classes": "Applies to",
+        "isPass": "Pass",
+        "showOnReport": "On report"
       },
       "filters": {
         "class": "Class",
@@ -589,7 +595,12 @@
         "remarkPlaceholder": "e.g. Excellent",
         "applyTo": "Apply to classes",
         "applyToHelp": "The grade applies to every arm of the selected classes.",
-        "selectAll": "Select all"
+        "selectAll": "Select all",
+        "gradeWeightHelp": "A rank: 1 is the best grade.",
+        "isPass": "Counts as a pass",
+        "isPassHelp": "Used for subjects passed and failed on the report.",
+        "showOnReport": "Show on report",
+        "showOnReportHelp": "List this grade in the report's grade key."
       },
       "errors": {
         "required": "Required",
@@ -606,6 +617,94 @@
         "created": "Grade added",
         "updated": "Grade updated",
         "deleted": "Grade deleted"
+      }
+    },
+    "attainmentGrades": {
+      "title": "Attainment Grades",
+      "subtitle": "The British attainment grade scale for each grade-based class. A score falls in a band to give the grade and its weight. The weight is a point value (higher is better) used for value added and the weight display.",
+      "addNew": "Add Grade",
+      "adminOnly": "Only an administrator can manage attainment grades. Switch the “acting as” picker (Exam › Results) to Admin to test this screen.",
+      "empty": "No attainment grades yet. Add the grades your British classes are assessed on.",
+      "panel": {
+        "createTitle": "Add Attainment Grade",
+        "editTitle": "Edit Attainment Grade"
+      },
+      "fields": {
+        "gradePlaceholder": "e.g. 9 or M",
+        "gradeWeightHelp": "A point value: higher is better (GCSE 9 = 9, U = 0; KS3 M = 4). Value added = attainment weight − target weight.",
+        "remarkPlaceholder": "e.g. Mastering"
+      },
+      "confirmDelete": {
+        "message": "Delete grade {grade}? Its classes will no longer be able to use it."
+      }
+    },
+    "progressGrades": {
+      "title": "Progress Grades",
+      "subtitle": "Rating levels. Each level needs a name and a value, both unique in the scale; descriptors are optional.",
+      "addNew": "Add Level",
+      "adminOnly": "Only an administrator can manage progress grades. Switch the “acting as” picker (Exam › Results) to Admin to test this screen.",
+      "empty": "No levels yet. Add the levels this scale rates on.",
+      "searchPlaceholder": "Search by name or value",
+      "scale": {
+        "label": "Scale",
+        "general": "General",
+        "british": "British",
+        "help": {
+          "general": "Rates the Psychomotor and Affective traits a class teacher enters in View Results.",
+          "british": "The levels for Engagement, Learning Behaviour and Boarding: the Academic Report's Engagement and Learning Behaviour dropdowns use them, and British report cards print their descriptors."
+        }
+      },
+      "columns": {
+        "name": "Name",
+        "value": "Value",
+        "hideInReport": "In report",
+        "descriptors": "Descriptors"
+      },
+      "hidden": "Hidden",
+      "shown": "Shown",
+      "noDescriptors": "None",
+      "domains": {
+        "engagement": "Engagement",
+        "learning_behaviour": "Learning behaviour",
+        "boarding": "Boarding",
+        "psychomotor": "Psychomotor",
+        "affective": "Affective"
+      },
+      "panel": {
+        "createTitle": "Add Level",
+        "editTitle": "Edit Level",
+        "subtitle": {
+          "general": "A level of the General scale (traits).",
+          "british": "A level of the British scale (engagement, learning behaviour, boarding)."
+        }
+      },
+      "fields": {
+        "name": "Name",
+        "namePlaceholder": {
+          "general": "e.g. Excellent",
+          "british": "e.g. Good"
+        },
+        "value": "Value",
+        "hideInReport": "Hide in report",
+        "hideInReportHelp": "The level still counts, but report cards leave it out entirely (its name, value and descriptors).",
+        "descriptors": "Descriptors (optional)",
+        "descriptorsHelp": "What this level means for each area. Leave any blank."
+      },
+      "errors": {
+        "required": "Required",
+        "valueRange": "Enter a whole number from 0 to 99",
+        "duplicateName": "Another level already has this name",
+        "duplicateValue": "Another level already has this value",
+        "descriptorTooLong": "Keep it to {max} characters or fewer"
+      },
+      "confirmDelete": {
+        "title": "Delete level?",
+        "message": "Delete {name}? Levels used by saved ratings can't be deleted — hide them in reports instead."
+      },
+      "toast": {
+        "created": "Level added",
+        "updated": "Level updated",
+        "deleted": "Level deleted"
       }
     },
     "assessmentTypes": {
@@ -3360,6 +3459,7 @@
         "saved": "Saved traits and remarks for {name}",
         "notRated": "Not rated",
         "level": "{value} — {label}",
+        "levelHidden": "{value} — {label} (hidden on report)",
         "readOnly": "Only the class teacher can enter traits and remarks.",
         "psychomotor": "Psychomotor skills",
         "affective": "Affective domain",

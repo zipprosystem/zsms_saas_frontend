@@ -225,6 +225,26 @@ export const setupCategories: SetupConfig = [
         slug: "grades",
         permission: NAV_PERMISSIONS.setupGrades,
       },
+      // British attainment grade scale (grading completion, 2026-10-28) — the
+      // grade_band model's attainment scale_type; British classes read their
+      // levels + weights from it.
+      {
+        key: "attainmentGrades",
+        name: "setup.items.attainmentGrades.name",
+        description: "setup.items.attainmentGrades.description",
+        done: false,
+        slug: "attainment-grades",
+        permission: NAV_PERMISSIONS.setupAttainmentGrades,
+      },
+      // Rating levels for traits + British rating domains (grading completion).
+      {
+        key: "progressGrades",
+        name: "setup.items.progressGrades.name",
+        description: "setup.items.progressGrades.description",
+        done: false,
+        slug: "progress-grades",
+        permission: NAV_PERMISSIONS.setupProgressGrades,
+      },
       {
         key: "assessmentTypes",
         name: "setup.items.assessmentTypes.name",

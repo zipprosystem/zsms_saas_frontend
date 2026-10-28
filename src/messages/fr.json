@@ -310,6 +310,8 @@
       },
       "gradingSchemes": { "name": "Barèmes de notation" },
       "grades": { "name": "Mentions", "description": "Barèmes par classe : mention, poids, GPA, plage de notes et appréciation" },
+      "attainmentGrades": { "name": "Mentions de niveau", "description": "Échelle de niveau britannique : mention, poids, plage de notes, réussite et légende du bulletin" },
+      "progressGrades": { "name": "Niveaux de progression", "description": "Niveaux d'appréciation des comportements et, en britannique, de l'engagement, de l'attitude et de l'internat, avec descripteurs" },
       "assessmentTypes": { "name": "Types d'évaluation", "description": "Les composantes CC et examen qui forment les notes" },
       "resultTemplates": { "name": "Modèles de résultats" },
       "idCardTemplates": { "name": "Modèles de carte d'identité" },
@@ -559,13 +561,17 @@
       "empty": "Aucune mention pour l'instant. Ajoutez les tranches utilisées pour noter vos classes.",
       "range": "{min} – {max} %",
       "gpaNotUsed": "Non utilisé",
+      "yes": "Oui",
+      "no": "Non",
       "columns": {
         "grade": "Mention",
         "gradeWeight": "Poids",
         "gpa": "GPA",
         "range": "Plage de notes",
         "remark": "Appréciation",
-        "classes": "S'applique à"
+        "classes": "S'applique à",
+        "isPass": "Réussite",
+        "showOnReport": "Au bulletin"
       },
       "filters": {
         "class": "Classe",
@@ -589,7 +595,12 @@
         "remarkPlaceholder": "ex. Excellent",
         "applyTo": "Appliquer aux classes",
         "applyToHelp": "La mention s'applique à toutes les sections des classes choisies.",
-        "selectAll": "Tout sélectionner"
+        "selectAll": "Tout sélectionner",
+        "gradeWeightHelp": "Un rang : 1 est la meilleure mention.",
+        "isPass": "Compte comme une réussite",
+        "isPassHelp": "Sert aux matières réussies et échouées sur le bulletin.",
+        "showOnReport": "Afficher au bulletin",
+        "showOnReportHelp": "Faire figurer cette mention dans la légende du bulletin."
       },
       "errors": {
         "required": "Obligatoire",
@@ -606,6 +617,94 @@
         "created": "Mention ajoutée",
         "updated": "Mention mise à jour",
         "deleted": "Mention supprimée"
+      }
+    },
+    "attainmentGrades": {
+      "title": "Mentions de niveau",
+      "subtitle": "L'échelle de niveau britannique de chaque classe à mentions. Une note tombe dans une tranche qui donne la mention et son poids. Le poids est une valeur en points (plus haut = mieux) utilisée pour la valeur ajoutée et l'affichage en poids.",
+      "addNew": "Ajouter une mention",
+      "adminOnly": "Seul un administrateur peut gérer les mentions de niveau. Choisissez Admin dans le sélecteur « agir en tant que » (Examens › Résultats) pour tester cet écran.",
+      "empty": "Aucune mention de niveau. Ajoutez les mentions de vos classes britanniques.",
+      "panel": {
+        "createTitle": "Ajouter une mention de niveau",
+        "editTitle": "Modifier la mention de niveau"
+      },
+      "fields": {
+        "gradePlaceholder": "ex. 9 ou M",
+        "gradeWeightHelp": "Une valeur en points : plus haut = mieux (GCSE 9 = 9, U = 0 ; KS3 M = 4). Valeur ajoutée = poids du niveau − poids de l'objectif.",
+        "remarkPlaceholder": "ex. Maîtrise"
+      },
+      "confirmDelete": {
+        "message": "Supprimer la mention {grade} ? Ses classes ne pourront plus l'utiliser."
+      }
+    },
+    "progressGrades": {
+      "title": "Niveaux de progression",
+      "subtitle": "Niveaux d'appréciation. Chaque niveau a un nom et une valeur, uniques dans l'échelle ; les descripteurs sont facultatifs.",
+      "addNew": "Ajouter un niveau",
+      "adminOnly": "Seul un administrateur peut gérer les niveaux de progression. Choisissez Admin dans le sélecteur « agir en tant que » (Examens › Résultats) pour tester cet écran.",
+      "empty": "Aucun niveau. Ajoutez les niveaux de cette échelle.",
+      "searchPlaceholder": "Rechercher par nom ou valeur",
+      "scale": {
+        "label": "Échelle",
+        "general": "Générale",
+        "british": "Britannique",
+        "help": {
+          "general": "Apprécie les comportements psychomoteurs et affectifs saisis par le professeur principal dans Consulter les résultats.",
+          "british": "Les niveaux d'engagement, d'attitude d'apprentissage et d'internat : les listes Engagement et Attitude d'apprentissage du bulletin académique les utilisent, et les bulletins britanniques impriment leurs descripteurs."
+        }
+      },
+      "columns": {
+        "name": "Nom",
+        "value": "Valeur",
+        "hideInReport": "Au bulletin",
+        "descriptors": "Descripteurs"
+      },
+      "hidden": "Masqué",
+      "shown": "Affiché",
+      "noDescriptors": "Aucun",
+      "domains": {
+        "engagement": "Engagement",
+        "learning_behaviour": "Attitude d'apprentissage",
+        "boarding": "Internat",
+        "psychomotor": "Psychomoteur",
+        "affective": "Affectif"
+      },
+      "panel": {
+        "createTitle": "Ajouter un niveau",
+        "editTitle": "Modifier le niveau",
+        "subtitle": {
+          "general": "Un niveau de l'échelle générale (comportements).",
+          "british": "Un niveau de l'échelle britannique (engagement, attitude d'apprentissage, internat)."
+        }
+      },
+      "fields": {
+        "name": "Nom",
+        "namePlaceholder": {
+          "general": "ex. Excellent",
+          "british": "ex. Bien"
+        },
+        "value": "Valeur",
+        "hideInReport": "Masquer au bulletin",
+        "hideInReportHelp": "Le niveau compte toujours, mais les bulletins l'omettent entièrement (nom, valeur et descripteurs).",
+        "descriptors": "Descripteurs (facultatif)",
+        "descriptorsHelp": "Ce que ce niveau signifie pour chaque domaine. Laissez vide si besoin."
+      },
+      "errors": {
+        "required": "Obligatoire",
+        "valueRange": "Saisissez un nombre entier de 0 à 99",
+        "duplicateName": "Un autre niveau porte déjà ce nom",
+        "duplicateValue": "Un autre niveau a déjà cette valeur",
+        "descriptorTooLong": "{max} caractères maximum"
+      },
+      "confirmDelete": {
+        "title": "Supprimer le niveau ?",
+        "message": "Supprimer {name} ? Un niveau utilisé par des appréciations enregistrées ne peut pas être supprimé — masquez-le au bulletin à la place."
+      },
+      "toast": {
+        "created": "Niveau ajouté",
+        "updated": "Niveau mis à jour",
+        "deleted": "Niveau supprimé"
       }
     },
     "assessmentTypes": {
@@ -3368,6 +3467,7 @@
         "saved": "Aptitudes et appréciations enregistrées pour {name}",
         "notRated": "Non évalué",
         "level": "{value} — {label}",
+        "levelHidden": "{value} — {label} (masqué au bulletin)",
         "readOnly": "Seul le professeur principal peut saisir les aptitudes et appréciations.",
         "psychomotor": "Compétences psychomotrices",
         "affective": "Domaine affectif",

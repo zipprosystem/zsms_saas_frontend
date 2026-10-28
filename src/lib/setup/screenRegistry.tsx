@@ -14,7 +14,8 @@ import { SubjectEnrolmentScreen } from "@/components/setup/academicStructure/Sub
 import { AssessmentTypesScreen } from "@/components/setup/assessmentConfiguration/AssessmentTypesScreen";
 import { ResultTemplatesScreen } from "@/components/setup/assessmentConfiguration/ResultTemplatesScreen";
 import { IdCardTemplatesScreen } from "@/components/setup/assessmentConfiguration/IdCardTemplatesScreen";
-import { GradesScreen } from "@/components/setup/assessmentConfiguration/GradesScreen";
+import { AttainmentGradesScreen, GradesScreen } from "@/components/setup/assessmentConfiguration/GradesScreen";
+import { ProgressGradesScreen } from "@/components/setup/assessmentConfiguration/ProgressGradesScreen";
 
 /**
  * Keyed by "{categorySlug}/{screenSlug}". A screen not listed here falls
@@ -61,6 +62,11 @@ export const setupScreenRegistry: Record<string, ComponentType> = {
   // Per-class grade bands (admin-gated) — read by the results engine. MOCK
   // on the exam module's transport, see gradesApi.ts.
   "assessment-configuration/grades": GradesScreen,
+  // British attainment grade scale + Progress Grades (grading completion,
+  // admin-gated) — MOCK on the exam transport, see gradesApi.ts and
+  // progressGradesApi.ts.
+  "assessment-configuration/attainment-grades": AttainmentGradesScreen,
+  "assessment-configuration/progress-grades": ProgressGradesScreen,
   // Both catalogs are MOCK (frontend-ahead) and feed the School Types
   // form's template assignment dropdowns.
   "assessment-configuration/result-templates": ResultTemplatesScreen,

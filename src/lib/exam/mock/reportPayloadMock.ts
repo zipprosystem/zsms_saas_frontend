@@ -13,9 +13,7 @@ import { resultTemplatesService } from "@/lib/setup/assessmentConfiguration/resu
 import {
   SEED_AFFECTIVE,
   SEED_PSYCHOMOTOR,
-  SEED_RATING_SCALES,
   SEED_TEACHERS,
-  SEED_TRAIT_SCALE,
   SEED_YEARS,
   enrolledForTerm,
   seedStudentProfile,
@@ -27,6 +25,9 @@ import { armInScope, readGradeMark, readScoreMark } from "@/lib/exam/mock/examMo
 import { subjectStats } from "@/lib/exam/mock/broadsheetMock";
 import { loadExamSettings } from "@/lib/exam/mock/examSettingsMock";
 import { levelWeight } from "@/lib/exam/results/resultsEngine";
+import { classAttainmentBands } from "@/lib/exam/mock/gradesMock";
+import { progressGradeById, progressGrades } from "@/lib/exam/mock/progressGradesMock";
+import type { ProgressDomain, ProgressGrade } from "@/lib/setup/assessmentConfiguration/progressGradesApi";
 import { armOfStudent, classAverage, compute, storedTraits, termPoints, viewerFor, type Computed, type ComputedRow } from "@/lib/exam/mock/examResultsMock";
 
 /**
@@ -207,17 +208,34 @@ function britishReportPoints(computed: Computed, termId: string): Exam[] {
     .filter((exam) => exam.term_id !== termId || computed.stage === "full" || exam.id === current[0]?.id);
 }
 
+/**
+ * A British rating domain entry (a British Progress Grade, by id) as the
+ * report prints it: the level's value, or null when not rated or the
+ * level is hidden in reports (hide_in_report — it still counts; the report
+ * just doesn't show it).
+ */
+function britishRatingShown(code: string | null | undefined): number | null {
+  const level = progressGradeById(code);
+  return level && level.mode === "british" && !level.hide_in_report ? level.value : null;
+}
+
+/** The report's level key for a Progress Grades scale: visible levels only, best first, with their descriptors. */
+function ratingKey(levels: ProgressGrade[]): ReportPayload["traits"]["rating_key"] {
+  return levels
+    .filter((level) => !level.hide_in_report)
+    .map((level) => ({ rating: level.value, descriptor: level.name, descriptors: { ...level.descriptors } }));
+}
+
 function britishSubject(computed: Computed, result: SubjectResult, reportPoint: Exam | undefined, history: Exam[], armId: string, studentId: string) {
   const structure = computed.gradeStructure;
   const mark = structure && reportPoint ? readGradeMark(reportPoint, result.subject_id, armId, studentId, structure) : null;
   const scores = mark?.component_scores ?? {};
   const components: ReportComponent[] = (structure?.rating_domains ?? []).map((domain) => {
-    const code = scores[domain.id];
-    const level = code ? Number(code) : NaN;
     return {
       label: domain.name,
-      score: Number.isFinite(level) ? level : null,
-      max: SEED_RATING_SCALES.find((scale) => scale.id === domain.rating_scale_id)?.levels.length ?? 0,
+      score: britishRatingShown(scores[domain.id]),
+      // Levels on the British Progress Grades scale (hidden ones still count).
+      max: progressGrades("british").length,
       kind: "rating" as const,
     };
   });
@@ -243,10 +261,7 @@ function britishSubject(computed: Computed, result: SubjectResult, reportPoint: 
       return {
         label: exam.name,
         attainment: (structure && at[structure.attainment.id]) || null,
-        ratings: (structure?.rating_domains ?? []).map((domain) => {
-          const level = at[domain.id] ? Number(at[domain.id]) : NaN;
-          return Number.isFinite(level) ? level : null;
-        }),
+        ratings: (structure?.rating_domains ?? []).map((domain) => britishRatingShown(at[domain.id])),
       };
     }),
   };
@@ -335,10 +350,11 @@ function buildPayload(
   const own = viewer.report_scope === "own_subjects";
   const aggregate = row.aggregate;
   const stored = storedTraits(termId, row.student.id);
-  const descriptor = (rating: number | null) => SEED_TRAIT_SCALE.find((level) => level.value === rating)?.label ?? null;
-  const trait = ({ key, label }: { key: string; label: string }) => {
-    const rating = stored?.ratings[key] ?? null;
-    return { skill: label, rating, descriptor: descriptor(rating) };
+  // A trait rating = a General Progress Grade (by id). Hidden in reports -> the whole level is suppressed.
+  const traitOf = (domain: Extract<ProgressDomain, "psychomotor" | "affective">) => ({ key, label }: { key: string; label: string }) => {
+    const level = progressGradeById(stored?.ratings[key]);
+    if (!level || level.hide_in_report) return { skill: label, rating: null, descriptor: null };
+    return { skill: label, rating: level.value, descriptor: level.descriptors[domain] || level.name };
   };
   const [startDate, endDate] = TERM_DATES[termId] ?? [null, null];
   const profile = seedStudentProfile(row.student.id);
@@ -395,13 +411,14 @@ function buildPayload(
             }),
     },
     traits: {
-      psychomotor: SEED_PSYCHOMOTOR.map(trait),
-      affective: SEED_AFFECTIVE.map(trait),
+      psychomotor: SEED_PSYCHOMOTOR.map(traitOf("psychomotor")),
+      affective: SEED_AFFECTIVE.map(traitOf("affective")),
       engagement: null,
       learning_behaviour: null,
       boarding: null,
       form_tutor_comment: null,
-      rating_key: SEED_TRAIT_SCALE.map((level) => ({ rating: level.value, descriptor: level.label })),
+      // General: the trait scale. British: the Engagement / Learning Behaviour / Boarding level key.
+      rating_key: ratingKey(progressGrades(general ? "general" : "british")),
     },
     remarks: {
       class_teacher: stored?.class_teacher_remark || null,
@@ -409,15 +426,19 @@ function buildPayload(
     },
     grade_key: general
       ? (computed.scale?.bands ?? []).map((band) => ({ grade: band.grade, min: band.min, max: band.max, remark: band.remark, show_on_report: true, gpa: band.gpa, weight: null }))
-      : computed.levels.map((level) => ({
-          grade: level.code,
-          min: null,
-          max: null,
-          remark: level.label,
-          show_on_report: true,
-          gpa: null,
-          weight: levelWeight(computed.levels, level.code),
-        })),
+      : computed.levels.map((level) => {
+          // Score range + show-on-report from the class's attainment band (Setup › Attainment Grades), when there is one.
+          const band = classAttainmentBands(computed.classId).find((item) => item.grade === level.code);
+          return {
+            grade: level.code,
+            min: band?.min_score ?? null,
+            max: band?.max_score ?? null,
+            remark: level.label,
+            show_on_report: band?.show_on_report ?? true,
+            gpa: null,
+            weight: levelWeight(computed.levels, level.code),
+          };
+        }),
   };
 }
 

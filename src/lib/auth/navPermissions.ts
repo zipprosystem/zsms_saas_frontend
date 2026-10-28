@@ -31,6 +31,8 @@ export const LIVE_PERMISSION_KEYS: ReadonlySet<string> = new Set<string>([]);
 export const NAV_PERMISSIONS = {
   examViewResults: { key: "exam.view_results", fallback: "exam.view" },
   setupGrades: { key: "assessment_config.grades", fallback: "assessment_config.view" },
+  setupAttainmentGrades: { key: "assessment_config.attainment_grades", fallback: "assessment_config.view" },
+  setupProgressGrades: { key: "assessment_config.progress_grades", fallback: "assessment_config.view" },
   hrAssignmentReview: { key: "hr.assignment_review", fallback: "hr.view" },
 } satisfies Record<string, NavPermission>;
 

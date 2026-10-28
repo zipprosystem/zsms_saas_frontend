@@ -29,6 +29,8 @@ export type ScoreBand = {
   grade_weight: number;
   /** null = the school doesn't use GPA for this band (Setup › Grades). */
   gpa: number | null;
+  /** The grade counts as a pass (Setup › Grades is_pass). Optional: older seeds don't carry it. */
+  is_pass?: boolean;
 };
 
 export type ScoreGradeScale = { id: string; name: string; bands: ScoreBand[] };
@@ -192,8 +194,10 @@ export type ResultsArms = {
   full_scope: boolean;
 };
 
-export type TraitRatingLevel = { value: number; label: string };
-export type TraitItem = { key: string; label: string; rating: number | null };
+/** A General Progress Grades level (Setup › Progress Grades). */
+export type TraitRatingLevel = { id: string; value: number; label: string; hide_in_report: boolean };
+/** progress_grade_id: the rated level, by id; null = not rated. */
+export type TraitItem = { key: string; label: string; progress_grade_id: string | null };
 
 /** GET / PUT erp/results/:student_id/traits?term_id= — the class teacher's student-wise entry. */
 export type StudentTraits = {
@@ -212,7 +216,8 @@ export type StudentTraits = {
 
 export type SaveStudentTraitsInput = {
   term_id: string;
-  ratings: Record<string, number | null>;
+  /** trait key -> progress_grade_id (null = not rated). */
+  ratings: Record<string, string | null>;
   class_teacher_remark: string;
   head_teacher_remark: string;
 };

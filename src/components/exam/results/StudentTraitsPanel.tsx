@@ -15,11 +15,12 @@ import { failureMessage, Notice } from "@/components/exam/examEntryShared";
 
 const REMARK_MAX = 500;
 
-type Draft = { ratings: Record<string, number | null>; class_teacher_remark: string; head_teacher_remark: string };
+/** ratings: trait key -> progress_grade_id (null = not rated). */
+type Draft = { ratings: Record<string, string | null>; class_teacher_remark: string; head_teacher_remark: string };
 
 function draftOf(traits: StudentTraits): Draft {
   return {
-    ratings: Object.fromEntries([...traits.psychomotor, ...traits.affective].map((item) => [item.key, item.rating])),
+    ratings: Object.fromEntries([...traits.psychomotor, ...traits.affective].map((item) => [item.key, item.progress_grade_id])),
     class_teacher_remark: traits.class_teacher_remark,
     head_teacher_remark: traits.head_teacher_remark,
   };
@@ -37,7 +38,8 @@ function sameDraft(a: Draft, b: Draft): boolean {
  * Class teacher's student-wise entry (results reframe): Psychomotor
  * Skills, Affective Domain, Class Teacher's Remarks and Head Teacher's
  * Remarks for one student and term. Skill lists and the rating key come
- * from the backend (school data, not UI strings). Only opened from the
+ * from the backend (school data, not UI strings); the key is the General
+ * Progress Grades scale and each rating is saved as the level's id. Only opened from the
  * class teacher's list; the backend also refuses anyone else (403).
  */
 export function StudentTraitsPanel({
@@ -113,17 +115,19 @@ export function StudentTraitsPanel({
             </span>
             <SelectField
               id={`trait-${item.key}`}
-              value={draft.ratings[item.key] === null || draft.ratings[item.key] === undefined ? "" : String(draft.ratings[item.key])}
+              value={draft.ratings[item.key] ?? ""}
               disabled={!editable}
               onChange={(event) => {
-                const value = event.target.value === "" ? null : Number(event.target.value);
+                const value = event.target.value === "" ? null : event.target.value;
                 setDraft((current) => (current ? { ...current, ratings: { ...current.ratings, [item.key]: value } } : current));
               }}
             >
               <option value="">{k("notRated")}</option>
               {traits.rating_scale.map((level) => (
-                <option key={level.value} value={String(level.value)}>
-                  {k("level", { value: level.value, label: level.label })}
+                <option key={level.id} value={level.id}>
+                  {level.hide_in_report
+                    ? k("levelHidden", { value: level.value, label: level.label })
+                    : k("level", { value: level.value, label: level.label })}
                 </option>
               ))}
             </SelectField>

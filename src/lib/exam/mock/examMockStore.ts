@@ -19,6 +19,8 @@ import {
   yearOfTerm,
 } from "@/lib/exam/mock/examMockSeeds";
 import { getMockActingAs, MOCK_ADMIN } from "@/lib/exam/mock/mockActingAs";
+import { resolveGradeScale } from "@/lib/exam/mock/gradesMock";
+import { seededProgressGradeId } from "@/lib/exam/mock/progressGradesMock";
 
 /**
  * MOCK Exam data layer shared by the marks endpoints (Stage 1b/1c) and the
@@ -232,14 +234,15 @@ function generatedGradeMark(exam: Exam, subjectId: string, armId: string, studen
   const index = studentIndexOf(armId, studentId);
   const policy = seedPolicy(exam, armId, subjectId, index);
   if (!policy.entered) return null;
-  const scale = SEED_GRADE_SCALES.find((item) => item.id === structure.attainment.grade_scale_id);
+  const scale = resolveGradeScale(classOfArm(armId), SEED_GRADE_SCALES.find((item) => item.id === structure.attainment.grade_scale_id));
   const codes = (scale?.grades ?? []).map((grade) => grade.code).filter((code) => code !== "U");
   if (codes.length === 0) return null;
   const level = performance(studentId, subjectId, exam.id, "att");
   const attainment = codes[Math.min(codes.length - 1, Math.max(0, Math.round((1 - level) * (codes.length - 1))))];
   const rating = (salt: string) => {
     const value = performance(studentId, subjectId, exam.id, salt);
-    return value > 0.8 ? "1" : value > 0.6 ? "2" : value > 0.45 ? "3" : "4";
+    // A British Progress Grades level, by id (seeded levels: 1 = best … 4).
+    return seededProgressGradeId("british", value > 0.8 ? 1 : value > 0.6 ? 2 : value > 0.45 ? 3 : 4);
   };
   const domains = structure.rating_domains;
   const scores: Record<string, string | null> = { [structure.attainment.id]: attainment };
@@ -302,7 +305,34 @@ export function readScoreMark(exam: Exam, subjectId: string, armId: string, stud
   return loadMarks()[markKey(exam.id, subjectId, armId, studentId)] ?? generatedScoreMark(exam, subjectId, armId, studentId, structure);
 }
 
+/**
+ * Rating-domain entries saved before the Academic Report used Progress
+ * Grades held the level's value ("1"…"4"); read them as the seeded
+ * British level's id (pg-british-<n>).
+ */
+function withRatingIds(mark: StoredGradeMark, structure: GradeBasedStructure | null): StoredGradeMark {
+  const domains = structure?.rating_domains ?? [];
+  if (!domains.some((domain) => /^\d+$/.test(mark.component_scores[domain.id] ?? ""))) return mark;
+  const scores = { ...mark.component_scores };
+  for (const domain of domains) {
+    const code = scores[domain.id];
+    if (code && /^\d+$/.test(code)) scores[domain.id] = seededProgressGradeId("british", Number(code));
+  }
+  return { ...mark, component_scores: scores };
+}
+
 /** A student's Academic Report entry for one point: saved entry first, else the generated seed. */
 export function readGradeMark(exam: Exam, subjectId: string, armId: string, studentId: string, structure: GradeBasedStructure | null): StoredGradeMark | null {
-  return loadGradeMarks()[markKey(exam.id, subjectId, armId, studentId)] ?? generatedGradeMark(exam, subjectId, armId, studentId, structure);
+  const saved = loadGradeMarks()[markKey(exam.id, subjectId, armId, studentId)];
+  return saved ? withRatingIds(saved, structure) : generatedGradeMark(exam, subjectId, armId, studentId, structure);
+}
+
+/**
+ * Whether an Academic Report rating references this British progress
+ * grade (so it can't be deleted): any saved entry, or — for the seeded
+ * levels — the generated seed marks, which always use them.
+ */
+export function gradeMarksReference(id: string): boolean {
+  if (/^pg-british-[1-4]$/.test(id)) return true;
+  return Object.values(loadGradeMarks()).some((mark) => Object.values(mark.component_scores ?? {}).some((code) => code === id || (/^\d+$/.test(code ?? "") && seededProgressGradeId("british", Number(code)) === id)));
 }
