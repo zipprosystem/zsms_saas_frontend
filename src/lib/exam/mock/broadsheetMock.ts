@@ -49,8 +49,12 @@ function mean(values: number[], divisor = values.length): number | null {
   return divisor > 0 ? round2(values.reduce((sum, value) => sum + value, 0) / divisor) : null;
 }
 
-/** Subject average = Σ totals ÷ students enrolled in the subject (blank = 0); highest / lowest over the totals there are. */
-function subjectStats(computed: Computed, subjectId: string): Omit<BroadsheetSubject, "subject_id" | "subject_name"> {
+/**
+ * Subject average = Σ totals ÷ students enrolled in the subject (blank = 0,
+ * NE excluded); highest / lowest over the totals there are. Shared with
+ * the report payload (reportPayloadMock) so both read the same numbers.
+ */
+export function subjectStats(computed: Computed, subjectId: string): Omit<BroadsheetSubject, "subject_id" | "subject_name"> {
   const enrolled = computed.rows.map((row) => row.subjects[subjectId]).filter((result) => result && result.status !== "ne");
   const totals = enrolled.map((result) => result.total).filter((total): total is number => total !== null);
   const anyScore = totals.length > 0;

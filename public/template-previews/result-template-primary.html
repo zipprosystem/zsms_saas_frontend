@@ -342,13 +342,14 @@
         '</td><td style="color:var(--ok);font-weight:700">'+zEsc(String(b.remark).toUpperCase())+"</td></tr>";}).join("")+
       '<tr><td class="gl">Total</td><td>'+shown+"</td><td></td></tr></tbody></table>";
 
-    // Term / cumulative block: the payload carries this term's figures (earlier terms' columns show —).
+    // Term / cumulative block: this term from the aggregate; earlier terms (Full report) from aggregate.earlier_terms — full-term figures, so a Progress (CA) report leaves them —.
     var labels=["1st","2nd","3rd"].slice(0,Math.min(3,n));
-    function col(v){return labels.map(function(l,i){return '<td class="num">'+(i===labels.length-1?v:"—")+"</td>";}).join("");}
+    function before(num){var e=ag.earlier_terms||[];for(var i=0;i<e.length;i++)if(e[i].number===num)return e[i];return null;}
+    function col(v,field,dp){return labels.map(function(l,i){var e=isFull&&field?before(i+1):null;return '<td class="num">'+(i===labels.length-1?v:e?zNum(e[field],dp):"—")+"</td>";}).join("");}
     var out='<tr><th class="lbl">Term</th>'+labels.map(function(l){return "<th>"+l+"</th>";}).join("")+"</tr>";
     if(!isFull) out+='<tr><td class="lbl">Total Score ('+zNum(caP&&caP.max)+'%)</td>'+col("—")+'</tr><tr><td class="lbl">Total Score (100%)</td>'+col(zNum(ag.grand_total))+"</tr>";
-    else out+='<tr><td class="lbl">Total Score</td>'+col(zNum(ag.grand_total))+"</tr>";
-    out+='<tr><td class="lbl">No of Subjects</td>'+col(zNum(ag.subjects_counted))+'</tr><tr><td class="lbl">Term Average</td>'+col(zNum(ag.average,2))+"</tr>";
+    else out+='<tr><td class="lbl">Total Score</td>'+col(zNum(ag.grand_total),"grand_total")+"</tr>";
+    out+='<tr><td class="lbl">No of Subjects</td>'+col(zNum(ag.subjects_counted),"subjects_counted")+'</tr><tr><td class="lbl">Term Average</td>'+col(zNum(ag.average,2),"average",2)+"</tr>";
     if(n===3&&isFull) out+='<tr class="cum"><td class="lbl">Total Cumulative Average</td><td class="num" colspan="3">'+zNum(ag.cumulative_average,2)+"</td></tr>";
     document.getElementById("termTable").innerHTML=out;
 

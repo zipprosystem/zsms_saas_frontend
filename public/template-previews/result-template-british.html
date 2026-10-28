@@ -271,6 +271,8 @@
   function zImg(url,fallback){return url?'<img src="'+zEsc(url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':fallback;}
   function zRow(s){return s.redacted?' class="zsms-redacted"':"";}
   function zAddress(){return [Z.school.address,Z.school.motto].filter(Boolean).map(zEsc).join(" &middot; ");}
+  /* An attainment grade as the school's setting shows it: its weight (looked up in grade_key) or its label. */
+  function zAtt(code){if(code==null||code==="")return "—";if(Z.meta.attainment_display!=="label"){var k=Z.grade_key||[];for(var i=0;i<k.length;i++)if(k[i].grade===code&&k[i].weight!=null)return zEsc(k[i].weight);}return zEsc(code);}
 
   var SUBJECTS=[
     ["Biology",9,[9,9,9,9,8,9],[97,93,90,90,88,98],[1,1,2,1,2,2],[1,1,2,1,2,2],"Mr Wasiu Rasak"],
@@ -304,27 +306,31 @@
       '</p><p class="mid" style="font-weight:800">'+zEsc(st.full_name)+" — "+zEsc(st["class"])+" ("+zEsc(st.arm)+")</p>"+(Z.school.motto?'<p class="mission">'+zEsc(Z.school.motto)+"</p>":"");
 
     function cb(k,v,accent){return '<div class="cellb"><span class="k">'+k+'</span><span class="v'+(accent?" accent":"")+'">'+v+"</span></div>";}
-    card.querySelector(".bio").innerHTML=cb("Student's Name",zTxt(st.full_name),1)+cb("Class",zTxt(st["class"])+" "+zTxt(st.arm))+cb("Tutor","—")+cb("Boarding House","—")+cb("Pupil ID Number",zTxt(st.admission_no));
+    card.querySelector(".bio").innerHTML=cb("Student's Name",zTxt(st.full_name),1)+cb("Class",zTxt(st["class"])+" "+zTxt(st.arm))+cb("Tutor","—")+cb("Boarding House","—")/* Form Tutor + boarding: Report Progression's student-wise entry (not built) */+cb("Pupil ID Number",zTxt(st.admission_no));
 
-    // The grid's six reporting-point columns (1A…3B): the payload carries the current point (highlighted); earlier points show —.
+    // The grid's six reporting-point columns (1A…3B): subjects[].history has one entry per meta.points item (the year so far); the current point is highlighted.
+    card.querySelector("thead th.tgt").innerHTML="Target<br>(MTG)";
     var heads=card.querySelectorAll("thead tr:last-child th");
     heads.forEach(function(th,i){th.classList.remove("c3a","c3b");if(i%6===cur&&(i<6||i>=12))th.classList.add("cur");});
     function lv(v){return v==null?"—":'<span class="lv lv'+zEsc(v)+'">'+zEsc(v)+"</span>";}
-    function six(fn,cls){var h="";for(var i=0;i<6;i++)h+='<td class="'+(cls||"")+(i===cur?" cur":"")+'">'+(i===cur?fn():"—")+"</td>";return h;}
+    function six(fn,cls){var h="";for(var i=0;i<6;i++)h+='<td class="'+(cls||"")+(i===cur?" cur":"")+'">'+(i<points.length?fn(i):"—")+"</td>";return h;}
     document.getElementById("rows").innerHTML=Z.subjects.map(function(s){
-      var eng=(s.components||[])[0], beh=(s.components||[])[1];
-      return "<tr"+zRow(s)+'><td class="subj">'+zEsc(s.name)+'</td><td class="tgt g">'+zTxt(s.mtg)+"</td>"+
-        six(function(){return zTxt(s.cag);},"g")+'<td class="gb">—</td><td class="gb">—</td><td class="gb">—</td><td class="gb">—</td><td class="gb">—</td><td class="gb">—</td>'+
-        six(function(){return lv(eng&&eng.score);})+six(function(){return lv(beh&&beh.score);})+'<td class="tcr">'+zTxt(s.teacher_name)+"</td></tr>";
+      var hist=s.history||[];
+      function at(i){var p=hist[i];return p?zAtt(p.attainment):"—";}
+      function rating(d){return function(i){var p=hist[i];return lv(p&&p.ratings?p.ratings[d]:null);};}
+      // Grade Book (GB) scores: not in the payload until the Grade Book entry is built -> —.
+      return "<tr"+zRow(s)+'><td class="subj">'+zEsc(s.name)+'</td><td class="tgt g">'+zAtt(s.mtg)+"</td>"+
+        six(at,"g")+'<td class="gb">—</td><td class="gb">—</td><td class="gb">—</td><td class="gb">—</td><td class="gb">—</td><td class="gb">—</td>'+
+        six(rating(0))+six(rating(1))+'<td class="tcr">'+zTxt(s.teacher_name)+"</td></tr>";
     }).join("");
     var avg=card.querySelector("tfoot tr.avg");
     avg.innerHTML='<td class="subj">Average</td><td class="tgt"></td><td colspan="6"></td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td colspan="6"></td><td colspan="6"></td><td></td>';
 
     card.querySelector(".narr").innerHTML=Z.subjects.filter(function(s){return !s.redacted;}).map(function(s){
       var eng=(s.components||[])[0], beh=(s.components||[])[1];
-      function badge(k,v){return '<span class="badge">'+k+" <b>"+zTxt(v)+"</b></span>";}
+      function badge(k,v){return '<span class="badge">'+k+" <b>"+v+"</b></span>";}
       return '<div class="ncard"><div class="top"><span class="subjn">'+zEsc(s.name)+'</span><span class="teach">'+zTxt(s.teacher_name)+'</span><span class="badges">'+
-        badge("Target",s.mtg)+badge("Attainment",s.cag)+badge("Engagement",eng&&eng.score)+badge("Behaviour",beh&&beh.score)+"</span></div><p>"+zTxt(s.comment)+"</p></div>";
+        badge("Target",zAtt(s.mtg))+badge("Attainment",zAtt(s.cag))+badge("Engagement",zTxt(eng&&eng.score))+badge("Behaviour",zTxt(beh&&beh.score))+"</span></div><p>"+zTxt(s.comment)+"</p></div>";
     }).join("");
 
     var b=Z.traits.boarding;

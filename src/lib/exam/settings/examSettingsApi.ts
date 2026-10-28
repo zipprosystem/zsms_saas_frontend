@@ -16,7 +16,10 @@ import type { ScaleLevel } from "@/lib/exam/examTypes";
  *       term and cumulative grades) are shown: the grade's numeric weight
  *       (KS3 M → 4, GCSE 9 → 9) or its grade label (M / S / D, 9–1).
  *       Display only — grades are stored and sent as codes either way,
- *       and VA is always CAG weight − MTG weight.
+ *       and VA is always CAG weight − MTG weight. One setting for the
+ *       whole system: Academic Report entry, Progression broadsheet, and
+ *       the report card (the report payload carries it as
+ *       meta.attainment_display, with each level's weight in grade_key).
  *   Errors: 422 VALIDATION_ERROR, 403 FORBIDDEN (PUT: admins only).
  *
  * Grade weights come with the scale: each level carries weight (see

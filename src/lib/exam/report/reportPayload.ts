@@ -1,5 +1,6 @@
 import type { CrudResult } from "@/lib/setup/crudTypes";
 import { examSend } from "@/lib/exam/examApi";
+import type { AttainmentDisplay } from "@/lib/exam/settings/examSettingsApi";
 
 /**
  * REPORT PAYLOAD — the one JSON shape every result template reads.
@@ -29,10 +30,19 @@ import { examSend } from "@/lib/exam/examApi";
                                             share of the 100, null British
  *               pages: 1|2, generated_at,
  *               scope: "full"|"own_subjects",              (addition)
- *               assessment_mode: component_based|grade_based },  (addition)
+ *               assessment_mode: component_based|grade_based,    (addition)
+ *               attainment_display: "weight"|"label" },          (addition)
+ *                 the school's exam setting (GET erp/exam-settings):
+ *                 British templates show each attainment grade (the
+ *                 points, MTG, CAG) as its weight or its label — look the
+ *                 weight up in grade_key[].weight. Same setting the
+ *                 Progression broadsheet and Academic Report read.
  *       school:  { name, logo_url, address, motto },
  *       student: { full_name, admission_no, class, arm, gender, dob,
  *                  photo_url, resumption_date },
+ *                  from the student record: gender "male"|"female",
+ *                  dob = date_of_birth (YYYY-MM-DD), photo_url = the
+ *                  served URL of photo_file_id (null = no photo).
  *       attendance: { present, absent, total_days, time_school_opened },
  *       subjects: [{ name, teacher_name,
  *                    components: [{ label, score, max, kind }],
@@ -44,14 +54,45 @@ import { examSend } from "@/lib/exam/examApi";
  *                    grade, grade_weight, gpa, remark, position,
  *                    cag, mtg, va,           British
  *                    comment,                subject comment (Full only)
- *                    redacted }],            (addition) true = not the
+ *                    redacted,               (addition) true = not the
  *                                            caller's subject: every score
- *                                            field above is null
+ *                                            field is null
+ *                    units,                  (addition) Class Subjects' unit
+ *                                            (null = not set)
+ *                    class_highest, class_lowest, class_average,
+ *                                            (addition) General: the subject
+ *                                            in this arm for this report —
+ *                                            highest / lowest over students
+ *                                            with a total; average = Σ
+ *                                            totals ÷ students enrolled in
+ *                                            the subject (blank = 0, NE
+ *                                            excluded). Same rule as the
+ *                                            Broad Sheet foot.
+ *                    cumulative_average,     (addition) General, Full only:
+ *                                            the subject's cumulative
+ *                                            average (results engine)
+ *                    earlier_terms: [{ number, name, total }],
+ *                                            (addition) General: this
+ *                                            subject's full-term total in
+ *                                            each earlier term of the year
+ *                                            (null = no total / not then
+ *                                            enrolled)
+ *                    history: [{ label, attainment, ratings }] }],
+ *                                            (addition) British: one entry
+ *                                            per meta.points item — the
+ *                                            attainment code and the rating
+ *                                            domain levels (components'
+ *                                            order) entered at that point
  *       aggregate: { grand_total, average, overall_grade, class_position,
  *                    gpa, cumulative_average,
  *                    out_of,                 students ranked (position "of")
- *                    subjects_counted, marks_obtainable, class_average },
- *                                            (last three: additions)
+ *                    subjects_counted, marks_obtainable, class_average,
+ *                    earlier_terms: [{ number, name, grand_total,
+ *                                      average, subjects_counted }] },
+ *                                            (last four: additions;
+ *                                            earlier_terms = the student's
+ *                                            full-term figures in each
+ *                                            earlier term of the year)
  *       traits: { psychomotor: [{ skill, rating, descriptor? }],
  *                 affective:   [{ skill, rating, descriptor? }],
  *                 engagement: { rating, descriptor? } | null,
@@ -63,9 +104,13 @@ import { examSend } from "@/lib/exam/examApi";
                                             the template's legend)
  *       remarks: { class_teacher, head_teacher },
  *       grade_key: [{ grade, min, max, remark, show_on_report,
-                     gpa }]                   (gpa: addition, the band's GPA
+                     gpa, weight }]           (gpa: addition, the band's GPA
                                             for a GPA-scale legend; null =
-                                            not used / British)
+                                            not used / British.
+                                            weight: addition, British — the
+                                            level's weight (ScaleLevel
+                                            .weight, else position from the
+                                            bottom); null for General)
  *     }
  *     Progress (mid-term) variant: CA only — the engine runs over the CA
  *     part of the structure, so total = CA scaled to 100 and grade,
@@ -117,6 +162,13 @@ export type ReportSubject = {
   va: number | null;
   comment: string | null;
   redacted: boolean;
+  units: number | null;
+  class_highest: number | null;
+  class_lowest: number | null;
+  class_average: number | null;
+  cumulative_average: number | null;
+  earlier_terms: Array<{ number: number; name: string; total: number | null }>;
+  history: Array<{ label: string; attainment: string | null; ratings: Array<number | null> }>;
 };
 
 export type ReportRating = { rating: number | null; descriptor?: string | null };
@@ -134,6 +186,7 @@ export type ReportPayload = {
     generated_at: string;
     scope: "full" | "own_subjects";
     assessment_mode: "component_based" | "grade_based";
+    attainment_display: AttainmentDisplay;
   };
   school: { name: string; logo_url: string | null; address: string | null; motto: string | null };
   student: {
@@ -141,7 +194,7 @@ export type ReportPayload = {
     admission_no: string;
     class: string;
     arm: string;
-    gender: string | null;
+    gender: "male" | "female" | null;
     dob: string | null;
     photo_url: string | null;
     resumption_date: string | null;
@@ -159,6 +212,7 @@ export type ReportPayload = {
     subjects_counted: number | null;
     marks_obtainable: number | null;
     class_average: number | null;
+    earlier_terms: Array<{ number: number; name: string; grand_total: number | null; average: number | null; subjects_counted: number | null }>;
   };
   traits: {
     psychomotor: ReportTrait[];
@@ -170,7 +224,7 @@ export type ReportPayload = {
     rating_key: Array<{ rating: number; descriptor: string }>;
   };
   remarks: { class_teacher: string | null; head_teacher: string | null };
-  grade_key: Array<{ grade: string; min: number | null; max: number | null; remark: string; show_on_report: boolean; gpa: number | null }>;
+  grade_key: Array<{ grade: string; min: number | null; max: number | null; remark: string; show_on_report: boolean; gpa: number | null; weight: number | null }>;
 };
 
 export const CLASS_PDF_STATUSES = ["queued", "processing", "ready", "failed", "unavailable"] as const;
@@ -178,6 +232,8 @@ export type ClassPdfStatus = (typeof CLASS_PDF_STATUSES)[number];
 export type ClassPdfJob = { job_id: string | null; status: ClassPdfStatus; download_url: string | null; message: string | null };
 
 export const reportQueryKeys = {
+  /** Every report payload — invalidated when a school setting the payload carries (attainment_display) changes. */
+  all: ["exam", "results", "report"] as const,
   payload: (studentId: string, termId: string, variant: ReportVariant | null) => ["exam", "results", "report", studentId, termId, variant] as const,
 };
 

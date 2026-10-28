@@ -12,11 +12,13 @@ import {
   updateExamSettings,
   type AttainmentDisplay,
 } from "@/lib/exam/settings/examSettingsApi";
+import { reportQueryKeys } from "@/lib/exam/report/reportPayload";
 
 /**
- * School setting: how British attainment grades read across the Academic
- * Report and the Progression broadsheet — the grade's numeric weight
- * (default) or its grade label. Display only; VA is always the weight
+ * School setting: how British attainment grades read everywhere they show —
+ * the Academic Report entry, the Progression broadsheet, View Results'
+ * report viewer and the printed report card — as the grade's numeric
+ * weight (default) or its grade label. Display only; VA is always the weight
  * difference.
  */
 export function AttainmentDisplaySetting() {
@@ -32,6 +34,8 @@ export function AttainmentDisplaySetting() {
     onSuccess: (result) => {
       if (result.ok) {
         queryClient.setQueryData(examSettingsQueryKey, result);
+        // Report payloads carry the setting (meta.attainment_display).
+        void queryClient.invalidateQueries({ queryKey: reportQueryKeys.all });
         showToast(t("saved"));
       } else {
         showToast(t("saveFailed"), "error");

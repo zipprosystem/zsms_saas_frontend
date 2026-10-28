@@ -230,7 +230,8 @@
      (contract: src/lib/exam/report/reportPayload.ts) before this file runs.
      With it, the template renders from the payload; without it (catalog
      preview), it shows its own sample data. The template does no
-     arithmetic — every number is the payload's. */
+     arithmetic — every number is the payload's (the distribution chart
+     is a count of the grades shown). */
   var Z = window.__ZSMS_REPORT__ || null;
   if (Z) document.documentElement.classList.add("zsms-live");
   function zEsc(v){return v==null?"":String(v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
@@ -267,7 +268,7 @@
     document.querySelector(".sheet .bio").innerHTML=
       '<div class="r">'+c("Admission No.:",zTxt(st.admission_no))+c("Term:",termText)+c("Time School Opened:",zNum(at.time_school_opened))+"</div>"+
       '<div class="r">'+c("Fullname:",zTxt(st.full_name))+c("Class:",zTxt(st["class"])+" "+zTxt(st.arm))+c("Attendance:",zNum(at.present))+"</div>"+
-      '<div class="r">'+c("Gender:",zTxt(st.gender))+c("Date of Birth:",zDate(st.dob))+c("Resumption Date:",zDate(st.resumption_date))+"</div>";
+      '<div class="r">'+c("Gender:",st.gender?zEsc(st.gender.charAt(0).toUpperCase()+st.gender.slice(1)):"—")+c("Date of Birth:",zDate(st.dob))+c("Resumption Date:",zDate(st.resumption_date))+"</div>";
 
     function rem(s){return s.grade?zEsc(s.grade)+(s.remark?" · "+zEsc(String(s.remark).toUpperCase()):""):"—";}
     function num(v){return '<td class="num">'+zNum(v,2)+"</td>";}
@@ -281,16 +282,18 @@
       foot.innerHTML='<tr><td colspan="'+(ca.length+3)+'">No of Subjects: '+count+" &nbsp;·&nbsp; Total Score: "+zNum(ag.grand_total,2)+
         " &nbsp;·&nbsp; Student’s Average: "+avg+" &nbsp;·&nbsp; Class Average: "+cavg+"</td></tr>";
     } else {
-      // Columns grow by term (design): prior-term totals / class highest-lowest aren't in the payload yet -> "—".
+      // Columns grow by term (design): term 1 = the class's subject average; later terms = earlier-term totals (latest first) + the subject's cumulative average.
       var extra=n===1?["Subject<br>Average"]:n===2?["First Term<br>Total","Cumulative<br>Average"]:["Second Term<br>Total","First Term<br>Total","Cumulative<br>Average"];
+      function earlier(s,num){var e=s.earlier_terms||[];for(var i=0;i<e.length;i++)if(e[i].number===num)return e[i].total;return null;}
+      function extras(s){return n===1?[s.class_average]:n===2?[earlier(s,1),s.cumulative_average]:[earlier(s,2),earlier(s,1),s.cumulative_average];}
       var leaves=ca.concat(ex);
       head.innerHTML='<tr><th class="s">Subject</th>'+leaves.map(function(l){return "<th>"+zEsc(l.label)+"<br>("+zNum(l.max)+")</th>";}).join("")+
         "<th>Exam<br>Total (100)</th>"+extra.map(function(h){return "<th>"+h+"</th>";}).join("")+"<th>Class<br>Highest</th><th>Class<br>Lowest</th><th>Remarks</th></tr>";
       body.innerHTML=Z.subjects.map(function(s){
         var cells=ca.map(function(l,i){return num(zComp(s,"ca",i));}).join("")+ex.map(function(l,i){return num(zComp(s,"exam",i));}).join("");
-        var more=extra.map(function(h,i){return '<td class="num'+(n>1&&i===extra.length-1?" cum":"")+'">—</td>';}).join("");
+        var more=extras(s).map(function(v,i){return '<td class="num'+(n>1&&i===extra.length-1?" cum":"")+'">'+zNum(v,2)+"</td>";}).join("");
         return "<tr"+zRow(s)+'><td class="s">'+zEsc(String(s.name).toUpperCase())+"</td>"+cells+'<td class="num"><b>'+zNum(s.total,2)+"</b></td>"+more+
-          '<td class="num">—</td><td class="num">—</td><td class="rem">'+rem(s)+"</td></tr>";}).join("");
+          '<td class="num">'+zNum(s.class_highest,2)+'</td><td class="num">'+zNum(s.class_lowest,2)+'</td><td class="rem">'+rem(s)+"</td></tr>";}).join("");
       var span=leaves.length+extra.length+5;
       foot.innerHTML='<tr><td colspan="'+span+'">No of Subjects: '+count+" &nbsp;·&nbsp; Obtained: "+zNum(ag.grand_total,2)+" &nbsp;·&nbsp; Obtainable: "+zNum(ag.marks_obtainable)+
         " &nbsp;·&nbsp; Student’s Average: "+avg+" &nbsp;·&nbsp; Class Average: "+cavg+"</td></tr>"+
@@ -301,9 +304,18 @@
     document.getElementById("affBody").innerHTML=rr(Z.traits.affective||[]);
     document.getElementById("psyBody").innerHTML=rr(Z.traits.psychomotor||[]);
     document.getElementById("gradeTbl").innerHTML=zKey().map(function(b){return '<tr><td class="g">'+zEsc(b.grade)+'</td><td class="rg num">'+zRange(b).replace("–"," – ")+'</td><td class="nm">'+zEsc(String(b.remark).toUpperCase())+"</td></tr>";}).join("");
-    // Distribution bands have no rule in the payload yet -> shown empty.
-    document.querySelector(".donut i").textContent="—";
-    document.querySelectorAll(".chart .legend div").forEach(function(d){d.lastChild.textContent=d.lastChild.textContent.replace(/\(\d+\)/,"(—)");});
+    // Distribution: a tally of the grades shown above (a count of rows, like Primary's grade-distribution box), best grade first.
+    var DIST=["#1e8e3e","#5aa832","#9bbf2a","#e0a800","#e07b00","#d4561f","#c0392b","#9b2c2c","#6b2020"];
+    var tally={}, graded=0;
+    Z.subjects.forEach(function(s){if(!s.redacted&&s.grade){tally[s.grade]=(tally[s.grade]||0)+1;graded++;}});
+    var present=zKey().map(function(b,i){return {grade:b.grade,remark:b.remark,count:tally[b.grade]||0,color:DIST[Math.min(i,DIST.length-1)]};}).filter(function(x){return x.count>0;});
+    var at=0, stops=present.map(function(x){var from=at;at+=x.count/graded*100;return x.color+" "+from+"% "+at+"%";});
+    var donut=document.querySelector(".donut");
+    donut.style.background=graded?"conic-gradient("+stops.join(",")+")":"var(--rule)";
+    donut.querySelector("i").textContent=graded?String(graded):"—";
+    donut.setAttribute("title","Subjects graded");
+    document.querySelector(".chart .legend").innerHTML=present.length?present.map(function(x){
+      return '<div><b style="background:'+x.color+'"></b>'+zEsc(x.grade)+" · "+zEsc(String(x.remark).toUpperCase())+" ("+x.count+")</div>";}).join(""):"<div>—</div>";
     document.querySelector(".ratingkey").innerHTML=(Z.traits.rating_key||[]).map(function(r){return "<div>"+zEsc(r.rating)+" — "+zEsc(String(r.descriptor).toUpperCase())+"</div>";}).join("");
     document.getElementById("ctRem").textContent=Z.remarks.class_teacher||"—";
     document.querySelectorAll(".remarks .rrow .txt")[1].textContent=Z.remarks.head_teacher||"—";

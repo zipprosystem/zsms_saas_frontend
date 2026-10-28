@@ -17,11 +17,16 @@ import {
   SEED_TEACHERS,
   SEED_TRAIT_SCALE,
   SEED_YEARS,
+  enrolledForTerm,
+  seedStudentProfile,
   seedTerms,
   termNumber,
   yearOfTerm,
 } from "@/lib/exam/mock/examMockSeeds";
 import { armInScope, readGradeMark, readScoreMark } from "@/lib/exam/mock/examMockStore";
+import { subjectStats } from "@/lib/exam/mock/broadsheetMock";
+import { loadExamSettings } from "@/lib/exam/mock/examSettingsMock";
+import { levelWeight } from "@/lib/exam/results/resultsEngine";
 import { armOfStudent, classAverage, compute, storedTraits, termPoints, viewerFor, type Computed, type ComputedRow } from "@/lib/exam/mock/examResultsMock";
 
 /**
@@ -36,8 +41,15 @@ import { armOfStudent, classAverage, compute, storedTraits, termPoints, viewerFo
  * MOCK-ONLY data, FLAGGED: the school block, term dates and each class's
  * selected template are seeds here (the real ones come from the tenant's
  * school profile, the academic calendar and the School Type's assigned
- * result template). Attendance, gender, date of birth and photo have no
- * source yet (null → the template shows "—").
+ * result template). Gender, date of birth and photo come from a seeded
+ * stand-in for the student record (examMockSeeds.seedStudentProfile).
+ *
+ * Still null (the template shows "—"), each waiting on a later build:
+ * attendance (Report Progression's present field), Form Tutor and
+ * boarding (Report Progression's student-wise entry — the traits entry
+ * doesn't capture them), British grade-boundary scores (grading
+ * completion), the Grade Book GB score (Grade Book entry) and CEM / GL SAS
+ * (external import).
  */
 
 const SEED_SCHOOL: ReportPayload["school"] = {
@@ -133,6 +145,13 @@ const REDACTED: Omit<ReportSubject, "name" | "teacher_name"> = {
   va: null,
   comment: null,
   redacted: true,
+  units: null,
+  class_highest: null,
+  class_lowest: null,
+  class_average: null,
+  cumulative_average: null,
+  earlier_terms: [],
+  history: [],
 };
 
 function generalSubject(computed: Computed, result: SubjectResult, point: (kind: "ca" | "exam") => Exam | undefined, armId: string, studentId: string) {
@@ -179,7 +198,16 @@ function generalSubject(computed: Computed, result: SubjectResult, point: (kind:
   };
 }
 
-function britishSubject(computed: Computed, result: SubjectResult, reportPoint: Exam | undefined, armId: string, studentId: string) {
+/** The year's points this British report covers (oldest first): earlier terms' points, then this term's (Progress: its first only). */
+function britishReportPoints(computed: Computed, termId: string): Exam[] {
+  const current = termPoints(termId, "grade_based");
+  return seedTerms(yearOfTerm(termId))
+    .filter((term) => termNumber(term.id) <= termNumber(termId))
+    .flatMap((term) => termPoints(term.id, "grade_based"))
+    .filter((exam) => exam.term_id !== termId || computed.stage === "full" || exam.id === current[0]?.id);
+}
+
+function britishSubject(computed: Computed, result: SubjectResult, reportPoint: Exam | undefined, history: Exam[], armId: string, studentId: string) {
   const structure = computed.gradeStructure;
   const mark = structure && reportPoint ? readGradeMark(reportPoint, result.subject_id, armId, studentId, structure) : null;
   const scores = mark?.component_scores ?? {};
@@ -208,7 +236,33 @@ function britishSubject(computed: Computed, result: SubjectResult, reportPoint: 
     va: result.va,
     comment: computed.stage === "full" ? mark?.subject_remark?.trim() || null : null,
     redacted: false,
+    // What was entered at each of the year's points so far (a point before the student joined stays blank).
+    history: history.map((exam) => {
+      const entry = structure && enrolledForTerm(studentId, exam.term_id) ? readGradeMark(exam, result.subject_id, armId, studentId, structure) : null;
+      const at = entry?.component_scores ?? {};
+      return {
+        label: exam.name,
+        attainment: (structure && at[structure.attainment.id]) || null,
+        ratings: (structure?.rating_domains ?? []).map((domain) => {
+          const level = at[domain.id] ? Number(at[domain.id]) : NaN;
+          return Number.isFinite(level) ? level : null;
+        }),
+      };
+    }),
   };
+}
+
+/** Earlier terms of the year, each with the engine's full-term run for the arm (General reports' earlier-term figures). */
+type EarlierRun = { number: number; name: string; computed: Computed };
+
+async function earlierRuns(armId: string, termId: string): Promise<EarlierRun[]> {
+  const terms = seedTerms(yearOfTerm(termId)).filter((term) => termNumber(term.id) < termNumber(termId));
+  const runs: EarlierRun[] = [];
+  for (const term of terms) {
+    const run = await compute(armId, term.id, "full");
+    if (!("status" in run)) runs.push({ number: termNumber(term.id), name: term.name, computed: run });
+  }
+  return runs;
 }
 
 function buildPayload(
@@ -217,6 +271,7 @@ function buildPayload(
   armId: string,
   termId: string,
   template: { id: string | null; pages: 1 | 2 },
+  earlier: EarlierRun[],
 ): ReportPayload {
   const viewer = viewerFor(armId);
   const visible = viewer.visible_subject_ids ? new Set(viewer.visible_subject_ids) : null;
@@ -224,6 +279,8 @@ function buildPayload(
   const points = termPoints(termId, computed.mode);
   const pointOf = (kind: "ca" | "exam") => points.find((exam) => exam.kind === kind);
   const reportPoint = computed.stage === "progress" ? points[0] : points[points.length - 1];
+  const britishPoints = general ? [] : britishReportPoints(computed, termId);
+  const earlierRow = (run: EarlierRun) => run.computed.rows.find((item) => item.student.id === row.student.id);
 
   const subjects: ReportSubject[] = computed.columns.flatMap((column) => {
     const result = row.subjects[column.subject_id];
@@ -231,7 +288,39 @@ function buildPayload(
     if (!result || result.status === "ne") return [];
     const base = { name: column.subject_name, teacher_name: teacherOf(column.subject_id, armId) };
     if (visible && !visible.has(column.subject_id)) return [{ ...base, ...REDACTED }];
-    return [{ ...base, ...(general ? generalSubject(computed, result, pointOf, armId, row.student.id) : britishSubject(computed, result, reportPoint, armId, row.student.id)) }];
+    if (!general) {
+      return [
+        {
+          ...base,
+          ...britishSubject(computed, result, reportPoint, britishPoints, armId, row.student.id),
+          units: column.unit,
+          class_highest: null,
+          class_lowest: null,
+          class_average: null,
+          cumulative_average: null,
+          earlier_terms: [],
+        },
+      ];
+    }
+    // Class stats are over this report's run (Progress: the CA-only totals the report shows).
+    const stats = subjectStats(computed, column.subject_id);
+    return [
+      {
+        ...base,
+        ...generalSubject(computed, result, pointOf, armId, row.student.id),
+        units: column.unit,
+        class_highest: stats.highest,
+        class_lowest: stats.lowest,
+        class_average: stats.average,
+        cumulative_average: computed.stage === "full" ? result.cumulative_average : null,
+        earlier_terms: earlier.map((run) => ({
+          number: run.number,
+          name: run.name,
+          total: earlierRow(run)?.subjects[column.subject_id]?.total ?? null,
+        })),
+        history: [],
+      },
+    ];
   });
 
   // Report points: General = the term's points this report covers; British = the year's points up to this one.
@@ -241,11 +330,7 @@ function buildPayload(
         const exam = pointOf(kind);
         return exam ? [{ label: exam.name, kind, max: structure ? shownTotal(buildMarkColumns(structure, kind), {}).outOf : null }] : [];
       })
-    : seedTerms(yearOfTerm(termId))
-        .filter((term) => termNumber(term.id) <= termNumber(termId))
-        .flatMap((term) => termPoints(term.id, "grade_based"))
-        .filter((exam) => exam.term_id !== termId || computed.stage === "full" || exam.id === points[0]?.id)
-        .map((exam) => ({ label: exam.name, kind: exam.report_variant ?? "progress", max: null }));
+    : britishPoints.map((exam) => ({ label: exam.name, kind: exam.report_variant ?? "progress", max: null }));
 
   const own = viewer.report_scope === "own_subjects";
   const aggregate = row.aggregate;
@@ -256,6 +341,7 @@ function buildPayload(
     return { skill: label, rating, descriptor: descriptor(rating) };
   };
   const [startDate, endDate] = TERM_DATES[termId] ?? [null, null];
+  const profile = seedStudentProfile(row.student.id);
 
   return {
     meta: {
@@ -268,6 +354,7 @@ function buildPayload(
       generated_at: new Date().toISOString(),
       scope: viewer.report_scope,
       assessment_mode: computed.mode,
+      attainment_display: loadExamSettings().attainment_display,
     },
     school: SEED_SCHOOL,
     student: {
@@ -275,9 +362,9 @@ function buildPayload(
       admission_no: row.student.admission_no,
       class: computed.className,
       arm: computed.armName,
-      gender: null,
-      dob: null,
-      photo_url: null,
+      gender: profile?.gender ?? null,
+      dob: profile?.dob ?? null,
+      photo_url: profile?.photo_url ?? null,
       resumption_date: resumptionDate(termId),
     },
     attendance: { present: null, absent: null, total_days: null, time_school_opened: null },
@@ -293,6 +380,19 @@ function buildPayload(
       subjects_counted: own ? null : aggregate.subjects_counted,
       marks_obtainable: own || !general ? null : aggregate.subjects_counted * 100,
       class_average: classAverage(computed),
+      earlier_terms:
+        own || !general
+          ? []
+          : earlier.map((run) => {
+              const before = earlierRow(run)?.aggregate;
+              return {
+                number: run.number,
+                name: run.name,
+                grand_total: before?.grand_total ?? null,
+                average: before?.average ?? null,
+                subjects_counted: before ? before.subjects_counted : null,
+              };
+            }),
     },
     traits: {
       psychomotor: SEED_PSYCHOMOTOR.map(trait),
@@ -308,8 +408,16 @@ function buildPayload(
       head_teacher: stored?.head_teacher_remark || null,
     },
     grade_key: general
-      ? (computed.scale?.bands ?? []).map((band) => ({ grade: band.grade, min: band.min, max: band.max, remark: band.remark, show_on_report: true, gpa: band.gpa }))
-      : computed.levels.map((level) => ({ grade: level.code, min: null, max: null, remark: level.label, show_on_report: true, gpa: null })),
+      ? (computed.scale?.bands ?? []).map((band) => ({ grade: band.grade, min: band.min, max: band.max, remark: band.remark, show_on_report: true, gpa: band.gpa, weight: null }))
+      : computed.levels.map((level) => ({
+          grade: level.code,
+          min: null,
+          max: null,
+          remark: level.label,
+          show_on_report: true,
+          gpa: null,
+          weight: levelWeight(computed.levels, level.code),
+        })),
   };
 }
 
@@ -332,7 +440,8 @@ export async function getStudentReport(studentId: string, query: URLSearchParams
   if ("status" in computed) return computed;
   const row = computed.rows.find((item) => item.student.id === studentId);
   if (!row) return fail(404, "NOT_ENROLLED_FOR_TERM", "This student wasn't enrolled in their class for that term.");
-  return ok(buildPayload(computed, row, armId, termId, await selectedTemplate(computed.classId)));
+  const earlier = computed.mode === "component_based" ? await earlierRuns(armId, termId) : [];
+  return ok(buildPayload(computed, row, armId, termId, await selectedTemplate(computed.classId), earlier));
 }
 
 /** Class PDF stub: the batch render is a backend job (async, cached) — the mock only answers "not available here". */

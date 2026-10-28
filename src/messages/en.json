@@ -542,7 +542,7 @@
       "adminOnly": "Only an administrator can manage grades. Switch the “acting as” picker (Exam › Results) to Admin to test this screen.",
       "attainmentDisplay": {
         "title": "Attainment display (British classes)",
-        "description": "How attainment grades read on the Academic Report and the Progression broadsheet. Grades are still entered and stored as grades; value added (VA) is always the target-to-attainment weight difference.",
+        "description": "How attainment grades read everywhere they show: Academic Report entry, the Progression broadsheet, View Results and the printed report card. Grades are still entered and stored as grades; value added (VA) is always the target-to-attainment weight difference.",
         "label": "Show attainment as",
         "options": {
           "weight": "Weight",
@@ -3302,9 +3302,9 @@
           "all": "All pages"
         },
         "template": {
-          "label": "Template (mock preview)",
+          "label": "Template (dev preview)",
           "assigned": "{name} (assigned)",
-          "help": "Mock only: see this student in any template. The real report always uses the class's assigned template."
+          "help": "Dev only: see this student in any template. The report always uses the class's assigned template."
         },
         "print": "Print / save as PDF",
         "printPage": "Print page {n} / save as PDF",

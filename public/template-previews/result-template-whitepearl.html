@@ -201,7 +201,7 @@
      (contract: src/lib/exam/report/reportPayload.ts) before this file runs.
      With it, the template renders from the payload; without it (catalog
      preview), it shows its own sample data. The template does no
-     arithmetic — every number is the payload's. */
+     arithmetic beyond the Total Point (G.p. × units) and its column sums. */
   var Z = window.__ZSMS_REPORT__ || null;
   if (Z) document.documentElement.classList.add("zsms-live");
   function zEsc(v){return v==null?"":String(v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
@@ -220,6 +220,8 @@
   function zRow(s){return s.redacted?' class="zsms-redacted"':"";}
   function zAddress(){return [Z.school.address,Z.school.motto].filter(Boolean).map(zEsc).join(" &middot; ");}
 
+  /* Total Point (T.p.) = the subject's grade point (the G.p. column) × its units. Computed here, from two payload values (Matthew, 2026-10-28). No units set -> —. */
+  function zTp(s){return s.gpa==null||s.units==null?null:Math.round(s.gpa*s.units*100)/100;}
   var Z_MONTHS=["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"];
   function zRender(){
     var isFull=Z.meta.variant==="full", st=Z.student, ag=Z.aggregate;
@@ -251,16 +253,20 @@
       body.innerHTML='<tr class="max"><td class="s">Maximum Score</td>'+ca.map(function(l){return "<td>"+zNum(l.max)+"</td>";}).join("")+"<td>"+zNum(caP&&caP.max)+'</td><td>100</td><td colspan="5"></td></tr>'+
         Z.subjects.map(function(s){return "<tr"+zRow(s)+'><td class="s">'+zEsc(s.name)+"</td>"+ca.map(function(l,i){return '<td class="num">'+zNum(zComp(s,"ca",i),2)+"</td>";}).join("")+
           '<td class="num">'+zNum(s.ca)+'</td><td class="num">'+zNum(s.total,2)+'</td><td class="'+gcls(s.grade)+'">'+zTxt(s.grade)+
-          '</td><td class="num">—</td><td class="num">'+zNum(s.grade_weight)+"</td><td>"+zTxt(s.remark&&String(s.remark).toUpperCase())+'</td><td class="sig">'+zTxt(s.teacher_name)+"</td></tr>";}).join("");
+          '</td><td class="num">'+zNum(s.units)+'</td><td class="num">'+zNum(s.grade_weight)+"</td><td>"+zTxt(s.remark&&String(s.remark).toUpperCase())+'</td><td class="sig">'+zTxt(s.teacher_name)+"</td></tr>";}).join("");
       foot.innerHTML='<tr class="tot"><td class="s">TOTAL</td><td colspan="'+(ca.length+3)+'"></td><td class="num">—</td><td class="num">—</td><td colspan="2"></td></tr>';
     } else {
       head.innerHTML='<tr><th class="s">Subject</th><th>Subject<br>Units (S.u)</th><th>CA<br>Marks ('+zNum(caP&&caP.max)+")</th><th>Exam<br>Marks ("+zNum(exP&&exP.max)+")</th>"+
         "<th>Term Final<br>Score (100)</th><th>Term Final<br>Grade</th><th>Grade<br>Point (G.p.)</th><th>Total<br>Point (T.p.)</th><th>Remark</th><th>Teacher</th></tr>";
       body.innerHTML='<tr class="max"><td class="s">Maximum Score</td><td></td><td>'+zNum(caP&&caP.max)+"</td><td>"+zNum(exP&&exP.max)+'</td><td>100</td><td colspan="5"></td></tr>'+
-        Z.subjects.map(function(s){return "<tr"+zRow(s)+'><td class="s">'+zEsc(s.name)+'</td><td class="num">—</td><td class="num">'+zNum(s.ca)+'</td><td class="num">'+zNum(s.exam,2)+
-          '</td><td class="num"><b>'+zNum(s.total,2)+'</b></td><td class="'+gcls(s.grade)+'">'+zTxt(s.grade)+'</td><td class="num">'+zNum(s.gpa)+'</td><td class="num">—</td><td class="'+(s.grade==="F"?"g-fail":"")+'">'+
+        Z.subjects.map(function(s){return "<tr"+zRow(s)+'><td class="s">'+zEsc(s.name)+'</td><td class="num">'+zNum(s.units)+'</td><td class="num">'+zNum(s.ca)+'</td><td class="num">'+zNum(s.exam,2)+
+          '</td><td class="num"><b>'+zNum(s.total,2)+'</b></td><td class="'+gcls(s.grade)+'">'+zTxt(s.grade)+'</td><td class="num">'+zNum(s.gpa)+'</td><td class="num">'+zNum(zTp(s))+'</td><td class="'+(s.grade==="F"?"g-fail":"")+'">'+
           zTxt(s.remark&&String(s.remark).toUpperCase())+'</td><td class="sig">'+zTxt(s.teacher_name)+"</td></tr>";}).join("");
-      foot.innerHTML='<tr class="tot"><td class="s">TOTAL</td><td class="num">—</td><td colspan="4"></td><td class="num">—</td><td class="num">—</td><td colspan="2"></td></tr>';
+      // Totals row: Σ units, Σ G.p., Σ T.p. over the subjects that have them (as the design's sample).
+      var su=0, sg=0, stp=0, nu=0, ng=0, nt=0;
+      Z.subjects.forEach(function(s){var tp=zTp(s);if(s.units!=null){su+=s.units;nu++;}if(s.gpa!=null){sg+=s.gpa;ng++;}if(tp!=null){stp+=tp;nt++;}});
+      foot.innerHTML='<tr class="tot"><td class="s">TOTAL</td><td class="num">'+(nu?zNum(su):"—")+'</td><td colspan="4"></td><td class="num">'+(ng?zNum(sg):"—")+
+        '</td><td class="num">'+(nt?zNum(stp):"—")+'</td><td colspan="2"></td></tr>';
     }
     document.getElementById("band").innerHTML="<div>Student Average: "+(ag.average==null?"—":zNum(ag.average,2)+"%")+"</div><div>GPA: "+zNum(ag.gpa,2)+"</div><div>Overall Grade: "+zTxt(ag.overall_grade)+"</div>";
     document.getElementById("passfail").innerHTML="<div>Number of Subjects Passed: <b>—</b></div><div>Number of Subjects Failed: <b>—</b></div>";
