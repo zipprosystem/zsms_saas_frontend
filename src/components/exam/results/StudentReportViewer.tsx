@@ -10,7 +10,6 @@ import { Segmented } from "@/components/ui/Segmented";
 import { fetchPreviewHtml, templateHtmlQueryKey } from "@/components/setup/assessmentConfiguration/TemplatePreviewFrame";
 import { isDevBypassUnavailable, throwIfTransient } from "@/lib/setup/crudTypes";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
-import { EXAM_USES_MOCK } from "@/lib/exam/examApi";
 import { getReportPayload, REPORT_VARIANTS, reportQueryKeys, type ReportVariant } from "@/lib/exam/report/reportPayload";
 import { buildReportSrcDoc, declaredPages, PRINT_MESSAGE } from "@/lib/exam/report/reportSrcDoc";
 import { resultTemplatesQueryKey, resultTemplatesService } from "@/lib/setup/assessmentConfiguration/resultTemplatesApi";
@@ -20,8 +19,17 @@ import { failureMessage, Notice } from "@/components/exam/examEntryShared";
 type PageChoice = number | "all";
 
 /**
- * View Report: one student's report payload poured into the class's
- * selected result template, rendered here in the browser (see
+ * DEV-ONLY: flip to true locally to get a template picker in the viewer
+ * (preview the same payload in any catalog template). Never on in a
+ * production build, and off by default — the viewer shows only the
+ * template assigned to the class (the School Type's result template).
+ */
+const DEV_TEMPLATE_PICKER = false;
+const showTemplatePicker = DEV_TEMPLATE_PICKER && process.env.NODE_ENV !== "production";
+
+/**
+ * View Report: one student's report payload poured into the result
+ * template assigned to the class (payload meta.template_id), rendered here in the browser (see
  * reportSrcDoc.ts). Page-aware — one view + print per page the template
  * declares. Print is the browser's print dialog, which also saves as PDF.
  * The payload is role-scoped by the backend: a subject teacher's comes
@@ -44,7 +52,7 @@ export function StudentReportViewer({
   /** null = the backend's default for what's been entered. */
   const [variant, setVariant] = useState<ReportVariant | null>(null);
   const [page, setPage] = useState<PageChoice>(1);
-  /** Mock only: preview the same payload in another template. */
+  /** Dev only (DEV_TEMPLATE_PICKER): preview the same payload in another template. */
   const [templateOverride, setTemplateOverride] = useState("");
 
   useEffect(() => {
@@ -74,7 +82,7 @@ export function StudentReportViewer({
     () => (templatesQuery.data?.ok ? templatesQuery.data.data.filter((template) => template.status !== "archived" && template.preview_path) : []),
     [templatesQuery.data],
   );
-  const templateId = (EXAM_USES_MOCK && templateOverride) || payload?.meta.template_id || "";
+  const templateId = (showTemplatePicker && templateOverride) || payload?.meta.template_id || "";
   const template = templates.find((item) => item.id === templateId) ?? null;
   const previewPath = template?.preview_path ?? null;
 
@@ -164,7 +172,7 @@ export function StudentReportViewer({
               onChange={setVariant}
             />
             {pages > 1 ? <Segmented<PageChoice> label={k("pages.label")} options={pageOptions} value={shownPage} onChange={setPage} /> : null}
-            {EXAM_USES_MOCK && templates.length > 0 ? (
+            {showTemplatePicker && templates.length > 0 ? (
               <div className="flex min-w-0 flex-col gap-1 sm:w-64">
                 <SelectField
                   id="report-template-override"

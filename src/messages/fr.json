@@ -542,7 +542,7 @@
       "adminOnly": "Seul un administrateur peut gérer les mentions. Passez le sélecteur « connecté en tant que » (Examen › Résultats) sur Administrateur pour tester cet écran.",
       "attainmentDisplay": {
         "title": "Affichage du niveau atteint (classes britanniques)",
-        "description": "Comment les mentions de niveau s'affichent sur le bulletin académique et le tableau de progression. Les mentions restent saisies et enregistrées comme des mentions ; la valeur ajoutée (VA) est toujours l'écart de poids entre le niveau et l'objectif.",
+        "description": "Comment les mentions de niveau s'affichent partout : saisie du bulletin académique, tableau de progression, consultation des résultats et bulletin imprimé. Les mentions restent saisies et enregistrées comme des mentions ; la valeur ajoutée (VA) est toujours l'écart de poids entre le niveau et l'objectif.",
         "label": "Afficher le niveau en",
         "options": {
           "weight": "Poids",
@@ -3310,9 +3310,9 @@
           "all": "Toutes les pages"
         },
         "template": {
-          "label": "Modèle (aperçu simulé)",
+          "label": "Modèle (aperçu de développement)",
           "assigned": "{name} (attribué)",
-          "help": "Simulation uniquement : voir cet élève dans n'importe quel modèle. Le vrai bulletin utilise toujours le modèle attribué à la classe."
+          "help": "Développement uniquement : voir cet élève dans n'importe quel modèle. Le bulletin utilise toujours le modèle attribué à la classe."
         },
         "print": "Imprimer / enregistrer en PDF",
         "printPage": "Imprimer la page {n} / enregistrer en PDF",

@@ -194,6 +194,49 @@ export function seedRoster(armId: string): SeedStudent[] {
   });
 }
 
+/** Typical age at the start of the 2025/26 year, per class (for a plausible seeded date of birth). */
+const CLASS_AGE: Record<string, number> = { "cls-jss1": 11, "cls-ss1": 14, "cls-y9": 13, "cls-y11": 15 };
+
+/** Initials avatar (an inline SVG) — stands in for an uploaded passport photo. */
+function initialsPhoto(name: string, hue: number): string {
+  const initials = name
+    .split(" ")
+    .map((part) => part.charAt(0))
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 100"><rect width="80" height="100" fill="hsl(${hue},45%,55%)"/>` +
+    `<text x="40" y="60" font-family="Arial,sans-serif" font-size="30" font-weight="700" fill="#fff" text-anchor="middle">${initials}</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+/**
+ * The student-record fields a report card shows (gender, date of birth,
+ * photo). MOCK stand-in for the Students module's record (gender,
+ * date_of_birth, photo_file_id → a served URL) — the Exam mock's roster
+ * isn't linked to real students. Every third student has no photo, so the
+ * templates' "no photo" placeholder stays exercised.
+ */
+export function seedStudentProfile(studentId: string): { gender: "male" | "female"; dob: string; photo_url: string | null } | null {
+  const match = studentId.match(/^stu-(.+)-(\d+)$/);
+  if (!match) return null;
+  const [, armId, position] = match;
+  const index = Number(position) - 1;
+  const cls = SEED_CLASSES.find((item) => item.arms.some((arm) => arm.id === armId));
+  const student = seedRoster(armId)[index];
+  if (!cls || !student) return null;
+  const hash = seedHash(studentId);
+  const month = String((hash % 12) + 1).padStart(2, "0");
+  const day = String(((hash >>> 4) % 28) + 1).padStart(2, "0");
+  return {
+    // The first-name list alternates male / female.
+    gender: FIRST_NAMES.indexOf(student.name.split(" ")[0]) % 2 === 0 ? "male" : "female",
+    dob: `${2025 - (CLASS_AGE[cls.id] ?? 12) - (Number(month) > 8 ? 1 : 0)}-${month}-${day}`,
+    photo_url: index % 3 === 2 ? null : initialsPhoto(student.name, hash % 360),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Enrolment (Stage 2a) — per-term and per-subject, as the results engine reads it.
 // ---------------------------------------------------------------------------
