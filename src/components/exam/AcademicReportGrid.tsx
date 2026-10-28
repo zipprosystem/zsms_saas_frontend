@@ -19,6 +19,8 @@ type AcademicReportGridProps = {
   onChangeRow: (studentId: string, patch: Partial<GradeDraftRow>) => void;
   onRevertRow: (studentId: string) => void;
   onClearEntries: (studentId: string) => void;
+  /** The Comment column — Full report points only; hidden entirely on Progress. */
+  showComment: boolean;
 };
 
 const TH = "px-3 py-2.5 text-left text-xs font-semibold text-text-secondary align-bottom";
@@ -123,6 +125,7 @@ export function AcademicReportGrid({
   onChangeRow,
   onRevertRow,
   onClearEntries,
+  showComment,
 }: AcademicReportGridProps) {
   const t = useTranslations("exam.academicReport");
   const display = useAttainmentDisplay();
@@ -145,7 +148,7 @@ export function AcademicReportGrid({
                 {domain.name}
               </th>
             ))}
-            <th className={TH}>{t("columns.comment")}</th>
+            {showComment ? <th className={TH}>{t("columns.comment")}</th> : null}
             <th className={`${TH} text-center`}>{t("columns.completed")}</th>
             <th className={TH}>
               <span className="sr-only">{t("columns.actions")}</span>
@@ -219,18 +222,20 @@ export function AcademicReportGrid({
                     />
                   </td>
                 ))}
-                <td className={TD}>
-                  <input
-                    type="text"
-                    value={current.subject_remark}
-                    maxLength={SUBJECT_REMARK_MAX}
-                    disabled={readOnly}
-                    placeholder={t("commentPlaceholder")}
-                    onChange={(event) => onChangeRow(row.student_id, { subject_remark: event.target.value })}
-                    aria-label={t("aria.comment", { name: row.student_name })}
-                    className="h-10 w-56 rounded-md border border-border bg-surface px-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-60"
-                  />
-                </td>
+                {showComment ? (
+                  <td className={TD}>
+                    <input
+                      type="text"
+                      value={current.subject_remark}
+                      maxLength={SUBJECT_REMARK_MAX}
+                      disabled={readOnly}
+                      placeholder={t("commentPlaceholder")}
+                      onChange={(event) => onChangeRow(row.student_id, { subject_remark: event.target.value })}
+                      aria-label={t("aria.comment", { name: row.student_name })}
+                      className="h-10 w-56 rounded-md border border-border bg-surface px-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </td>
+                ) : null}
                 <td className={`${TD} text-center`}>
                   <input
                     type="checkbox"

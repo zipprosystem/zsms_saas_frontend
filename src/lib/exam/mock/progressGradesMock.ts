@@ -1,8 +1,12 @@
 import type { WireResponse } from "@/lib/setup/assessmentConfiguration/templateCatalog";
 import {
+  compareProgressValues,
   PROGRESS_DESCRIPTOR_MAX,
   PROGRESS_DOMAINS,
   PROGRESS_NAME_MAX,
+  PROGRESS_VALUE_MAX,
+  PROGRESS_VALUE_PATTERN,
+  sameProgressValue,
   type ProgressGrade,
   type ProgressGradeInput,
   type ProgressGradeMode,
@@ -14,19 +18,27 @@ import { getMockActingAs, MOCK_ADMIN } from "@/lib/exam/mock/mockActingAs";
 /**
  * MOCK Setup › Assessment Config › Progress Grades (contract in
  * progressGradesApi.ts). localStorage; the first read seeds:
- *   - general: the trait rating key (5 Excellent … 1 Poor), no descriptors.
+ *   - general: A Excellent … E Poor (levels only, no descriptors).
  *   - british: the 1–4 rating (1 Excellent … 4 Cause for concern) with the
  *     Engagement / Learning Behaviour / Boarding descriptors the British
  *     result template printed as sample text.
- * Seeded ids are stable (pg-general-5, pg-british-1 …) so the traits mock
- * can map ratings saved before this change (stored as the level's value).
+ * Seeded ids are stable and keyed by the OLD numeric rating (pg-general-5 =
+ * Excellent, pg-british-1 …) so ratings saved as numbers before Progress
+ * Grades still map. Values are text; both scales list ascending (best first).
  *
  * Writes are admin-only; reads are open. DELETE refuses a level a saved
  * rating references — a trait (General) or an Academic Report Engagement /
  * Learning Behaviour entry (British); the caller passes that check in.
  */
 
-const STORAGE_KEY = "zsms.mockExam.progressGrades.v1";
+const STORAGE_KEY = "zsms.mockExam.progressGrades.v2";
+/** v1 stored numeric values (General 5 = best); migrated on first read. */
+const STORAGE_KEY_V1 = "zsms.mockExam.progressGrades.v1";
+
+/** General seed: the old 5–1 trait rating (5 = Excellent) becomes A–E (A = Excellent). */
+function generalSeedValue(legacy: number): string {
+  return "ABCDE"[5 - legacy] ?? String(legacy);
+}
 
 type Store = Record<string, ProgressGrade>;
 
@@ -53,7 +65,7 @@ const BRITISH_DESCRIPTORS: Record<string, ProgressGrade["descriptors"]> = {
   },
 };
 
-/** The seeded id of a scale's level with this value (also how legacy trait ratings map). */
+/** The seeded id of a scale's level for this OLD numeric rating (also how legacy numeric ratings map). */
 export function seededProgressGradeId(mode: ProgressGradeMode, value: number): string {
   return `pg-${mode}-${value}`;
 }
@@ -62,25 +74,45 @@ function seed(): Store {
   const store: Store = {};
   for (const level of SEED_TRAIT_SCALE) {
     const id = seededProgressGradeId("general", level.value);
-    store[id] = { id, mode: "general", name: level.label, value: level.value, hide_in_report: false, descriptors: {} };
+    store[id] = { id, mode: "general", name: level.label, value: generalSeedValue(level.value), hide_in_report: false, descriptors: {} };
   }
   for (const level of SEED_RATING_SCALES.find((scale) => scale.id === "rating-1-4")?.levels ?? []) {
     const value = Number(level.code);
     const id = seededProgressGradeId("british", value);
-    store[id] = { id, mode: "british", name: level.label, value, hide_in_report: false, descriptors: BRITISH_DESCRIPTORS[level.code] ?? {} };
+    store[id] = { id, mode: "british", name: level.label, value: level.code, hide_in_report: false, descriptors: BRITISH_DESCRIPTORS[level.code] ?? {} };
   }
   return store;
 }
 
 let cache: Store | null = null;
 
+/**
+ * v1 → v2: values become text and General levels lose their descriptors. A
+ * seeded General level still on its old number (pg-general-5 = 5) takes its
+ * seed letter (A); any other value keeps its digits.
+ */
+function migrateV1(): Store | null {
+  const old = readStore<Record<string, Record<string, unknown>>>(STORAGE_KEY_V1).levels;
+  if (!old || typeof old !== "object") return null;
+  const store: Store = {};
+  for (const [id, level] of Object.entries(old)) {
+    const mode: ProgressGradeMode = level.mode === "british" ? "british" : "general";
+    const legacy = typeof level.value === "number" ? level.value : Number.NaN;
+    const value = mode === "general" && id === seededProgressGradeId("general", legacy) ? generalSeedValue(legacy) : String(level.value ?? "");
+    const descriptors = mode === "british" && level.descriptors && typeof level.descriptors === "object" ? (level.descriptors as ProgressGrade["descriptors"]) : {};
+    store[id] = { id, mode, name: String(level.name ?? ""), value, hide_in_report: level.hide_in_report === true, descriptors };
+  }
+  return store;
+}
+
 function load(): Store {
   if (!cache) {
     // Stored as { levels } so a school that deletes every level isn't re-seeded on reload.
     const stored = readStore<Store>(STORAGE_KEY).levels;
-    cache = stored && typeof stored === "object" ? stored : seed();
+    if (stored && typeof stored === "object") cache = stored;
+    else save(migrateV1() ?? seed());
   }
-  return cache;
+  return cache as Store;
 }
 
 function save(store: Store): void {
@@ -88,9 +120,9 @@ function save(store: Store): void {
   writeStore(STORAGE_KEY, { levels: store });
 }
 
-/** Best level first: general high value → low; british low value → high (1 = best). */
+/** Best level first: ascending value on both scales (1 = best / A = best). */
 function sorted(levels: ProgressGrade[]): ProgressGrade[] {
-  return [...levels].sort((a, b) => (a.mode === "british" ? a.value - b.value : b.value - a.value) || a.name.localeCompare(b.name));
+  return [...levels].sort((a, b) => compareProgressValues(a.value, b.value) || a.name.localeCompare(b.name));
 }
 
 /** The scale's levels, best first. */
@@ -118,20 +150,22 @@ function parse(payload: unknown): { input: ProgressGradeInput } | { error: WireR
   const name = typeof r.name === "string" ? r.name.trim() : "";
   if (!name) return invalid("name: is required");
   if (name.length > PROGRESS_NAME_MAX) return invalid(`name: must be ${PROGRESS_NAME_MAX} characters or fewer`);
-  if (typeof r.value !== "number" || !Number.isInteger(r.value) || r.value < 0 || r.value > 99) return invalid("value: must be a whole number from 0 to 99");
+  const value = typeof r.value === "string" ? r.value.trim() : "";
+  if (!value) return invalid("value: is required");
+  if (!PROGRESS_VALUE_PATTERN.test(value)) return invalid(`value: must be 1–${PROGRESS_VALUE_MAX} letters or digits (e.g. A or 1)`);
   if (r.hide_in_report !== undefined && typeof r.hide_in_report !== "boolean") return invalid("hide_in_report: must be true or false");
   const sent = r.descriptors && typeof r.descriptors === "object" && !Array.isArray(r.descriptors) ? (r.descriptors as Record<string, unknown>) : {};
   const allowed: readonly string[] = PROGRESS_DOMAINS[mode];
   const descriptors: ProgressGradeInput["descriptors"] = {};
   for (const [domain, text] of Object.entries(sent)) {
-    if (!allowed.includes(domain)) return invalid(`descriptors.${domain}: not a ${mode} domain`);
+    if (!allowed.includes(domain)) return invalid(mode === "general" ? `descriptors.${domain}: General levels have no descriptors` : `descriptors.${domain}: not a ${mode} domain`);
     if (text === null || text === undefined) continue;
     if (typeof text !== "string") return invalid(`descriptors.${domain}: must be text`);
     const trimmed = text.trim();
     if (trimmed.length > PROGRESS_DESCRIPTOR_MAX) return invalid(`descriptors.${domain}: must be ${PROGRESS_DESCRIPTOR_MAX} characters or fewer`);
     if (trimmed) descriptors[domain as keyof ProgressGradeInput["descriptors"]] = trimmed;
   }
-  return { input: { mode, name, value: r.value, hide_in_report: r.hide_in_report === true, descriptors } };
+  return { input: { mode, name, value, hide_in_report: r.hide_in_report === true, descriptors } };
 }
 
 /** 409 when the name or value is already used by another level of the same scale. */
@@ -139,7 +173,7 @@ function conflict(input: ProgressGradeInput, selfId: string | null): WireRespons
   for (const other of Object.values(load())) {
     if (other.id === selfId || other.mode !== input.mode) continue;
     if (other.name.toLowerCase() === input.name.toLowerCase()) return fail(409, "DUPLICATE_LEVEL_NAME", `There's already a level named "${other.name}".`);
-    if (other.value === input.value) return fail(409, "DUPLICATE_LEVEL_VALUE", `Level "${other.name}" already has the value ${other.value}.`);
+    if (sameProgressValue(other.value, input.value)) return fail(409, "DUPLICATE_LEVEL_VALUE", `Level "${other.name}" already has the value ${other.value}.`);
   }
   return null;
 }

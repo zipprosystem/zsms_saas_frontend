@@ -13,6 +13,8 @@ export const SETUP_ITEM_KEYWORDS: Record<string, string[]> = {
   grades: ["grade", "grades", "grade bands", "grading", "grade weight", "GPA", "GPA grades", "score range", "remark", "A1", "F9", "pass mark", "is pass"],
   attainmentGrades: ["attainment", "attainment scale", "British grades", "GCSE", "KS3", "9-1", "grade weight", "point value", "value added", "VA", "pass mark"],
   progressGrades: ["progress grade", "rating scale", "rating levels", "traits", "psychomotor", "affective", "engagement", "learning behaviour", "boarding", "descriptors", "rating key"],
+  psychomotorSkills: ["psychomotor", "skills", "traits", "handwriting", "sports", "games", "handling of tools", "verbal fluency"],
+  affectiveDomain: ["affective", "affective traits", "traits", "behaviour", "punctuality", "leadership", "neatness", "attentiveness", "character"],
   classSubjects: ["core", "elective"],
   studentTermDetails: ["roll number", "roll no", "promotion", "class placement"],
   assessmentTypes: ["score structure", "CA", "continuous assessment", "exam", "test", "assignment", "marks", "weighting"],

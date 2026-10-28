@@ -314,9 +314,10 @@ function traitsFromWire(value: unknown): StudentTraits | null {
     rating_scale: arr(r.rating_scale)
       .map((item) => {
         const x = rec(item);
-        return { id: s(x.id), value: num(x.value), label: s(x.label), hide_in_report: x.hide_in_report === true };
+        const value = typeof x.value === "number" && Number.isFinite(x.value) ? String(x.value) : s(x.value).trim();
+        return { id: s(x.id), value, label: s(x.label), hide_in_report: x.hide_in_report === true };
       })
-      .filter((level): level is TraitRatingLevel => !!level.id && level.value !== null),
+      .filter((level): level is TraitRatingLevel => !!level.id && !!level.value),
     psychomotor: traitItemsFromWire(r.psychomotor),
     affective: traitItemsFromWire(r.affective),
     class_teacher_remark: s(r.class_teacher_remark),

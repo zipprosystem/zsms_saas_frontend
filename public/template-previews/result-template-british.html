@@ -312,7 +312,10 @@
     card.querySelector("thead th.tgt").innerHTML="Target<br>(MTG)";
     var heads=card.querySelectorAll("thead tr:last-child th");
     heads.forEach(function(th,i){th.classList.remove("c3a","c3b");if(i%6===cur&&(i<6||i>=12))th.classList.add("cur");});
-    function lv(v){return v==null?"—":'<span class="lv lv'+zEsc(v)+'">'+zEsc(v)+"</span>";}
+    // A level's colour comes from its place in the level key (first = best → lv1 … lv4; further levels muted) — values may be letters.
+    var rank={};(Z.traits.rating_key||[]).forEach(function(r,i){rank[String(r.rating).toLowerCase()]=i+1;});
+    function lvClass(v){var n=rank[String(v).toLowerCase()];return n&&n<=4?" lv"+n:"";}
+    function lv(v){if(v==null)return "—";var c=lvClass(v);return '<span class="lv'+c+'"'+(c?"":' style="background:var(--muted)"')+">"+zEsc(v)+"</span>";}
     function six(fn,cls){var h="";for(var i=0;i<6;i++)h+='<td class="'+(cls||"")+(i===cur?" cur":"")+'">'+(i<points.length?fn(i):"—")+"</td>";return h;}
     document.getElementById("rows").innerHTML=Z.subjects.map(function(s){
       var hist=s.history||[];
@@ -326,11 +329,13 @@
     var avg=card.querySelector("tfoot tr.avg");
     avg.innerHTML='<td class="subj">Average</td><td class="tgt"></td><td colspan="6"></td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td colspan="6"></td><td colspan="6"></td><td></td>';
 
+    // Subject comments are a Full-report field: on a Progress report the comment line is left out entirely.
+    var full=Z.meta.variant==="full";
     card.querySelector(".narr").innerHTML=Z.subjects.filter(function(s){return !s.redacted;}).map(function(s){
       var eng=(s.components||[])[0], beh=(s.components||[])[1];
       function badge(k,v){return '<span class="badge">'+k+" <b>"+v+"</b></span>";}
       return '<div class="ncard"><div class="top"><span class="subjn">'+zEsc(s.name)+'</span><span class="teach">'+zTxt(s.teacher_name)+'</span><span class="badges">'+
-        badge("Target",zAtt(s.mtg))+badge("Attainment",zAtt(s.cag))+badge("Engagement",zTxt(eng&&eng.score))+badge("Behaviour",zTxt(beh&&beh.score))+"</span></div><p>"+zTxt(s.comment)+"</p></div>";
+        badge("Target",zAtt(s.mtg))+badge("Attainment",zAtt(s.cag))+badge("Engagement",zTxt(eng&&eng.score))+badge("Behaviour",zTxt(beh&&beh.score))+"</span></div>"+(full?"<p>"+zTxt(s.comment)+"</p>":"")+"</div>";
     }).join("");
 
     var b=Z.traits.boarding;
@@ -340,7 +345,7 @@
     // Level key: the British Progress Grades (visible levels, best first) with their per-domain descriptors.
     var key=Z.traits.rating_key||[];
     card.querySelector(".descr tbody").innerHTML=key.length?key.map(function(r){
-      var d=r.descriptors||{}, c=(r.rating>=1&&r.rating<=4)?" lv"+r.rating:"";
+      var d=r.descriptors||{}, c=lvClass(r.rating);
       return '<tr><td class="lvl"><span class="lv lv-tag'+c+'"'+(c?"":' style="background:var(--muted)"')+">"+zEsc(r.rating)+"</span>"+zEsc(r.descriptor)+"</td><td>"+zTxt(d.engagement)+"</td><td>"+zTxt(d.learning_behaviour)+"</td><td>"+zTxt(d.boarding)+"</td></tr>";
     }).join(""):'<tr><td colspan="4">—</td></tr>';
     card.querySelector(".foot .prin .scribble").innerHTML="&nbsp;";

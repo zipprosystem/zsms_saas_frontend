@@ -16,6 +16,7 @@ import { ResultTemplatesScreen } from "@/components/setup/assessmentConfiguratio
 import { IdCardTemplatesScreen } from "@/components/setup/assessmentConfiguration/IdCardTemplatesScreen";
 import { AttainmentGradesScreen, GradesScreen } from "@/components/setup/assessmentConfiguration/GradesScreen";
 import { ProgressGradesScreen } from "@/components/setup/assessmentConfiguration/ProgressGradesScreen";
+import { AffectiveDomainScreen, PsychomotorSkillsScreen } from "@/components/setup/assessmentConfiguration/TraitMastersScreen";
 
 /**
  * Keyed by "{categorySlug}/{screenSlug}". A screen not listed here falls
@@ -67,6 +68,10 @@ export const setupScreenRegistry: Record<string, ComponentType> = {
   // progressGradesApi.ts.
   "assessment-configuration/attainment-grades": AttainmentGradesScreen,
   "assessment-configuration/progress-grades": ProgressGradesScreen,
+  // Trait masters (admin-gated): the skills / traits listed per School Type.
+  // MOCK on the exam transport, see traitMastersApi.ts.
+  "assessment-configuration/psychomotor-skills": PsychomotorSkillsScreen,
+  "assessment-configuration/affective-domain": AffectiveDomainScreen,
   // Both catalogs are MOCK (frontend-ahead) and feed the School Types
   // form's template assignment dropdowns.
   "assessment-configuration/result-templates": ResultTemplatesScreen,

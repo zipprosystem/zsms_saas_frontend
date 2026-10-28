@@ -10,7 +10,7 @@ import { examQueryKeys, getMarks, saveMarks } from "@/lib/exam/examApi";
 import type { GradeMarksSheet, ScaleLevel } from "@/lib/exam/examTypes";
 import { AcademicReportGrid } from "@/components/exam/AcademicReportGrid";
 import {
-  commentRequired,
+  commentApplies,
   gradeAutoTickRule,
   gradeLeafIds,
   isGradeRowDirty,
@@ -125,7 +125,7 @@ export function AcademicReportScreen() {
     const result = await saveMarks(sheet.exam.id, {
       subject_id: sheet.subject_id,
       class_arm_id: sheet.class_arm_id,
-      rows: dirtyIds.map((id) => toGradeInput(id, draft[id], leafIds)),
+      rows: dirtyIds.map((id) => toGradeInput(id, draft[id], leafIds, commentApplies(variant))),
     });
     setSaving(false);
     if (result.ok) {
@@ -145,7 +145,7 @@ export function AcademicReportScreen() {
   const variantLabel = variant ? m(`variants.${variant}`) : "—";
   // "Current Attainment, Engagement, Learning Behaviour" (+ "Comment" on a full report) — the fields completion waits for.
   const requiredFields = structure
-    ? [structure.attainment.name, ...structure.rating_domains.map((domain) => domain.name), ...(commentRequired(variant) ? [k("columns.comment")] : [])].join(", ")
+    ? [structure.attainment.name, ...structure.rating_domains.map((domain) => domain.name), ...(commentApplies(variant) ? [k("columns.comment")] : [])].join(", ")
     : "";
 
   const otherScreen = (
@@ -185,6 +185,7 @@ export function AcademicReportScreen() {
         onChangeRow={updateRow}
         onRevertRow={revertRow}
         onClearEntries={clearEntries}
+        showComment={commentApplies(variant)}
       />
     );
   }

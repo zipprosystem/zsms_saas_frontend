@@ -12,6 +12,7 @@ import type {
 import { resultTemplatesService } from "@/lib/setup/assessmentConfiguration/resultTemplatesApi";
 import {
   SEED_AFFECTIVE,
+  SEED_CLASS_SCHOOL_TYPE,
   SEED_PSYCHOMOTOR,
   SEED_TEACHERS,
   SEED_YEARS,
@@ -27,7 +28,8 @@ import { loadExamSettings } from "@/lib/exam/mock/examSettingsMock";
 import { levelWeight } from "@/lib/exam/results/resultsEngine";
 import { classAttainmentBands } from "@/lib/exam/mock/gradesMock";
 import { progressGradeById, progressGrades } from "@/lib/exam/mock/progressGradesMock";
-import type { ProgressDomain, ProgressGrade } from "@/lib/setup/assessmentConfiguration/progressGradesApi";
+import { reportTraitList } from "@/lib/exam/mock/traitMastersMock";
+import type { ProgressGrade } from "@/lib/setup/assessmentConfiguration/progressGradesApi";
 import { armOfStudent, classAverage, compute, storedTraits, termPoints, viewerFor, type Computed, type ComputedRow } from "@/lib/exam/mock/examResultsMock";
 
 /**
@@ -214,7 +216,7 @@ function britishReportPoints(computed: Computed, termId: string): Exam[] {
  * level is hidden in reports (hide_in_report — it still counts; the report
  * just doesn't show it).
  */
-function britishRatingShown(code: string | null | undefined): number | null {
+function britishRatingShown(code: string | null | undefined): string | null {
   const level = progressGradeById(code);
   return level && level.mode === "british" && !level.hide_in_report ? level.value : null;
 }
@@ -252,7 +254,8 @@ function britishSubject(computed: Computed, result: SubjectResult, reportPoint: 
     cag: result.cag,
     mtg: result.mtg,
     va: result.va,
-    comment: computed.stage === "full" ? mark?.subject_remark?.trim() || null : null,
+    // The subject Comment is a Full-report field only (null on a Progress report).
+    comment: computed.stage === "full" && reportPoint?.report_variant === "full" ? mark?.subject_remark?.trim() || null : null,
     redacted: false,
     // What was entered at each of the year's points so far (a point before the student joined stays blank).
     history: history.map((exam) => {
@@ -280,6 +283,9 @@ async function earlierRuns(armId: string, termId: string): Promise<EarlierRun[]>
   return runs;
 }
 
+/** The skills / traits the report lists, in order: key = what a saved rating is stored under. */
+type TraitLists = Record<"psychomotor" | "affective", Array<{ key: string; label: string }>>;
+
 function buildPayload(
   computed: Computed,
   row: ComputedRow,
@@ -287,6 +293,7 @@ function buildPayload(
   termId: string,
   template: { id: string | null; pages: 1 | 2 },
   earlier: EarlierRun[],
+  traitLists: TraitLists,
 ): ReportPayload {
   const viewer = viewerFor(armId);
   const visible = viewer.visible_subject_ids ? new Set(viewer.visible_subject_ids) : null;
@@ -350,11 +357,11 @@ function buildPayload(
   const own = viewer.report_scope === "own_subjects";
   const aggregate = row.aggregate;
   const stored = storedTraits(termId, row.student.id);
-  // A trait rating = a General Progress Grade (by id). Hidden in reports -> the whole level is suppressed.
-  const traitOf = (domain: Extract<ProgressDomain, "psychomotor" | "affective">) => ({ key, label }: { key: string; label: string }) => {
+  // A trait rating = a General Progress Grade (by id): its value + name. Hidden in reports -> the whole level is suppressed.
+  const traitOf = ({ key, label }: { key: string; label: string }) => {
     const level = progressGradeById(stored?.ratings[key]);
     if (!level || level.hide_in_report) return { skill: label, rating: null, descriptor: null };
-    return { skill: label, rating: level.value, descriptor: level.descriptors[domain] || level.name };
+    return { skill: label, rating: level.value, descriptor: level.name };
   };
   const [startDate, endDate] = TERM_DATES[termId] ?? [null, null];
   const profile = seedStudentProfile(row.student.id);
@@ -411,8 +418,9 @@ function buildPayload(
             }),
     },
     traits: {
-      psychomotor: SEED_PSYCHOMOTOR.map(traitOf("psychomotor")),
-      affective: SEED_AFFECTIVE.map(traitOf("affective")),
+      // The class's School Type lists (Setup › Psychomotor Skills / Affective Domain), in their sort order.
+      psychomotor: traitLists.psychomotor.map(traitOf),
+      affective: traitLists.affective.map(traitOf),
       engagement: null,
       learning_behaviour: null,
       boarding: null,
@@ -462,7 +470,12 @@ export async function getStudentReport(studentId: string, query: URLSearchParams
   const row = computed.rows.find((item) => item.student.id === studentId);
   if (!row) return fail(404, "NOT_ENROLLED_FOR_TERM", "This student wasn't enrolled in their class for that term.");
   const earlier = computed.mode === "component_based" ? await earlierRuns(armId, termId) : [];
-  return ok(buildPayload(computed, row, armId, termId, await selectedTemplate(computed.classId), earlier));
+  const schoolType = SEED_CLASS_SCHOOL_TYPE[computed.classId] ?? null;
+  const traitLists: TraitLists = {
+    psychomotor: (await reportTraitList("psychomotor", schoolType)) ?? SEED_PSYCHOMOTOR,
+    affective: (await reportTraitList("affective", schoolType)) ?? SEED_AFFECTIVE,
+  };
+  return ok(buildPayload(computed, row, armId, termId, await selectedTemplate(computed.classId), earlier, traitLists));
 }
 
 /** Class PDF stub: the batch render is a backend job (async, cached) — the mock only answers "not available here". */
