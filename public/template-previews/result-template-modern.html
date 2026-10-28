@@ -310,7 +310,10 @@
     }
 
     var domains=card.querySelectorAll(".domain");
-    function traits(list){return list.map(function(t){return '<div class="trait"><span>'+zEsc(t.skill)+'</span><span class="dots" data-on="'+(t.rating==null?0:zEsc(t.rating))+'"></span></div>';}).join("");}
+    // Dots by the level's place in the key (best = most dots), not its value — values may be letters (A best).
+    var tkey=Z.traits.rating_key||[], tn=Math.min(tkey.length,5)||5;
+    function dotsFor(v){if(v==null)return 0;for(var i=0;i<tkey.length;i++)if(String(tkey[i].rating).toLowerCase()===String(v).toLowerCase())return Math.max(tn-i,1);return 0;}
+    function traits(list){return list.map(function(t){return '<div class="trait"><span>'+zEsc(t.skill)+'</span><span class="dots" data-on="'+dotsFor(t.rating)+'" data-of="'+tn+'"></span></div>';}).join("");}
     if(domains.length===2){
       domains[0].innerHTML="<h3>Affective Domain</h3>"+traits(Z.traits.affective||[]);
       domains[1].innerHTML="<h3>Psychomotor Skills</h3>"+traits(Z.traits.psychomotor||[]);
@@ -324,7 +327,7 @@
     var key=Z.traits.rating_key||[];
     card.querySelector(".legend").innerHTML='<span class="lab">Grading</span>'+zKey().map(function(b){
       return '<span class="chip"><i style="background:'+swatch(b.grade)+'"></i>'+zEsc(b.grade)+" · "+zRange(b)+(isFull?" "+zEsc(b.remark):"")+"</span>";}).join("")+
-      (isFull&&key.length?'<span class="lab" style="margin-left:10px">Traits</span><span class="chip">'+zEsc(key[0].rating)+" dots = "+zEsc(key[0].descriptor)+" → "+zEsc(key[key.length-1].rating)+" dot = "+zEsc(key[key.length-1].descriptor)+"</span>":"");
+      (isFull&&key.length?'<span class="lab" style="margin-left:10px">Traits</span><span class="chip">'+tn+" dots = "+zEsc(key[0].rating)+" "+zEsc(key[0].descriptor)+" → 1 dot = "+zEsc(key[key.length-1].rating)+" "+zEsc(key[key.length-1].descriptor)+"</span>":"");
   })();
 
   (function(){
@@ -338,8 +341,8 @@
     bF.addEventListener('click',function(){show(true)});
     bM.addEventListener('click',function(){show(false)});
     document.querySelectorAll('.dots').forEach(function(d){
-      var on=parseInt(d.getAttribute('data-on'),10)||0;
-      for(var i=1;i<=5;i++){var s=document.createElement('span');s.className='dot'+(i<=on?' on':'');d.appendChild(s);}
+      var on=parseInt(d.getAttribute('data-on'),10)||0, of=parseInt(d.getAttribute('data-of'),10)||5;
+      for(var i=1;i<=of;i++){var s=document.createElement('span');s.className='dot'+(i<=on?' on':'');d.appendChild(s);}
     });
   })();
 </script>

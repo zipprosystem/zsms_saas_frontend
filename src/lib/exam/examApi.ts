@@ -101,7 +101,9 @@ import type {
  *                    mtg, grade_book }] }   (read-only references; mtg is
  *                    the single target grade — no second/desired target)
  *     component_scores carry the attainment grade + one rating per domain;
- *     subject_remark is the subject comment. Score sheets answer with
+ *     subject_remark is the subject comment — a FULL report point only:
+ *     on a "progress" point it is hidden entirely (GET answers "", PUT
+ *     ignores it and stores ""). Score sheets answer with
  *     assessment_mode: "component_based" and the shape above.
  *   PUT  .../marks  same body as the score sheet, component_scores values
  *     are codes: 422 when a key isn't a leaf of the resolved structure or a
@@ -230,7 +232,9 @@ function levelsFromWire(value: unknown): ScaleLevel[] {
       const x = rec(item);
       const level: ScaleLevel = { code: typeof x.code === "string" ? x.code : String(x.code ?? ""), label: s(x.label) };
       if (typeof x.weight === "number" && Number.isFinite(x.weight)) level.weight = x.weight;
-      if (typeof x.value === "number" && Number.isFinite(x.value)) level.value = x.value;
+      // A rating level's value is alphanumeric text (A, 1…); a number is read as its digits.
+      if (typeof x.value === "string" && x.value.trim()) level.value = x.value.trim();
+      else if (typeof x.value === "number" && Number.isFinite(x.value)) level.value = String(x.value);
       return level;
     })
     .filter((level) => level.code);

@@ -49,7 +49,8 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *                    components: [{ label, score, max, kind }],
  *                      General: the score leaves (kind ca|exam).
  *                      British: the rating domains at the reporting point
- *                      (kind rating; score = the level, 1 = best;
+ *                      (kind rating; score = the British Progress
+ *                      Grade's value — alphanumeric text, e.g. "1";
  *                      max = levels on the scale).
  *                    ca, exam, total,        General aggregates (/100 total)
  *                    grade, grade_weight, gpa, remark, position,
@@ -96,10 +97,14 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *                                            earlier term of the year)
  *       traits: { psychomotor: [{ skill, rating, descriptor? }],
  *                 affective:   [{ skill, rating, descriptor? }],
- *                   rating = the General Progress Grade's value;
- *                   descriptor = its psychomotor / affective descriptor,
- *                   else its name. Both null when not rated OR the level
- *                   is hidden in reports (hide_in_report).
+ *                   the class's School Type list (Setup › Psychomotor
+ *                   Skills / Affective Domain) in its sort_order — the
+ *                   template prints them in array order.
+ *                   rating = the General Progress Grade's value
+ *                   (alphanumeric text, e.g. "A"); descriptor = its
+ *                   name (General levels have no descriptors). Both
+ *                   null when not rated OR the level is hidden in
+ *                   reports (hide_in_report).
  *                 engagement: { rating, descriptor? } | null,
  *                 learning_behaviour: { rating, descriptor? } | null,
  *                 boarding: { rating, comment? } | null,
@@ -108,10 +113,13 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *                   (addition) the Progress Grades level key for the
  *                   template's legend — General classes: the General
  *                   scale; British: the British scale. Visible levels
- *                   only, best first. rating = value, descriptor = name,
- *                   descriptors = { <domain>: text } (engagement,
- *                   learning_behaviour, boarding | psychomotor,
- *                   affective; missing = none).
+ *                   only, best first (ascending value: 1 / A = best).
+ *                   rating = value (text), descriptor = name,
+ *                   descriptors = { <domain>: text } — British only
+ *                   (engagement, learning_behaviour, boarding; missing
+ *                   = none); General levels send {}.
+ *                 Templates rank a rating by its position in rating_key
+ *                 (first = best), never by its value as a number.
  *                 British subjects[].components (rating) and history
  *                 ratings: a level hidden in reports comes back null.
  *       remarks: { class_teacher, head_teacher },
@@ -158,7 +166,8 @@ export type ReportVariant = (typeof REPORT_VARIANTS)[number];
 export type ReportPointKind = "ca" | "exam" | "progress" | "full";
 export type ReportComponentKind = "ca" | "exam" | "rating";
 
-export type ReportComponent = { label: string; score: number | null; max: number; kind: ReportComponentKind };
+/** score: a number for ca / exam; for kind "rating" the Progress Grade's value (text). */
+export type ReportComponent = { label: string; score: number | string | null; max: number; kind: ReportComponentKind };
 
 export type ReportSubject = {
   name: string;
@@ -183,11 +192,11 @@ export type ReportSubject = {
   class_average: number | null;
   cumulative_average: number | null;
   earlier_terms: Array<{ number: number; name: string; total: number | null }>;
-  history: Array<{ label: string; attainment: string | null; ratings: Array<number | null> }>;
+  history: Array<{ label: string; attainment: string | null; ratings: Array<string | null> }>;
 };
 
-export type ReportRating = { rating: number | null; descriptor?: string | null };
-export type ReportTrait = { skill: string; rating: number | null; descriptor?: string | null };
+export type ReportRating = { rating: string | null; descriptor?: string | null };
+export type ReportTrait = { skill: string; rating: string | null; descriptor?: string | null };
 
 export type ReportPayload = {
   meta: {
@@ -234,9 +243,9 @@ export type ReportPayload = {
     affective: ReportTrait[];
     engagement: ReportRating | null;
     learning_behaviour: ReportRating | null;
-    boarding: { rating: number | null; comment?: string | null } | null;
+    boarding: { rating: string | null; comment?: string | null } | null;
     form_tutor_comment: string | null;
-    rating_key: Array<{ rating: number; descriptor: string; descriptors: Partial<Record<ProgressDomain, string>> }>;
+    rating_key: Array<{ rating: string; descriptor: string; descriptors: Partial<Record<ProgressDomain, string>> }>;
   };
   remarks: { class_teacher: string | null; head_teacher: string | null };
   grade_key: Array<{ grade: string; min: number | null; max: number | null; remark: string; show_on_report: boolean; gpa: number | null; weight: number | null }>;

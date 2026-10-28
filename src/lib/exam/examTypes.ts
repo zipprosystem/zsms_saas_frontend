@@ -112,9 +112,9 @@ export type SaveMarksInput = { subject_id: string; class_arm_id: string; rows: S
 /**
  * A level of a grade or rating scale. Grade scales: weight = the grade's
  * point value. Rating scales (British Progress Grades): code = the
- * progress_grade_id, label = its name, value = its value.
+ * progress_grade_id, label = its name, value = its value (alphanumeric text).
  */
-export type ScaleLevel = { code: string; label: string; weight?: number; value?: number };
+export type ScaleLevel = { code: string; label: string; weight?: number; value?: string };
 export type GradeScale = { id: string; name: string; grades: ScaleLevel[] };
 export type RatingScale = { id: string; name: string; levels: ScaleLevel[] };
 

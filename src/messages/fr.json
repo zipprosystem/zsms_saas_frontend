@@ -312,6 +312,8 @@
       "grades": { "name": "Mentions", "description": "Barèmes par classe : mention, poids, GPA, plage de notes et appréciation" },
       "attainmentGrades": { "name": "Mentions de niveau", "description": "Échelle de niveau britannique : mention, poids, plage de notes, réussite et légende du bulletin" },
       "progressGrades": { "name": "Niveaux de progression", "description": "Niveaux d'appréciation des comportements et, en britannique, de l'engagement, de l'attitude et de l'internat, avec descripteurs" },
+      "psychomotorSkills": { "name": "Compétences psychomotrices", "description": "Les compétences appréciées sur les bulletins, par type d'école" },
+      "affectiveDomain": { "name": "Domaine affectif", "description": "Les traits appréciés sur les bulletins (ex. Ponctualité), par type d'école" },
       "assessmentTypes": { "name": "Types d'évaluation", "description": "Les composantes CC et examen qui forment les notes" },
       "resultTemplates": { "name": "Modèles de résultats" },
       "idCardTemplates": { "name": "Modèles de carte d'identité" },
@@ -638,9 +640,54 @@
         "message": "Supprimer la mention {grade} ? Ses classes ne pourront plus l'utiliser."
       }
     },
+    "traitMasters": {
+      "common": {
+        "searchPlaceholder": "Rechercher par nom",
+        "columns": { "order": "Ordre", "name": "Nom", "schoolType": "Type d'école" },
+        "filters": { "schoolType": "Type d'école", "all": "Tous" },
+        "actions": { "moveUp": "Monter", "moveDown": "Descendre" },
+        "fields": {
+          "name": "Nom",
+          "schoolType": "Type d'école",
+          "schoolTypePlaceholder": "Choisissez un type d'école",
+          "schoolTypeLoading": "Chargement des types d'école…",
+          "schoolTypeLoadError": "Impossible de charger les types d'école. Fermez et réessayez.",
+          "schoolTypeEmptyHint": "Aucun type d'école.",
+          "schoolTypeEmptyHintLink": "Ajoutez-en un d'abord",
+          "position": "Position",
+          "positionHelpNew": "Sa place sur le bulletin. Laissez vide pour l'ajouter à la fin.",
+          "positionHelpEdit": "Sa place sur le bulletin ; les autres se décalent pour lui faire place."
+        },
+        "errors": { "required": "Obligatoire", "position": "Saisissez un nombre entier à partir de 1" }
+      },
+      "psychomotor": {
+        "title": "Compétences psychomotrices",
+        "subtitle": "Les compétences que chaque type d'école apprécie sur les bulletins. Le primaire et le secondaire peuvent en lister de différentes.",
+        "addNew": "Ajouter une compétence",
+        "adminOnly": "Seul un administrateur peut gérer les compétences psychomotrices. Choisissez Admin dans le sélecteur « agir en tant que » (Examens › Résultats) pour tester cet écran.",
+        "empty": "Aucune compétence. Ajoutez celles que l'école apprécie.",
+        "namePlaceholder": "ex. Écriture",
+        "panel": { "createTitle": "Ajouter une compétence", "editTitle": "Modifier la compétence", "subtitle": "Une compétence psychomotrice de la liste d'un type d'école." },
+        "errors": { "duplicateName": "Ce type d'école a déjà une compétence de ce nom" },
+        "confirmDelete": { "title": "Supprimer la compétence ?", "message": "Supprimer {name} de la liste {schoolType} ?" },
+        "toast": { "created": "Compétence ajoutée", "updated": "Compétence mise à jour", "deleted": "Compétence supprimée" }
+      },
+      "affective": {
+        "title": "Domaine affectif",
+        "subtitle": "Les traits que chaque type d'école apprécie sur les bulletins (ex. Ponctualité, Leadership). Le primaire et le secondaire peuvent en lister de différents.",
+        "addNew": "Ajouter un trait",
+        "adminOnly": "Seul un administrateur peut gérer les traits affectifs. Choisissez Admin dans le sélecteur « agir en tant que » (Examens › Résultats) pour tester cet écran.",
+        "empty": "Aucun trait. Ajoutez ceux que l'école apprécie.",
+        "namePlaceholder": "ex. Ponctualité",
+        "panel": { "createTitle": "Ajouter un trait", "editTitle": "Modifier le trait", "subtitle": "Un trait affectif de la liste d'un type d'école." },
+        "errors": { "duplicateName": "Ce type d'école a déjà un trait de ce nom" },
+        "confirmDelete": { "title": "Supprimer le trait ?", "message": "Supprimer {name} de la liste {schoolType} ?" },
+        "toast": { "created": "Trait ajouté", "updated": "Trait mis à jour", "deleted": "Trait supprimé" }
+      }
+    },
     "progressGrades": {
       "title": "Niveaux de progression",
-      "subtitle": "Niveaux d'appréciation. Chaque niveau a un nom et une valeur, uniques dans l'échelle ; les descripteurs sont facultatifs.",
+      "subtitle": "Niveaux d'appréciation. Chaque niveau a un nom et une valeur (lettres ou chiffres), uniques dans l'échelle. Le meilleur niveau vient en premier : 1 ou A.",
       "addNew": "Ajouter un niveau",
       "adminOnly": "Seul un administrateur peut gérer les niveaux de progression. Choisissez Admin dans le sélecteur « agir en tant que » (Examens › Résultats) pour tester cet écran.",
       "empty": "Aucun niveau. Ajoutez les niveaux de cette échelle.",
@@ -666,9 +713,7 @@
       "domains": {
         "engagement": "Engagement",
         "learning_behaviour": "Attitude d'apprentissage",
-        "boarding": "Internat",
-        "psychomotor": "Psychomoteur",
-        "affective": "Affectif"
+        "boarding": "Internat"
       },
       "panel": {
         "createTitle": "Ajouter un niveau",
@@ -685,6 +730,7 @@
           "british": "ex. Bien"
         },
         "value": "Valeur",
+        "valueHelp": "Lettres ou chiffres, ex. A–D ou 1–5. 1 ou A est le meilleur niveau.",
         "hideInReport": "Masquer au bulletin",
         "hideInReportHelp": "Le niveau compte toujours, mais les bulletins l'omettent entièrement (nom, valeur et descripteurs).",
         "descriptors": "Descripteurs (facultatif)",
@@ -692,7 +738,7 @@
       },
       "errors": {
         "required": "Obligatoire",
-        "valueRange": "Saisissez un nombre entier de 0 à 99",
+        "valueRange": "1 à 4 lettres ou chiffres, ex. A ou 1",
         "duplicateName": "Un autre niveau porte déjà ce nom",
         "duplicateValue": "Un autre niveau a déjà cette valeur",
         "descriptorTooLong": "{max} caractères maximum"

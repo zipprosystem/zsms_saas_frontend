@@ -461,6 +461,20 @@ export const SEED_PSYCHOMOTOR = [
   { key: "psy-verbal", label: "Verbal fluency" },
 ];
 
+/**
+ * Each seeded class's School Type — the ids of the dev School Types mock
+ * (schoolTypesDevMock.ts), so report cards can read that type's Psychomotor
+ * / Affective lists. FLAGGED: the dev mock has no Senior Secondary type, so
+ * SS 1 has none and its report keeps the default lists. On a real tenant
+ * the class record carries school_type_id.
+ */
+export const SEED_CLASS_SCHOOL_TYPE: Record<string, string | null> = {
+  "cls-jss1": "dev-school-type-jss",
+  "cls-ss1": null,
+  "cls-y11": "dev-school-type-igcse",
+  "cls-y9": "dev-school-type-igcse",
+};
+
 export const SEED_AFFECTIVE = [
   { key: "aff-attentiveness", label: "Attentiveness" },
   { key: "aff-attitude", label: "Attitude to school work" },

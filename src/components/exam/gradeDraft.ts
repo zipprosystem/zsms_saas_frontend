@@ -42,20 +42,25 @@ export function isGradeRowDirty(row: GradeDraftRow, baseline: GradeDraftRow, lea
   );
 }
 
-export function toGradeInput(studentId: string, row: GradeDraftRow, leafIds: string[]): GradeMarkInput {
+export function toGradeInput(studentId: string, row: GradeDraftRow, leafIds: string[], withComment: boolean): GradeMarkInput {
   const scores: GradeScores = Object.fromEntries(leafIds.map((id) => [id, row.scores[id] || null]));
   return {
     student_id: studentId,
     component_scores: scores,
     present: row.present,
     mark_completed: row.mark_completed,
-    subject_remark: row.subject_remark.trim(),
+    // No Comment on a Progress point: send none (the server stores "").
+    subject_remark: withComment ? row.subject_remark.trim() : "",
   };
 }
 
-/** Whether the point's report variant makes the Comment required for completion (full; also when the variant is unknown). */
-export function commentRequired(variant: ReportVariant | null): boolean {
-  return variant !== "progress";
+/**
+ * Whether the point carries a subject Comment at all: only a Full report
+ * does. On a Progress point the Comment is hidden entirely (no entry column,
+ * not saved, not printed). When it applies it is also required for completion.
+ */
+export function commentApplies(variant: ReportVariant | null): boolean {
+  return variant === "full";
 }
 
 /**
@@ -66,7 +71,7 @@ export function commentRequired(variant: ReportVariant | null): boolean {
  */
 export function gradeAutoTickRule(structure: GradeBasedStructure, variant: ReportVariant | null): AutoTickRule<GradeDraftRow> {
   const leafIds = gradeLeafIds(structure);
-  const needsComment = commentRequired(variant);
+  const needsComment = commentApplies(variant);
   return {
     attended: (row) => !!row.scores[structure.attainment.id],
     complete: (row) => leafIds.every((id) => !!row.scores[id]) && (!needsComment || row.subject_remark.trim() !== ""),

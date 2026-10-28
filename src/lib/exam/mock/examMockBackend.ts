@@ -47,6 +47,7 @@ import {
 import { getResultArms, getResults, getStudentResult, getStudentTraits, progressGradeInUse, putStudentTraits } from "@/lib/exam/mock/examResultsMock";
 import { handleGrades, resolveGradeScale } from "@/lib/exam/mock/gradesMock";
 import { handleProgressGrades, progressGrades } from "@/lib/exam/mock/progressGradesMock";
+import { handleTraitMasters } from "@/lib/exam/mock/traitMastersMock";
 import { handleExamSettings } from "@/lib/exam/mock/examSettingsMock";
 import { getStudentReport, postGenerateClassPdf } from "@/lib/exam/mock/reportPayloadMock";
 import { getBroadsheet, getCumulativeBroadsheet, getProgressionBroadsheet } from "@/lib/exam/mock/broadsheetMock";
@@ -179,7 +180,8 @@ function buildGradeSheet({ exam, subjectId, armId }: SheetContext): GradeMarksSh
       component_scores: stored?.component_scores ?? {},
       present: stored?.present ?? null,
       mark_completed: stored?.mark_completed ?? false,
-      subject_remark: stored?.subject_remark ?? "",
+      // No Comment on a Progress point (Full only).
+      subject_remark: exam.report_variant === "full" ? (stored?.subject_remark ?? "") : "",
       entered_by_staff_id: stored?.entered_by_staff_id ?? null,
       updated_at: stored?.updated_at ?? null,
       ...refs,
@@ -221,7 +223,8 @@ async function putGradeMarks(context: SheetContext, body: Record<string, unknown
       }
       scores[leafId] = value as string | null;
     }
-    const remark = typeof row.subject_remark === "string" ? row.subject_remark.trim() : "";
+    // The Comment exists only on a Full report point; on a Progress point it's ignored (stored "").
+    const remark = context.exam.report_variant === "full" && typeof row.subject_remark === "string" ? row.subject_remark.trim() : "";
     if (remark.length > SUBJECT_REMARK_MAX) {
       return fail(422, "VALIDATION_ERROR", `${path}.subject_remark: must be ${SUBJECT_REMARK_MAX} characters or fewer`);
     }
@@ -432,6 +435,8 @@ async function handle(method: HttpMethod, path: string, query: URLSearchParams, 
   if (grades) return grades;
   const progress = handleProgressGrades(method, path, query, payload, (id) => progressGradeInUse(id) || gradeMarksReference(id));
   if (progress) return progress;
+  const masters = await handleTraitMasters(method, path, query, payload);
+  if (masters) return masters;
   const settings = handleExamSettings(method, path, payload);
   if (settings) return settings;
   const studentMatch = path.match(/^erp\/results\/([^/]+)$/);

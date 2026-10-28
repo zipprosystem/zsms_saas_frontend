@@ -17,7 +17,10 @@ import {
   PROGRESS_DOMAINS,
   PROGRESS_GRADE_MODES,
   PROGRESS_NAME_MAX,
+  PROGRESS_VALUE_MAX,
+  PROGRESS_VALUE_PATTERN,
   progressGradesServiceFor,
+  sameProgressValue,
   type ProgressDomain,
   type ProgressGrade,
   type ProgressGradeInput,
@@ -40,12 +43,13 @@ const EMPTY_FORM: FormState = { id: null, name: "", value: "", hide_in_report: f
  * student-wise traits and the British rating domains (contract in
  * progressGradesApi.ts). Two scales, one tab each:
  *   - General: rates Psychomotor and Affective traits (the View Results
- *     traits pop-up saves a level BY ID).
- *   - British: the Engagement / Learning Behaviour / Boarding level key the
- *     British report card prints.
- * A level is Name · Value · Hide in report, plus OPTIONAL descriptors per
- * domain. Name and value are each unique within the scale; any number of
- * levels. Hidden levels still count — the report just leaves them out.
+ *     traits pop-up saves a level BY ID). Levels only: Name · Value ·
+ *     Hide in report.
+ *   - British: the same, plus OPTIONAL Engagement / Learning Behaviour /
+ *     Boarding descriptors for the level key the British report prints.
+ * Value is alphanumeric (A–D, 1–5…); the list runs best first (1 / A).
+ * Name and value are each unique within the scale; any number of levels.
+ * Hidden levels still count — the report just leaves them out.
  * Admin-gated (same gate as Grades).
  */
 export function ProgressGradesScreen() {
@@ -64,6 +68,8 @@ export function ProgressGradesScreen() {
   const domainLabel = (domain: ProgressDomain) => k(`domains.${domain}`);
   const describedDomains = (row: ProgressGrade) => domains.filter((domain) => row.descriptors[domain]);
 
+  // Descriptors: British only (General levels have none).
+  const hasDescriptors = domains.length > 0;
   const columns: ColumnDef<ProgressGrade>[] = [
     { key: "name", header: k("columns.name"), render: (row) => <span className="font-semibold">{row.name}</span> },
     { key: "value", header: k("columns.value"), render: (row) => row.value },
@@ -72,14 +78,18 @@ export function ProgressGradesScreen() {
       header: k("columns.hideInReport"),
       render: (row) => (row.hide_in_report ? <span className="font-medium text-warning">{k("hidden")}</span> : <span className="text-text-muted">{k("shown")}</span>),
     },
-    {
-      key: "descriptors",
-      header: k("columns.descriptors"),
-      render: (row) => {
-        const set = describedDomains(row);
-        return set.length ? set.map(domainLabel).join(", ") : <span className="text-text-muted">{k("noDescriptors")}</span>;
-      },
-    },
+    ...(hasDescriptors
+      ? [
+          {
+            key: "descriptors",
+            header: k("columns.descriptors"),
+            render: (row: ProgressGrade) => {
+              const set = describedDomains(row);
+              return set.length ? set.map(domainLabel).join(", ") : <span className="text-text-muted">{k("noDescriptors")}</span>;
+            },
+          },
+        ]
+      : []),
   ];
 
   const exportColumns: ExportColumn<ProgressGrade>[] = [
@@ -95,7 +105,7 @@ export function ProgressGradesScreen() {
       const text = data.descriptors[domain]?.trim();
       if (text) descriptors[domain] = text;
     }
-    return { mode, name: data.name.trim(), value: Number(data.value), hide_in_report: data.hide_in_report, descriptors };
+    return { mode, name: data.name.trim(), value: data.value.trim(), hide_in_report: data.hide_in_report, descriptors };
   };
 
   return (
@@ -123,7 +133,7 @@ export function ProgressGradesScreen() {
         exportFilenamePrefix={`progress-grades-${mode}`}
         getRowId={(row) => row.id}
         searchPlaceholder={k("searchPlaceholder")}
-        matchesSearch={(row, query) => row.name.toLowerCase().includes(query.toLowerCase()) || String(row.value) === query.trim()}
+        matchesSearch={(row, query) => row.name.toLowerCase().includes(query.toLowerCase()) || row.value.toLowerCase() === query.trim().toLowerCase()}
         onItemsLoaded={setLevels}
         rowActions={(row, helpers) => [
           { key: "edit", label: t("common.edit"), onClick: helpers.edit },
@@ -136,17 +146,17 @@ export function ProgressGradesScreen() {
           },
         ]}
         emptyFormState={EMPTY_FORM}
-        toFormState={(row) => ({ id: row.id, name: row.name, value: String(row.value), hide_in_report: row.hide_in_report, descriptors: { ...row.descriptors } })}
+        toFormState={(row) => ({ id: row.id, name: row.name, value: row.value, hide_in_report: row.hide_in_report, descriptors: { ...row.descriptors } })}
         validate={(data) => {
           const errors: Record<string, string> = {};
           const others = levels.filter((level) => level.id !== data.id);
           const name = data.name.trim();
           if (!name) errors.name = k("errors.required");
           else if (others.some((level) => level.name.toLowerCase() === name.toLowerCase())) errors.name = k("errors.duplicateName");
-          const value = Number(data.value);
-          if (!data.value.trim()) errors.value = k("errors.required");
-          else if (!Number.isInteger(value) || value < 0 || value > 99) errors.value = k("errors.valueRange");
-          else if (others.some((level) => level.value === value)) errors.value = k("errors.duplicateValue");
+          const value = data.value.trim();
+          if (!value) errors.value = k("errors.required");
+          else if (!PROGRESS_VALUE_PATTERN.test(value)) errors.value = k("errors.valueRange");
+          else if (others.some((level) => sameProgressValue(level.value, value))) errors.value = k("errors.duplicateValue");
           for (const domain of domains) {
             if ((data.descriptors[domain]?.trim().length ?? 0) > PROGRESS_DESCRIPTOR_MAX) errors[`descriptor-${domain}`] = k("errors.descriptorTooLong", { max: PROGRESS_DESCRIPTOR_MAX });
           }
@@ -169,11 +179,9 @@ export function ProgressGradesScreen() {
               />
               <InputField
                 id="progress-grade-value"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={99}
-                step={1}
+                type="text"
+                autoComplete="off"
+                maxLength={PROGRESS_VALUE_MAX}
                 label={k("fields.value")}
                 value={data.value}
                 onChange={(event) => onChange({ value: event.target.value })}
@@ -181,6 +189,7 @@ export function ProgressGradesScreen() {
                 error={errors.value}
               />
             </div>
+            <p className="-mt-2 text-xs text-text-muted">{k("fields.valueHelp")}</p>
             <Toggle
               id="progress-grade-hide"
               label={k("fields.hideInReport")}
@@ -188,23 +197,25 @@ export function ProgressGradesScreen() {
               checked={data.hide_in_report}
               onChange={(hide_in_report) => onChange({ hide_in_report })}
             />
-            <fieldset className="flex flex-col gap-3">
-              <legend className="mb-1 text-sm font-medium text-text-primary">{k("fields.descriptors")}</legend>
-              <p className="-mt-1 text-xs text-text-muted">{k("fields.descriptorsHelp")}</p>
-              {domains.map((domain) => (
-                <TextareaField
-                  key={domain}
-                  id={`progress-grade-descriptor-${domain}`}
-                  label={domainLabel(domain)}
-                  rows={2}
-                  maxLength={PROGRESS_DESCRIPTOR_MAX}
-                  value={data.descriptors[domain] ?? ""}
-                  onChange={(event) => onChange({ descriptors: { ...data.descriptors, [domain]: event.target.value } })}
-                  hasError={!!errors[`descriptor-${domain}`]}
-                  error={errors[`descriptor-${domain}`]}
-                />
-              ))}
-            </fieldset>
+            {hasDescriptors ? (
+              <fieldset className="flex flex-col gap-3">
+                <legend className="mb-1 text-sm font-medium text-text-primary">{k("fields.descriptors")}</legend>
+                <p className="-mt-1 text-xs text-text-muted">{k("fields.descriptorsHelp")}</p>
+                {domains.map((domain) => (
+                  <TextareaField
+                    key={domain}
+                    id={`progress-grade-descriptor-${domain}`}
+                    label={domainLabel(domain)}
+                    rows={2}
+                    maxLength={PROGRESS_DESCRIPTOR_MAX}
+                    value={data.descriptors[domain] ?? ""}
+                    onChange={(event) => onChange({ descriptors: { ...data.descriptors, [domain]: event.target.value } })}
+                    hasError={!!errors[`descriptor-${domain}`]}
+                    error={errors[`descriptor-${domain}`]}
+                  />
+                ))}
+              </fieldset>
+            ) : null}
           </>
         )}
         emptyMessage={k("empty")}

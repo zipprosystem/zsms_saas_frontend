@@ -195,7 +195,8 @@ export type ResultsArms = {
 };
 
 /** A General Progress Grades level (Setup › Progress Grades). */
-export type TraitRatingLevel = { id: string; value: number; label: string; hide_in_report: boolean };
+/** A General Progress Grade as the traits pop-up lists it; value is alphanumeric (A, 1…), best first. */
+export type TraitRatingLevel = { id: string; value: string; label: string; hide_in_report: boolean };
 /** progress_grade_id: the rated level, by id; null = not rated. */
 export type TraitItem = { key: string; label: string; progress_grade_id: string | null };
 

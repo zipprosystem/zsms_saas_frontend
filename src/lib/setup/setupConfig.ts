@@ -245,6 +245,24 @@ export const setupCategories: SetupConfig = [
         slug: "progress-grades",
         permission: NAV_PERMISSIONS.setupProgressGrades,
       },
+      // Trait masters (2026-10-28): the named skills / traits, per School
+      // Type. Lists only — rated on Report Progression (later).
+      {
+        key: "psychomotorSkills",
+        name: "setup.items.psychomotorSkills.name",
+        description: "setup.items.psychomotorSkills.description",
+        done: false,
+        slug: "psychomotor-skills",
+        permission: NAV_PERMISSIONS.setupPsychomotorSkills,
+      },
+      {
+        key: "affectiveDomain",
+        name: "setup.items.affectiveDomain.name",
+        description: "setup.items.affectiveDomain.description",
+        done: false,
+        slug: "affective-domain",
+        permission: NAV_PERMISSIONS.setupAffectiveDomain,
+      },
       {
         key: "assessmentTypes",
         name: "setup.items.assessmentTypes.name",

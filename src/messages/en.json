@@ -312,6 +312,8 @@
       "grades": { "name": "Grades", "description": "Per-class grade bands: grade, weight, GPA, score range and remark" },
       "attainmentGrades": { "name": "Attainment Grades", "description": "British attainment grade scale: grade, weight, score range, pass and report key" },
       "progressGrades": { "name": "Progress Grades", "description": "Rating levels for traits and British engagement, behaviour and boarding, with descriptors" },
+      "psychomotorSkills": { "name": "Psychomotor Skills", "description": "The skills rated on report cards, per school type" },
+      "affectiveDomain": { "name": "Affective Domain", "description": "The traits rated on report cards (e.g. Punctuality), per school type" },
       "assessmentTypes": { "name": "Assessment Types", "description": "The CA and exam components scores are made of" },
       "resultTemplates": { "name": "Result Templates" },
       "idCardTemplates": { "name": "ID Card Templates" },
@@ -638,9 +640,54 @@
         "message": "Delete grade {grade}? Its classes will no longer be able to use it."
       }
     },
+    "traitMasters": {
+      "common": {
+        "searchPlaceholder": "Search by name",
+        "columns": { "order": "Order", "name": "Name", "schoolType": "School Type" },
+        "filters": { "schoolType": "School Type", "all": "All" },
+        "actions": { "moveUp": "Move up", "moveDown": "Move down" },
+        "fields": {
+          "name": "Name",
+          "schoolType": "School Type",
+          "schoolTypePlaceholder": "Select a school type",
+          "schoolTypeLoading": "Loading school types…",
+          "schoolTypeLoadError": "Couldn't load school types. Close and try again.",
+          "schoolTypeEmptyHint": "No school types yet.",
+          "schoolTypeEmptyHintLink": "Add one first",
+          "position": "Position",
+          "positionHelpNew": "Where it appears on the report card. Leave blank to add it at the end.",
+          "positionHelpEdit": "Where it appears on the report card; the others shift to make room."
+        },
+        "errors": { "required": "Required", "position": "Enter a whole number from 1" }
+      },
+      "psychomotor": {
+        "title": "Psychomotor Skills",
+        "subtitle": "The skills each school type rates on report cards. Primary and secondary can list different skills.",
+        "addNew": "Add Skill",
+        "adminOnly": "Only an administrator can manage psychomotor skills. Switch the “acting as” picker (Exam › Results) to Admin to test this screen.",
+        "empty": "No skills yet. Add the skills this school rates.",
+        "namePlaceholder": "e.g. Handwriting",
+        "panel": { "createTitle": "Add Skill", "editTitle": "Edit Skill", "subtitle": "A psychomotor skill on one school type's list." },
+        "errors": { "duplicateName": "This school type already has a skill with this name" },
+        "confirmDelete": { "title": "Delete skill?", "message": "Delete {name} from the {schoolType} list?" },
+        "toast": { "created": "Skill added", "updated": "Skill updated", "deleted": "Skill deleted" }
+      },
+      "affective": {
+        "title": "Affective Domain",
+        "subtitle": "The traits each school type rates on report cards (e.g. Punctuality, Leadership). Primary and secondary can list different traits.",
+        "addNew": "Add Trait",
+        "adminOnly": "Only an administrator can manage affective traits. Switch the “acting as” picker (Exam › Results) to Admin to test this screen.",
+        "empty": "No traits yet. Add the traits this school rates.",
+        "namePlaceholder": "e.g. Punctuality",
+        "panel": { "createTitle": "Add Trait", "editTitle": "Edit Trait", "subtitle": "An affective trait on one school type's list." },
+        "errors": { "duplicateName": "This school type already has a trait with this name" },
+        "confirmDelete": { "title": "Delete trait?", "message": "Delete {name} from the {schoolType} list?" },
+        "toast": { "created": "Trait added", "updated": "Trait updated", "deleted": "Trait deleted" }
+      }
+    },
     "progressGrades": {
       "title": "Progress Grades",
-      "subtitle": "Rating levels. Each level needs a name and a value, both unique in the scale; descriptors are optional.",
+      "subtitle": "Rating levels. Each level needs a name and a value (letters or numbers), both unique in the scale. The best level comes first: 1 or A.",
       "addNew": "Add Level",
       "adminOnly": "Only an administrator can manage progress grades. Switch the “acting as” picker (Exam › Results) to Admin to test this screen.",
       "empty": "No levels yet. Add the levels this scale rates on.",
@@ -666,9 +713,7 @@
       "domains": {
         "engagement": "Engagement",
         "learning_behaviour": "Learning behaviour",
-        "boarding": "Boarding",
-        "psychomotor": "Psychomotor",
-        "affective": "Affective"
+        "boarding": "Boarding"
       },
       "panel": {
         "createTitle": "Add Level",
@@ -685,6 +730,7 @@
           "british": "e.g. Good"
         },
         "value": "Value",
+        "valueHelp": "Letters or numbers, e.g. A–D or 1–5. 1 or A is the best level.",
         "hideInReport": "Hide in report",
         "hideInReportHelp": "The level still counts, but report cards leave it out entirely (its name, value and descriptors).",
         "descriptors": "Descriptors (optional)",
@@ -692,7 +738,7 @@
       },
       "errors": {
         "required": "Required",
-        "valueRange": "Enter a whole number from 0 to 99",
+        "valueRange": "Use 1–4 letters or digits, e.g. A or 1",
         "duplicateName": "Another level already has this name",
         "duplicateValue": "Another level already has this value",
         "descriptorTooLong": "Keep it to {max} characters or fewer"
