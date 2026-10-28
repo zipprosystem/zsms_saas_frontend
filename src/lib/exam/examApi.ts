@@ -90,7 +90,7 @@ import type {
  *          structure: { id, name,
  *            attainment: { id, name, grade_scale_id },
  *            rating_domains: [{ id, key, name, rating_scale_id }] } | null,
- *          grade_scales: [{ id, name, grades: [{ code, label }] }],
+ *          grade_scales: [{ id, name, grades: [{ code, label, weight }] }],  weight = the grade's numeric value (see examSettingsApi)
  *          rating_scales: [{ id, name, levels: [{ code, label }] }],
  *          items: [{ …same row fields…, component_scores: { <leaf id>: code|null },
  *                    mtg, grade_book }] }   (read-only references; mtg is
@@ -223,7 +223,9 @@ function levelsFromWire(value: unknown): ScaleLevel[] {
   return arr(value)
     .map((item) => {
       const x = rec(item);
-      return { code: typeof x.code === "string" ? x.code : String(x.code ?? ""), label: s(x.label) };
+      const level: ScaleLevel = { code: typeof x.code === "string" ? x.code : String(x.code ?? ""), label: s(x.label) };
+      if (typeof x.weight === "number" && Number.isFinite(x.weight)) level.weight = x.weight;
+      return level;
     })
     .filter((level) => level.code);
 }

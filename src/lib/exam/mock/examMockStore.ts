@@ -8,6 +8,7 @@ import {
   SEED_CLASS_TEACHERS,
   SEED_CLASS_STRUCTURE,
   SEED_CLASSES,
+  SEED_EXAMS,
   SEED_GRADE_SCALES,
   SEED_GRADE_STRUCTURES,
   SEED_SECTIONAL_HEADS,
@@ -253,6 +254,47 @@ function generatedGradeMark(exam: Exam, subjectId: string, armId: string, studen
     entered_by_staff_id: null,
     updated_at: "2026-07-20T09:00:00.000Z",
   };
+}
+
+/**
+ * MOCK Grade Book (British): a separate /100 score per subject per term.
+ * The real one comes from its own entry page (configurable breakdown
+ * summing to 100) — not built yet, so it's seeded here, read-only, and
+ * only where the term's first grade point has seeded marks.
+ */
+export function seededGradeBook(armId: string, subjectId: string, termId: string, studentId: string): number | null {
+  const first = SEED_EXAMS.find((exam) => exam.term_id === termId && exam.assessment_mode === "grade_based");
+  if (!first) return null;
+  const index = studentIndexOf(armId, studentId);
+  if (index < 0 || !seedPolicy(first, armId, subjectId, index).entered) return null;
+  return Math.round(performance(studentId, subjectId, `${termId}-gb`, "gb") * 100);
+}
+
+/**
+ * External baseline scores for a student — CEM (one standardised score)
+ * and GL SAS (ENG + MAT, each a standardised score + its stanine). They
+ * are imported later from the testing providers; until then they're
+ * seeded here, read-only, on the standardised scale (≈ 70–140, mean 100).
+ */
+export function seededBaselines(armId: string, studentId: string, yearId: string): {
+  cem: number | null;
+  glsas: Record<"eng" | "mat", { score: number | null; grade: string | null }>;
+} {
+  const empty = { score: null, grade: null };
+  if (studentIndexOf(armId, studentId) < 0) return { cem: null, glsas: { eng: empty, mat: empty } };
+  const standardised = (key: string) => Math.round(80 + performance(studentId, key, yearId, "baseline") * 50);
+  const sas = (key: string) => {
+    const score = standardised(key);
+    return { score, grade: String(stanine(score)) };
+  };
+  return { cem: standardised("cem"), glsas: { eng: sas("gl-eng"), mat: sas("gl-mat") } };
+}
+
+/** GL SAS → stanine (1–9), the provider's published bands. */
+function stanine(sas: number): number {
+  const upper = [73, 81, 88, 96, 103, 111, 118, 126];
+  const index = upper.findIndex((bound) => sas <= bound);
+  return index < 0 ? 9 : index + 1;
 }
 
 /** A student's score mark for one point: saved entry first, else the generated seed. */

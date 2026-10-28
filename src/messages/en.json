@@ -192,6 +192,8 @@
       "manageExamResult": "Manage Exam Result",
       "academicReport": "Academic Report",
       "viewResults": "View Results",
+      "broadSheetProgression": "Progression (British broadsheet)",
+      "broadSheetCumulative": "Cumulative Broadsheet",
       "broadSheet": "Broad Sheet"
     }
   },
@@ -538,6 +540,21 @@
       "subtitle": "Grade bands for each class. Results use the band a score falls in for the grade, remark, weight and GPA. A band applies to every arm of the classes it's assigned to.",
       "addNew": "Add Grade",
       "adminOnly": "Only an administrator can manage grades. Switch the “acting as” picker (Exam › Results) to Admin to test this screen.",
+      "attainmentDisplay": {
+        "title": "Attainment display (British classes)",
+        "description": "How attainment grades read on the Academic Report and the Progression broadsheet. Grades are still entered and stored as grades; value added (VA) is always the target-to-attainment weight difference.",
+        "label": "Show attainment as",
+        "options": {
+          "weight": "Weight",
+          "label": "Grade label"
+        },
+        "help": {
+          "weight": "Grades show as their numeric weight (e.g. KS3 M = 4, GCSE 9 = 9).",
+          "label": "Grades show as their label (e.g. KS3 M / S / D, GCSE 9–1)."
+        },
+        "saved": "Attainment display updated",
+        "saveFailed": "Couldn't update the attainment display. Try again."
+      },
       "searchPlaceholder": "Search by grade or remark",
       "empty": "No grades yet. Add the bands your classes are graded on.",
       "range": "{min} – {max}%",
@@ -3117,8 +3134,128 @@
       "viewResults": "View Results"
     },
     "broadSheet": {
+      "analyzeAi": "Analyze with AI",
+      "analyzeAiSoon": "Coming soon",
       "title": "Broad Sheet",
-      "subtitle": "Every student's subject totals and grades for a class-arm and term, with grand total, average and position. Select a student to see their full result."
+      "subtitle": "Every student's scores across all subjects for a class-arm and term. Open a class to see its broadsheet.",
+      "card": {
+        "subjects": "Subjects",
+        "viewBroadsheet": "View Broadsheet"
+      },
+      "tabs": {
+        "label": "Broad Sheet views",
+        "broadsheet": "Broadsheet",
+        "cumulative": "Cumulative Broadsheet",
+        "progression": "Progression"
+      },
+      "cumulative": {
+        "caption": "Cumulative broadsheet for {arm} as of {term}: each subject's term totals and cumulative average, with cumulative score, overall average and rank",
+        "exportTitle": "Cumulative Broadsheet — {arm} — as of {term}",
+        "asOf": "As of {term}",
+        "asOfLabel": "As of",
+        "futureTerm": "Not reached yet — not counted",
+        "avgDivisor": "{count, plural, one {Divided by # term enrolled} other {Divided by # terms enrolled}}",
+        "columns": {
+          "avg": "AVG",
+          "avgHelp": "Cumulative average: the term totals ÷ terms enrolled",
+          "overallAverage": "Overall average"
+        },
+        "legend": {
+          "up": "Higher than the previous term",
+          "down": "Lower than the previous term",
+          "lateEnrolment": "Not in the class that term (joined later); not counted"
+        },
+        "trend": {
+          "up": "Higher than the previous term",
+          "down": "Lower than the previous term"
+        }
+      },
+      "progression": {
+        "caption": "Progression for {arm} ({view}): attainment, Grade Book, target and value added per subject",
+        "exportTitle": "Progression — {arm} — {view} — {term}",
+        "ownScope": "You're seeing only the subjects you teach.",
+        "termPicker": "Term",
+        "weights": "Attainment shown as weights",
+        "scale": "Scale",
+        "noData": "No data yet",
+        "layout": {
+          "label": "View",
+          "perTerm": "Per term",
+          "allTerm": "All terms"
+        },
+        "columns": {
+          "gb": "GB",
+          "mtg": "MTG",
+          "cag": "CAG",
+          "va": "VA",
+          "gbN": "GB{n}",
+          "gbAvg": "GB AVG",
+          "tN": "T{n}",
+          "tAvg": "T AVG",
+          "cem": "CEM",
+          "glsas": "GL SAS",
+          "glsasEng": "ENG",
+          "glsasMat": "MAT",
+          "glsasGrade": "Grade"
+        },
+        "help": {
+          "gb": "Grade Book: the term's Grade Book score out of 100",
+          "mtg": "Target (MTG): the student's minimum target grade",
+          "cag": "Current attainment grade: the grade at the term's latest point",
+          "va": "Value added: current attainment against the target, in grade steps",
+          "gbAvg": "Average Grade Book score over the terms enrolled",
+          "tAvg": "Cumulative attainment: the average of the term grades, rounded to a grade",
+          "cem": "CEM baseline: the student's standardised score (imported later)",
+          "glsas": "GL standard age score in English and Maths (imported later)",
+          "glsasGrade": "GL SAS grade: the stanine (1–9) for the score"
+        },
+        "vaBands": {
+          "wellBelow": "Well below target",
+          "below": "Below target",
+          "onTarget": "On target",
+          "above": "Above target"
+        }
+      },
+      "general": {
+        "caption": "Broadsheet for {arm}, {term}: each student's CA, Exam and Total per subject, with cumulative score, average and rank",
+        "exportTitle": "Broadsheet — {arm} — {term}",
+        "noSubjects": "No subjects to show for this class.",
+        "ownScope": "You're seeing only the subjects you teach. Cumulative score, average, rank and the class average cover every subject, so they're shown to the class teacher, sectional head and admin.",
+        "columns": {
+          "sn": "S/N",
+          "student": "Student",
+          "id": "ID",
+          "ca": "CA",
+          "caOutOf": "CA ({max})",
+          "exam": "Exam",
+          "examOutOf": "Exam ({max})",
+          "total": "Total",
+          "cumulativeScore": "Cumulative score",
+          "average": "Average",
+          "rank": "Rank"
+        },
+        "foot": {
+          "average": "Subject average",
+          "highest": "Highest score",
+          "lowest": "Lowest score",
+          "enrolled": "{count, plural, one {# enrolled} other {# enrolled}}"
+        },
+        "summary": {
+          "classAverage": "Class average",
+          "classAverageHidden": "Shown to the class teacher, sectional head and admin"
+        },
+        "legend": {
+          "label": "Key",
+          "above": "Above the subject average",
+          "below": "Below the subject average",
+          "incomplete": "Incomplete (blanks count as 0)"
+        },
+        "vsAverage": {
+          "above": "Above the subject average of {average}",
+          "below": "Below the subject average of {average}",
+          "equal": "Equal to the subject average of {average}"
+        }
+      }
     },
     "viewResults": {
       "title": "View Results",

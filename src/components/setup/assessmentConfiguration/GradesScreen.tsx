@@ -11,6 +11,7 @@ import type { ExportColumn } from "@/lib/export/exportTypes";
 import { EXAM_USES_MOCK, examQueryKeys, getEntryOptions } from "@/lib/exam/examApi";
 import { MOCK_ADMIN } from "@/lib/exam/mock/mockActingAs";
 import { Notice, useMockActingAs } from "@/components/exam/examEntryShared";
+import { AttainmentDisplaySetting } from "@/components/setup/assessmentConfiguration/AttainmentDisplaySetting";
 import { gradesService, type GradeBand, type GradeBandInput } from "@/lib/setup/assessmentConfiguration/gradesApi";
 
 type FormState = {
@@ -100,7 +101,7 @@ export function GradesScreen() {
     return null;
   };
 
-  return (
+  const bands = (
     <CrudScreen<GradeBand, GradeBandInput, GradeBandInput, FormState>
       title={k("title")}
       subtitle={k("subtitle")}
@@ -248,5 +249,13 @@ export function GradesScreen() {
       emptyMessage={k("empty")}
       toastMessages={{ created: k("toast.created"), updated: k("toast.updated"), deleted: k("toast.deleted") }}
     />
+  );
+
+  return (
+    <div className="flex min-w-0 flex-col gap-6">
+      {bands}
+      {/* School-wide British attainment display (weight / grade label). */}
+      <AttainmentDisplaySetting />
+    </div>
   );
 }

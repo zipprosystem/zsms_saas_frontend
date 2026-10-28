@@ -10,6 +10,8 @@ import {
   NAV_CHILD_KEYWORDS,
   SEARCH_ACADEMIC_REPORT_KEYWORDS,
   SEARCH_BROAD_SHEET_KEYWORDS,
+  SEARCH_CUMULATIVE_BROADSHEET_KEYWORDS,
+  SEARCH_PROGRESSION_KEYWORDS,
   SEARCH_VIEW_RESULTS_KEYWORDS,
   SETUP_ITEM_KEYWORDS,
 } from "./searchKeywords";
@@ -141,6 +143,18 @@ export function useSearchIndex(): SearchGroup[] {
           title: t("search.exams.broadSheet"),
           href: "/admin/academics/exam/broad-sheet",
           keywords: SEARCH_BROAD_SHEET_KEYWORDS,
+        },
+        {
+          id: "exams-broad-sheet-cumulative",
+          title: t("search.exams.broadSheetCumulative"),
+          href: "/admin/academics/exam/broad-sheet?view=cumulative",
+          keywords: SEARCH_CUMULATIVE_BROADSHEET_KEYWORDS,
+        },
+        {
+          id: "exams-broad-sheet-progression",
+          title: t("search.exams.broadSheetProgression"),
+          href: "/admin/academics/exam/broad-sheet?view=progression",
+          keywords: SEARCH_PROGRESSION_KEYWORDS,
         },
       ],
     };

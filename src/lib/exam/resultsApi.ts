@@ -72,7 +72,9 @@ import {
  *   GET /api/v1/erp/results/arms?academic_year_id=&term_id=   (arm cards)
  *     -> { academic_year_id, years, terms, term_id, full_scope,
  *          items: [{ class_id, class_name, class_arm_id, arm_name,
- *                    assessment_mode, student_count, class_average|null }] }
+ *                    assessment_mode, student_count, subject_count,
+ *                    class_average|null }] }
+ *     (subject_count added in Stage 2b for the Broad Sheet cards.)
  *     Arms in the caller's RESULTS scope (admin all; sectional head their
  *     classes; class teacher their arm; subject teacher arms they teach).
  *
@@ -198,11 +200,11 @@ function header(r: Record<string, unknown>) {
   };
 }
 
-function viewerFromWire(value: unknown): ResultsViewer {
+/** An unknown scope reads as the narrower view (shared with the broadsheet reader). */
+export function viewerFromWire(value: unknown): ResultsViewer {
   const r = rec(value);
   const role = (RESULTS_VIEWER_ROLES as readonly string[]).includes(r.role as string) ? (r.role as ResultsViewer["role"]) : "subject_teacher";
   const ids = Array.isArray(r.visible_subject_ids) ? r.visible_subject_ids.filter((id): id is string => typeof id === "string") : null;
-  // Unknown scope reads as the narrower view.
   const full = r.report_scope === "full";
   return { role, report_scope: full ? "full" : "own_subjects", visible_subject_ids: full ? null : (ids ?? []), can_enter_traits: r.can_enter_traits === true };
 }
@@ -281,6 +283,7 @@ function armsFromWire(value: unknown): ResultsArms | null {
         arm_name: s(x.arm_name),
         assessment_mode: x.assessment_mode === "grade_based" ? "grade_based" : "component_based",
         student_count: num(x.student_count) ?? 0,
+        subject_count: num(x.subject_count) ?? 0,
         class_average: num(x.class_average),
       };
     }),

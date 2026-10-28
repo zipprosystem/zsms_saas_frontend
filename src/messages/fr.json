@@ -192,6 +192,8 @@
       "manageExamResult": "Gérer les résultats d'examen",
       "academicReport": "Bulletin académique",
       "viewResults": "Voir les résultats",
+      "broadSheetProgression": "Progression (tableau britannique)",
+      "broadSheetCumulative": "Tableau récapitulatif cumulé",
       "broadSheet": "Tableau récapitulatif"
     }
   },
@@ -538,6 +540,21 @@
       "subtitle": "Les barèmes de mentions de chaque classe. Les résultats utilisent la tranche où tombe une note pour la mention, l'appréciation, le poids et le GPA. Une tranche s'applique à toutes les sections des classes concernées.",
       "addNew": "Ajouter une mention",
       "adminOnly": "Seul un administrateur peut gérer les mentions. Passez le sélecteur « connecté en tant que » (Examen › Résultats) sur Administrateur pour tester cet écran.",
+      "attainmentDisplay": {
+        "title": "Affichage du niveau atteint (classes britanniques)",
+        "description": "Comment les mentions de niveau s'affichent sur le bulletin académique et le tableau de progression. Les mentions restent saisies et enregistrées comme des mentions ; la valeur ajoutée (VA) est toujours l'écart de poids entre le niveau et l'objectif.",
+        "label": "Afficher le niveau en",
+        "options": {
+          "weight": "Poids",
+          "label": "Mention"
+        },
+        "help": {
+          "weight": "Les mentions s'affichent par leur poids numérique (ex. KS3 M = 4, GCSE 9 = 9).",
+          "label": "Les mentions s'affichent par leur libellé (ex. KS3 M / S / D, GCSE 9–1)."
+        },
+        "saved": "Affichage du niveau mis à jour",
+        "saveFailed": "Impossible de mettre à jour l'affichage du niveau. Réessayez."
+      },
       "searchPlaceholder": "Rechercher par mention ou appréciation",
       "empty": "Aucune mention pour l'instant. Ajoutez les tranches utilisées pour noter vos classes.",
       "range": "{min} – {max} %",
@@ -3125,8 +3142,128 @@
       "viewResults": "Consulter les résultats"
     },
     "broadSheet": {
+      "analyzeAi": "Analyser avec l'IA",
+      "analyzeAiSoon": "Bientôt disponible",
       "title": "Tableau récapitulatif",
-      "subtitle": "Les totaux et mentions par matière de chaque élève pour une classe-section et un trimestre, avec total général, moyenne et rang. Sélectionnez un élève pour voir son résultat complet."
+      "subtitle": "Les notes de chaque élève dans toutes les matières pour une classe-section et un trimestre. Ouvrez une classe pour voir son tableau récapitulatif.",
+      "card": {
+        "subjects": "Matières",
+        "viewBroadsheet": "Voir le tableau"
+      },
+      "tabs": {
+        "label": "Vues du tableau récapitulatif",
+        "broadsheet": "Tableau récapitulatif",
+        "cumulative": "Tableau cumulé",
+        "progression": "Progression"
+      },
+      "cumulative": {
+        "caption": "Tableau récapitulatif cumulé de {arm} au {term} : totaux par trimestre et moyenne cumulée de chaque matière, avec score cumulé, moyenne générale et rang",
+        "exportTitle": "Tableau récapitulatif cumulé — {arm} — au {term}",
+        "asOf": "Au {term}",
+        "asOfLabel": "Arrêté au",
+        "futureTerm": "Pas encore atteint — non comptabilisé",
+        "avgDivisor": "{count, plural, one {Divisé par # trimestre d'inscription} other {Divisé par # trimestres d'inscription}}",
+        "columns": {
+          "avg": "MOY",
+          "avgHelp": "Moyenne cumulée : les totaux des trimestres ÷ trimestres d'inscription",
+          "overallAverage": "Moyenne générale"
+        },
+        "legend": {
+          "up": "Supérieur au trimestre précédent",
+          "down": "Inférieur au trimestre précédent",
+          "lateEnrolment": "Pas dans la classe ce trimestre (arrivé plus tard) ; non comptabilisé"
+        },
+        "trend": {
+          "up": "Supérieur au trimestre précédent",
+          "down": "Inférieur au trimestre précédent"
+        }
+      },
+      "progression": {
+        "caption": "Progression de {arm} ({view}) : niveau atteint, carnet de notes, objectif et valeur ajoutée par matière",
+        "exportTitle": "Progression — {arm} — {view} — {term}",
+        "ownScope": "Vous ne voyez que les matières que vous enseignez.",
+        "termPicker": "Trimestre",
+        "weights": "Niveaux affichés en poids",
+        "scale": "Échelle",
+        "noData": "Pas encore de données",
+        "layout": {
+          "label": "Vue",
+          "perTerm": "Par trimestre",
+          "allTerm": "Tous les trimestres"
+        },
+        "columns": {
+          "gb": "GB",
+          "mtg": "MTG",
+          "cag": "CAG",
+          "va": "VA",
+          "gbN": "GB{n}",
+          "gbAvg": "MOY GB",
+          "tN": "T{n}",
+          "tAvg": "MOY T",
+          "cem": "CEM",
+          "glsas": "GL SAS",
+          "glsasEng": "ANG",
+          "glsasMat": "MAT",
+          "glsasGrade": "Mention"
+        },
+        "help": {
+          "gb": "Grade Book : la note du carnet de notes du trimestre, sur 100",
+          "mtg": "Objectif (MTG) : la mention minimale visée par l'élève",
+          "cag": "Niveau actuel atteint : la mention au dernier point du trimestre",
+          "va": "Valeur ajoutée : niveau atteint par rapport à l'objectif, en échelons",
+          "gbAvg": "Moyenne des notes du carnet sur les trimestres d'inscription",
+          "tAvg": "Niveau cumulé : la moyenne des mentions des trimestres, arrondie à une mention",
+          "cem": "Évaluation de référence CEM : le score standardisé de l'élève (importé plus tard)",
+          "glsas": "Score standardisé GL en anglais et en mathématiques (importé plus tard)",
+          "glsasGrade": "Mention GL SAS : la stanine (1–9) correspondant au score"
+        },
+        "vaBands": {
+          "wellBelow": "Bien en dessous de l'objectif",
+          "below": "En dessous de l'objectif",
+          "onTarget": "Objectif atteint",
+          "above": "Au-dessus de l'objectif"
+        }
+      },
+      "general": {
+        "caption": "Tableau récapitulatif de {arm}, {term} : CC, examen et total de chaque élève par matière, avec score cumulé, moyenne et rang",
+        "exportTitle": "Tableau récapitulatif — {arm} — {term}",
+        "noSubjects": "Aucune matière à afficher pour cette classe.",
+        "ownScope": "Vous ne voyez que les matières que vous enseignez. Le score cumulé, la moyenne, le rang et la moyenne de la classe portent sur toutes les matières : ils sont affichés au professeur principal, au responsable de section et à l'administrateur.",
+        "columns": {
+          "sn": "N°",
+          "student": "Élève",
+          "id": "Matricule",
+          "ca": "CC",
+          "caOutOf": "CC ({max})",
+          "exam": "Examen",
+          "examOutOf": "Examen ({max})",
+          "total": "Total",
+          "cumulativeScore": "Score cumulé",
+          "average": "Moyenne",
+          "rank": "Rang"
+        },
+        "foot": {
+          "average": "Moyenne de la matière",
+          "highest": "Note la plus haute",
+          "lowest": "Note la plus basse",
+          "enrolled": "{count, plural, one {# inscrit} other {# inscrits}}"
+        },
+        "summary": {
+          "classAverage": "Moyenne de la classe",
+          "classAverageHidden": "Affichée au professeur principal, au responsable de section et à l'administrateur"
+        },
+        "legend": {
+          "label": "Légende",
+          "above": "Au-dessus de la moyenne de la matière",
+          "below": "En dessous de la moyenne de la matière",
+          "incomplete": "Incomplet (les cases vides comptent pour 0)"
+        },
+        "vsAverage": {
+          "above": "Au-dessus de la moyenne de la matière ({average})",
+          "below": "En dessous de la moyenne de la matière ({average})",
+          "equal": "Égal à la moyenne de la matière ({average})"
+        }
+      }
     },
     "viewResults": {
       "title": "Voir les résultats",
