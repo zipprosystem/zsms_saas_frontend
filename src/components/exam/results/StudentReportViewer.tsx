@@ -11,7 +11,10 @@ import { fetchPreviewHtml, templateHtmlQueryKey } from "@/components/setup/asses
 import { isDevBypassUnavailable, throwIfTransient } from "@/lib/setup/crudTypes";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import { getReportPayload, REPORT_VARIANTS, reportQueryKeys, type ReportVariant } from "@/lib/exam/report/reportPayload";
-import { buildReportSrcDoc, declaredPages, PRINT_MESSAGE } from "@/lib/exam/report/reportSrcDoc";
+import { buildReportSrcDoc, declaredPages, PRINT_MESSAGE, reportFileName } from "@/lib/exam/report/reportSrcDoc";
+
+/** Template text the viewer translates (exam.viewResults.report.templateLabels.*), passed in as window.__ZSMS_LABELS__. */
+const TEMPLATE_LABEL_KEYS = ["valueAdded", "vaHeader", "vaAbove", "vaBelow", "coverTerm", "schoolLogo", "gradeBookShort", "tutorComment", "boardingComment", "boardingGrade"] as const;
 import { resultTemplatesQueryKey, resultTemplatesService } from "@/lib/setup/assessmentConfiguration/resultTemplatesApi";
 import { failureMessage, Notice } from "@/components/exam/examEntryShared";
 
@@ -98,11 +101,12 @@ export function StudentReportViewer({
   const pages = (html && declaredPages(html)) || payload?.meta.pages || 1;
   const shownPage: PageChoice = page !== "all" && page > pages ? 1 : page;
 
-  // The print / PDF file name the browser suggests.
-  const documentTitle = student && payload ? k("documentTitle", { name: student.name, term: payload.meta.term.name }) : "";
+  // The print / PDF file name the browser suggests: built from the payload's student / arm / term / point / session.
+  const documentTitle = payload ? reportFileName(payload) : "";
+  const labels = useMemo(() => Object.fromEntries(TEMPLATE_LABEL_KEYS.map((key) => [key, t(`exam.viewResults.report.templateLabels.${key}`)])), [t]);
   const srcDoc = useMemo(
-    () => (html && payload ? buildReportSrcDoc(html, payload, shownPage === "all" ? null : shownPage, documentTitle) : null),
-    [html, payload, shownPage, documentTitle],
+    () => (html && payload ? buildReportSrcDoc(html, payload, shownPage === "all" ? null : shownPage, documentTitle, labels) : null),
+    [html, payload, shownPage, documentTitle, labels],
   );
 
   const print = () => frameRef.current?.contentWindow?.postMessage({ type: PRINT_MESSAGE }, "*");

@@ -3467,7 +3467,18 @@
       },
       "report": {
         "title": "Bulletin — {name}",
-        "documentTitle": "{name} — bulletin du {term}",
+        "templateLabels": {
+          "valueAdded": "Valeur ajoutée",
+          "vaHeader": "CAG-MTG",
+          "vaAbove": "Au niveau de l'objectif ou au-dessus",
+          "vaBelow": "En dessous de l'objectif",
+          "coverTerm": "Trimestre",
+          "schoolLogo": "Logo de l'établissement",
+          "gradeBookShort": "GB",
+          "tutorComment": "Commentaire du tuteur",
+          "boardingComment": "Commentaire de l'internat",
+          "boardingGrade": "Note d'internat"
+        },
         "frameTitle": "Bulletin de {name}",
         "variant": {
           "label": "Bulletin",

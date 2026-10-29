@@ -9,6 +9,9 @@ import type { ReportPayload } from "@/lib/exam/report/reportPayload";
  *                           instead of its sample data
  *   window.__ZSMS_PAGE__    the page to show (null = every page); pages
  *                           are the template's [data-zsms-page] sections
+ *   window.__ZSMS_LABELS__  the viewer's translations for template text
+ *                           that has them ({ key: text }); a template
+ *                           falls back to its own English
  *   message "zsms:print"    the parent's Print — the opaque-origin frame
  *                           can't be printed from outside, so it prints
  *                           itself (needs sandbox allow-modals)
@@ -31,9 +34,34 @@ export function declaredPages(html: string): number | null {
   return Number.isInteger(pages) && pages > 0 ? pages : null;
 }
 
-export function buildReportSrcDoc(html: string, payload: ReportPayload, page: number | null, documentTitle: string): string {
+/**
+ * The downloaded file's name (the print dialog's "Save as PDF" suggests
+ * the document title): studentname_arm_termname_pointname_session, each
+ * token from the payload with spaces and punctuation dropped (accents
+ * folded; "/" in the session becomes "-") — e.g.
+ * SadiqMarzuqOluwatofarati_10A_Term3_3B_2025-2026. The point is the
+ * report's point (British: meta.current_point_index; General: the last
+ * point the report covers).
+ */
+export function reportFileName(payload: ReportPayload): string {
+  const token = (value: string | null | undefined) =>
+    (value ?? "")
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[/\\]+/g, "-")
+      .replace(/[^A-Za-z0-9-]+/g, "");
+  const points = payload.meta.points ?? [];
+  const point = points[payload.meta.current_point_index ?? points.length - 1] ?? null;
+  return [payload.student.full_name, payload.student.arm, payload.meta.term.name, point?.label, payload.meta.academic_year.name]
+    .map(token)
+    .filter(Boolean)
+    .join("_");
+}
+
+export function buildReportSrcDoc(html: string, payload: ReportPayload, page: number | null, documentTitle: string, labels: Record<string, string> = {}): string {
   const boot = [
     `window.__ZSMS_REPORT__=${inlineJson(payload)};`,
+    `window.__ZSMS_LABELS__=${inlineJson(labels)};`,
     `window.__ZSMS_PAGE__=${page === null ? "null" : String(page)};`,
     `window.addEventListener("message",function(e){if(e.data&&e.data.type===${inlineJson(PRINT_MESSAGE)})window.print();});`,
     `window.addEventListener("load",function(){document.title=${inlineJson(documentTitle)};});`,

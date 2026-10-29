@@ -1,9 +1,11 @@
 <title>British Progress Template</title>
-<meta name="zsms-report-pages" content="1">
+<meta name="zsms-report-pages" content="4">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-  /* Layout: a wide landscape progress report (prints A4 landscape). Toggle = Interim (3A) vs Full (3B, mixed orientation). */
+  /* Layout, in print order: (1) cover — portrait; (2) subject comments — portrait, flows over ~2 pages;
+     (3) results grid + comment + principal — landscape; (4) grade descriptors — landscape.
+     Toggle = Interim (3A) vs Full (3B). Columns run only to the report's term (Term 1 → 1A,1B …). */
   :root{
     --page-bg:#eef1f5; --paper:#ffffff; --ink:#18212e; --muted:#5a6675;
     --line:#d3dae2; --line-strong:#a9b4c1; --accent:#15639f; --accent-fg:#fff;
@@ -37,6 +39,23 @@
   .note{color:var(--muted);font-size:12px;max-width:50ch;min-width:0}.note b{color:var(--ink);font-weight:700}
 
   .card{width:100%;max-width:1180px;background:var(--paper);border:1px solid var(--line-strong);box-shadow:0 1px 0 rgba(0,0,0,.04),0 18px 40px -24px rgba(0,0,0,.45)}
+  .card.portrait{max-width:820px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  /* (1) cover: centred school / term / dates / logo / student / arm; mission statement in the footer */
+  .cover-page{display:flex;flex-direction:column;align-items:center;text-align:center;aspect-ratio:210/297;padding:40px 24px 28px}
+  .cover-page .c-main{margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0;max-width:100%}
+  .cover-page p{margin:0}
+  .c-school{font:800 clamp(22px,4.2vw,36px)/1.15 var(--disp);color:var(--accent);text-wrap:balance}
+  :root[data-theme="dark"] .c-school{color:var(--ink)} @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .c-school{color:var(--ink)}}
+  .c-term{font:800 clamp(16px,2.6vw,21px)/1.2 var(--disp);letter-spacing:.14em;text-transform:uppercase}
+  .c-dates{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+  .c-logo{width:150px;height:150px;margin:22px 0;border-radius:18px;border:1px solid var(--line);background:var(--tint);display:grid;place-items:center;font:800 12px/1 var(--disp);letter-spacing:.06em;color:var(--muted)}
+  .c-logo img{width:100%;height:100%;object-fit:contain;border-radius:inherit}
+  .c-logo.has-img{border:0;background:transparent}
+  .c-name{font:800 clamp(20px,3.6vw,30px)/1.2 var(--disp);text-wrap:balance}
+  .c-arm{font:700 17px/1.2 var(--disp);color:var(--muted)}
+  .c-mission{color:var(--muted);font-size:12.5px;font-style:italic;max-width:62ch;border-top:1px solid var(--line);padding-top:12px}
   .masthead{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;background:linear-gradient(100deg,var(--band1),var(--band2));color:#fff;padding:16px 20px}
   .crest{width:54px;height:54px;border-radius:11px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.4);display:grid;place-items:center;font:800 10px/1 var(--disp);letter-spacing:.05em}
   .school h1{font-family:var(--disp);font-weight:800;font-size:clamp(18px,3vw,27px);margin:0;text-wrap:balance}
@@ -69,13 +88,19 @@
   .lv{font-weight:800;color:#fff;border-radius:3px;display:inline-block;min-width:16px;padding:0 1px;font-family:var(--disp);font-size:9.5px}
   .lv1{background:var(--l1)} .lv2{background:var(--l2)} .lv3{background:var(--l3)} .lv4{background:var(--l4)}
   tr.avg td{background:var(--tint-2);font-weight:700;color:var(--muted)}
+  /* Value Added (CAG − MTG): colour + arrow + sign, never colour alone */
+  th.vah{background:var(--tint)}
+  td.va{font-weight:800;font-family:var(--disp);white-space:nowrap}
+  td.va-up{color:var(--l1)} td.va-down{color:var(--l4)}
   /* current reporting-point column highlight */
   .zsms-redacted td{opacity:.38}
-  .card .cur,.card[data-cur="3A"] .c3a,.card[data-cur="3B"] .c3b{background:var(--yellow);box-shadow:inset 0 0 0 1px var(--yellow-bd)}
+  .card .cur{background:var(--yellow);box-shadow:inset 0 0 0 1px var(--yellow-bd)}
 
-  /* footer: comment | boarding grades | principal */
+  /* footer: comment (Progress: boarding house; Full: form tutor) | boarding grades (Progress) | principal */
   .foot{display:grid;grid-template-columns:1fr 150px 230px;border-top:2px solid var(--line-strong)}
   .foot .cmt{padding:10px 14px;border-right:1px solid var(--line);min-width:0}
+  /* Full: the Form Tutor's comment, with the Boarding Grade as a strip (points across, grades below) */
+  .foot.tutor{grid-template-columns:1fr auto 230px}
   .foot .cmt h4,.foot .bhg h4,.foot .prin h4{margin:0 0 5px;font:800 10px/1 var(--disp);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
   .foot .cmt p{margin:0;font-size:11.5px;line-height:1.45}
   .foot .bhg{border-right:1px solid var(--line);padding:0}
@@ -83,16 +108,16 @@
   .foot .bhg table{width:100%;border-collapse:collapse;font-size:10.5px}
   .foot .bhg td{border-top:1px solid var(--line);padding:3px 12px;font-variant-numeric:tabular-nums}
   .foot .bhg td:last-child{text-align:center;font-weight:700}
+  .foot .bhg table.strip{width:auto}
+  .foot .bhg table.strip th,.foot .bhg table.strip td{border-top:1px solid var(--line);border-left:1px solid var(--line);padding:3px 9px;text-align:center;font-variant-numeric:tabular-nums}
+  .foot .bhg table.strip th:first-child,.foot .bhg table.strip td:first-child{border-left:0}
+  .foot .bhg table.strip th{background:var(--head);font:700 9.5px/1.2 var(--disp)}
+  .foot .bhg table.strip td{font-weight:700}
   .foot .prin{padding:10px 14px;display:flex;flex-direction:column}
   .foot .prin .scribble{font-family:var(--disp);font-style:italic;font-weight:700;font-size:17px;transform:rotate(-4deg);margin:6px 0}
   .foot .prin .date{margin-top:auto;font-size:11px;color:var(--muted)}
 
-  /* full-only: cover + narratives */
-  .cover{text-align:center;padding:20px;border-bottom:1px solid var(--line);background:var(--tint)}
-  .cover .big{font-family:var(--disp);font-weight:800;font-size:clamp(20px,3.6vw,30px);color:var(--accent);margin:0;text-wrap:balance}
-  :root[data-theme="dark"] .cover .big{color:var(--ink)} @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .cover .big{color:var(--ink)}}
-  .cover .mid{font-weight:700;margin:8px 0 0;font-size:14px}
-  .cover .mission{color:var(--muted);font-size:12px;font-style:italic;max-width:60ch;margin:12px auto 0}
+  /* (2) subject comments (the comment text is a Full-report field) */
   .narr{display:grid;gap:10px;padding:4px 16px 10px}
   .ncard{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:11px 13px;background:var(--tint-2)}
   .ncard .top{display:flex;flex-wrap:wrap;gap:7px 13px;align-items:baseline;min-width:0}
@@ -102,7 +127,7 @@
   .badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--paper);border:1px solid var(--line-strong);color:var(--muted)}.badge b{color:var(--ink)}
   .ncard p{margin:8px 0 0;font-size:12.5px;line-height:1.5}
 
-  .descr{overflow-x:auto;border-top:2px solid var(--line-strong)}
+  .descr{overflow-x:auto}
   .descr table{border-collapse:collapse;width:100%;min-width:760px;font-size:11px}
   .descr td,.descr th{border:1px solid var(--line);text-align:left;vertical-align:top;padding:7px 11px}
   .descr thead th{background:var(--head);font-family:var(--disp);font-weight:800}
@@ -112,17 +137,22 @@
   @media (max-width:640px){
     .masthead{grid-template-columns:auto 1fr}.passport{display:none}
     .bio{grid-template-columns:1fr 1fr}.bio .cellb{border-right:0}
-    .foot{grid-template-columns:1fr}.foot .cmt,.foot .bhg{border-right:0;border-bottom:1px solid var(--line)}
+    .foot,.foot.tutor{grid-template-columns:1fr}.foot .cmt,.foot .bhg{border-right:0;border-bottom:1px solid var(--line)}
+    .foot .bhg table.strip{width:100%}
   }
   @media print{
     @page{size:A4 landscape;margin:7mm}
+    @page portrait{size:A4 portrait;margin:12mm}
     html,body{background:#fff}
     .wrap{padding:0;gap:0;display:block}
     .toolbar{display:none!important}
     .card{max-width:none;width:100%;border:0;box-shadow:none}
+    .card.portrait{page:portrait}
+    .card+.card{break-before:page}
+    .cover-page{aspect-ratio:auto;height:271mm}
     .tablebox,.descr{overflow:visible}
     table.grid{min-width:0;font-size:8.5px}
-    .card,.foot,.descr table,.ncard{break-inside:avoid}
+    #card,.foot,.descr table,.ncard{break-inside:avoid}
   }
 </style>
 
@@ -135,7 +165,24 @@
     <p class="note"><b>Template preview — sample data.</b> British 9–1 landscape report: attainment + grade-boundary scores across all reporting points, Engagement &amp; Learning Behaviour (1–4), boarding. Fictional school; placeholders fill per tenant.</p>
   </div>
 
-  <article class="card" id="card" data-cur="3A">
+  <section class="card portrait cover-page" data-zsms-page="1" aria-label="Cover">
+    <div class="c-main">
+      <p class="c-school" id="c-school">Westbridge International College</p>
+      <p class="c-term" id="c-term">Term 3A</p>
+      <p class="c-dates" id="c-dates">19/04/2026 – 09/07/2026</p>
+      <div class="c-logo" id="c-logo">CREST</div>
+      <p class="c-name" id="c-name">Daniel Afolabi</p>
+      <p class="c-arm" id="c-arm">10A</p>
+    </div>
+    <p class="c-mission" id="c-mission">Westbridge provides an outstanding education that inspires leadership and focuses on each child's ability to excel in a global world.</p>
+  </section>
+
+  <section class="card portrait" data-zsms-page="2">
+    <div class="sechead">Subject Reports</div>
+    <div class="narr"></div>
+  </section>
+
+  <article class="card" id="card" data-zsms-page="3">
     <header class="masthead">
       <div class="crest">CREST</div>
       <div class="school">
@@ -146,13 +193,6 @@
       <div class="passport" aria-label="Student photo placeholder"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z"/></svg></div>
     </header>
 
-    <div class="cover fullonly" hidden>
-      <p class="big">Westbridge International College</p>
-      <p class="mid">Term 3B — Full Report · 19 Apr 2026 – 09 Jul 2026</p>
-      <p class="mid" style="font-weight:800">Daniel Afolabi — Year 10 (10A)</p>
-      <p class="mission">Westbridge provides an outstanding education that inspires leadership and focuses on each child's ability to excel in a global world.</p>
-    </div>
-
     <div class="bio">
       <div class="cellb"><span class="k">Student's Name</span><span class="v accent">Daniel Afolabi</span></div>
       <div class="cellb"><span class="k">Class</span><span class="v">10A</span></div>
@@ -162,54 +202,7 @@
     </div>
 
     <div class="tablebox">
-      <table class="grid">
-        <thead>
-          <tr class="grp">
-            <th class="subj" rowspan="2">Subject</th>
-            <th class="tgt" rowspan="2">DWC<br>Target</th>
-            <th colspan="12">Current Attainment</th>
-            <th colspan="6">Engagement</th>
-            <th colspan="6">Learning Behaviour</th>
-            <th class="tcr" rowspan="2">Teacher</th>
-          </tr>
-          <tr>
-            <th>1A</th><th>1B</th><th>2A</th><th>2B</th><th class="c3a">3A</th><th class="c3b">3B</th>
-            <th>GB<br>1A</th><th>GB<br>1B</th><th>GB<br>2A</th><th>GB<br>2B</th><th>GB<br>3A</th><th>GB<br>3B</th>
-            <th>1A</th><th>1B</th><th>2A</th><th>2B</th><th class="c3a">3A</th><th class="c3b">3B</th>
-            <th>1A</th><th>1B</th><th>2A</th><th>2B</th><th class="c3a">3A</th><th class="c3b">3B</th>
-          </tr>
-        </thead>
-        <tbody id="rows"></tbody>
-        <tfoot>
-          <tr class="avg">
-            <td class="subj">Average</td><td class="tgt"></td>
-            <td colspan="6"></td>
-            <td>82.09</td><td>85.00</td><td>85.18</td><td>86.55</td><td>85.82</td><td>79.91</td>
-            <td colspan="6"></td><td colspan="6"></td><td></td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-
-    <div class="fullonly" hidden>
-      <div class="sechead">Subject Reports</div>
-      <div class="narr">
-        <div class="ncard">
-          <div class="top"><span class="subjn">Mathematics</span><span class="teach">Mrs Oluwatoyin Olatunbosun</span>
-            <span class="badges"><span class="badge">Target <b>9</b></span><span class="badge">Attainment <b>9</b></span><span class="badge">Engagement <b>1</b></span><span class="badge">Behaviour <b>1</b></span></span></div>
-          <p>Daniel is an outstanding mathematician who works with precision and pace and supports his peers. To consolidate a grade 9 he should keep working through full IGCSE past papers under timed conditions.</p>
-        </div>
-        <div class="ncard">
-          <div class="top"><span class="subjn">Physics</span><span class="teach">Mr Sunday Ogundana</span>
-            <span class="badges"><span class="badge">Target <b>9</b></span><span class="badge">Attainment <b>8</b></span><span class="badge">Engagement <b>3</b></span><span class="badge">Behaviour <b>3</b></span></span></div>
-          <p>A capable physicist whose engagement slipped this term. Revising vectors and committing to a regular problem-solving routine will bring him back towards target by the mocks.</p>
-        </div>
-        <div class="ncard">
-          <div class="top"><span class="subjn">English Literature</span><span class="teach">Miss Omolara Akinmoyede</span>
-            <span class="badges"><span class="badge">Target <b>9</b></span><span class="badge">Attainment <b>5</b></span><span class="badge">Engagement <b>1</b></span><span class="badge">Behaviour <b>1</b></span></span></div>
-          <p>A diligent reader who writes with insight; attainment dipped at 3B after a strong run. Precise, selective use of quotations and close focus on the anthology poems will lift his essays back up.</p>
-        </div>
-      </div>
+      <table class="grid"><thead></thead><tbody id="rows"></tbody><tfoot></tfoot></table>
     </div>
 
     <div class="foot">
@@ -218,7 +211,7 @@
         <p>Daniel has continued to participate actively in the boarding house this half term, with a pleasant, responsible attitude and positive interactions with peers and staff. He responds well to correction and has made steady progress in personal responsibility and social conduct. We encourage him to take greater initiative and to keep showing leadership among his peers.</p>
       </div>
       <div class="bhg">
-        <h4>Boarding Grade</h4>
+        <h4 id="bhg-title">Boarding Grade</h4>
         <table><tbody>
           <tr><td>1A</td><td>2</td></tr><tr><td>1B</td><td>2</td></tr>
           <tr><td>2A</td><td>1</td></tr><tr><td>2B</td><td>—</td></tr>
@@ -231,7 +224,9 @@
         <span class="date" id="pdate">Date: 28 May 2026</span>
       </div>
     </div>
+  </article>
 
+  <section class="card" data-zsms-page="4">
     <div class="descr">
       <table>
         <thead><tr><th class="lvl">Level</th><th>Engagement</th><th>Learning Behaviour</th><th>Boarding: Community Contribution</th></tr></thead>
@@ -243,7 +238,7 @@
         </tbody>
       </table>
     </div>
-  </article>
+  </section>
 </div>
 
 <script>
@@ -287,69 +282,133 @@
     ["Physics",9,[9,8,9,9,7,8],[91,85,93,90,76,83],[2,2,2,1,3,3],[2,2,2,2,3,3],"Mr Sunday Ogundana"],
     ["Religious Studies",9,[7,8,9,8,9,8],[71,86,91,83,91,84],[1,1,1,1,1,1],[1,1,1,1,1,1],"Mr Christopher Jegede"]
   ];
+  var SAMPLE_COMMENTS={
+    "Mathematics":"Daniel is an outstanding mathematician who works with precision and pace and supports his peers. To consolidate a grade 9 he should keep working through full IGCSE past papers under timed conditions.",
+    "Physics":"A capable physicist whose engagement slipped this term. Revising vectors and committing to a regular problem-solving routine will bring him back towards target by the mocks.",
+    "English Literature":"A diligent reader who writes with insight; attainment dipped at 3B after a strong run. Precise, selective use of quotations and close focus on the anthology poems will lift his essays back up."
+  };
+
+  /* ---- shared rendering (live payload and sample data) ---------------- */
+  var L=window.__ZSMS_LABELS__||{};
+  function zL(k,fb){return L[k]||fb;}
+  /* Value Added (CAG − MTG, grade points): ≥0 green ▲/●, <0 red ▼, always with its sign. */
+  function zVa(v){
+    if(typeof v!=="number"||!isFinite(v))return '<td class="va">—</td>';
+    var up=v>=0, mark=v>0?"▲":v<0?"▼":"●", num=(v>0?"+":v<0?"−":"")+zNum(Math.abs(v));
+    return '<td class="va '+(up?"va-up":"va-down")+'"><span aria-hidden="true">'+mark+"</span> "+num+'<span class="sr"> ('+zEsc(up?zL("vaAbove","At or above target"):zL("vaBelow","Below target"))+")</span></td>";
+  }
+  /* The results grid. cols = the point labels reached (Term 1 → 1A,1B …); cur = the report point's index.
+     rows[]: { name, tgt, att[], gb[], va, eng[], beh[], teacher, redacted } (cells ready-made); avg: { gb[], va }. */
+  function renderGrid(cols,cur,rows,avg){
+    var n=cols.length, table=document.querySelector("#card table.grid");
+    function heads(prefix,hl){return cols.map(function(c,i){return "<th"+(hl&&i===cur?' class="cur"':"")+">"+prefix+zEsc(c)+"</th>";}).join("");}
+    function cells(list,cls){var h="";for(var i=0;i<n;i++){var c=(cls||"")+(i===cur?" cur":"");h+="<td"+(c?' class="'+c.trim()+'"':"")+">"+(list[i]==null?"—":list[i])+"</td>";}return h;}
+    table.tHead.innerHTML='<tr class="grp"><th class="subj" rowspan="2">Subject</th><th class="tgt" rowspan="2">Target<br>(MTG)</th>'+
+      '<th colspan="'+2*n+'">Current Attainment</th><th class="vah">'+zEsc(zL("valueAdded","Value Added"))+"</th>"+
+      '<th colspan="'+n+'">Engagement</th><th colspan="'+n+'">Learning Behaviour</th><th class="tcr" rowspan="2">Teacher</th></tr>'+
+      "<tr>"+heads("",1)+heads("GB<br>",0)+'<th class="vah">'+zEsc(zL("vaHeader","CAG-MTG"))+"</th>"+heads("",1)+heads("",1)+"</tr>";
+    document.getElementById("rows").innerHTML=rows.map(function(r){
+      return "<tr"+(r.redacted?' class="zsms-redacted"':"")+'><td class="subj">'+zEsc(r.name)+'</td><td class="tgt g">'+r.tgt+"</td>"+
+        cells(r.att,"g")+cells(r.gb,"gb")+zVa(r.va)+cells(r.eng)+cells(r.beh)+'<td class="tcr">'+zTxt(r.teacher)+"</td></tr>";
+    }).join("");
+    table.tFoot.innerHTML='<tr class="avg"><td class="subj">Average</td><td class="tgt"></td><td colspan="'+n+'"></td>'+cells(avg.gb)+zVa(avg.va)+
+      '<td colspan="'+n+'"></td><td colspan="'+n+'"></td><td></td></tr>';
+  }
+  /* Mean of the numbers in a list (blank → —), 0 dp — the per-point Grade Book average. */
+  function zMean0(list){var v=list.filter(function(x){return typeof x==="number";});return v.length?zNum(v.reduce(function(a,b){return a+b;},0)/v.length,0):null;}
+  /* Subject comment cards: header figures at the report point; the comment line only on a Full report. */
+  function renderNarr(cards,full){
+    document.querySelector(".narr").innerHTML=cards.map(function(c){
+      var badges=c.badges.map(function(b){return '<span class="badge">'+zEsc(b[0])+" <b>"+b[1]+"</b></span>";}).join("");
+      return '<div class="ncard"><div class="top"><span class="subjn">'+zEsc(c.name)+'</span><span class="teach">'+zTxt(c.teacher)+'</span><span class="badges">'+badges+"</span></div>"+(full?"<p>"+zTxt(c.comment)+"</p>":"")+"</div>";
+    }).join("");
+  }
+  /* Page 3 comment block by variant: Full = Form Tutor ("Tutor Comment: <name>"), Progress = Boarding House (+ its grade list). */
+  function setFootComment(full,tutorName,text){
+    var foot=document.querySelector("#card .foot");
+    foot.classList.toggle("tutor",full);
+    foot.querySelector(".cmt h4").textContent=full?zL("tutorComment","Tutor Comment")+(tutorName?": "+tutorName:""):zL("boardingComment","Boarding House Comment");
+    foot.querySelector(".cmt p").textContent=text||"—";
+  }
+  /* Boarding Grade (the house's per-point grade), on both variants: a column on Progress, a strip (points across) on Full. */
+  function setBoardingGrades(cols,vals,strip){
+    var t=document.querySelector("#card .foot .bhg table");
+    document.getElementById("bhg-title").textContent=zL("boardingGrade","Boarding Grade");
+    function v(i){return vals[i]==null?"—":zEsc(vals[i]);}
+    t.classList.toggle("strip",strip);
+    t.innerHTML=strip
+      ?"<thead><tr>"+cols.map(function(c){return "<th>"+zEsc(c)+"</th>";}).join("")+"</tr></thead><tbody><tr>"+cols.map(function(_,i){return "<td>"+v(i)+"</td>";}).join("")+"</tr></tbody>"
+      :"<tbody>"+cols.map(function(c,i){return "<tr><td>"+zEsc(c)+"</td><td>"+v(i)+"</td></tr>";}).join("")+"</tbody>";
+  }
+  function setCover(o){
+    document.getElementById("c-school").textContent=o.school||"";
+    document.getElementById("c-term").textContent=zL("coverTerm","Term")+" "+(o.point||"");
+    var d=document.getElementById("c-dates");d.textContent=o.dates||"";d.hidden=!o.dates;
+    var logo=document.getElementById("c-logo");
+    if(o.logo){logo.classList.add("has-img");logo.innerHTML='<img src="'+zEsc(o.logo)+'" alt="'+zEsc(zL("schoolLogo","School logo"))+'">';}else if(o.noLogo){logo.hidden=true;}
+    document.getElementById("c-name").textContent=o.name||"";
+    document.getElementById("c-arm").textContent=o.arm||"";
+    var m=document.getElementById("c-mission");m.textContent=o.mission||"";m.hidden=!o.mission;
+  }
+
   if (Z) (function(){
     document.querySelector(".toolbar").style.display="none";
     var isFull=Z.meta.variant==="full", st=Z.student, card=document.getElementById("card");
-    card.setAttribute("data-zsms-page","1");
-    card.setAttribute("data-cur","");
-    document.querySelectorAll(".fullonly").forEach(function(e){e.hidden=!isFull;});
-    var points=Z.meta.points||[], cur=Math.min(5,Math.max(0,points.length-1)), curLabel=points.length?points[points.length-1].label:"";
+    // Columns: every point of each term up to this one (payload meta.points); later points than the report point are blank.
+    var points=Z.meta.points||[], cols=points.map(function(p){return p.label;});
+    var cur=typeof Z.meta.current_point_index==="number"?Z.meta.current_point_index:points.length-1, curLabel=cols[cur]||"";
     var t=Z.meta.term, dates=t.start_date?zDate(t.start_date)+" – "+zDate(t.end_date):"";
+
+    setCover({school:Z.school.name,point:curLabel,dates:dates,logo:Z.school.logo_url,noLogo:true,name:st.full_name,arm:st.arm,mission:Z.school.mission_statement});
 
     card.querySelector(".crest").innerHTML=zImg(Z.school.logo_url,"CREST");
     card.querySelector(".school h1").textContent=Z.school.name;
     document.getElementById("term").innerHTML="Progress Report — "+zEsc(t.name)+" "+zEsc(curLabel)+" ("+(isFull?"Full":"Interim")+")"+(dates?" · "+dates:"");
     card.querySelector(".school .cem").style.display="none";
     card.querySelector(".passport").innerHTML=zImg(st.photo_url,card.querySelector(".passport").innerHTML);
-    var cover=card.querySelector(".cover");
-    cover.innerHTML='<p class="big">'+zEsc(Z.school.name)+'</p><p class="mid">'+zEsc(t.name)+" "+zEsc(curLabel)+" — Full Report"+(dates?" · "+dates:"")+
-      '</p><p class="mid" style="font-weight:800">'+zEsc(st.full_name)+" — "+zEsc(st["class"])+" ("+zEsc(st.arm)+")</p>"+(Z.school.motto?'<p class="mission">'+zEsc(Z.school.motto)+"</p>":"");
 
     function cb(k,v,accent){return '<div class="cellb"><span class="k">'+k+'</span><span class="v'+(accent?" accent":"")+'">'+v+"</span></div>";}
     card.querySelector(".bio").innerHTML=cb("Student's Name",zTxt(st.full_name),1)+cb("Class",zTxt(st["class"])+" "+zTxt(st.arm))+cb("Tutor","—")+cb("Boarding House","—")/* Form Tutor + boarding: Report Progression's student-wise entry (not built) */+cb("Pupil ID Number",zTxt(st.admission_no));
 
-    // The grid's six reporting-point columns (1A…3B): subjects[].history has one entry per meta.points item (the year so far); the current point is highlighted.
-    card.querySelector("thead th.tgt").innerHTML="Target<br>(MTG)";
-    var heads=card.querySelectorAll("thead tr:last-child th");
-    heads.forEach(function(th,i){th.classList.remove("c3a","c3b");if(i%6===cur&&(i<6||i>=12))th.classList.add("cur");});
     // A level's colour comes from its place in the level key (first = best → lv1 … lv4; further levels muted) — values may be letters.
     var rank={};(Z.traits.rating_key||[]).forEach(function(r,i){rank[String(r.rating).toLowerCase()]=i+1;});
     function lvClass(v){var n=rank[String(v).toLowerCase()];return n&&n<=4?" lv"+n:"";}
     function lv(v){if(v==null)return "—";var c=lvClass(v);return '<span class="lv'+c+'"'+(c?"":' style="background:var(--muted)"')+">"+zEsc(v)+"</span>";}
-    function six(fn,cls){var h="";for(var i=0;i<6;i++)h+='<td class="'+(cls||"")+(i===cur?" cur":"")+'">'+(i<points.length?fn(i):"—")+"</td>";return h;}
-    document.getElementById("rows").innerHTML=Z.subjects.map(function(s){
-      var hist=s.history||[];
-      function at(i){var p=hist[i];return p?zAtt(p.attainment):"—";}
-      function rating(d){return function(i){var p=hist[i];return lv(p&&p.ratings?p.ratings[d]:null);};}
-      // Grade Book (GB): each point's /100 from the Grade Book page (null = not entered / hidden -> —).
-      function gb(i){var p=hist[i];return zNum(p?p.grade_book:null);}
-      return "<tr"+zRow(s)+'><td class="subj">'+zEsc(s.name)+'</td><td class="tgt g">'+zAtt(s.mtg)+"</td>"+
-        six(at,"g")+six(gb,"gb")+
-        six(rating(0))+six(rating(1))+'<td class="tcr">'+zTxt(s.teacher_name)+"</td></tr>";
-    }).join("");
-    var avg=card.querySelector("tfoot tr.avg");
-    // GB average per point: mean of the shown subjects' Grade Books at that point.
+    function perPoint(s,fn){var hist=s.history||[];return cols.map(function(_,i){var p=hist[i];return p?fn(p):null;});}
+    var rows=Z.subjects.map(function(s){
+      return {
+        name:s.name, tgt:zAtt(s.mtg), redacted:s.redacted, teacher:s.teacher_name,
+        att:perPoint(s,function(p){return zAtt(p.attainment);}),
+        // Grade Book (GB): each point's /100 from the Grade Book page (null = not entered / hidden -> —).
+        gb:perPoint(s,function(p){return zNum(p.grade_book);}),
+        // Value Added: the engine's CAG − MTG (latest point with an attainment grade), grade points.
+        va:s.redacted?null:s.va,
+        eng:perPoint(s,function(p){return lv(p.ratings?p.ratings[0]:null);}),
+        beh:perPoint(s,function(p){return lv(p.ratings?p.ratings[1]:null);})
+      };
+    });
+    // GB average per point: mean of the shown subjects' Grade Books at that point. VA average: the payload's.
     var shownSubs=Z.subjects.filter(function(s){return !s.redacted;});
-    function gbAvg(i){var v=shownSubs.map(function(s){var p=(s.history||[])[i];return p?p.grade_book:null;}).filter(function(x){return typeof x==="number";});return v.length?zNum(v.reduce(function(a,b){return a+b;},0)/v.length,0):"—";}
-    var gbCells="";for(var gi=0;gi<6;gi++)gbCells+="<td"+(gi===cur?' class="cur"':"")+">"+(gi<points.length?gbAvg(gi):"—")+"</td>";
-    avg.innerHTML='<td class="subj">Average</td><td class="tgt"></td><td colspan="6"></td>'+gbCells+'<td colspan="6"></td><td colspan="6"></td><td></td>';
+    renderGrid(cols,cur,rows,{
+      gb:cols.map(function(_,i){return zMean0(shownSubs.map(function(s){var p=(s.history||[])[i];return p?p.grade_book:null;}));}),
+      va:(Z.aggregate||{}).va_average
+    });
 
-    // Subject comments are a Full-report field: on a Progress report the comment line is left out entirely.
-    var full=Z.meta.variant==="full";
-    card.querySelector(".narr").innerHTML=Z.subjects.filter(function(s){return !s.redacted;}).map(function(s){
-      var eng=(s.components||[])[0], beh=(s.components||[])[1];
-      function badge(k,v){return '<span class="badge">'+k+" <b>"+v+"</b></span>";}
-      return '<div class="ncard"><div class="top"><span class="subjn">'+zEsc(s.name)+'</span><span class="teach">'+zTxt(s.teacher_name)+'</span><span class="badges">'+
-        badge("Target",zAtt(s.mtg))+badge("Attainment",zAtt(s.cag))+badge("Engagement",zTxt(eng&&eng.score))+badge("Behaviour",zTxt(beh&&beh.score))+"</span></div>"+(full?"<p>"+zTxt(s.comment)+"</p>":"")+"</div>";
-    }).join("");
+    // Subject comments: Target / GB / Attainment / Engagement / Behaviour at the report point; the comment itself is a Full-report field.
+    renderNarr(shownSubs.map(function(s){
+      var eng=(s.components||[])[0], beh=(s.components||[])[1], hist=s.history||[], gb=null;
+      for(var i=Math.min(cur,hist.length-1);i>=0&&gb==null;i--)if(hist[i]&&typeof hist[i].grade_book==="number")gb=hist[i].grade_book;
+      return {name:s.name,teacher:s.teacher_name,comment:s.comment,badges:[
+        ["Target",zAtt(s.mtg)],[zL("gradeBookShort","GB"),zNum(gb)],["Attainment",zAtt(s.cag)],["Engagement",zTxt(eng&&eng.score)],["Behaviour",zTxt(beh&&beh.score)]]};
+    }),isFull);
 
-    var b=Z.traits.boarding;
-    card.querySelector(".foot .cmt p").textContent=(b&&b.comment)||"—";
-    var labels=["1A","1B","2A","2B","3A","3B"];
-    card.querySelector(".foot .bhg tbody").innerHTML=labels.map(function(l,i){return "<tr><td>"+l+"</td><td>"+(i===cur&&b&&b.rating!=null?zEsc(b.rating):"—")+"</td></tr>";}).join("");
+    var b=Z.traits.boarding, rm=Z.remarks||{}, tutor=rm.form_tutor, house=rm.boarding_house;
+    setFootComment(isFull,tutor&&tutor.name,isFull?tutor&&tutor.comment:(house&&house.comment)||(b&&b.comment));
+    // Same source on both variants: traits.boarding.rating, at the report point.
+    setBoardingGrades(cols,cols.map(function(_,i){return i===cur&&b?b.rating:null;}),isFull);
     // Level key: the British Progress Grades (visible levels, best first) with their per-domain descriptors.
     var key=Z.traits.rating_key||[];
-    card.querySelector(".descr tbody").innerHTML=key.length?key.map(function(r){
+    document.querySelector(".descr tbody").innerHTML=key.length?key.map(function(r){
       var d=r.descriptors||{}, c=lvClass(r.rating);
       return '<tr><td class="lvl"><span class="lv lv-tag'+c+'"'+(c?"":' style="background:var(--muted)"')+">"+zEsc(r.rating)+"</span>"+zEsc(r.descriptor)+"</td><td>"+zTxt(d.engagement)+"</td><td>"+zTxt(d.learning_behaviour)+"</td><td>"+zTxt(d.boarding)+"</td></tr>";
     }).join(""):'<tr><td colspan="4">—</td></tr>';
@@ -358,28 +417,33 @@
   })();
 
   if (!Z) (function(){
-    var tb=document.getElementById('rows');
-    function lv(n){return '<span class="lv lv'+n+'">'+n+'</span>';}
-    SUBJECTS.forEach(function(s){
-      var att=s[2],gb=s[3],eng=s[4],beh=s[5],tr=document.createElement('tr');
-      var h='<td class="subj">'+s[0]+'</td><td class="tgt g">'+s[1]+'</td>';
-      att.forEach(function(g,i){h+='<td class="g'+(i===4?' c3a':i===5?' c3b':'')+'">'+g+'</td>';});
-      gb.forEach(function(v){h+='<td class="gb">'+v+'</td>';});
-      eng.forEach(function(v,i){h+='<td class="'+(i===4?'c3a':i===5?'c3b':'')+'">'+lv(v)+'</td>';});
-      beh.forEach(function(v,i){h+='<td class="'+(i===4?'c3a':i===5?'c3b':'')+'">'+lv(v)+'</td>';});
-      h+='<td class="tcr">'+s[6]+'</td>';
-      tr.innerHTML=h; tb.appendChild(tr);
-    });
-    var bI=document.getElementById('btn-interim'),bF=document.getElementById('btn-full');
-    var card=document.getElementById('card'),term=document.getElementById('term'),pdate=document.getElementById('pdate');
+    var COLS=["1A","1B","2A","2B","3A","3B"];
+    function lv(n){return n==null?null:'<span class="lv lv'+n+'">'+n+"</span>";}
+    function upTo(list,cur){return list.map(function(v,i){return i>cur?null:v;});}
+    var bI=document.getElementById("btn-interim"),bF=document.getElementById("btn-full");
+    var term=document.getElementById("term"),pdate=document.getElementById("pdate");
+    var SAMPLE_BOARDING=document.querySelector("#card .foot .cmt p").textContent;
     function set(full){
-      document.querySelectorAll('.fullonly').forEach(function(e){e.hidden=!full});
-      card.setAttribute('data-cur', full?'3B':'3A');
-      bF.setAttribute('aria-pressed',String(full)); bI.setAttribute('aria-pressed',String(!full));
-      term.textContent = full ? 'Progress Report — Term 3B (Full) · 19 Apr – 09 Jul 2026' : 'Progress Report — Term 3A (Interim) · 28 May 2026';
-      pdate.textContent = full ? 'Date: 09 Jul 2026' : 'Date: 28 May 2026';
+      var cur=full?5:4;
+      renderGrid(COLS,cur,SUBJECTS.map(function(s){
+        return {name:s[0],tgt:s[1],att:upTo(s[2],cur),gb:upTo(s[3],cur),va:s[2][cur]-s[1],eng:upTo(s[4],cur).map(lv),beh:upTo(s[5],cur).map(lv),teacher:s[6]};
+      }),{
+        gb:COLS.map(function(_,i){return i>cur?null:zMean0(SUBJECTS.map(function(s){return s[3][i];}));}),
+        va:Math.round(SUBJECTS.reduce(function(a,s){return a+s[2][cur]-s[1];},0)/SUBJECTS.length*100)/100
+      });
+      renderNarr(SUBJECTS.filter(function(s){return SAMPLE_COMMENTS[s[0]];}).map(function(s){
+        return {name:s[0],teacher:s[6],comment:SAMPLE_COMMENTS[s[0]],badges:[["Target",s[1]],["GB",s[3][cur]],["Attainment",s[2][cur]],["Engagement",s[4][cur]],["Behaviour",s[5][cur]]]};
+      }),full);
+      setCover({school:"Westbridge International College",point:COLS[cur],dates:"19/04/2026 – 09/07/2026",name:"Daniel Afolabi",arm:"10A",
+        mission:"Westbridge provides an outstanding education that inspires leadership and focuses on each child's ability to excel in a global world."});
+      setFootComment(full,"Mr Joshua Ojo",full?"Daniel has had a productive term: organised, courteous and a steady presence in form time. He should now carry the same focus into independent revision so that his strongest subjects stay at grade 9.":SAMPLE_BOARDING);
+      setBoardingGrades(COLS,upTo([2,2,1,null,1,1],cur),full);
+      bF.setAttribute("aria-pressed",String(full)); bI.setAttribute("aria-pressed",String(!full));
+      term.textContent = full ? "Progress Report — Term 3B (Full) · 19 Apr – 09 Jul 2026" : "Progress Report — Term 3A (Interim) · 28 May 2026";
+      pdate.textContent = full ? "Date: 09 Jul 2026" : "Date: 28 May 2026";
     }
-    bI.addEventListener('click',function(){set(false)});
-    bF.addEventListener('click',function(){set(true)});
+    bI.addEventListener("click",function(){set(false)});
+    bF.addEventListener("click",function(){set(true)});
+    set(false);
   })();
 </script>
