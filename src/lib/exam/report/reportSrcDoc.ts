@@ -1,4 +1,4 @@
-import type { ReportPayload } from "@/lib/exam/report/reportPayload";
+import type { ReportPayload, ReportVariant } from "@/lib/exam/report/reportPayload";
 
 /**
  * Pours one student's report payload into a shared static result
@@ -15,23 +15,38 @@ import type { ReportPayload } from "@/lib/exam/report/reportPayload";
  *   message "zsms:print"    the parent's Print — the opaque-origin frame
  *                           can't be printed from outside, so it prints
  *                           itself (needs sandbox allow-modals)
+ *   message "zsms:height"   posted UP to the parent: the report's content
+ *                           height, on load and whenever it changes — the
+ *                           viewer sizes the frame to it on phones, so the
+ *                           modal body is the only scroller (a scrolling
+ *                           iframe inside a scrolling modal doesn't pass
+ *                           swipes on to the modal on mobile Safari)
  *
  * data-theme="light": a report card is a print artifact, so it renders as
  * printed whatever the app's theme (same as TemplatePreviewFrame).
  */
 
 export const PRINT_MESSAGE = "zsms:print";
+export const HEIGHT_MESSAGE = "zsms:height";
 
 /** JSON safe to inline in a <script>: no "</script>", no U+2028/2029 line breaks. */
 function inlineJson(value: unknown): string {
   return JSON.stringify(value).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
 }
 
-/** The page count the template declares: <meta name="zsms-report-pages" content="N">. */
-export function declaredPages(html: string): number | null {
-  const match = html.match(/<meta\s+name=["']zsms-report-pages["']\s+content=["'](\d+)["']/i);
-  const pages = match ? Number(match[1]) : NaN;
-  return Number.isInteger(pages) && pages > 0 ? pages : null;
+/**
+ * The page count the template declares for a variant:
+ * <meta name="zsms-report-pages-<variant>" content="N"> when the variant has
+ * its own count (e.g. British Progress has no cover / comments pages), else
+ * <meta name="zsms-report-pages" content="N">.
+ */
+export function declaredPages(html: string, variant?: ReportVariant | null): number | null {
+  const read = (name: string) => {
+    const match = html.match(new RegExp(`<meta\\s+name=["']${name}["']\\s+content=["'](\\d+)["']`, "i"));
+    const pages = match ? Number(match[1]) : NaN;
+    return Number.isInteger(pages) && pages > 0 ? pages : null;
+  };
+  return (variant ? read(`zsms-report-pages-${variant}`) : null) ?? read("zsms-report-pages");
 }
 
 /**
@@ -65,6 +80,9 @@ export function buildReportSrcDoc(html: string, payload: ReportPayload, page: nu
     `window.__ZSMS_PAGE__=${page === null ? "null" : String(page)};`,
     `window.addEventListener("message",function(e){if(e.data&&e.data.type===${inlineJson(PRINT_MESSAGE)})window.print();});`,
     `window.addEventListener("load",function(){document.title=${inlineJson(documentTitle)};});`,
+    // The content height (html's box, not the viewport) — stays correct once the frame is sized to it.
+    `(function(){var last=0;function post(){var h=Math.ceil(document.documentElement.getBoundingClientRect().height);if(h&&h!==last){last=h;parent.postMessage({type:${inlineJson(HEIGHT_MESSAGE)},height:h},"*");}}`,
+    `window.addEventListener("load",function(){post();if(window.ResizeObserver)new ResizeObserver(post).observe(document.documentElement);});})();`,
   ].join("");
   const pageCss = page === null ? "" : `[data-zsms-page]:not([data-zsms-page="${page}"]){display:none!important}`;
   return `<!doctype html><html data-theme="light"><head><script>${boot}</script></head>${html}<style>${pageCss}</style>`;

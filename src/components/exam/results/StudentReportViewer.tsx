@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { WideModal } from "@/components/ui/WideModal";
@@ -11,12 +11,56 @@ import { fetchPreviewHtml, templateHtmlQueryKey } from "@/components/setup/asses
 import { isDevBypassUnavailable, throwIfTransient } from "@/lib/setup/crudTypes";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import { getReportPayload, REPORT_VARIANTS, reportQueryKeys, type ReportVariant } from "@/lib/exam/report/reportPayload";
-import { buildReportSrcDoc, declaredPages, PRINT_MESSAGE, reportFileName } from "@/lib/exam/report/reportSrcDoc";
+import { buildReportSrcDoc, declaredPages, HEIGHT_MESSAGE, PRINT_MESSAGE, reportFileName } from "@/lib/exam/report/reportSrcDoc";
 
 /** Template text the viewer translates (exam.viewResults.report.templateLabels.*), passed in as window.__ZSMS_LABELS__. */
 const TEMPLATE_LABEL_KEYS = ["valueAdded", "vaHeader", "vaAbove", "vaBelow", "coverTerm", "schoolLogo", "gradeBookShort", "tutorComment", "boardingComment", "boardingGrade"] as const;
 import { resultTemplatesQueryKey, resultTemplatesService } from "@/lib/setup/assessmentConfiguration/resultTemplatesApi";
 import { failureMessage, Notice } from "@/components/exam/examEntryShared";
+
+/** Below Tailwind's `sm`: the modal is full-screen and the report frame grows to its content (see useFrameAutoHeight). */
+const PHONE_QUERY = "(max-width: 639.98px)";
+
+/**
+ * Phones: size the report frame to the report's own height (posted up by
+ * the frame, reportSrcDoc.ts HEIGHT_MESSAGE), so the modal body is the only
+ * vertical scroller. A scrolling iframe nested in the scrolling modal body
+ * doesn't hand swipes on to the modal on mobile Safari, which left the
+ * report unscrollable. Desktop keeps the fixed-height frame with its own
+ * scrollbar. Returns null when the frame keeps its CSS height.
+ */
+function useFrameAutoHeight(frameRef: RefObject<HTMLIFrameElement>, srcDoc: string | null): number | null {
+  const [isPhone, setIsPhone] = useState(false);
+  const [height, setHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    const query = window.matchMedia(PHONE_QUERY);
+    const update = () => setIsPhone(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  // A new document reports its own height.
+  useEffect(() => setHeight(null), [srcDoc]);
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      // Only our frame (opaque origin, so match on the window, not the origin).
+      if (event.source !== frameRef.current?.contentWindow) return;
+      const data = event.data as { type?: unknown; height?: unknown } | null;
+      if (data?.type !== HEIGHT_MESSAGE || typeof data.height !== "number" || !Number.isFinite(data.height)) return;
+      // Plus the frame's own border, so its inner viewport is exactly the report: no leftover px for the frame to scroll (that would catch the swipe).
+      const frame = frameRef.current;
+      const border = frame ? frame.offsetHeight - frame.clientHeight : 0;
+      setHeight(Math.min(Math.max(Math.round(data.height) + border, 200), 40000));
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [frameRef]);
+
+  return isPhone ? height : null;
+}
 
 /** "all" = every page the template declares. */
 type PageChoice = number | "all";
@@ -98,7 +142,7 @@ export function StudentReportViewer({
   });
   const html = htmlQuery.data ?? null;
   // The template file's own declaration wins; the payload's count is the fallback.
-  const pages = (html && declaredPages(html)) || payload?.meta.pages || 1;
+  const pages = (html && declaredPages(html, payload?.meta.variant)) || payload?.meta.pages || 1;
   const shownPage: PageChoice = page !== "all" && page > pages ? 1 : page;
 
   // The print / PDF file name the browser suggests: built from the payload's student / arm / term / point / session.
@@ -110,6 +154,7 @@ export function StudentReportViewer({
   );
 
   const print = () => frameRef.current?.contentWindow?.postMessage({ type: PRINT_MESSAGE }, "*");
+  const phoneFrameHeight = useFrameAutoHeight(frameRef, srcDoc);
 
   let body: ReactNode;
   if (payloadQuery.isPending || (payload && templatesQuery.isPending)) {
@@ -134,6 +179,8 @@ export function StudentReportViewer({
         srcDoc={srcDoc}
         // allow-modals: the frame opens its own print dialog (see reportSrcDoc.ts).
         sandbox="allow-scripts allow-modals"
+        // Phones: as tall as the report (the modal body scrolls); desktop: 70vh with the frame's own scrollbar.
+        style={phoneFrameHeight ? { height: phoneFrameHeight } : undefined}
         className="h-[70vh] w-full rounded-lg border border-border bg-surface"
       />
     );
