@@ -36,6 +36,12 @@ export type SettingsData = {
     client_name: string | null;
     show_website_to_visitors: boolean;
     logo_url: string | null;
+    // ADDITIONS, not in the backend yet (schoolIdentityExtras.ts swap
+    // flag): the school-wide report motto (short tagline, General report
+    // header) and mission statement (British report cover). A School Type
+    // can override either; blank on both hides it on the report.
+    motto: string | null;
+    mission_statement: string | null;
   };
   branding: {
     school_logo_url: string | null;
@@ -130,6 +136,8 @@ export type IdentityUpdate = Partial<
     | "client_name"
     | "show_website_to_visitors"
     | "logo_url"
+    | "motto"
+    | "mission_statement"
   >
 >;
 

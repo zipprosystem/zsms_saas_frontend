@@ -54,20 +54,22 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *                  name / logo / motto / address / phone / email /
  *                  website in their header, each line hidden when null;
  *                  British prints its cover instead.
- *                  name: the class's School Type report_display_name
- *                  (addition — so two School Types in one school print
- *                  different names), else Settings school_name.
- *                  logo_url: the School Type's report logo, else the
- *                  Settings logo (branding.school_logo_url).
- *                  motto (= slogan; one field): the School Type's motto
- *                  (addition), else the Settings motto (addition);
- *                  null = neither, and the template hides the slot.
+ *                  Every field resolves: the class's School Type
+ *                  override (Setup › School Types) → the Settings value
+ *                  → null (the template hides that line / slot).
+ *                  name: School Type report_display_name (addition — the
+ *                  school name printed on that type's reports, so two
+ *                  School Types in one school print different names) →
+ *                  Settings identity.school_name. NEVER the School Type's
+ *                  own name ("Junior Secondary", "IGCSE").
+ *                  logo_url: School Type report logo → Settings school
+ *                  logo (branding.school_logo_url, else identity.logo_url).
+ *                  motto (= slogan; one field) / mission_statement
+ *                  (additions): School Type → Settings identity.motto /
+ *                  identity.mission_statement (additions).
  *                  address / phone / email / website (phone, email,
- *                  website are additions): from Settings
- *                  (regional.address, identity.phone / email / website);
- *                  null = not set, and the template omits that line.
- *                  mission_statement (addition): the School Type's
- *                  mission statement for the British cover (null = none).
+ *                  website are additions): Settings only
+ *                  (regional.address, identity.phone / email / website).
  *       student: { full_name, admission_no, class, arm, gender, dob,
  *                  photo_url, resumption_date },
  *                  from the student record: gender "male"|"female",

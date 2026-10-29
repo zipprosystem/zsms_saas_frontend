@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { InputField } from "@/components/ui/Input";
+import { TextareaField } from "@/components/ui/Textarea";
 import { ChipGroup } from "@/components/ui/ChipGroup";
 import { SelectField } from "@/components/ui/Select";
 import { CrudScreen } from "@/components/setup/CrudScreen";
@@ -29,6 +30,9 @@ type FormState = {
   student_id_card_template_id: string;
   staff_id_card_template_id: string;
   report_logo_file_id: string | null;
+  report_display_name: string;
+  motto: string;
+  mission_statement: string;
 };
 
 const EMPTY_FORM: FormState = {
@@ -39,6 +43,9 @@ const EMPTY_FORM: FormState = {
   student_id_card_template_id: "",
   staff_id_card_template_id: "",
   report_logo_file_id: null,
+  report_display_name: "",
+  motto: "",
+  mission_statement: "",
 };
 
 type AssignableTemplate = { id: string; name: string; status: TemplateStatus };
@@ -62,6 +69,9 @@ function toFormInput(data: FormState): SchoolTypeInput {
     student_id_card_template_id: data.student_id_card_template_id || null,
     staff_id_card_template_id: data.staff_id_card_template_id || null,
     report_logo_file_id: data.report_logo_file_id,
+    report_display_name: data.report_display_name.trim() || null,
+    motto: data.motto.trim() || null,
+    mission_statement: data.mission_statement.trim() || null,
   };
 }
 
@@ -161,6 +171,9 @@ export function SchoolTypesScreen() {
         student_id_card_template_id: row.student_id_card_template_id ?? "",
         staff_id_card_template_id: row.staff_id_card_template_id ?? "",
         report_logo_file_id: row.report_logo_file_id,
+        report_display_name: row.report_display_name ?? "",
+        motto: row.motto ?? "",
+        mission_statement: row.mission_statement ?? "",
       })}
       validate={(data) => {
         const errors: Record<string, string> = {};
@@ -169,7 +182,6 @@ export function SchoolTypesScreen() {
           errors.award_body_ids = t("setup.schoolTypes.errors.awardBodiesRequired");
         }
         if (!data.result_template_id) errors.result_template_id = t("setup.schoolTypes.errors.resultTemplateRequired");
-        if (!data.report_logo_file_id) errors.report_logo_file_id = t("setup.schoolTypes.errors.reportLogoRequired");
         return errors;
       }}
       toCreateInput={toFormInput}
@@ -263,6 +275,43 @@ export function SchoolTypesScreen() {
             <option value="">{t("setup.schoolTypes.fields.idCardNone")}</option>
             {templateOptions(staffCards.items, data.staff_id_card_template_id)}
           </SelectField>
+
+          <div className="flex flex-col gap-1.5">
+            <InputField
+              id="school-type-report-school-name"
+              label={t("setup.schoolTypes.fields.reportSchoolName.label")}
+              placeholder={t("setup.schoolTypes.fields.reportSchoolName.placeholder")}
+              value={data.report_display_name}
+              onChange={(event) => onChange({ report_display_name: event.target.value })}
+              maxLength={150}
+            />
+            <p className="text-xs text-text-muted">{t("setup.schoolTypes.fields.reportSchoolName.helper")}</p>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <InputField
+              id="school-type-report-motto"
+              label={t("setup.schoolTypes.fields.reportMotto.label")}
+              placeholder={t("setup.schoolTypes.fields.reportMotto.placeholder")}
+              value={data.motto}
+              onChange={(event) => onChange({ motto: event.target.value })}
+              maxLength={120}
+            />
+            <p className="text-xs text-text-muted">{t("setup.schoolTypes.fields.reportMotto.helper")}</p>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <TextareaField
+              id="school-type-report-mission"
+              label={t("setup.schoolTypes.fields.reportMissionStatement.label")}
+              placeholder={t("setup.schoolTypes.fields.reportMissionStatement.placeholder")}
+              value={data.mission_statement}
+              onChange={(event) => onChange({ mission_statement: event.target.value })}
+              maxLength={500}
+              rows={3}
+            />
+            <p className="text-xs text-text-muted">{t("setup.schoolTypes.fields.reportMissionStatement.helper")}</p>
+          </div>
 
           <ReportLogoUploadField
             value={data.report_logo_file_id}

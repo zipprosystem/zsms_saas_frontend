@@ -31,6 +31,7 @@ import { classAttainmentBands } from "@/lib/exam/mock/gradesMock";
 import { progressGradeById, progressGrades } from "@/lib/exam/mock/progressGradesMock";
 import { reportTraitList } from "@/lib/exam/mock/traitMastersMock";
 import { loadMockAssignments, mockReportLogoUrl } from "@/lib/setup/academicStructure/schoolTypeAssignments";
+import { getSchoolSettings } from "@/lib/settings/settingsApi";
 import { pointGradeBook } from "@/lib/exam/mock/gradeBookMock";
 import type { ProgressGrade } from "@/lib/setup/assessmentConfiguration/progressGradesApi";
 import { armOfStudent, classAverage, compute, storedTraits, termPoints, viewerFor, type Computed, type ComputedRow } from "@/lib/exam/mock/examResultsMock";
@@ -58,52 +59,6 @@ import { armOfStudent, classAverage, compute, storedTraits, termPoints, viewerFo
  * (external import).
  */
 
-/** Mock Settings logo: a plain monogram badge, so the logo fallback shows on School Types without a report logo. */
-const MOCK_SETTINGS_LOGO =
-  "data:image/svg+xml;utf8," +
-  encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#852b99"/><text x="50" y="62" font-family="Arial,sans-serif" font-size="34" font-weight="700" fill="#fff" text-anchor="middle">ZS</text></svg>',
-  );
-
-/**
- * MOCK-ONLY, FLAGGED: the Settings fields the report header falls back
- * to / reads, at their SettingsData paths (src/lib/settings/types.ts).
- * identity.motto is an addition (Settings has no motto yet — backend
- * dependency). The logo fallback is branding.school_logo_url (the
- * Branding panel's school logo). The live payload resolves all of this
- * server-side; the report mock doesn't call the Settings API.
- */
-const SEED_SETTINGS = {
-  identity: {
-    school_name: "ZSMS Demo School",
-    phone: "+234 800 000 0000",
-    email: "info@zsms-demo.example",
-    website: "www.zsms-demo.example",
-    motto: "Learning for life",
-  },
-  regional: { address: "1 Example Road, Lagos" },
-  branding: { school_logo_url: MOCK_SETTINGS_LOGO as string | null },
-};
-
-/**
- * MOCK-ONLY, FLAGGED: a School Type's report identity — report_display_name
- * (the school name General headers and the British cover print), motto
- * (General header) and mission statement (British cover). School Types
- * don't carry these fields yet (backend dependency; the Setup screen to
- * edit them is a separate backlog item). The logo is real: the School
- * Type's report logo (Setup › School Types). A missing / blank field
- * falls back to Settings.
- */
-const SCHOOL_TYPE_IDENTITY: Record<string, { report_display_name: string | null; motto: string | null; mission_statement: string | null }> = {
-  "dev-school-type-primary": { report_display_name: "ZSMS Demo Primary School", motto: null, mission_statement: null },
-  "dev-school-type-jss": { report_display_name: "ZSMS Demo Junior Secondary School", motto: "Knowledge, Discipline, Service", mission_statement: null },
-  "dev-school-type-igcse": {
-    report_display_name: "ZSMS Demo International College",
-    motto: null,
-    mission_statement: "We provide an excellent education that inspires every learner to lead, to serve and to excel in a global world.",
-  },
-};
-
 /** Blank → null, so the template drops that line. */
 function present(value: string | null | undefined): string | null {
   const trimmed = value?.trim();
@@ -111,21 +66,30 @@ function present(value: string | null | undefined): string | null {
 }
 
 /**
- * The school block for a class. Name, logo and motto: the class's School
- * Type first, else Settings. Address / phone / email / website: Settings.
+ * The school block for a class. Each field resolves the class's School
+ * Type override (Setup › School Types) → the Settings value (Settings ›
+ * School Identity / Regional) → null (the template hides it):
+ *   name: School Type report_display_name → Settings school_name. Never
+ *         the School Type's own name ("Junior Secondary", "IGCSE").
+ *   logo: School Type report logo → Settings school logo.
+ *   motto, mission_statement: School Type → Settings.
+ *   address / phone / email / website: Settings only.
+ * Reads the same stores the Setup and Settings screens write (School Type
+ * side-store; Settings via its API — the dev mock under the dev bypass).
  */
-function schoolBlock(schoolTypeId: string | null): ReportPayload["school"] {
-  const identity = schoolTypeId ? SCHOOL_TYPE_IDENTITY[schoolTypeId] : undefined;
-  const typeLogo = schoolTypeId ? mockReportLogoUrl(loadMockAssignments(schoolTypeId).report_logo_file_id) : null;
+async function schoolBlock(schoolTypeId: string | null): Promise<ReportPayload["school"]> {
+  const type = schoolTypeId ? loadMockAssignments(schoolTypeId) : null;
+  const settingsResult = await getSchoolSettings().catch(() => null);
+  const settings = settingsResult?.ok ? settingsResult.data : null;
   return {
-    name: present(identity?.report_display_name) ?? SEED_SETTINGS.identity.school_name,
-    logo_url: present(typeLogo) ?? present(SEED_SETTINGS.branding.school_logo_url),
-    address: present(SEED_SETTINGS.regional.address),
-    phone: present(SEED_SETTINGS.identity.phone),
-    email: present(SEED_SETTINGS.identity.email),
-    website: present(SEED_SETTINGS.identity.website),
-    motto: present(identity?.motto) ?? present(SEED_SETTINGS.identity.motto),
-    mission_statement: present(identity?.mission_statement),
+    name: present(type?.report_display_name) ?? present(settings?.identity.school_name) ?? "",
+    logo_url: present(mockReportLogoUrl(type?.report_logo_file_id)) ?? present(settings?.branding.school_logo_url) ?? present(settings?.identity.logo_url),
+    address: present(settings?.regional.address),
+    phone: present(settings?.identity.phone),
+    email: present(settings?.identity.email),
+    website: present(settings?.identity.website),
+    motto: present(type?.motto) ?? present(settings?.identity.motto),
+    mission_statement: present(type?.mission_statement) ?? present(settings?.identity.mission_statement),
   };
 }
 
@@ -379,7 +343,7 @@ function buildPayload(
   template: { id: string | null; pages: number },
   earlier: EarlierRun[],
   traitLists: TraitLists,
-  schoolType: string | null,
+  school: ReportPayload["school"],
 ): ReportPayload {
   const viewer = viewerFor(armId);
   const visible = viewer.visible_subject_ids ? new Set(viewer.visible_subject_ids) : null;
@@ -467,7 +431,7 @@ function buildPayload(
       assessment_mode: computed.mode,
       attainment_display: loadExamSettings().attainment_display,
     },
-    school: schoolBlock(schoolType),
+    school,
     student: {
       full_name: row.student.name,
       admission_no: row.student.admission_no,
@@ -568,7 +532,7 @@ export async function getStudentReport(studentId: string, query: URLSearchParams
     psychomotor: (await reportTraitList("psychomotor", schoolType)) ?? SEED_PSYCHOMOTOR,
     affective: (await reportTraitList("affective", schoolType)) ?? SEED_AFFECTIVE,
   };
-  return ok(buildPayload(computed, row, armId, termId, await selectedTemplate(computed.classId), earlier, traitLists, schoolType));
+  return ok(buildPayload(computed, row, armId, termId, await selectedTemplate(computed.classId), earlier, traitLists, await schoolBlock(schoolType)));
 }
 
 /** Class PDF stub: the batch render is a backend job (async, cached) — the mock only answers "not available here". */
