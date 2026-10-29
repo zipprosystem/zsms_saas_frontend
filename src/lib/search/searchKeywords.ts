@@ -96,6 +96,22 @@ export const SEARCH_PROGRESSION_KEYWORDS = [
   "GL SAS",
 ];
 
+/** Exam › Results › Grade Book (British /100 per subject per point). */
+export const SEARCH_GRADE_BOOK_KEYWORDS = [
+  "grade book",
+  "gradebook",
+  "gradebook report",
+  "GB",
+  "british",
+  "test 1",
+  "test 2",
+  "homework",
+  "classwork",
+  "unified assessment",
+  "score out of 100",
+  "attainment",
+];
+
 /** Exam › Results › Academic Report (British grade-based entry, Stage 1c). */
 export const SEARCH_ACADEMIC_REPORT_KEYWORDS = [
   "british",

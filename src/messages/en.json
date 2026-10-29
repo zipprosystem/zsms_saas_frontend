@@ -191,6 +191,7 @@
     "exams": {
       "manageExamResult": "Manage Exam Result",
       "academicReport": "Academic Report",
+      "gradeBook": "Grade Book",
       "viewResults": "View Results",
       "broadSheetProgression": "Progression (British broadsheet)",
       "broadSheetCumulative": "Cumulative Broadsheet",
@@ -544,6 +545,19 @@
       "subtitle": "Grade bands for each class. Results use the band a score falls in for the grade, remark, weight and GPA. A band applies to every arm of the classes it's assigned to.",
       "addNew": "Add Grade",
       "adminOnly": "Only an administrator can manage grades. Switch the “acting as” picker (Exam › Results) to Admin to test this screen.",
+      "attainmentAutoFill": {
+        "title": "Auto-fill attainment from Grade Book",
+        "description": "Per class: when on, a point's Grade Book total (out of 100) is graded on the class's attainment score ranges and fills Current Attainment on the Academic Report. Teachers can still choose a different grade; Engagement and Learning Behaviour stay manual. When off, Current Attainment is entered by hand.",
+        "classHelp": "{scale} · {default}",
+        "defaultOn": "on by default (KS3)",
+        "defaultOff": "off by default (KS4)",
+        "loading": "Loading classes…",
+        "loadFailed": "Couldn't load the classes. Refresh to try again.",
+        "empty": "No British (grade-based) classes yet.",
+        "savedOn": "{name} now auto-fills attainment from the Grade Book",
+        "savedOff": "{name} now enters attainment by hand",
+        "saveFailed": "Couldn't save the setting. Try again."
+      },
       "attainmentDisplay": {
         "title": "Attainment display (British classes)",
         "description": "How attainment grades read everywhere they show: Academic Report entry, the Progression broadsheet, View Results and the printed report card. Grades are still entered and stored as grades; value added (VA) is always the target-to-attainment weight difference.",
@@ -799,7 +813,8 @@
       "badges": {
         "default": "Default",
         "active": "Active",
-        "inactive": "Inactive"
+        "inactive": "Inactive",
+        "gradeBook": "Grade Book"
       },
       "filters": {
         "allModes": "All modes",
@@ -837,6 +852,12 @@
           "max": "Max marks",
           "weight": "Weight %"
         },
+        "gradeBook": {
+          "label": "Is Grade Book",
+          "helper": "British only. A Grade Book's fields (e.g. Test 1 /10, Test 2 /10, Homework & Classwork /10, Unified Assessment /70) total 100. It's offered on the Grade Book page, not on Manage Exam Result, and can't be the default.",
+          "componentPlaceholder": "e.g. Test 1",
+          "componentsHelper": "Add each Grade Book field. Their marks must total {total}."
+        },
         "isActive": {
           "label": "Active",
           "helper": "Inactive structures can't be chosen for new exams"
@@ -863,7 +884,8 @@
         "setDefault": "Make default",
         "alreadyDefault": "This is already the default",
         "inactiveCannotBeDefault": "Activate this structure before making it the default",
-        "defaultCannotBeDeleted": "Make another structure the default before deleting this one"
+        "defaultCannotBeDeleted": "Make another structure the default before deleting this one",
+        "gradeBookNotDefault": "A Grade Book can't be the default structure"
       },
       "deleteConfirm": {
         "title": "Delete assessment type?",
@@ -875,6 +897,8 @@
         "name_required": "Enter a name.",
         "name_too_long": "Name must be 100 characters or fewer.",
         "default_inactive": "The default structure must be active.",
+        "grade_book_default": "A Grade Book can't be the default structure",
+        "grade_book_mode": "A Grade Book must be component-based",
         "components_required": "Add at least one component.",
         "total_mismatch": "Components total {actual}. They must total exactly {target}.",
         "component_name_required": "Enter a component name.",
@@ -3276,6 +3300,7 @@
       "label": "Results",
       "manageExamResult": "Manage Exam Result",
       "academicReport": "Academic Report",
+      "gradeBook": "Grade Book",
       "viewResults": "View Results"
     },
     "broadSheet": {
@@ -3600,6 +3625,29 @@
         "britishNote": "VA is current attainment minus target, in grade steps. Cumulative attainment is the average grade across the terms with a current attainment grade."
       }
     },
+    "gradeBook": {
+      "title": "Grade Book",
+      "subtitle": "Enter each student's Grade Book scores for a subject at a point (1A, 1B…). The total adds up to 100 and the grade comes from the class's attainment score ranges.",
+      "filters": { "gradeBook": "Grade Book" },
+      "columns": { "grade": "Grade" },
+      "info": {
+        "point": "Assessment point",
+        "gradeBook": "Grade Book",
+        "progress": "{done} of {total} students have scores",
+        "howGraded": "Total = the fields added up (out of 100). Grade = the attainment score range the total falls in (Setup › Attainment Grades). It feeds the Academic Report's GB column, the report card and the Progression broadsheet."
+      },
+      "notices": {
+        "noGradeBooks": "No Grade Book is set up yet. Create an assessment type and tick “Is Grade Book”.",
+        "goToAssessmentTypes": "Open Assessment Types",
+        "noBands": "This class has no attainment score ranges, so totals show but grades don't.",
+        "goToAttainmentGrades": "Set them in Attainment Grades"
+      },
+      "crossLink": {
+        "toManageExamResult": "This class reports with scores, not grades. The Grade Book is for British classes; enter its results in Manage Exam Result.",
+        "openManageExamResult": "Open Manage Exam Result"
+      },
+      "toast": { "saved": "Grade Book saved for {count, plural, one {# student} other {# students}}" }
+    },
     "academicReport": {
       "title": "Academic Report",
       "subtitle": "Enter each student's current attainment, ratings and comment for a subject. Value added and averages are worked out later.",
@@ -3612,7 +3660,8 @@
         "point": "Assessment point",
         "reportVariant": "Report variant",
         "autoTick": "Present ticks once Current Attainment is entered. Mark as completed ticks once {fields} are in. You can still change either by hand (for example, for an absence).",
-        "referencesNote": "Target (MTG) and Grade Book are for reference and can't be edited here."
+        "referencesNote": "Target (MTG) and Grade Book are for reference and can't be edited here. The Grade Book is this point's /100 from the Grade Book page.",
+        "autoFillOn": "This class auto-fills Current Attainment from the Grade Book (marked “From Grade Book”). Choose another grade to override it; Engagement and Learning Behaviour stay manual."
       },
       "notices": {
         "noStructure": "No grade-based report structure is in force for this class, so there's nothing to enter yet."
@@ -3631,6 +3680,8 @@
       "notEntered": "—",
       "unknownCode": "{code} (not on scale)",
       "commentPlaceholder": "Add a comment",
+      "gradeBookHelp": "This point's Grade Book total out of 100 and its attainment grade, from the Grade Book page.",
+      "autoFilled": "From Grade Book",
       "unsavedRow": "Unsaved changes",
       "aria": {
         "present": "{name} present",

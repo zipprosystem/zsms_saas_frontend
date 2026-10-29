@@ -29,6 +29,7 @@ import { levelWeight } from "@/lib/exam/results/resultsEngine";
 import { classAttainmentBands } from "@/lib/exam/mock/gradesMock";
 import { progressGradeById, progressGrades } from "@/lib/exam/mock/progressGradesMock";
 import { reportTraitList } from "@/lib/exam/mock/traitMastersMock";
+import { pointGradeBook } from "@/lib/exam/mock/gradeBookMock";
 import type { ProgressGrade } from "@/lib/setup/assessmentConfiguration/progressGradesApi";
 import { armOfStudent, classAverage, compute, storedTraits, termPoints, viewerFor, type Computed, type ComputedRow } from "@/lib/exam/mock/examResultsMock";
 
@@ -259,12 +260,15 @@ function britishSubject(computed: Computed, result: SubjectResult, reportPoint: 
     redacted: false,
     // What was entered at each of the year's points so far (a point before the student joined stays blank).
     history: history.map((exam) => {
-      const entry = structure && enrolledForTerm(studentId, exam.term_id) ? readGradeMark(exam, result.subject_id, armId, studentId, structure) : null;
+      const enrolled = enrolledForTerm(studentId, exam.term_id);
+      const entry = structure && enrolled ? readGradeMark(exam, result.subject_id, armId, studentId, structure) : null;
       const at = entry?.component_scores ?? {};
       return {
         label: exam.name,
         attainment: (structure && at[structure.attainment.id]) || null,
         ratings: (structure?.rating_domains ?? []).map((domain) => britishRatingShown(at[domain.id])),
+        // That point's Grade Book /100 (Grade Book page), unless the point hides it.
+        grade_book: enrolled && exam.show_grade_book ? (pointGradeBook(exam, result.subject_id, armId, studentId)?.total ?? null) : null,
       };
     }),
   };

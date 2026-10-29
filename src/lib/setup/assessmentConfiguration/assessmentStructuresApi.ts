@@ -34,10 +34,17 @@ import {
  *   POST   /api/v1/erp/assessment-structures              body: StructureInput -> 201 Structure
  *   PUT    /api/v1/erp/assessment-structures/:id          body: StructureInput -> Structure
  *   DELETE /api/v1/erp/assessment-structures/:id          -> 200 (409 STRUCTURE_IS_DEFAULT)
- *   POST   /api/v1/erp/assessment-structures/:id/set-default -> Structure (409 STRUCTURE_INACTIVE)
+ *   POST   /api/v1/erp/assessment-structures/:id/set-default -> Structure (409 STRUCTURE_INACTIVE,
+ *                                                              409 GRADE_BOOK_NOT_DEFAULT)
  *
  *   Structure {
  *     id, name, mode: "component_based" | "grade_based", is_default, is_active,
+ *     is_grade_book,   (addition, British) true = a Grade Book structure: its
+ *                      components are the Grade Book's fields, totalling
+ *                      100; category is ignored (send "ca"). Offered only
+ *                      on the Grade Book entry page — never the default
+ *                      (422) and never resolved for Manage Exam Result.
+ *                      mode must be component_based (422).
  *     components: [{
  *       id, name, category: "ca" | "exam", max, weight | null, display_order,
  *       breakdown: "none" | "sum" | "weighted",
@@ -141,6 +148,7 @@ export function fromWire(value: unknown): AssessmentStructure {
     mode: oneOf(ASSESSMENT_MODES, r.mode, "component_based"),
     is_default: r.is_default === true,
     is_active: r.is_active !== false,
+    is_grade_book: r.is_grade_book === true,
     components: byDisplayOrder(asList(r.components).map(componentFromWire)),
   };
 }

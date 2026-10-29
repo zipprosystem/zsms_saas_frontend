@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ACADEMIC_REPORT_HREF, MANAGE_EXAM_RESULT_HREF, VIEW_RESULTS_HREF } from "@/components/exam/examTabsConfig";
+import { ACADEMIC_REPORT_HREF, GRADE_BOOK_HREF, MANAGE_EXAM_RESULT_HREF, VIEW_RESULTS_HREF } from "@/components/exam/examTabsConfig";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { canSeeNavEntry, NAV_PERMISSIONS, readUserPermissions, type NavPermission } from "@/lib/auth/navPermissions";
 
 const SUB_TABS: Array<{ href: string; labelKey: string; permission?: NavPermission }> = [
   { href: MANAGE_EXAM_RESULT_HREF, labelKey: "exam.resultsTabs.manageExamResult" },
   { href: ACADEMIC_REPORT_HREF, labelKey: "exam.resultsTabs.academicReport" },
+  { href: GRADE_BOOK_HREF, labelKey: "exam.resultsTabs.gradeBook" },
   { href: VIEW_RESULTS_HREF, labelKey: "exam.resultsTabs.viewResults", permission: NAV_PERMISSIONS.examViewResults },
 ];
 

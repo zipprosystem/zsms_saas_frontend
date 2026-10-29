@@ -19,7 +19,8 @@ import type {
   TermTrend,
 } from "@/lib/exam/broadsheet/broadsheetApi";
 import { seedTerms, termNumber, yearOfTerm } from "@/lib/exam/mock/examMockSeeds";
-import { readGradeMark, seededBaselines, seededGradeBook } from "@/lib/exam/mock/examMockStore";
+import { readGradeMark, seededBaselines } from "@/lib/exam/mock/examMockStore";
+import { pointGradeBook } from "@/lib/exam/mock/gradeBookMock";
 import { classAverage, compute, RANKING_RULES, termPoints, viewerFor, type Computed, type ComputedRow } from "@/lib/exam/mock/examResultsMock";
 
 /**
@@ -309,7 +310,14 @@ export async function getProgressionBroadsheet(query: URLSearchParams): Promise<
             return [point.id, (structure && mark?.component_scores[structure.attainment.id]) || null];
           }),
         );
-        const gb = seededGradeBook(armId, id, term.id, row.student.id);
+        // The term's Grade Book: its latest point that has one (B, else A), from the Grade Book entry page;
+        // a point whose show_grade_book is off doesn't count.
+        const gb =
+          [...termPoints(term.id, "grade_based")]
+            .reverse()
+            .filter((exam) => exam.show_grade_book)
+            .map((exam) => pointGradeBook(exam, id, armId, row.student.id)?.total ?? null)
+            .find((total) => total !== null) ?? null;
         gbs.push(gb);
         cells[term.id] = { enrolled: true, status: result.status, points, gb, cag: result.cag, va: result.va };
       }

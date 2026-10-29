@@ -48,7 +48,9 @@ function componentSummary(row: AssessmentStructure): string {
  * builder (Exam Stage 1a). A structure is a list of CA/Exam components,
  * each optionally broken down one level into sub-fields; component_based
  * structures must total 100. Grading itself lives in the Exam module, not
- * here. MOCK until the backend ships (assessmentStructuresApi.ts).
+ * here. "Is Grade Book" marks a British Grade Book structure (fields
+ * totalling 100) — offered on the Grade Book entry page, not on Manage
+ * Exam Result. MOCK until the backend ships (assessmentStructuresApi.ts).
  *
  * Admin-only by location: Setup has no per-screen role guard (same as
  * every other Setup master) until the platform-wide /auth/me role claim
@@ -80,7 +82,7 @@ export function AssessmentTypesScreen() {
     return errors;
   };
 
-  const modeLabel = (row: AssessmentStructure) => k(`modes.${row.mode}`);
+  const modeLabel = (row: AssessmentStructure) => (row.is_grade_book ? k("badges.gradeBook") : k(`modes.${row.mode}`));
   const statusLabel = (row: AssessmentStructure) => k(row.is_active ? "badges.active" : "badges.inactive");
 
   const columns: ColumnDef<AssessmentStructure>[] = [
@@ -92,6 +94,7 @@ export function AssessmentTypesScreen() {
         <span className="flex flex-wrap items-center gap-2">
           <span className="font-medium text-text-primary">{row.name}</span>
           {row.is_default ? <Badge tone="accent">{k("badges.default")}</Badge> : null}
+          {row.is_grade_book ? <Badge tone="accent">{k("badges.gradeBook")}</Badge> : null}
         </span>
       ),
     },
@@ -153,6 +156,7 @@ export function AssessmentTypesScreen() {
             { value: "", label: k("filters.allModes") },
             { value: "component_based", label: k("modes.component_based") },
             { value: "grade_based", label: k("modes.grade_based") },
+            { value: "grade_book", label: k("badges.gradeBook") },
           ],
         },
         {
@@ -166,7 +170,7 @@ export function AssessmentTypesScreen() {
         },
       ]}
       matchesFilters={(row, filters) =>
-        (!filters.mode || row.mode === filters.mode) &&
+        (!filters.mode || (filters.mode === "grade_book" ? row.is_grade_book : row.mode === filters.mode && !row.is_grade_book)) &&
         (!filters.status || (filters.status === "active") === row.is_active)
       }
       rowActions={(row, helpers) => [
@@ -175,8 +179,12 @@ export function AssessmentTypesScreen() {
           key: "setDefault",
           label: k("actions.setDefault"),
           onClick: () => helpers.runCustom("setDefault"),
-          disabled: row.is_default || !row.is_active,
-          disabledReason: row.is_default ? k("actions.alreadyDefault") : k("actions.inactiveCannotBeDefault"),
+          disabled: row.is_default || !row.is_active || row.is_grade_book,
+          disabledReason: row.is_default
+            ? k("actions.alreadyDefault")
+            : row.is_grade_book
+              ? k("actions.gradeBookNotDefault")
+              : k("actions.inactiveCannotBeDefault"),
         },
         {
           key: "delete",

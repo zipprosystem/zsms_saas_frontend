@@ -79,12 +79,16 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *                                            each earlier term of the year
  *                                            (null = no total / not then
  *                                            enrolled)
- *                    history: [{ label, attainment, ratings }] }],
+ *                    history: [{ label, attainment, ratings, grade_book }] }],
  *                                            (addition) British: one entry
  *                                            per meta.points item — the
  *                                            attainment code and the rating
  *                                            domain levels (components'
- *                                            order) entered at that point
+ *                                            order) entered at that point;
+ *                                            grade_book = that point's Grade
+ *                                            Book /100 (null = not entered
+ *                                            or the point's show_grade_book
+ *                                            is off)
  *       aggregate: { grand_total, average, overall_grade, class_position,
  *                    gpa, cumulative_average,
  *                    out_of,                 students ranked (position "of")
@@ -192,7 +196,7 @@ export type ReportSubject = {
   class_average: number | null;
   cumulative_average: number | null;
   earlier_terms: Array<{ number: number; name: string; total: number | null }>;
-  history: Array<{ label: string; attainment: string | null; ratings: Array<string | null> }>;
+  history: Array<{ label: string; attainment: string | null; ratings: Array<string | null>; grade_book: number | null }>;
 };
 
 export type ReportRating = { rating: string | null; descriptor?: string | null };

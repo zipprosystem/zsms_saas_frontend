@@ -11,6 +11,7 @@ import {
   SEARCH_ACADEMIC_REPORT_KEYWORDS,
   SEARCH_BROAD_SHEET_KEYWORDS,
   SEARCH_CUMULATIVE_BROADSHEET_KEYWORDS,
+  SEARCH_GRADE_BOOK_KEYWORDS,
   SEARCH_PROGRESSION_KEYWORDS,
   SEARCH_VIEW_RESULTS_KEYWORDS,
   SETUP_ITEM_KEYWORDS,
@@ -127,6 +128,12 @@ export function useSearchIndex(): SearchGroup[] {
           title: t("search.exams.academicReport"),
           href: "/admin/academics/exam/results/academic-report",
           keywords: SEARCH_ACADEMIC_REPORT_KEYWORDS,
+        },
+        {
+          id: "exams-grade-book",
+          title: t("search.exams.gradeBook"),
+          href: "/admin/academics/exam/results/grade-book",
+          keywords: SEARCH_GRADE_BOOK_KEYWORDS,
         },
         ...(canSeeNavEntry(NAV_PERMISSIONS.examViewResults, granted)
           ? [
