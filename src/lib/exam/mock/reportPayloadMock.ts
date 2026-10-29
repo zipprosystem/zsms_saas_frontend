@@ -58,36 +58,74 @@ import { armOfStudent, classAverage, compute, storedTraits, termPoints, viewerFo
  * (external import).
  */
 
-const SEED_SCHOOL: ReportPayload["school"] = {
-  name: "ZSMS Demo School",
-  logo_url: null,
-  address: "1 Example Road, Lagos",
-  motto: "Learning for life",
-  mission_statement: null,
+/** Mock Settings logo: a plain monogram badge, so the logo fallback shows on School Types without a report logo. */
+const MOCK_SETTINGS_LOGO =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#852b99"/><text x="50" y="62" font-family="Arial,sans-serif" font-size="34" font-weight="700" fill="#fff" text-anchor="middle">ZS</text></svg>',
+  );
+
+/**
+ * MOCK-ONLY, FLAGGED: the Settings fields the report header falls back
+ * to / reads, at their SettingsData paths (src/lib/settings/types.ts).
+ * identity.motto is an addition (Settings has no motto yet — backend
+ * dependency). The logo fallback is branding.school_logo_url (the
+ * Branding panel's school logo). The live payload resolves all of this
+ * server-side; the report mock doesn't call the Settings API.
+ */
+const SEED_SETTINGS = {
+  identity: {
+    school_name: "ZSMS Demo School",
+    phone: "+234 800 000 0000",
+    email: "info@zsms-demo.example",
+    website: "www.zsms-demo.example",
+    motto: "Learning for life",
+  },
+  regional: { address: "1 Example Road, Lagos" },
+  branding: { school_logo_url: MOCK_SETTINGS_LOGO as string | null },
 };
 
 /**
- * MOCK-ONLY, FLAGGED: a School Type's report identity — the school name
- * and mission statement its British cover prints. School Types don't
- * carry these fields yet (name / award bodies / description only); the
- * logo is real: the School Type's report logo (Setup › School Types).
+ * MOCK-ONLY, FLAGGED: a School Type's report identity — report_display_name
+ * (the school name General headers and the British cover print), motto
+ * (General header) and mission statement (British cover). School Types
+ * don't carry these fields yet (backend dependency; the Setup screen to
+ * edit them is a separate backlog item). The logo is real: the School
+ * Type's report logo (Setup › School Types). A missing / blank field
+ * falls back to Settings.
  */
-const SCHOOL_TYPE_IDENTITY: Record<string, { name: string; mission_statement: string }> = {
+const SCHOOL_TYPE_IDENTITY: Record<string, { report_display_name: string | null; motto: string | null; mission_statement: string | null }> = {
+  "dev-school-type-primary": { report_display_name: "ZSMS Demo Primary School", motto: null, mission_statement: null },
+  "dev-school-type-jss": { report_display_name: "ZSMS Demo Junior Secondary School", motto: "Knowledge, Discipline, Service", mission_statement: null },
   "dev-school-type-igcse": {
-    name: "ZSMS Demo International College",
+    report_display_name: "ZSMS Demo International College",
+    motto: null,
     mission_statement: "We provide an excellent education that inspires every learner to lead, to serve and to excel in a global world.",
   },
 };
 
-/** The school block for a class: its School Type's report identity + report logo over the school profile. */
+/** Blank → null, so the template drops that line. */
+function present(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+/**
+ * The school block for a class. Name, logo and motto: the class's School
+ * Type first, else Settings. Address / phone / email / website: Settings.
+ */
 function schoolBlock(schoolTypeId: string | null): ReportPayload["school"] {
-  if (!schoolTypeId) return SEED_SCHOOL;
-  const identity = SCHOOL_TYPE_IDENTITY[schoolTypeId];
+  const identity = schoolTypeId ? SCHOOL_TYPE_IDENTITY[schoolTypeId] : undefined;
+  const typeLogo = schoolTypeId ? mockReportLogoUrl(loadMockAssignments(schoolTypeId).report_logo_file_id) : null;
   return {
-    ...SEED_SCHOOL,
-    name: identity?.name ?? SEED_SCHOOL.name,
-    mission_statement: identity?.mission_statement ?? null,
-    logo_url: mockReportLogoUrl(loadMockAssignments(schoolTypeId).report_logo_file_id) ?? SEED_SCHOOL.logo_url,
+    name: present(identity?.report_display_name) ?? SEED_SETTINGS.identity.school_name,
+    logo_url: present(typeLogo) ?? present(SEED_SETTINGS.branding.school_logo_url),
+    address: present(SEED_SETTINGS.regional.address),
+    phone: present(SEED_SETTINGS.identity.phone),
+    email: present(SEED_SETTINGS.identity.email),
+    website: present(SEED_SETTINGS.identity.website),
+    motto: present(identity?.motto) ?? present(SEED_SETTINGS.identity.motto),
+    mission_statement: present(identity?.mission_statement),
   };
 }
 

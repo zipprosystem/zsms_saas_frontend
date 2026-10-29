@@ -42,6 +42,7 @@
   .logo .l2{font-size:5.5px;font-weight:700;margin-top:2px;letter-spacing:.03em;}
   .sch{text-align:center;}
   .sch h1{font-family:"Archivo";font-weight:800;font-size:26px;color:var(--blue);margin:0;letter-spacing:.01em;}
+  .sch .mt{font-size:11px;font-weight:700;font-style:italic;color:var(--blue-dk);margin:3px 0 0;}
   .sch .ad{font-size:9.5px;color:var(--ink-soft);margin-top:3px;}
   .sch .mo{display:inline-block;margin-top:5px;font-weight:700;font-size:11px;color:var(--blue-dk);
     border-bottom:2px solid var(--line);padding:0 10px 2px;}
@@ -130,6 +131,7 @@
       <div class="logo"><div class="l1">W.P.I.S</div><div class="l2">IN PURSUIT OF<br>EXCELLENCE</div></div>
       <div class="sch">
         <h1>White Pearl International School</h1>
+        <div class="mt">In Pursuit of Excellence</div>
         <div class="ad">12 Example Crescent, Abuja.</div>
         <div class="mo" id="bMonth">JUNE, 2026</div>
       </div>
@@ -218,7 +220,10 @@
   function zComp(s,kind,i){var c=(s.components||[]).filter(function(x){return x.kind===kind;})[i];return c?c.score:null;}
   function zImg(url,fallback){return url?'<img src="'+zEsc(url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':fallback;}
   function zRow(s){return s.redacted?' class="zsms-redacted"':"";}
-  function zAddress(){return [Z.school.address,Z.school.motto].filter(Boolean).map(zEsc).join(" &middot; ");}
+  /* Header motto slot: School Type motto, else Settings motto (resolved in the payload). None → the slot hides. */
+  function zMotto(el){var m=Z.school.motto;el.textContent=m||"";el.style.display=m?"":"none";}
+  /* Header contact block (spec §7.27): address, then phone · email · website from Settings. A missing field drops out; nothing set hides the block. */
+  function zContact(el){var s=Z.school,c=[s.phone,s.email,s.website].filter(Boolean).map(zEsc).join(" &middot; ");var h=[s.address?zEsc(s.address):"",c].filter(Boolean).join("<br>");el.innerHTML=h;el.style.display=h?"":"none";}
 
   /* Total Point (T.p.) = the subject's grade point (the G.p. column) × its units. Computed here, from two payload values (Matthew, 2026-10-28). No units set -> —. */
   function zTp(s){return s.gpa==null||s.units==null?null:Math.round(s.gpa*s.units*100)/100;}
@@ -232,7 +237,8 @@
     document.querySelector(".wmk b").textContent=motto||String(Z.school.name).toUpperCase();
     document.querySelector(".head .logo").innerHTML=Z.school.logo_url?zImg(Z.school.logo_url,""):'<div class="l1">'+zEsc(Z.school.name)+'</div><div class="l2">'+zEsc(motto)+"</div>";
     document.querySelector(".sch h1").textContent=Z.school.name;
-    document.querySelector(".sch .ad").innerHTML=zTxt(Z.school.address);
+    zMotto(document.querySelector(".sch .mt"));
+    zContact(document.querySelector(".sch .ad"));
     var gen=new Date(Z.meta.generated_at);
     document.getElementById("bMonth").textContent=isNaN(gen)?"":Z_MONTHS[gen.getMonth()]+", "+gen.getFullYear();
     document.querySelector(".bio .photo").innerHTML=zImg(st.photo_url,"PHOTO");

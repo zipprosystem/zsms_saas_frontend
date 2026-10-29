@@ -292,7 +292,10 @@
   function zComp(s,kind,i){var c=(s.components||[]).filter(function(x){return x.kind===kind;})[i];return c?c.score:null;}
   function zImg(url,fallback){return url?'<img src="'+zEsc(url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':fallback;}
   function zRow(s){return s.redacted?' class="zsms-redacted"':"";}
-  function zAddress(){return [Z.school.address,Z.school.motto].filter(Boolean).map(zEsc).join(" &middot; ");}
+  /* Header motto slot: School Type motto, else Settings motto (resolved in the payload). None → the slot hides. */
+  function zMotto(el){var m=Z.school.motto;el.textContent=m||"";el.style.display=m?"":"none";}
+  /* Header contact block (spec §7.27): address, then phone · email · website from Settings. A missing field drops out; nothing set hides the block. */
+  function zContact(el){var s=Z.school,c=[s.phone,s.email,s.website].filter(Boolean).map(zEsc).join(" &middot; ");var h=[s.address?zEsc(s.address):"",c].filter(Boolean).join("<br>");el.innerHTML=h;el.style.display=h?"":"none";}
 
   function zRender(){
     var isFull=Z.meta.variant==="full", st=Z.student, ag=Z.aggregate, at=Z.attendance, n=Z.meta.term.number||1;
@@ -306,8 +309,8 @@
     document.querySelector(".head .badge").innerHTML=Z.school.logo_url?zImg(Z.school.logo_url,""):
       '<div class="bk">'+zEsc(String(Z.school.name).toUpperCase())+"</div>"+(Z.school.motto?'<div class="bm">MOTTO: '+zEsc(String(Z.school.motto).toUpperCase())+"</div>":"");
     document.querySelector(".school h1").textContent=Z.school.name;
-    document.querySelector(".school .motto").textContent=Z.school.motto?"..."+Z.school.motto+"...":"";
-    document.querySelector(".school .meta").innerHTML=zTxt(Z.school.address);
+    zMotto(document.querySelector(".school .motto"));
+    zContact(document.querySelector(".school .meta"));
     document.getElementById("docTitle").textContent=termUpper+(isFull?" EXAMINATION":" CONTINUOUS ASSESSMENT");
     document.querySelector(".head .photo").innerHTML=zImg(st.photo_url,"PHOTO");
 
