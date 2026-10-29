@@ -33,6 +33,7 @@ export type StructureForm = {
   mode: AssessmentMode;
   is_default: boolean;
   is_active: boolean;
+  is_grade_book: boolean;
   components: ComponentForm[];
 };
 
@@ -51,7 +52,7 @@ export function emptyComponent(category: ComponentCategory = "ca"): ComponentFor
 }
 
 export function emptyStructureForm(): StructureForm {
-  return { name: "", mode: "component_based", is_default: false, is_active: true, components: [emptyComponent()] };
+  return { name: "", mode: "component_based", is_default: false, is_active: true, is_grade_book: false, components: [emptyComponent()] };
 }
 
 function numText(value: number | null): string {
@@ -64,6 +65,7 @@ export function toStructureForm(row: AssessmentStructure): StructureForm {
     mode: row.mode,
     is_default: row.is_default,
     is_active: row.is_active,
+    is_grade_book: row.is_grade_book,
     components: row.components.map((component) => ({
       key: nextRowKey(),
       id: component.id,
@@ -99,6 +101,7 @@ export function toStructureInput(form: StructureForm): AssessmentStructureInput 
     mode: form.mode,
     is_default: form.is_default,
     is_active: form.is_active,
+    is_grade_book: form.is_grade_book,
     components: form.components.map((component, ci) => ({
       ...(component.id ? { id: component.id } : {}),
       name: component.name,

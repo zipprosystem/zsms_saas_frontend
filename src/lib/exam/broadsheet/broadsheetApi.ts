@@ -89,7 +89,12 @@ import { RESULT_STATUSES, type ResultStatus, type ResultsViewer } from "@/lib/ex
  *                        enrolled,           false = not in the class that term
  *                        status|null,
  *                        points: { <point_id>: grade|null },  attainment entered at that point
- *                        gb|null,            Grade Book score /100 for the term
+ *                        gb|null,            Grade Book /100 for the term: the
+ *                                            term's latest point with a Grade
+ *                                            Book entry (B, else A), from the
+ *                                            Grade Book page (gradeBookApi.ts);
+ *                                            points with show_grade_book off
+ *                                            are skipped
  *                        cag|null,           current attainment = latest point's grade
  *                        va|null } },        CAG weight − MTG weight
  *                      gb_average|null,      enrolment-aware mean of the term GBs

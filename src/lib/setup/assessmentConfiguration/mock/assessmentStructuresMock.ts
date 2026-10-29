@@ -39,6 +39,8 @@ import { SEED_ASSESSMENT_STRUCTURES } from "@/lib/setup/assessmentConfiguration/
  */
 
 const STORAGE_KEY = "zsms.mockAssessmentStructures.v1";
+/** Set once the seeded Grade Book has been added to a store saved before Grade Books existed. */
+const GRADE_BOOK_SEEDED_KEY = "zsms.mockAssessmentStructures.gradeBookSeeded";
 
 let cache: AssessmentStructure[] | null = null;
 
@@ -49,7 +51,16 @@ function load(): AssessmentStructure[] {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       const parsed = raw ? JSON.parse(raw) : null;
-      if (Array.isArray(parsed)) rows = parsed as AssessmentStructure[];
+      if (Array.isArray(parsed)) {
+        // Saved before is_grade_book existed: read it as false, and add the seeded Grade Book once.
+        rows = (parsed as AssessmentStructure[]).map((row) => ({ ...row, is_grade_book: row.is_grade_book === true }));
+        if (!window.localStorage.getItem(GRADE_BOOK_SEEDED_KEY)) {
+          const seeded = SEED_ASSESSMENT_STRUCTURES.filter((row) => row.is_grade_book && !rows.some((existing) => existing.id === row.id));
+          rows = [...rows, ...structuredClone(seeded)];
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+        }
+      }
+      window.localStorage.setItem(GRADE_BOOK_SEEDED_KEY, "1");
     } catch {
       // Corrupt JSON / storage disabled — fall back to the seeds.
     }
@@ -141,6 +152,7 @@ function parseBody(payload: unknown): AssessmentStructureInput | { error: string
     mode: body.mode as AssessmentStructureInput["mode"],
     is_default: body.is_default === true,
     is_active: body.is_active !== false,
+    is_grade_book: body.is_grade_book === true,
     components,
   });
 }
@@ -173,6 +185,7 @@ function materialize(id: string, input: AssessmentStructureInput, previous: Asse
     mode: input.mode,
     is_default: input.is_default,
     is_active: input.is_active,
+    is_grade_book: input.is_grade_book,
     components: input.components.map((c) => ({
       id: c.id && knownComponentIds.has(c.id) ? c.id : newId(),
       name: c.name,
@@ -236,6 +249,7 @@ function handle(method: HttpMethod, rest: string | null, payload: unknown): Wire
   if (action === "set-default") {
     if (method !== "POST") return fail(405, "METHOD_NOT_ALLOWED", "Method not allowed");
     if (!existing.is_active) return fail(409, "STRUCTURE_INACTIVE", "Activate this structure before making it the default.");
+    if (existing.is_grade_book) return fail(409, "GRADE_BOOK_NOT_DEFAULT", "A Grade Book can't be the default structure.");
     const updated = { ...existing, is_default: true };
     save(withSingleDefault(rows.map((row) => (row.id === id ? updated : row)), id));
     return ok(updated);

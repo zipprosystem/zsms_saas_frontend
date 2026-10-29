@@ -57,6 +57,12 @@ export type Exam = {
   term_id: string;
   /** Last day marks may be entered (cutoff). null = no cutoff. */
   entry_closes_on: string | null;
+  /**
+   * grade_based only: whether this point's Grade Book shows (Academic Report
+   * GB column, report card, Progression). Default true; the Exam List toggle
+   * that changes it is a later piece.
+   */
+  show_grade_book: boolean;
 };
 
 /** Keyed by component id (plain component) or sub-field id (broken-down component). null = not entered. */
@@ -144,21 +150,28 @@ export type GradeBasedStructure = {
 /** Grade codes / rating codes keyed by leaf id; null = not entered. */
 export type GradeScores = Record<string, string | null>;
 
+/** A point's Grade Book as other screens read it: the /100 total and its attainment grade (null = no score range matches). */
+export type GradeBookRef = { total: number; grade: string | null };
+
 export type GradeMarkRow = Omit<SubjectMarkRow, "component_scores"> & {
   component_scores: GradeScores;
   /**
-   * Read-only references (Stage 3 manages them), as grade codes: mtg = the
+   * Read-only reference (Stage 3 manages it), as a grade code: the
    * student's ONE target grade (Minimum Target Grade — the Target column
-   * here and on the Stage 2 Progression broadsheet, where VA = CAG − MTG),
-   * and grade_book. There is no second target; labels stay generic (no
-   * school-branded names).
+   * here and on the Progression broadsheet, where VA = CAG − MTG). There is
+   * no second target; labels stay generic (no school-branded names).
    */
   mtg: string | null;
-  grade_book: string | null;
+  /** This point's Grade Book (Grade Book entry page); null = not entered or hidden (exam.show_grade_book off). */
+  grade_book: GradeBookRef | null;
+  /** The attainment shown was auto-filled from the Grade Book (not a saved entry). */
+  attainment_auto: boolean;
 };
 
 export type GradeMarksSheet = Omit<SubjectMarksSheet, "assessment_mode" | "items"> & {
   assessment_mode: "grade_based";
+  /** The class's "auto-fill attainment from Grade Book" setting. */
+  auto_fill_attainment: boolean;
   /** Inline — the resolved structure plus the scales its leaves point at. null = none in force. */
   structure: GradeBasedStructure | null;
   grade_scales: GradeScale[];

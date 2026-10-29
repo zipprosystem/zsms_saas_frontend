@@ -10,6 +10,7 @@ import type {
   Exam,
   ExamEntryOptions,
   GradeBasedStructure,
+  GradeBookRef,
   GradeMarkRow,
   GradeScale,
   GradeScores,
@@ -70,7 +71,10 @@ import type {
  *   GET /api/v1/erp/exams?academic_year_id=&term_id=&assessment_mode=
  *     -> { items: [{ id, name, assessment_mode, kind: "ca"|"exam"|null,
  *                    report_variant: "progress"|"full"|null,
- *                    academic_year_id, term_id, entry_closes_on }] }
+ *                    academic_year_id, term_id, entry_closes_on,
+ *                    show_grade_book }] }   (addition, grade_based: show
+ *                    this point's Grade Book; default true — the Exam
+ *                    List toggle is a later piece)
  *     Each term auto-creates exactly two points per mode (names
  *     school-editable): component_based = CA + Exam (kind); grade_based
  *     (British) = A/B, e.g. 1A / 1B, no CA/Exam framing, each carrying
@@ -87,6 +91,8 @@ import type {
  *
  *   GET  .../marks  -> { assessment_mode: "grade_based", exam, subject_id,
  *          class_arm_id, assessment_structure_id, entry_open,
+ *          auto_fill_attainment,   (addition) the class's "auto-fill
+ *            attainment from Grade Book" setting (examSettingsApi.ts)
  *          structure: { id, name,
  *            attainment: { id, name, grade_scale_id },
  *            rating_domains: [{ id, key, name, rating_scale_id }] } | null,
@@ -98,8 +104,19 @@ import type {
  *            progress_grade_id (same as the traits entry); 422 for an id
  *            that isn't a British level.
  *          items: [{ …same row fields…, component_scores: { <leaf id>: code|null },
- *                    mtg, grade_book }] }   (read-only references; mtg is
- *                    the single target grade — no second/desired target)
+ *                    mtg,             read-only: the single target grade
+ *                    grade_book: { total, grade } | null,
+ *                      (changed) THIS point's Grade Book — total /100 from
+ *                      the Grade Book entry page and its grade on the
+ *                      class's attainment scale (null grade = no score
+ *                      range matches). null = not entered, or the point's
+ *                      show_grade_book is off. Replaces the old seeded
+ *                      grade_book grade reference.
+ *                    attainment_auto }] }  (addition) true = the
+ *                      attainment in component_scores was auto-filled from
+ *                      the Grade Book (auto-fill ON, nothing entered) —
+ *                      not a saved entry. Sending null for it keeps it
+ *                      auto-filled; sending a code overrides it.
  *     component_scores carry the attainment grade + one rating per domain;
  *     subject_remark is the subject comment — a FULL report point only:
  *     on a "progress" point it is hidden entirely (GET answers "", PUT
@@ -188,7 +205,7 @@ function s(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
-function examFromWire(value: unknown): Exam {
+export function examFromWire(value: unknown): Exam {
   const r = rec(value);
   return {
     id: s(r.id),
@@ -199,6 +216,8 @@ function examFromWire(value: unknown): Exam {
     academic_year_id: s(r.academic_year_id),
     term_id: s(r.term_id),
     entry_closes_on: typeof r.entry_closes_on === "string" && r.entry_closes_on ? r.entry_closes_on : null,
+    // Default shown; only an explicit false hides the point's Grade Book.
+    show_grade_book: r.show_grade_book !== false,
   };
 }
 
@@ -266,6 +285,12 @@ function gradeStructureFromWire(value: unknown): GradeBasedStructure | null {
   };
 }
 
+function gradeBookRefFromWire(value: unknown): GradeBookRef | null {
+  const r = rec(value);
+  if (typeof r.total !== "number" || !Number.isFinite(r.total)) return null;
+  return { total: r.total, grade: typeof r.grade === "string" && r.grade ? r.grade : null };
+}
+
 function gradeRowFromWire(value: unknown): GradeMarkRow {
   const r = rec(value);
   const code = (field: unknown) => (typeof field === "string" && field ? field : null);
@@ -273,7 +298,8 @@ function gradeRowFromWire(value: unknown): GradeMarkRow {
     ...markRowFromWire(value),
     component_scores: gradeScoresFromWire(r.component_scores),
     mtg: code(r.mtg),
-    grade_book: code(r.grade_book),
+    grade_book: gradeBookRefFromWire(r.grade_book),
+    attainment_auto: r.attainment_auto === true,
   };
 }
 
@@ -291,6 +317,7 @@ function sheetFromWire(value: unknown): MarksSheet | null {
     return {
       ...common,
       assessment_mode: "grade_based",
+      auto_fill_attainment: r.auto_fill_attainment === true,
       structure: gradeStructureFromWire(r.structure),
       grade_scales: arr(r.grade_scales).map((item): GradeScale => ({ id: s(rec(item).id), name: s(rec(item).name), grades: levelsFromWire(rec(item).grades) })),
       rating_scales: arr(r.rating_scales).map((item): RatingScale => ({ id: s(rec(item).id), name: s(rec(item).name), levels: levelsFromWire(rec(item).levels) })),

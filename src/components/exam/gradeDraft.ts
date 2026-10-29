@@ -42,8 +42,21 @@ export function isGradeRowDirty(row: GradeDraftRow, baseline: GradeDraftRow, lea
   );
 }
 
-export function toGradeInput(studentId: string, row: GradeDraftRow, leafIds: string[], withComment: boolean): GradeMarkInput {
+/**
+ * autoAttainment: the row's attainment as auto-filled from the Grade Book
+ * (leaf id + code), when it was. Left on that value it's sent as null, so
+ * it stays auto-filled (a later Grade Book change still flows through);
+ * any other grade is a saved override.
+ */
+export function toGradeInput(
+  studentId: string,
+  row: GradeDraftRow,
+  leafIds: string[],
+  withComment: boolean,
+  autoAttainment: { leafId: string; code: string } | null = null,
+): GradeMarkInput {
   const scores: GradeScores = Object.fromEntries(leafIds.map((id) => [id, row.scores[id] || null]));
+  if (autoAttainment && scores[autoAttainment.leafId] === autoAttainment.code) scores[autoAttainment.leafId] = null;
   return {
     student_id: studentId,
     component_scores: scores,

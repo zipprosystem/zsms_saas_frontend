@@ -147,24 +147,18 @@ export const SEED_CLASS_GRADE_STRUCTURE: Record<string, string> = {
 };
 
 /**
- * Read-only per-student references for the Academic Report — Stage 3 owns
- * MTG management/import and the Grade Book; here they're deterministic
- * seeds on the class's grade scale. One target (mtg) per student/subject.
+ * Read-only per-student reference for the Academic Report — Stage 3 owns
+ * MTG management/import; here it's a deterministic seed on the class's
+ * grade scale. One target (mtg) per student/subject. (The old seeded
+ * grade_book grade is retired — the Grade Book is its own /100 entry now,
+ * see gradeBookMock.ts.)
  */
-export function seedReferences(
-  studentIndex: number,
-  subjectId: string,
-  scale: GradeScale,
-): { mtg: string | null; grade_book: string | null } {
+export function seedReferences(studentIndex: number, subjectId: string, scale: GradeScale): { mtg: string | null } {
   const codes = scale.grades.map((grade) => grade.code).filter((code) => code !== "U");
-  if (codes.length === 0) return { mtg: null, grade_book: null };
+  if (codes.length === 0) return { mtg: null };
   const salt = subjectId.split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
-  const at = (offset: number) => codes[Math.min(codes.length - 1, Math.max(0, offset))];
   const mtgIndex = (studentIndex * 3 + salt) % Math.max(1, codes.length - 1);
-  return {
-    mtg: at(mtgIndex),
-    grade_book: at(mtgIndex + ((studentIndex + salt) % 3) - 1),
-  };
+  return { mtg: codes[Math.min(codes.length - 1, Math.max(0, mtgIndex))] };
 }
 
 const FIRST_NAMES = [
@@ -429,7 +423,7 @@ export const SEED_EXAMS: Exam[] = SEED_YEARS.flatMap((year) =>
     const [firstCloses, secondCloses] = CLOSES_ON[term.id];
     const n = index + 1;
     const [variantA, variantB] = GRADE_VARIANTS[n];
-    const base = { academic_year_id: year.id, term_id: term.id };
+    const base = { academic_year_id: year.id, term_id: term.id, show_grade_book: true };
     return [
       { ...base, id: `${term.id}-ca`, name: `${term.name} CA`, assessment_mode: "component_based" as const, kind: "ca" as const, report_variant: null, entry_closes_on: firstCloses },
       { ...base, id: `${term.id}-exam`, name: `${term.name} Examination`, assessment_mode: "component_based" as const, kind: "exam" as const, report_variant: null, entry_closes_on: secondCloses },

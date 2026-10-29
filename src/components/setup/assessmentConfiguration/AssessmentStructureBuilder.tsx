@@ -298,6 +298,7 @@ function ComponentCard({
   onChange,
   onMove,
   onRemove,
+  gradeBook,
 }: {
   component: ComponentForm;
   index: number;
@@ -306,6 +307,8 @@ function ComponentCard({
   onChange: (patch: Partial<ComponentForm>) => void;
   onMove: (to: number) => void;
   onRemove: () => void;
+  /** A Grade Book's fields have no CA/Exam type. */
+  gradeBook: boolean;
 }) {
   const t = useTranslations("setup.assessmentTypes");
   const max = parseNumber(component.max);
@@ -356,27 +359,29 @@ function ComponentCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,2fr)_auto]">
+      <div className={`grid grid-cols-1 gap-3 ${gradeBook ? "" : "sm:grid-cols-[minmax(0,2fr)_auto]"}`}>
         <TextCell
           id={`${component.key}-name`}
           label={t("fields.component.name")}
-          placeholder={t("fields.component.namePlaceholder")}
+          placeholder={gradeBook ? t("fields.gradeBook.componentPlaceholder") : t("fields.component.namePlaceholder")}
           value={component.name}
           onChange={(name) => onChange({ name })}
           error={errors[`${component.key}.name`]}
         />
-        <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-text-secondary">{t("fields.component.category")}</span>
-          <Segmented<ComponentCategory>
-            label={t("fields.component.category")}
-            options={[
-              { value: "ca", label: t("categories.ca") },
-              { value: "exam", label: t("categories.exam") },
-            ]}
-            value={component.category}
-            onChange={(category) => onChange({ category })}
-          />
-        </div>
+        {gradeBook ? null : (
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-text-secondary">{t("fields.component.category")}</span>
+            <Segmented<ComponentCategory>
+              label={t("fields.component.category")}
+              options={[
+                { value: "ca", label: t("categories.ca") },
+                { value: "exam", label: t("categories.exam") },
+              ]}
+              value={component.category}
+              onChange={(category) => onChange({ category })}
+            />
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -523,6 +528,17 @@ export function AssessmentStructureBuilder({ data, onChange, errors }: BuilderPr
         <p className="text-xs text-text-muted">{t(`modeHelp.${data.mode}`)}</p>
       </div>
 
+      {data.mode === "component_based" ? (
+        <Toggle
+          id="assessment-structure-grade-book"
+          label={t("fields.gradeBook.label")}
+          helper={t("fields.gradeBook.helper")}
+          checked={data.is_grade_book}
+          // A Grade Book is never the default (the toggle is hidden while it's on).
+          onChange={(is_grade_book) => onChange(is_grade_book ? { is_grade_book, is_default: false } : { is_grade_book })}
+        />
+      ) : null}
+
       {data.mode === "grade_based" ? (
         <div role="status" className="rounded-md border border-border bg-category-amber-tint px-4 py-3 text-sm text-text-primary">
           <p className="font-medium">{t("gradeBasedStub.title")}</p>
@@ -536,7 +552,9 @@ export function AssessmentStructureBuilder({ data, onChange, errors }: BuilderPr
               {t("summary.total", { actual: fmt(total), target: STRUCTURE_TOTAL })}
             </TotalPill>
           </div>
-          <p className="text-xs text-text-muted">{t("fields.components.helper", { total: STRUCTURE_TOTAL })}</p>
+          <p className="text-xs text-text-muted">
+            {data.is_grade_book ? t("fields.gradeBook.componentsHelper", { total: STRUCTURE_TOTAL }) : t("fields.components.helper", { total: STRUCTURE_TOTAL })}
+          </p>
 
           {data.components.map((component, ci) => (
             <ComponentCard
@@ -550,6 +568,7 @@ export function AssessmentStructureBuilder({ data, onChange, errors }: BuilderPr
               }
               onMove={(to) => setComponents(move(data.components, ci, to))}
               onRemove={() => setComponents(data.components.filter((item) => item.key !== component.key))}
+              gradeBook={data.is_grade_book}
             />
           ))}
 
@@ -573,13 +592,15 @@ export function AssessmentStructureBuilder({ data, onChange, errors }: BuilderPr
         checked={data.is_active}
         onChange={(is_active) => onChange({ is_active })}
       />
-      <Toggle
-        id="assessment-structure-default"
-        label={t("fields.isDefault.label")}
-        helper={t("fields.isDefault.helper")}
-        checked={data.is_default}
-        onChange={(is_default) => onChange({ is_default })}
-      />
+      {data.is_grade_book ? null : (
+        <Toggle
+          id="assessment-structure-default"
+          label={t("fields.isDefault.label")}
+          helper={t("fields.isDefault.helper")}
+          checked={data.is_default}
+          onChange={(is_default) => onChange({ is_default })}
+        />
+      )}
       <FieldErrors messages={[errors.is_default, errors.mode]} />
     </div>
   );

@@ -38,6 +38,16 @@ export function buildMarkColumns(structure: AssessmentStructure, kind: ExamKind)
     );
 }
 
+/** A Grade Book structure's columns: every component (no CA/Exam split), totalling 100. */
+export function buildGradeBookColumns(structure: AssessmentStructure): MarkColumnGroup[] {
+  if (structure.mode !== "component_based") return [];
+  return structure.components.map((component) =>
+    component.breakdown === "none"
+      ? { component, leaves: [{ id: component.id, name: component.name, max: component.max }], hasTotal: false }
+      : { component, leaves: component.subfields.map((sub) => ({ id: sub.id, name: sub.name, max: sub.max })), hasTotal: true },
+  );
+}
+
 export function allLeaves(groups: MarkColumnGroup[]): MarkLeaf[] {
   return groups.flatMap((group) => group.leaves);
 }

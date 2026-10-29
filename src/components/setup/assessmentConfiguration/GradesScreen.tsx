@@ -14,6 +14,7 @@ import { EXAM_USES_MOCK, examQueryKeys, getEntryOptions } from "@/lib/exam/examA
 import { MOCK_ADMIN } from "@/lib/exam/mock/mockActingAs";
 import { Notice, useMockActingAs } from "@/components/exam/examEntryShared";
 import { AttainmentDisplaySetting } from "@/components/setup/assessmentConfiguration/AttainmentDisplaySetting";
+import { AttainmentAutoFillSetting } from "@/components/setup/assessmentConfiguration/AttainmentAutoFillSetting";
 import { gradesServiceFor, type GradeBand, type GradeBandInput, type GradeScaleType } from "@/lib/setup/assessmentConfiguration/gradesApi";
 
 type FormState = {
@@ -319,6 +320,7 @@ function GradeBandsScreen({ scaleType }: { scaleType: GradeScaleType }) {
       {bands}
       {/* School-wide British attainment display (weight / grade label) — with the British scale it reads. */}
       {attainment ? <AttainmentDisplaySetting /> : null}
+      {attainment ? <AttainmentAutoFillSetting /> : null}
     </div>
   );
 }

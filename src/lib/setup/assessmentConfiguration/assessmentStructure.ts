@@ -4,7 +4,7 @@
  * backend so the two can never disagree; the real backend must enforce
  * the same rules (see assessmentStructuresApi.ts for the contract).
  *
- *   assessment_structure  { id, name, mode, is_default, is_active, components[] }
+ *   assessment_structure  { id, name, mode, is_default, is_active, is_grade_book, components[] }
  *     assessment_component { id, name, category, max, weight, display_order, breakdown, subfields[] }
  *       assessment_subfield { id, name, max, weight, display_order }
  *
@@ -25,6 +25,13 @@
  *
  * grade_based (British attainment + rating domains) is a selectable mode
  * only — its fields arrive in Stage 1b; no component rules apply to it yet.
+ *
+ * Grade Book (is_grade_book, British only): a component_based structure
+ * whose components are the Grade Book's fields (Test 1 /10, Test 2 /10,
+ * Homework & Classwork /10, Unified Assessment /70 …) — same rules, so they
+ * total 100. CA/Exam category doesn't apply (every component shows on the
+ * Grade Book entry page). A Grade Book is offered only on that page: never
+ * the default, never resolved for Manage Exam Result.
  */
 
 export const ASSESSMENT_MODES = ["component_based", "grade_based"] as const;
@@ -68,6 +75,8 @@ export type AssessmentStructure = {
   mode: AssessmentMode;
   is_default: boolean;
   is_active: boolean;
+  /** A British Grade Book structure (see the header) — not a Manage Exam Result one. */
+  is_grade_book: boolean;
   components: AssessmentComponent[];
 };
 
@@ -132,7 +141,10 @@ export function structureTotal(components: Array<Pick<AssessmentComponent, "max"
  * and the mock can name it in its 422 message.
  */
 export type StructureIssue =
-  | { code: "name_required" | "name_too_long" | "default_inactive" | "components_required"; path: string }
+  | {
+      code: "name_required" | "name_too_long" | "default_inactive" | "components_required" | "grade_book_default" | "grade_book_mode";
+      path: string;
+    }
   | { code: "total_mismatch"; path: string; actual: number; target: number }
   | {
       code:
@@ -181,6 +193,8 @@ export function validateStructure(input: AssessmentStructureInput): StructureIss
   if (!name) issues.push({ code: "name_required", path: "name" });
   else if (name.length > STRUCTURE_NAME_MAX) issues.push({ code: "name_too_long", path: "name" });
   if (input.is_default && !input.is_active) issues.push({ code: "default_inactive", path: "is_default" });
+  if (input.is_grade_book && input.is_default) issues.push({ code: "grade_book_default", path: "is_default" });
+  if (input.is_grade_book && input.mode !== "component_based") issues.push({ code: "grade_book_mode", path: "mode" });
 
   if (input.mode !== "component_based") return issues;
 
@@ -261,11 +275,13 @@ export function normalizeStructureInput(input: AssessmentStructureInput): Assess
     mode: input.mode,
     is_default: input.is_default,
     is_active: input.is_active,
+    is_grade_book: input.is_grade_book,
     components: componentBased
       ? input.components.map((component, ci) => ({
           ...(component.id ? { id: component.id } : {}),
           name: component.name.trim(),
-          category: component.category,
+          // A Grade Book has no CA/Exam framing; its components are stored as "ca".
+          category: input.is_grade_book ? "ca" : component.category,
           max: component.max,
           weight: component.weight,
           display_order: ci + 1,

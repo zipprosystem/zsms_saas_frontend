@@ -21,10 +21,17 @@ type AcademicReportGridProps = {
   onClearEntries: (studentId: string) => void;
   /** The Comment column — Full report points only; hidden entirely on Progress. */
   showComment: boolean;
+  /** The GB column — this point's Grade Book; off when the point's show_grade_book is off. */
+  showGradeBook: boolean;
 };
 
 const TH = "px-3 py-2.5 text-left text-xs font-semibold text-text-secondary align-bottom";
 const TD = "px-3 py-2.5 align-middle";
+
+/** A /100 total: integers as-is, otherwise up to 2 decimals. */
+function fmtTotal(value: number): string {
+  return String(Math.round(value * 100) / 100);
+}
 
 function Initials({ name }: { name: string }) {
   const initials = name
@@ -126,6 +133,7 @@ export function AcademicReportGrid({
   onRevertRow,
   onClearEntries,
   showComment,
+  showGradeBook,
 }: AcademicReportGridProps) {
   const t = useTranslations("exam.academicReport");
   const display = useAttainmentDisplay();
@@ -140,7 +148,12 @@ export function AcademicReportGrid({
             <th className={TH}>{t("columns.student", { count: rows.length })}</th>
             <th className={TH}>{t("columns.seatNo")}</th>
             <th className={TH}>{t("columns.target")}</th>
-            <th className={TH}>{t("columns.gradeBook")}</th>
+            {showGradeBook ? (
+              <th className={TH} title={t("gradeBookHelp")}>
+                {t("columns.gradeBook")}
+                <span className="block font-normal text-text-muted">/ 100</span>
+              </th>
+            ) : null}
             <th className={`${TH} text-center`}>{t("columns.present")}</th>
             <th className={TH}>{structure.attainment.name}</th>
             {structure.rating_domains.map((domain) => (
@@ -188,9 +201,18 @@ export function AcademicReportGrid({
                 <td className={TD}>
                   <CodeChip code={row.mtg} levels={gradeLevels} display={display} />
                 </td>
-                <td className={TD}>
-                  <CodeChip code={row.grade_book} levels={gradeLevels} display={display} />
-                </td>
+                {showGradeBook ? (
+                  <td className={TD}>
+                    {row.grade_book ? (
+                      <span className="flex items-center gap-2">
+                        <span className="font-semibold tabular-nums text-text-primary">{fmtTotal(row.grade_book.total)}</span>
+                        <CodeChip code={row.grade_book.grade} levels={gradeLevels} display={display} />
+                      </span>
+                    ) : (
+                      <span className="text-text-muted">—</span>
+                    )}
+                  </td>
+                ) : null}
                 <td className={`${TD} text-center`}>
                   <input
                     type="checkbox"
@@ -210,6 +232,10 @@ export function AcademicReportGrid({
                     onChange={(code) => setScore(structure.attainment.id, code)}
                     display={display}
                   />
+                  {/* Auto-filled from the Grade Book and not changed: say so (choosing another grade overrides it). */}
+                  {row.attainment_auto && (current.scores[structure.attainment.id] ?? "") === (row.component_scores[structure.attainment.id] ?? "") ? (
+                    <span className="mt-1 block text-[11px] text-text-muted">{t("autoFilled")}</span>
+                  ) : null}
                 </td>
                 {structure.rating_domains.map((domain) => (
                   <td key={domain.id} className={TD}>

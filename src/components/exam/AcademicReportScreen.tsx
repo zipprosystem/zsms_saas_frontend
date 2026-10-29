@@ -125,7 +125,11 @@ export function AcademicReportScreen() {
     const result = await saveMarks(sheet.exam.id, {
       subject_id: sheet.subject_id,
       class_arm_id: sheet.class_arm_id,
-      rows: dirtyIds.map((id) => toGradeInput(id, draft[id], leafIds, commentApplies(variant))),
+      rows: dirtyIds.map((id) => {
+        const row = sheet.items.find((item) => item.student_id === id);
+        const autoCode = structure && row?.attainment_auto ? row.component_scores[structure.attainment.id] : null;
+        return toGradeInput(id, draft[id], leafIds, commentApplies(variant), structure && autoCode ? { leafId: structure.attainment.id, code: autoCode } : null);
+      }),
     });
     setSaving(false);
     if (result.ok) {
@@ -186,6 +190,7 @@ export function AcademicReportScreen() {
         onRevertRow={revertRow}
         onClearEntries={clearEntries}
         showComment={commentApplies(variant)}
+        showGradeBook={sheet.exam.show_grade_book}
       />
     );
   }
@@ -219,6 +224,7 @@ export function AcademicReportScreen() {
           </p>
           <p className="text-xs text-text-muted">{k("info.autoTick", { fields: requiredFields })}</p>
           <p className="text-xs text-text-muted">{k("info.referencesNote")}</p>
+          {sheet.auto_fill_attainment ? <p className="text-xs text-text-muted">{k("info.autoFillOn")}</p> : null}
         </div>
       ) : null}
 

@@ -191,6 +191,7 @@
     "exams": {
       "manageExamResult": "Gérer les résultats d'examen",
       "academicReport": "Bulletin académique",
+      "gradeBook": "Carnet de notes",
       "viewResults": "Voir les résultats",
       "broadSheetProgression": "Progression (tableau britannique)",
       "broadSheetCumulative": "Tableau récapitulatif cumulé",
@@ -544,6 +545,19 @@
       "subtitle": "Les barèmes de mentions de chaque classe. Les résultats utilisent la tranche où tombe une note pour la mention, l'appréciation, le poids et le GPA. Une tranche s'applique à toutes les sections des classes concernées.",
       "addNew": "Ajouter une mention",
       "adminOnly": "Seul un administrateur peut gérer les mentions. Passez le sélecteur « connecté en tant que » (Examen › Résultats) sur Administrateur pour tester cet écran.",
+      "attainmentAutoFill": {
+        "title": "Remplir le niveau à partir du carnet de notes",
+        "description": "Par classe : activé, le total du carnet de notes d'un point (sur 100) est noté sur les plages de notes de niveau de la classe et remplit le niveau actuel du bulletin académique. Les enseignants peuvent toujours choisir une autre mention ; l'engagement et l'attitude d'apprentissage restent manuels. Désactivé, le niveau actuel est saisi à la main.",
+        "classHelp": "{scale} · {default}",
+        "defaultOn": "activé par défaut (KS3)",
+        "defaultOff": "désactivé par défaut (KS4)",
+        "loading": "Chargement des classes…",
+        "loadFailed": "Impossible de charger les classes. Actualisez pour réessayer.",
+        "empty": "Aucune classe britannique (par niveaux) pour l'instant.",
+        "savedOn": "{name} remplit désormais le niveau à partir du carnet de notes",
+        "savedOff": "{name} saisit désormais le niveau à la main",
+        "saveFailed": "Impossible d'enregistrer le réglage. Réessayez."
+      },
       "attainmentDisplay": {
         "title": "Affichage du niveau atteint (classes britanniques)",
         "description": "Comment les mentions de niveau s'affichent partout : saisie du bulletin académique, tableau de progression, consultation des résultats et bulletin imprimé. Les mentions restent saisies et enregistrées comme des mentions ; la valeur ajoutée (VA) est toujours l'écart de poids entre le niveau et l'objectif.",
@@ -799,7 +813,8 @@
       "badges": {
         "default": "Par défaut",
         "active": "Actif",
-        "inactive": "Inactif"
+        "inactive": "Inactif",
+        "gradeBook": "Carnet de notes"
       },
       "filters": {
         "allModes": "Tous les modes",
@@ -837,6 +852,12 @@
           "max": "Note maximale",
           "weight": "Pondération %"
         },
+        "gradeBook": {
+          "label": "Carnet de notes (Grade Book)",
+          "helper": "Britannique uniquement. Les champs d'un carnet de notes (ex. Test 1 /10, Test 2 /10, Devoirs et travaux /10, Évaluation commune /70) totalisent 100. Il est proposé sur la page Carnet de notes, pas dans Gérer les résultats, et ne peut pas être la structure par défaut.",
+          "componentPlaceholder": "ex. Test 1",
+          "componentsHelper": "Ajoutez chaque champ du carnet de notes. Leurs points doivent totaliser {total}."
+        },
         "isActive": {
           "label": "Actif",
           "helper": "Les structures inactives ne peuvent pas être choisies pour de nouveaux examens"
@@ -863,7 +884,8 @@
         "setDefault": "Définir par défaut",
         "alreadyDefault": "C'est déjà la structure par défaut",
         "inactiveCannotBeDefault": "Activez cette structure avant de la définir par défaut",
-        "defaultCannotBeDeleted": "Définissez une autre structure par défaut avant de supprimer celle-ci"
+        "defaultCannotBeDeleted": "Définissez une autre structure par défaut avant de supprimer celle-ci",
+        "gradeBookNotDefault": "Un carnet de notes ne peut pas être la structure par défaut"
       },
       "deleteConfirm": {
         "title": "Supprimer le type d'évaluation ?",
@@ -875,6 +897,8 @@
         "name_required": "Saisissez un nom.",
         "name_too_long": "Le nom doit comporter 100 caractères au maximum.",
         "default_inactive": "La structure par défaut doit être active.",
+        "grade_book_default": "Un carnet de notes ne peut pas être la structure par défaut",
+        "grade_book_mode": "Un carnet de notes doit être basé sur des composantes",
         "components_required": "Ajoutez au moins une composante.",
         "total_mismatch": "Les composantes totalisent {actual}. Elles doivent totaliser exactement {target}.",
         "component_name_required": "Saisissez un nom de composante.",
@@ -3284,6 +3308,7 @@
       "label": "Résultats",
       "manageExamResult": "Gérer les résultats d'examen",
       "academicReport": "Bulletin académique",
+      "gradeBook": "Carnet de notes",
       "viewResults": "Consulter les résultats"
     },
     "broadSheet": {
@@ -3608,6 +3633,29 @@
         "britishNote": "La VA est le niveau actuel moins l'objectif, en nombre de niveaux. Le niveau cumulé est la moyenne des niveaux sur les trimestres disposant d'un niveau actuel."
       }
     },
+    "gradeBook": {
+      "title": "Carnet de notes",
+      "subtitle": "Saisissez les notes du carnet de chaque élève pour une matière à un point (1A, 1B…). Le total fait 100 et la mention vient des plages de notes de niveau de la classe.",
+      "filters": { "gradeBook": "Carnet de notes" },
+      "columns": { "grade": "Mention" },
+      "info": {
+        "point": "Point d'évaluation",
+        "gradeBook": "Carnet de notes",
+        "progress": "{done} élèves sur {total} ont des notes",
+        "howGraded": "Total = la somme des champs (sur 100). Mention = la plage de notes de niveau où tombe le total (Configuration › Mentions de niveau). Il alimente la colonne GB du bulletin académique, le bulletin et le tableau de progression."
+      },
+      "notices": {
+        "noGradeBooks": "Aucun carnet de notes n'est configuré. Créez un type d'évaluation et cochez « Carnet de notes ».",
+        "goToAssessmentTypes": "Ouvrir les types d'évaluation",
+        "noBands": "Cette classe n'a pas de plages de notes de niveau : les totaux s'affichent, pas les mentions.",
+        "goToAttainmentGrades": "Les définir dans Mentions de niveau"
+      },
+      "crossLink": {
+        "toManageExamResult": "Cette classe est notée par scores, pas par niveaux. Le carnet de notes concerne les classes britanniques ; saisissez ses résultats dans Gérer les résultats d'examen.",
+        "openManageExamResult": "Ouvrir Gérer les résultats d'examen"
+      },
+      "toast": { "saved": "Carnet de notes enregistré pour {count, plural, one {# élève} other {# élèves}}" }
+    },
     "academicReport": {
       "title": "Bulletin académique",
       "subtitle": "Saisissez le niveau actuel, les appréciations et le commentaire de chaque élève pour une matière. La valeur ajoutée et les moyennes sont calculées plus tard.",
@@ -3620,7 +3668,8 @@
         "point": "Point d'évaluation",
         "reportVariant": "Type de bulletin",
         "autoTick": "« Présent » se coche dès que le niveau actuel est saisi. « Marquer comme terminé » se coche dès que les champs suivants sont saisis : {fields}. Vous pouvez toujours les modifier à la main (par exemple en cas d'absence).",
-        "referencesNote": "L'objectif (MTG) et le carnet de niveaux sont donnés à titre de référence et ne sont pas modifiables ici."
+        "referencesNote": "L'objectif (MTG) et le carnet de notes sont donnés à titre de référence et ne sont pas modifiables ici. Le carnet de notes est la note sur 100 de ce point, saisie sur la page Carnet de notes.",
+        "autoFillOn": "Cette classe remplit automatiquement le niveau actuel à partir du carnet de notes (indiqué « Du carnet de notes »). Choisissez une autre note pour le remplacer ; l'engagement et l'attitude d'apprentissage restent manuels."
       },
       "notices": {
         "noStructure": "Aucune structure de bulletin par niveaux ne s'applique à cette classe : il n'y a rien à saisir pour l'instant."
@@ -3630,7 +3679,7 @@
         "student": "Élèves ({count})",
         "seatNo": "N° de place",
         "target": "Objectif (MTG)",
-        "gradeBook": "Carnet de niveaux",
+        "gradeBook": "Carnet de notes",
         "present": "Présent ?",
         "comment": "Commentaire",
         "completed": "Marquer comme terminé",
@@ -3639,6 +3688,8 @@
       "notEntered": "—",
       "unknownCode": "{code} (hors échelle)",
       "commentPlaceholder": "Ajouter un commentaire",
+      "gradeBookHelp": "Le total sur 100 du carnet de notes de ce point et sa note de niveau, depuis la page Carnet de notes.",
+      "autoFilled": "Du carnet de notes",
       "unsavedRow": "Modifications non enregistrées",
       "aria": {
         "present": "{name} présent",

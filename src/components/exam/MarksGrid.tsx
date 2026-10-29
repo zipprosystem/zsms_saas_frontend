@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { MoreVerticalIcon } from "@/components/icons/students/MoreVerticalIcon";
 import { ActionsMenu } from "@/components/ui/ActionsMenu";
@@ -25,6 +26,12 @@ type MarksGridProps = {
   onChangeRow: (studentId: string, patch: Partial<DraftRow>) => void;
   onRevertRow: (studentId: string) => void;
   onClearScores: (studentId: string) => void;
+  /** Column switches for screens that reuse the grid (the Grade Book has no Present / Remarks / Completed). Default all on. */
+  showPresent?: boolean;
+  showRemarks?: boolean;
+  showCompleted?: boolean;
+  /** An extra read-only column after Total, derived from the row's live total (the Grade Book's Grade). */
+  totalExtra?: { header: ReactNode; render: (total: number | null) => ReactNode };
 };
 
 /** Derived numbers: integers as-is, otherwise up to 2 decimals. */
@@ -55,7 +62,21 @@ function Initials({ name }: { name: string }) {
  * an input per sub-field plus its read-only computed total. Every total
  * shown is a live display sum — nothing here is stored.
  */
-export function MarksGrid({ groups, leaves, rows, draft, baseline, readOnly, onChangeRow, onRevertRow, onClearScores }: MarksGridProps) {
+export function MarksGrid({
+  groups,
+  leaves,
+  rows,
+  draft,
+  baseline,
+  readOnly,
+  onChangeRow,
+  onRevertRow,
+  onClearScores,
+  showPresent = true,
+  showRemarks = true,
+  showCompleted = true,
+  totalExtra,
+}: MarksGridProps) {
   const t = useTranslations("exam.marks");
   const hasSecondHeaderRow = groups.some((group) => group.hasTotal);
   const outOf = shownTotal(groups, {}).outOf;
@@ -68,7 +89,7 @@ export function MarksGrid({ groups, leaves, rows, draft, baseline, readOnly, onC
             <th rowSpan={hasSecondHeaderRow ? 2 : 1} className={TH}>{t("columns.sn")}</th>
             <th rowSpan={hasSecondHeaderRow ? 2 : 1} className={TH}>{t("columns.student", { count: rows.length })}</th>
             <th rowSpan={hasSecondHeaderRow ? 2 : 1} className={TH}>{t("columns.seatNo")}</th>
-            <th rowSpan={hasSecondHeaderRow ? 2 : 1} className={`${TH} text-center`}>{t("columns.present")}</th>
+            {showPresent ? <th rowSpan={hasSecondHeaderRow ? 2 : 1} className={`${TH} text-center`}>{t("columns.present")}</th> : null}
             {groups.map((group) =>
               group.hasTotal ? (
                 <th key={group.component.id} colSpan={group.leaves.length + 1} scope="colgroup" className={`${TH} border-b border-border text-center`}>
@@ -86,8 +107,13 @@ export function MarksGrid({ groups, leaves, rows, draft, baseline, readOnly, onC
               {t("columns.total")}
               <span className="block font-normal text-text-muted">/ {fmt(outOf)}</span>
             </th>
-            <th rowSpan={hasSecondHeaderRow ? 2 : 1} className={TH}>{t("columns.remarks")}</th>
-            <th rowSpan={hasSecondHeaderRow ? 2 : 1} className={`${TH} text-center`}>{t("columns.completed")}</th>
+            {totalExtra ? (
+              <th rowSpan={hasSecondHeaderRow ? 2 : 1} className={`${TH} text-center`}>
+                {totalExtra.header}
+              </th>
+            ) : null}
+            {showRemarks ? <th rowSpan={hasSecondHeaderRow ? 2 : 1} className={TH}>{t("columns.remarks")}</th> : null}
+            {showCompleted ? <th rowSpan={hasSecondHeaderRow ? 2 : 1} className={`${TH} text-center`}>{t("columns.completed")}</th> : null}
             <th rowSpan={hasSecondHeaderRow ? 2 : 1} className={TH}>
               <span className="sr-only">{t("columns.actions")}</span>
             </th>
@@ -140,16 +166,18 @@ export function MarksGrid({ groups, leaves, rows, draft, baseline, readOnly, onC
                   </span>
                 </td>
                 <td className={`${TD} text-text-secondary`}>{row.seat_no || "—"}</td>
-                <td className={`${TD} text-center`}>
-                  <input
-                    type="checkbox"
-                    checked={current.present === true}
-                    disabled={readOnly}
-                    onChange={(event) => onChangeRow(row.student_id, { present: event.target.checked })}
-                    aria-label={t("aria.present", { name: row.student_name })}
-                    className="h-4 w-4 accent-success disabled:cursor-not-allowed"
-                  />
-                </td>
+                {showPresent ? (
+                  <td className={`${TD} text-center`}>
+                    <input
+                      type="checkbox"
+                      checked={current.present === true}
+                      disabled={readOnly}
+                      onChange={(event) => onChangeRow(row.student_id, { present: event.target.checked })}
+                      aria-label={t("aria.present", { name: row.student_name })}
+                      className="h-4 w-4 accent-success disabled:cursor-not-allowed"
+                    />
+                  </td>
+                ) : null}
                 {groups.map((group) => {
                   const cells = group.leaves.map((leaf) => {
                     const text = current.scores[leaf.id] ?? "";
@@ -189,28 +217,35 @@ export function MarksGrid({ groups, leaves, rows, draft, baseline, readOnly, onC
                 <td className={`${TD} text-center font-semibold text-text-primary`}>
                   {total.value === null || Number.isNaN(total.value) ? "—" : fmt(total.value)}
                 </td>
-                <td className={TD}>
-                  <input
-                    type="text"
-                    value={current.subject_remark}
-                    maxLength={SUBJECT_REMARK_MAX}
-                    disabled={readOnly}
-                    placeholder={t("remarkPlaceholder")}
-                    onChange={(event) => onChangeRow(row.student_id, { subject_remark: event.target.value })}
-                    aria-label={t("aria.remark", { name: row.student_name })}
-                    className="h-10 w-48 rounded-md border border-border bg-surface px-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-60"
-                  />
-                </td>
-                <td className={`${TD} text-center`}>
-                  <input
-                    type="checkbox"
-                    checked={current.mark_completed}
-                    disabled={readOnly}
-                    onChange={(event) => onChangeRow(row.student_id, { mark_completed: event.target.checked })}
-                    aria-label={t("aria.completed", { name: row.student_name })}
-                    className="h-4 w-4 accent-accent disabled:cursor-not-allowed"
-                  />
-                </td>
+                {totalExtra ? (
+                  <td className={`${TD} text-center`}>{totalExtra.render(total.value === null || Number.isNaN(total.value) ? null : total.value)}</td>
+                ) : null}
+                {showRemarks ? (
+                  <td className={TD}>
+                    <input
+                      type="text"
+                      value={current.subject_remark}
+                      maxLength={SUBJECT_REMARK_MAX}
+                      disabled={readOnly}
+                      placeholder={t("remarkPlaceholder")}
+                      onChange={(event) => onChangeRow(row.student_id, { subject_remark: event.target.value })}
+                      aria-label={t("aria.remark", { name: row.student_name })}
+                      className="h-10 w-48 rounded-md border border-border bg-surface px-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </td>
+                ) : null}
+                {showCompleted ? (
+                  <td className={`${TD} text-center`}>
+                    <input
+                      type="checkbox"
+                      checked={current.mark_completed}
+                      disabled={readOnly}
+                      onChange={(event) => onChangeRow(row.student_id, { mark_completed: event.target.checked })}
+                      aria-label={t("aria.completed", { name: row.student_name })}
+                      className="h-4 w-4 accent-accent disabled:cursor-not-allowed"
+                    />
+                  </td>
+                ) : null}
                 <td className={TD}>
                   <ActionsMenu
                     menuLabel={t("aria.rowActions", { name: row.student_name })}

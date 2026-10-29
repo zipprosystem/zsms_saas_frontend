@@ -321,13 +321,18 @@
       var hist=s.history||[];
       function at(i){var p=hist[i];return p?zAtt(p.attainment):"—";}
       function rating(d){return function(i){var p=hist[i];return lv(p&&p.ratings?p.ratings[d]:null);};}
-      // Grade Book (GB) scores: not in the payload until the Grade Book entry is built -> —.
+      // Grade Book (GB): each point's /100 from the Grade Book page (null = not entered / hidden -> —).
+      function gb(i){var p=hist[i];return zNum(p?p.grade_book:null);}
       return "<tr"+zRow(s)+'><td class="subj">'+zEsc(s.name)+'</td><td class="tgt g">'+zAtt(s.mtg)+"</td>"+
-        six(at,"g")+'<td class="gb">—</td><td class="gb">—</td><td class="gb">—</td><td class="gb">—</td><td class="gb">—</td><td class="gb">—</td>'+
+        six(at,"g")+six(gb,"gb")+
         six(rating(0))+six(rating(1))+'<td class="tcr">'+zTxt(s.teacher_name)+"</td></tr>";
     }).join("");
     var avg=card.querySelector("tfoot tr.avg");
-    avg.innerHTML='<td class="subj">Average</td><td class="tgt"></td><td colspan="6"></td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td colspan="6"></td><td colspan="6"></td><td></td>';
+    // GB average per point: mean of the shown subjects' Grade Books at that point.
+    var shownSubs=Z.subjects.filter(function(s){return !s.redacted;});
+    function gbAvg(i){var v=shownSubs.map(function(s){var p=(s.history||[])[i];return p?p.grade_book:null;}).filter(function(x){return typeof x==="number";});return v.length?zNum(v.reduce(function(a,b){return a+b;},0)/v.length,0):"—";}
+    var gbCells="";for(var gi=0;gi<6;gi++)gbCells+="<td"+(gi===cur?' class="cur"':"")+">"+(gi<points.length?gbAvg(gi):"—")+"</td>";
+    avg.innerHTML='<td class="subj">Average</td><td class="tgt"></td><td colspan="6"></td>'+gbCells+'<td colspan="6"></td><td colspan="6"></td><td></td>';
 
     // Subject comments are a Full-report field: on a Progress report the comment line is left out entirely.
     var full=Z.meta.variant==="full";

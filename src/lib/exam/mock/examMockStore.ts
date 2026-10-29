@@ -8,7 +8,6 @@ import {
   SEED_CLASS_TEACHERS,
   SEED_CLASS_STRUCTURE,
   SEED_CLASSES,
-  SEED_EXAMS,
   SEED_GRADE_SCALES,
   SEED_GRADE_STRUCTURES,
   SEED_SECTIONAL_HEADS,
@@ -21,6 +20,9 @@ import {
 import { getMockActingAs, MOCK_ADMIN } from "@/lib/exam/mock/mockActingAs";
 import { resolveGradeScale } from "@/lib/exam/mock/gradesMock";
 import { seededProgressGradeId } from "@/lib/exam/mock/progressGradesMock";
+import { autoFillAttainment } from "@/lib/exam/mock/examSettingsMock";
+import { pointGradeBook } from "@/lib/exam/mock/gradeBookMock";
+import type { MarkLeaf } from "@/lib/exam/markColumns";
 
 /**
  * MOCK Exam data layer shared by the marks endpoints (Stage 1b/1c) and the
@@ -52,6 +54,9 @@ export type StoredGradeMark = Pick<
   GradeMarkRow,
   "component_scores" | "present" | "mark_completed" | "subject_remark" | "entered_by_staff_id" | "updated_at"
 >;
+
+/** An Academic Report entry as read: attainment_auto = its attainment came from the Grade Book (auto-fill), not a saved entry. */
+export type ReadGradeMark = StoredGradeMark & { attainment_auto?: boolean };
 
 export function markKey(examId: string, subjectId: string, armId: string, studentId: string): string {
   return `${examId}|${subjectId}|${armId}|${studentId}`;
@@ -150,7 +155,8 @@ export function classOfArm(armId: string): string | null {
 export async function resolveStructure(armId: string): Promise<AssessmentStructure | null> {
   const result = await assessmentStructuresService.list();
   if (!result.ok) return null;
-  const active = result.data.filter((structure) => structure.is_active);
+  // A Grade Book structure is never in force for Manage Exam Result (it's the Grade Book page's).
+  const active = result.data.filter((structure) => structure.is_active && !structure.is_grade_book);
   const classId = classOfArm(armId);
   const mappedId = classId ? SEED_CLASS_STRUCTURE[classId] : undefined;
   return active.find((structure) => structure.id === mappedId) ?? active.find((structure) => structure.is_default) ?? null;
@@ -238,7 +244,10 @@ function generatedGradeMark(exam: Exam, subjectId: string, armId: string, studen
   const codes = (scale?.grades ?? []).map((grade) => grade.code).filter((code) => code !== "U");
   if (codes.length === 0) return null;
   const level = performance(studentId, subjectId, exam.id, "att");
-  const attainment = codes[Math.min(codes.length - 1, Math.max(0, Math.round((1 - level) * (codes.length - 1))))];
+  // An auto-fill class's attainment comes from its Grade Book (filled on read), so the seed leaves it blank.
+  const attainment = autoFillAttainment(classOfArm(armId))
+    ? null
+    : codes[Math.min(codes.length - 1, Math.max(0, Math.round((1 - level) * (codes.length - 1))))];
   const rating = (salt: string) => {
     const value = performance(studentId, subjectId, exam.id, salt);
     // A British Progress Grades level, by id (seeded levels: 1 = best … 4).
@@ -260,17 +269,16 @@ function generatedGradeMark(exam: Exam, subjectId: string, armId: string, studen
 }
 
 /**
- * MOCK Grade Book (British): a separate /100 score per subject per term.
- * The real one comes from its own entry page (configurable breakdown
- * summing to 100) — not built yet, so it's seeded here, read-only, and
- * only where the term's first grade point has seeded marks.
+ * GENERATED Grade Book scores for a British point (the seeded Grade Book
+ * structure's leaves), wherever the point has seeded Academic Report marks
+ * — so Progression, reports and auto-fill have data. Saved entries from
+ * the Grade Book page override them (gradeBookMock.ts).
  */
-export function seededGradeBook(armId: string, subjectId: string, termId: string, studentId: string): number | null {
-  const first = SEED_EXAMS.find((exam) => exam.term_id === termId && exam.assessment_mode === "grade_based");
-  if (!first) return null;
+export function generatedGradeBookScores(exam: Exam, subjectId: string, armId: string, studentId: string, leaves: MarkLeaf[]): Record<string, number> | null {
+  if (exam.assessment_mode !== "grade_based" || leaves.length === 0) return null;
   const index = studentIndexOf(armId, studentId);
-  if (index < 0 || !seedPolicy(first, armId, subjectId, index).entered) return null;
-  return Math.round(performance(studentId, subjectId, `${termId}-gb`, "gb") * 100);
+  if (index < 0 || !seedPolicy(exam, armId, subjectId, index).entered) return null;
+  return Object.fromEntries(leaves.map((leaf) => [leaf.id, Math.round(performance(studentId, subjectId, exam.id, `gb-${leaf.id}`) * leaf.max)]));
 }
 
 /**
@@ -321,10 +329,23 @@ function withRatingIds(mark: StoredGradeMark, structure: GradeBasedStructure | n
   return { ...mark, component_scores: scores };
 }
 
-/** A student's Academic Report entry for one point: saved entry first, else the generated seed. */
-export function readGradeMark(exam: Exam, subjectId: string, armId: string, studentId: string, structure: GradeBasedStructure | null): StoredGradeMark | null {
+/**
+ * A student's Academic Report entry for one point: saved entry first, else
+ * the generated seed. Auto-fill (spec §7.22): when the class has "auto-fill
+ * attainment from Grade Book" on and no attainment was entered, the
+ * point's Grade Book grade fills it — computed here on READ, so every
+ * consumer (sheet, results engine / VA, Progression, report card) sees it
+ * and a later Grade Book change flows through. A saved attainment always
+ * wins (the teacher's override).
+ */
+export function readGradeMark(exam: Exam, subjectId: string, armId: string, studentId: string, structure: GradeBasedStructure | null): ReadGradeMark | null {
   const saved = loadGradeMarks()[markKey(exam.id, subjectId, armId, studentId)];
-  return saved ? withRatingIds(saved, structure) : generatedGradeMark(exam, subjectId, armId, studentId, structure);
+  const mark = saved ? withRatingIds(saved, structure) : generatedGradeMark(exam, subjectId, armId, studentId, structure);
+  if (!structure || mark?.component_scores[structure.attainment.id] || !autoFillAttainment(classOfArm(armId))) return mark;
+  const grade = pointGradeBook(exam, subjectId, armId, studentId)?.grade;
+  if (!grade) return mark;
+  const base: StoredGradeMark = mark ?? { component_scores: {}, present: null, mark_completed: false, subject_remark: "", entered_by_staff_id: null, updated_at: null };
+  return { ...base, component_scores: { ...base.component_scores, [structure.attainment.id]: grade }, attainment_auto: true };
 }
 
 /**

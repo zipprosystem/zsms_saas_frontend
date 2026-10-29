@@ -48,6 +48,12 @@ import { getResultArms, getResults, getStudentResult, getStudentTraits, progress
 import { handleGrades, resolveGradeScale } from "@/lib/exam/mock/gradesMock";
 import { handleProgressGrades, progressGrades } from "@/lib/exam/mock/progressGradesMock";
 import { handleTraitMasters } from "@/lib/exam/mock/traitMastersMock";
+import { autoFillAttainment } from "@/lib/exam/mock/examSettingsMock";
+import { classGradeBookBands, gradeBookKey, loadGradeBooks, pointGradeBook, readGradeBookEntry, saveGradeBooks } from "@/lib/exam/mock/gradeBookMock";
+import { gradeBookColumns, gradeBookResult } from "@/lib/exam/gradeBook/gradeBookMath";
+import { assessmentStructuresService } from "@/lib/setup/assessmentConfiguration/assessmentStructuresApi";
+import type { GradeBookRef } from "@/lib/exam/examTypes";
+import type { AssessmentStructure } from "@/lib/setup/assessmentConfiguration/assessmentStructure";
 import { handleExamSettings } from "@/lib/exam/mock/examSettingsMock";
 import { getStudentReport, postGenerateClassPdf } from "@/lib/exam/mock/reportPayloadMock";
 import { getBroadsheet, getCumulativeBroadsheet, getProgressionBroadsheet } from "@/lib/exam/mock/broadsheetMock";
@@ -90,8 +96,17 @@ import { getBroadsheet, getCumulativeBroadsheet, getProgressionBroadsheet } from
  *   - A class with a grade_based structure in force (SEED_CLASS_GRADE_STRUCTURE)
  *     answers GET with assessment_mode "grade_based": the resolved
  *     structure inline + the grade / rating scales its leaves use + per
- *     student mtg / grade_book references (seeded; Stage 3 manages
- *     them). Exam kind doesn't filter grade leaves — every leaf applies.
+ *     student mtg (seeded; Stage 3 manages it) and THIS point's Grade Book
+ *     { total, grade } (gradeBookMock.pointGradeBook; null when the point's
+ *     show_grade_book is off). Attainment auto-fills from the Grade Book on
+ *     read for an auto-fill class (examMockStore.readGradeMark) —
+ *     attainment_auto marks it. Exam kind doesn't filter grade leaves.
+ *
+ * GRADE BOOK (British, gradeBookApi.ts): GET / PUT erp/exams/:id/grade-book
+ *   — same context checks as marks (scope, offered subject, point mode,
+ *   cutoff on PUT); grade_book_id must be an active Grade Book structure
+ *   (422 NOT_A_GRADE_BOOK). Totals stored at save; grades looked up on read
+ *   from the class's attainment ranges.
  *   - PUT: component_scores keys must be that structure's leaves; each
  *     value null or a code on the leaf's scale -> else 422. Comment =
  *     subject_remark. Stored apart from score marks (own localStorage key).
@@ -169,15 +184,15 @@ function buildGradeSheet({ exam, subjectId, armId }: SheetContext): GradeMarksSh
   const rosterIndex = new Map(seedRoster(armId).map((student, index) => [student.id, index]));
   const items: GradeMarkRow[] = enrolledIn(armId, subjectId, exam.term_id).map((student) => {
     const stored = readGradeMark(exam, subjectId, armId, student.id, structure);
-    const refs = gradeScale
-      ? seedReferences(rosterIndex.get(student.id) ?? 0, subjectId, gradeScale)
-      : { mtg: null, grade_book: null };
+    const refs = gradeScale ? seedReferences(rosterIndex.get(student.id) ?? 0, subjectId, gradeScale) : { mtg: null };
     return {
       student_id: student.id,
       student_name: student.name,
       admission_no: student.admission_no,
       seat_no: student.seat_no,
       component_scores: stored?.component_scores ?? {},
+      attainment_auto: stored?.attainment_auto === true,
+      grade_book: exam.show_grade_book ? (pointGradeBookRef(exam, subjectId, armId, student.id)) : null,
       present: stored?.present ?? null,
       mark_completed: stored?.mark_completed ?? false,
       // No Comment on a Progress point (Full only).
@@ -189,6 +204,7 @@ function buildGradeSheet({ exam, subjectId, armId }: SheetContext): GradeMarksSh
   });
   return {
     assessment_mode: "grade_based",
+    auto_fill_attainment: autoFillAttainment(classOfArm(armId)),
     exam,
     subject_id: subjectId,
     class_arm_id: armId,
@@ -413,6 +429,103 @@ async function putMarks(examId: string, payload: unknown): Promise<WireResponse>
   return ok(await buildSheet(context));
 }
 
+// ---------------------------------------------------------------------------
+// Grade Book (British) — gradeBookApi.ts
+// ---------------------------------------------------------------------------
+
+function pointGradeBookRef(exam: Exam, subjectId: string, armId: string, studentId: string): GradeBookRef | null {
+  const gb = pointGradeBook(exam, subjectId, armId, studentId);
+  return gb ? { total: gb.total, grade: gb.grade } : null;
+}
+
+/** The context checks of the marks sheet, plus: a British point and an active Grade Book structure. */
+async function gradeBookContext(examId: string, subjectId: string, armId: string, gradeBookId: string): Promise<{ context: SheetContext; gradeBook: AssessmentStructure } | WireResponse> {
+  const context = sheetContext(examId, subjectId, armId);
+  if ("status" in context) return context;
+  if (context.exam.assessment_mode !== "grade_based") return fail(422, "WRONG_ASSESSMENT_MODE", "The Grade Book is for British (grade-based) classes and points.");
+  const structures = await assessmentStructuresService.list();
+  const gradeBook = structures.ok ? structures.data.find((item) => item.id === gradeBookId && item.is_grade_book && item.is_active) : undefined;
+  if (!gradeBook) return fail(422, "NOT_A_GRADE_BOOK", "grade_book_id: not an active Grade Book structure");
+  return { context, gradeBook };
+}
+
+function buildGradeBookSheet({ exam, subjectId, armId }: SheetContext, gradeBook: AssessmentStructure) {
+  const groups = gradeBookColumns(gradeBook);
+  const bands = classGradeBookBands(classOfArm(armId));
+  const items = enrolledIn(armId, subjectId, exam.term_id).map((student) => {
+    const entry = readGradeBookEntry(exam, subjectId, armId, student.id, gradeBook.id);
+    const scores = entry?.component_scores ?? {};
+    // Totals are stored at save; the grade is looked up now (ranges may have changed).
+    const result = gradeBookResult(groups, scores, bands);
+    return {
+      student_id: student.id,
+      student_name: student.name,
+      admission_no: student.admission_no,
+      seat_no: student.seat_no,
+      component_scores: scores,
+      total: result.total,
+      grade: result.grade,
+      grade_weight: result.weight,
+      entered_by_staff_id: entry?.entered_by_staff_id ?? null,
+      updated_at: entry?.updated_at ?? null,
+    };
+  });
+  return { exam, subject_id: subjectId, class_arm_id: armId, grade_book: gradeBook, bands, entry_open: entryOpen(exam), items };
+}
+
+async function getGradeBook(examId: string, query: URLSearchParams): Promise<WireResponse> {
+  const resolved = await gradeBookContext(examId, query.get("subject_id") ?? "", query.get("class_arm_id") ?? "", query.get("grade_book_id") ?? "");
+  if ("status" in resolved) return resolved;
+  return ok(buildGradeBookSheet(resolved.context, resolved.gradeBook));
+}
+
+async function putGradeBook(examId: string, payload: unknown): Promise<WireResponse> {
+  const body = record(payload);
+  const text = (value: unknown) => (typeof value === "string" ? value : "");
+  const resolved = await gradeBookContext(examId, text(body.subject_id), text(body.class_arm_id), text(body.grade_book_id));
+  if ("status" in resolved) return resolved;
+  const { context, gradeBook } = resolved;
+  if (!entryOpen(context.exam)) return fail(403, "ENTRY_CLOSED", `Grade Book entry for ${context.exam.name} closed on ${context.exam.entry_closes_on}.`);
+  const groups = gradeBookColumns(gradeBook);
+  const leaves = new Map(allLeaves(groups).map((leaf) => [leaf.id, leaf]));
+  const roster = new Set(enrolledIn(context.armId, context.subjectId, context.exam.term_id).map((student) => student.id));
+  if (!Array.isArray(body.rows)) return fail(422, "VALIDATION_ERROR", "rows must be an array");
+
+  const parsed: Array<{ studentId: string; scores: ComponentScores }> = [];
+  for (let index = 0; index < body.rows.length; index += 1) {
+    const row = record(body.rows[index]);
+    const path = `rows.${index}`;
+    const studentId = text(row.student_id);
+    if (!roster.has(studentId)) return fail(422, "VALIDATION_ERROR", `${path}.student_id: not enrolled in this subject for this class-arm`);
+    const scores: ComponentScores = {};
+    for (const [fieldId, score] of Object.entries(record(row.component_scores))) {
+      const leaf = leaves.get(fieldId);
+      if (!leaf) return fail(422, "VALIDATION_ERROR", `${path}.component_scores.${fieldId}: not a field of this Grade Book`);
+      const numeric = score === null ? null : typeof score === "number" ? score : Number.NaN;
+      if (!isScoreValid(numeric, leaf.max)) {
+        return fail(422, "VALIDATION_ERROR", `${path}.component_scores.${fieldId}: ${String(score)} must be between 0 and ${leaf.max} (${leaf.name})`);
+      }
+      scores[fieldId] = numeric;
+    }
+    parsed.push({ studentId, scores });
+  }
+
+  const actor = getMockActingAs();
+  const now = new Date().toISOString();
+  const next = { ...loadGradeBooks() };
+  for (const { studentId, scores } of parsed) {
+    next[gradeBookKey(context.exam.id, context.subjectId, context.armId, studentId, gradeBook.id)] = {
+      grade_book_id: gradeBook.id,
+      component_scores: scores,
+      total: gradeBookResult(groups, scores, []).total,
+      entered_by_staff_id: actor === MOCK_ADMIN ? null : actor,
+      updated_at: now,
+    };
+  }
+  saveGradeBooks(next);
+  return ok(buildGradeBookSheet(context, gradeBook));
+}
+
 async function handle(method: HttpMethod, path: string, query: URLSearchParams, payload: unknown): Promise<WireResponse> {
   if (path === "erp/exams" && method === "GET") return listExams(query);
   if (path === "erp/exams/entry-options" && method === "GET") return entryOptions(query);
@@ -441,6 +554,13 @@ async function handle(method: HttpMethod, path: string, query: URLSearchParams, 
   if (settings) return settings;
   const studentMatch = path.match(/^erp\/results\/([^/]+)$/);
   if (studentMatch && method === "GET") return getStudentResult(decodeURIComponent(studentMatch[1]), query);
+  const gradeBookMatch = path.match(/^erp\/exams\/([^/]+)\/grade-book$/);
+  if (gradeBookMatch) {
+    const examId = decodeURIComponent(gradeBookMatch[1]);
+    if (method === "GET") return getGradeBook(examId, query);
+    if (method === "PUT") return putGradeBook(examId, payload);
+    return fail(405, "METHOD_NOT_ALLOWED", "Method not allowed");
+  }
   const match = path.match(/^erp\/exams\/([^/]+)\/marks$/);
   if (match) {
     const examId = decodeURIComponent(match[1]);
