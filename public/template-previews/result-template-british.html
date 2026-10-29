@@ -1,10 +1,12 @@
 <title>British Progress Template</title>
 <meta name="zsms-report-pages" content="4">
+<meta name="zsms-report-pages-progress" content="2">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
   /* Layout, in print order: (1) cover — portrait; (2) subject comments — portrait, flows over ~2 pages;
      (3) results grid + comment + principal — landscape; (4) grade descriptors — landscape.
+     The cover and subject comments are Full-report pages: a Progress report is the results page + descriptors (pages 1–2).
      Toggle = Interim (3A) vs Full (3B). Columns run only to the report's term (Term 1 → 1A,1B …). */
   :root{
     --page-bg:#eef1f5; --paper:#ffffff; --ink:#18212e; --muted:#5a6675;
@@ -40,6 +42,7 @@
 
   .card{width:100%;max-width:1180px;background:var(--paper);border:1px solid var(--line-strong);box-shadow:0 1px 0 rgba(0,0,0,.04),0 18px 40px -24px rgba(0,0,0,.45)}
   .card.portrait{max-width:820px}
+  .card[hidden]{display:none!important}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
   /* (1) cover: centred school / term / dates / logo / student / arm; mission statement in the footer */
@@ -90,7 +93,8 @@
   tr.avg td{background:var(--tint-2);font-weight:700;color:var(--muted)}
   /* Value Added (CAG − MTG): colour + arrow + sign, never colour alone */
   th.vah{background:var(--tint)}
-  td.va{font-weight:800;font-family:var(--disp);white-space:nowrap}
+  /* position:relative keeps the cell's screen-reader text (.sr, absolute) inside the grid's scroll box — otherwise it widens the page on phones */
+  td.va{font-weight:800;font-family:var(--disp);white-space:nowrap;position:relative}
   td.va-up{color:var(--l1)} td.va-down{color:var(--l4)}
   /* current reporting-point column highlight */
   .zsms-redacted td{opacity:.38}
@@ -165,7 +169,7 @@
     <p class="note"><b>Template preview — sample data.</b> British 9–1 landscape report: attainment + grade-boundary scores across all reporting points, Engagement &amp; Learning Behaviour (1–4), boarding. Fictional school; placeholders fill per tenant.</p>
   </div>
 
-  <section class="card portrait cover-page" data-zsms-page="1" aria-label="Cover">
+  <section class="card portrait cover-page fullonly" data-zsms-page="1" aria-label="Cover">
     <div class="c-main">
       <p class="c-school" id="c-school">Westbridge International College</p>
       <p class="c-term" id="c-term">Term 3A</p>
@@ -177,7 +181,7 @@
     <p class="c-mission" id="c-mission">Westbridge provides an outstanding education that inspires leadership and focuses on each child's ability to excel in a global world.</p>
   </section>
 
-  <section class="card portrait" data-zsms-page="2">
+  <section class="card portrait fullonly" data-zsms-page="2">
     <div class="sechead">Subject Reports</div>
     <div class="narr"></div>
   </section>
@@ -226,7 +230,7 @@
     </div>
   </article>
 
-  <section class="card" data-zsms-page="4">
+  <section class="card" id="descr-page" data-zsms-page="4">
     <div class="descr">
       <table>
         <thead><tr><th class="lvl">Level</th><th>Engagement</th><th>Learning Behaviour</th><th>Boarding: Community Contribution</th></tr></thead>
@@ -340,6 +344,16 @@
       ?"<thead><tr>"+cols.map(function(c){return "<th>"+zEsc(c)+"</th>";}).join("")+"</tr></thead><tbody><tr>"+cols.map(function(_,i){return "<td>"+v(i)+"</td>";}).join("")+"</tr></tbody>"
       :"<tbody>"+cols.map(function(c,i){return "<tr><td>"+zEsc(c)+"</td><td>"+v(i)+"</td></tr>";}).join("")+"</tbody>";
   }
+  /* The cover + subject comments are Full-report pages. Live Progress: removed, and the results / descriptors pages renumber to 1–2
+     (the template's zsms-report-pages-progress); the sample preview just hides them. */
+  function setVariantPages(full,live){
+    var extra=document.querySelectorAll(".fullonly");
+    if(live&&!full){
+      extra.forEach(function(e){e.remove();});
+      document.getElementById("card").setAttribute("data-zsms-page","1");
+      document.getElementById("descr-page").setAttribute("data-zsms-page","2");
+    }else extra.forEach(function(e){e.hidden=!full;});
+  }
   function setCover(o){
     document.getElementById("c-school").textContent=o.school||"";
     document.getElementById("c-term").textContent=zL("coverTerm","Term")+" "+(o.point||"");
@@ -359,7 +373,8 @@
     var cur=typeof Z.meta.current_point_index==="number"?Z.meta.current_point_index:points.length-1, curLabel=cols[cur]||"";
     var t=Z.meta.term, dates=t.start_date?zDate(t.start_date)+" – "+zDate(t.end_date):"";
 
-    setCover({school:Z.school.name,point:curLabel,dates:dates,logo:Z.school.logo_url,noLogo:true,name:st.full_name,arm:st.arm,mission:Z.school.mission_statement});
+    setVariantPages(isFull,true);
+    if(isFull)setCover({school:Z.school.name,point:curLabel,dates:dates,logo:Z.school.logo_url,noLogo:true,name:st.full_name,arm:st.arm,mission:Z.school.mission_statement});
 
     card.querySelector(".crest").innerHTML=zImg(Z.school.logo_url,"CREST");
     card.querySelector(".school h1").textContent=Z.school.name;
@@ -395,7 +410,7 @@
     });
 
     // Subject comments: Target / GB / Attainment / Engagement / Behaviour at the report point; the comment itself is a Full-report field.
-    renderNarr(shownSubs.map(function(s){
+    if(isFull)renderNarr(shownSubs.map(function(s){
       var eng=(s.components||[])[0], beh=(s.components||[])[1], hist=s.history||[], gb=null;
       for(var i=Math.min(cur,hist.length-1);i>=0&&gb==null;i--)if(hist[i]&&typeof hist[i].grade_book==="number")gb=hist[i].grade_book;
       return {name:s.name,teacher:s.teacher_name,comment:s.comment,badges:[
@@ -434,6 +449,7 @@
       renderNarr(SUBJECTS.filter(function(s){return SAMPLE_COMMENTS[s[0]];}).map(function(s){
         return {name:s[0],teacher:s[6],comment:SAMPLE_COMMENTS[s[0]],badges:[["Target",s[1]],["GB",s[3][cur]],["Attainment",s[2][cur]],["Engagement",s[4][cur]],["Behaviour",s[5][cur]]]};
       }),full);
+      setVariantPages(full,false);
       setCover({school:"Westbridge International College",point:COLS[cur],dates:"19/04/2026 – 09/07/2026",name:"Daniel Afolabi",arm:"10A",
         mission:"Westbridge provides an outstanding education that inspires leadership and focuses on each child's ability to excel in a global world."});
       setFootComment(full,"Mr Joshua Ojo",full?"Daniel has had a productive term: organised, courteous and a steady presence in form time. He should now carry the same focus into independent revision so that his strongest subjects stay at grade 9.":SAMPLE_BOARDING);
