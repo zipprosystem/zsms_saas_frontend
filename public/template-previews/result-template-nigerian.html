@@ -40,6 +40,7 @@
   .crest{width:64px;height:64px;border-radius:50%;border:2px solid rgba(255,255,255,.75);display:grid;place-items:center;font:700 11px/1 var(--sans);letter-spacing:.08em;opacity:.95}
   .school h1{font-family:var(--serif);font-weight:700;font-size:clamp(20px,3.6vw,30px);margin:0;letter-spacing:.01em;text-wrap:balance}
   .school p{margin:3px 0 0;font-size:12px;opacity:.9}
+  .school .motto{margin:3px 0 0;font-size:12.5px;font-style:italic;opacity:.95}
   .school .rtitle{margin-top:7px;font-weight:600;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;opacity:.95}
   .passport{width:70px;height:84px;border:2px solid rgba(255,255,255,.75);border-radius:3px;display:grid;place-items:center;background:rgba(255,255,255,.08)}
   .passport svg{width:46px;height:46px;opacity:.85}
@@ -139,6 +140,7 @@
       <div class="crest">CREST</div>
       <div class="school">
         <h1>Greenfield Academy</h1>
+        <div class="motto">Knowledge and Character</div>
         <p>12 Unity Road, Ikeja, Lagos State, Nigeria &middot; www.greenfield.example &middot; info@greenfield.example</p>
         <div class="rtitle">Terminal Report Sheet &mdash; Junior Secondary</div>
       </div>
@@ -262,6 +264,7 @@
       <div class="crest">CREST</div>
       <div class="school">
         <h1>Greenfield Academy</h1>
+        <div class="motto">Knowledge and Character</div>
         <p>12 Unity Road, Ikeja, Lagos State, Nigeria &middot; www.greenfield.example &middot; info@greenfield.example</p>
         <div class="rtitle">Continuous Assessment (Mid-Term) &mdash; Junior Secondary</div>
       </div>
@@ -370,7 +373,10 @@
   function zComp(s,kind,i){var c=(s.components||[]).filter(function(x){return x.kind===kind;})[i];return c?c.score:null;}
   function zImg(url,fallback){return url?'<img src="'+zEsc(url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':fallback;}
   function zRow(s){return s.redacted?' class="zsms-redacted"':"";}
-  function zAddress(){return [Z.school.address,Z.school.motto].filter(Boolean).map(zEsc).join(" &middot; ");}
+  /* Header motto slot: School Type motto, else Settings motto (resolved in the payload). None → the slot hides. */
+  function zMotto(el){var m=Z.school.motto;el.textContent=m||"";el.style.display=m?"":"none";}
+  /* Header contact block (spec §7.27): address, then phone · email · website from Settings. A missing field drops out; nothing set hides the block. */
+  function zContact(el){var s=Z.school,c=[s.phone,s.email,s.website].filter(Boolean).map(zEsc).join(" &middot; ");var h=[s.address?zEsc(s.address):"",c].filter(Boolean).join("<br>");el.innerHTML=h;el.style.display=h?"":"none";}
 
   if (Z) (function(){
     document.querySelector(".toolbar").style.display="none";
@@ -383,7 +389,8 @@
 
     card.querySelector(".crest").innerHTML=zImg(Z.school.logo_url,"CREST");
     card.querySelector(".school h1").textContent=Z.school.name;
-    card.querySelector(".school p").innerHTML=zAddress();
+    zMotto(card.querySelector(".school .motto"));
+    zContact(card.querySelector(".school p"));
     card.querySelector(".school .rtitle").textContent=(isFull?"Terminal Report Sheet":"Continuous Assessment (Mid-Term)")+" — "+st["class"];
     card.querySelector(".passport").innerHTML=zImg(st.photo_url,card.querySelector(".passport").innerHTML);
 

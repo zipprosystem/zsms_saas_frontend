@@ -39,6 +39,7 @@
   .head{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;padding:22px 24px 18px}
   .logo{width:54px;height:54px;border-radius:14px;background:var(--tint);border:1px solid var(--line-strong);display:grid;place-items:center;color:var(--accent);font:700 11px/1 var(--sans);letter-spacing:.06em}
   .head h1{font-family:var(--disp);font-weight:600;font-size:clamp(21px,3.6vw,30px);margin:0;letter-spacing:-.01em;text-wrap:balance}
+  .head .motto{color:var(--accent);font-size:12.5px;font-style:italic;margin:2px 0 0}
   .head .sub{color:var(--muted);font-size:12px;margin:2px 0 0}
   .head .badge-term{display:inline-block;margin-top:7px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);background:var(--tint);border:1px solid var(--line-strong);padding:3px 10px;border-radius:999px}
   .photo{width:58px;height:70px;border-radius:9px;border:1px solid var(--line-strong);background:var(--tint-2);display:grid;place-items:center}
@@ -113,6 +114,7 @@
       <div class="logo">LOGO</div>
       <div>
         <h1>Brightlands School</h1>
+        <p class="motto">Bright minds, bright futures</p>
         <p class="sub">15 Harmony Avenue, Abuja, Nigeria &middot; hello@brightlands.example</p>
         <span class="badge-term">First Term Report &middot; 2025/2026</span>
       </div>
@@ -192,6 +194,7 @@
       <div class="logo">LOGO</div>
       <div>
         <h1>Brightlands School</h1>
+        <p class="motto">Bright minds, bright futures</p>
         <p class="sub">15 Harmony Avenue, Abuja, Nigeria &middot; hello@brightlands.example</p>
         <span class="badge-term">Mid-Term Assessment &middot; 2025/2026</span>
       </div>
@@ -269,7 +272,10 @@
   function zComp(s,kind,i){var c=(s.components||[]).filter(function(x){return x.kind===kind;})[i];return c?c.score:null;}
   function zImg(url,fallback){return url?'<img src="'+zEsc(url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':fallback;}
   function zRow(s){return s.redacted?' class="zsms-redacted"':"";}
-  function zAddress(){return [Z.school.address,Z.school.motto].filter(Boolean).map(zEsc).join(" &middot; ");}
+  /* Header motto slot: School Type motto, else Settings motto (resolved in the payload). None → the slot hides. */
+  function zMotto(el){var m=Z.school.motto;el.textContent=m||"";el.style.display=m?"":"none";}
+  /* Header contact block (spec §7.27): address, then phone · email · website from Settings. A missing field drops out; nothing set hides the block. */
+  function zContact(el){var s=Z.school,c=[s.phone,s.email,s.website].filter(Boolean).map(zEsc).join(" &middot; ");var h=[s.address?zEsc(s.address):"",c].filter(Boolean).join("<br>");el.innerHTML=h;el.style.display=h?"":"none";}
 
   if (Z) (function(){
     document.querySelector(".toolbar").style.display="none";
@@ -284,7 +290,8 @@
 
     card.querySelector(".logo").innerHTML=zImg(Z.school.logo_url,"LOGO");
     card.querySelector(".head h1").textContent=Z.school.name;
-    card.querySelector(".head .sub").innerHTML=zAddress();
+    zMotto(card.querySelector(".head .motto"));
+    zContact(card.querySelector(".head .sub"));
     card.querySelector(".badge-term").innerHTML=(isFull?zEsc(Z.meta.term.name)+" Report":"Mid-Term Assessment")+" &middot; "+zEsc(Z.meta.academic_year.name);
     card.querySelector(".photo").innerHTML=zImg(st.photo_url,card.querySelector(".photo").innerHTML);
 

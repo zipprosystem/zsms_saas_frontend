@@ -248,7 +248,10 @@
   function zComp(s,kind,i){var c=(s.components||[]).filter(function(x){return x.kind===kind;})[i];return c?c.score:null;}
   function zImg(url,fallback){return url?'<img src="'+zEsc(url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':fallback;}
   function zRow(s){return s.redacted?' class="zsms-redacted"':"";}
-  function zAddress(){return [Z.school.address,Z.school.motto].filter(Boolean).map(zEsc).join(" &middot; ");}
+  /* Header motto slot: School Type motto, else Settings motto (resolved in the payload). None → the slot hides. */
+  function zMotto(el){var m=Z.school.motto;el.textContent=m||"";el.style.display=m?"":"none";}
+  /* Header contact block (spec §7.27): address, then phone · email · website from Settings. A missing field drops out; nothing set hides the block. */
+  function zContact(el){var s=Z.school,c=[s.phone,s.email,s.website].filter(Boolean).map(zEsc).join(" &middot; ");var h=[s.address?zEsc(s.address):"",c].filter(Boolean).join("<br>");el.innerHTML=h;el.style.display=h?"":"none";}
 
   function zRender(){
     var isFull=Z.meta.variant==="full", st=Z.student, ag=Z.aggregate, at=Z.attendance, n=Math.min(3,Z.meta.term.number||1);
@@ -259,8 +262,8 @@
     document.querySelector(".head .logo").innerHTML=Z.school.logo_url?zImg(Z.school.logo_url,""):
       '<div class="l1">'+zEsc(String(Z.school.name).toUpperCase())+'</div><div class="l2">'+zEsc(motto)+"</div>";
     document.querySelector(".sch h1").textContent=Z.school.name;
-    document.querySelector(".sch .mt").textContent=motto?"Motto: "+motto:"";
-    document.querySelector(".sch .ad").innerHTML=zTxt(Z.school.address);
+    zMotto(document.querySelector(".sch .mt"));
+    zContact(document.querySelector(".sch .ad"));
     document.querySelector(".head .photo").innerHTML=zImg(st.photo_url,"PHOTO");
 
     var t=Z.meta.term, termText=zEsc(t.name)+(t.start_date?" ("+zDate(t.start_date)+" – "+zDate(t.end_date)+")":"");

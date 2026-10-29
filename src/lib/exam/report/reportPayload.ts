@@ -51,10 +51,24 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *                 points, MTG, CAG) as its weight or its label — look the
  *                 weight up in grade_key[].weight. Same setting the
  *                 Progression broadsheet and Academic Report read.
- *       school:  { name, logo_url, address, motto, mission_statement },
- *                  name / logo_url: the class's School Type report
- *                  identity when it has one (its report logo; its report
- *                  school name), else the school profile.
+ *       school:  { name, logo_url, address, phone, email, website,
+ *                  motto, mission_statement },
+ *                  Per-mode header (spec §7.27): General templates print
+ *                  name / logo / motto / address / phone / email /
+ *                  website in their header, each line hidden when null;
+ *                  British prints its cover instead.
+ *                  name: the class's School Type report_display_name
+ *                  (addition — so two School Types in one school print
+ *                  different names), else Settings school_name.
+ *                  logo_url: the School Type's report logo, else the
+ *                  Settings logo (branding.school_logo_url).
+ *                  motto (= slogan; one field): the School Type's motto
+ *                  (addition), else the Settings motto (addition);
+ *                  null = neither, and the template hides the slot.
+ *                  address / phone / email / website (phone, email,
+ *                  website are additions): from Settings
+ *                  (regional.address, identity.phone / email / website);
+ *                  null = not set, and the template omits that line.
  *                  mission_statement (addition): the School Type's
  *                  mission statement for the British cover (null = none).
  *       student: { full_name, admission_no, class, arm, gender, dob,
@@ -252,7 +266,16 @@ export type ReportPayload = {
     assessment_mode: "component_based" | "grade_based";
     attainment_display: AttainmentDisplay;
   };
-  school: { name: string; logo_url: string | null; address: string | null; motto: string | null; mission_statement: string | null };
+  school: {
+    name: string;
+    logo_url: string | null;
+    address: string | null;
+    phone: string | null;
+    email: string | null;
+    website: string | null;
+    motto: string | null;
+    mission_statement: string | null;
+  };
   student: {
     full_name: string;
     admission_no: string;
