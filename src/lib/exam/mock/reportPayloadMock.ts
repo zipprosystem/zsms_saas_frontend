@@ -12,6 +12,7 @@ import type {
 import { resultTemplatesService } from "@/lib/setup/assessmentConfiguration/resultTemplatesApi";
 import {
   SEED_AFFECTIVE,
+  SEED_CLASS_TEACHERS,
   SEED_CLASS_SCHOOL_TYPE,
   SEED_PSYCHOMOTOR,
   SEED_TEACHERS,
@@ -29,6 +30,7 @@ import { levelWeight } from "@/lib/exam/results/resultsEngine";
 import { classAttainmentBands } from "@/lib/exam/mock/gradesMock";
 import { progressGradeById, progressGrades } from "@/lib/exam/mock/progressGradesMock";
 import { reportTraitList } from "@/lib/exam/mock/traitMastersMock";
+import { loadMockAssignments, mockReportLogoUrl } from "@/lib/setup/academicStructure/schoolTypeAssignments";
 import { pointGradeBook } from "@/lib/exam/mock/gradeBookMock";
 import type { ProgressGrade } from "@/lib/setup/assessmentConfiguration/progressGradesApi";
 import { armOfStudent, classAverage, compute, storedTraits, termPoints, viewerFor, type Computed, type ComputedRow } from "@/lib/exam/mock/examResultsMock";
@@ -61,7 +63,33 @@ const SEED_SCHOOL: ReportPayload["school"] = {
   logo_url: null,
   address: "1 Example Road, Lagos",
   motto: "Learning for life",
+  mission_statement: null,
 };
+
+/**
+ * MOCK-ONLY, FLAGGED: a School Type's report identity — the school name
+ * and mission statement its British cover prints. School Types don't
+ * carry these fields yet (name / award bodies / description only); the
+ * logo is real: the School Type's report logo (Setup › School Types).
+ */
+const SCHOOL_TYPE_IDENTITY: Record<string, { name: string; mission_statement: string }> = {
+  "dev-school-type-igcse": {
+    name: "ZSMS Demo International College",
+    mission_statement: "We provide an excellent education that inspires every learner to lead, to serve and to excel in a global world.",
+  },
+};
+
+/** The school block for a class: its School Type's report identity + report logo over the school profile. */
+function schoolBlock(schoolTypeId: string | null): ReportPayload["school"] {
+  if (!schoolTypeId) return SEED_SCHOOL;
+  const identity = SCHOOL_TYPE_IDENTITY[schoolTypeId];
+  return {
+    ...SEED_SCHOOL,
+    name: identity?.name ?? SEED_SCHOOL.name,
+    mission_statement: identity?.mission_statement ?? null,
+    logo_url: mockReportLogoUrl(loadMockAssignments(schoolTypeId).report_logo_file_id) ?? SEED_SCHOOL.logo_url,
+  };
+}
 
 /** Term start/end dates — the academic calendar isn't in the Exam mock yet. */
 const TERM_DATES: Record<string, [string, string]> = {
@@ -86,7 +114,7 @@ const CLASS_TEMPLATE_KEY: Record<string, string> = {
 };
 
 /** Pages each built-in template declares (the template file's own zsms-report-pages meta is the source of truth). */
-const TEMPLATE_PAGES: Record<string, 1 | 2> = { lela_blossom: 2 };
+const TEMPLATE_PAGES: Record<string, number> = { lela_blossom: 2, british_progress: 4 };
 
 function ok(data: unknown, status = 200): WireResponse {
   return { status, body: { success: true, data } };
@@ -106,7 +134,7 @@ function resumptionDate(termId: string): string | null {
   return next ? (TERM_DATES[`${next.id}-t1`]?.[0] ?? null) : null;
 }
 
-async function selectedTemplate(classId: string): Promise<{ id: string | null; pages: 1 | 2 }> {
+async function selectedTemplate(classId: string): Promise<{ id: string | null; pages: number }> {
   const result = await resultTemplatesService.list();
   const templates = result.ok ? result.data.filter((template) => template.status !== "archived") : [];
   const key = CLASS_TEMPLATE_KEY[classId];
@@ -202,13 +230,21 @@ function generalSubject(computed: Computed, result: SubjectResult, point: (kind:
   };
 }
 
-/** The year's points this British report covers (oldest first): earlier terms' points, then this term's (Progress: its first only). */
-function britishReportPoints(computed: Computed, termId: string): Exam[] {
-  const current = termPoints(termId, "grade_based");
+/**
+ * A British report's columns (oldest first): every point of each term up
+ * to this one — Term 1 → 1A,1B; Term 3 → 1A…3B. Points after the report
+ * point (the term's B on a Progress report) stay listed but blank.
+ */
+function britishReportPoints(termId: string): Exam[] {
   return seedTerms(yearOfTerm(termId))
     .filter((term) => termNumber(term.id) <= termNumber(termId))
-    .flatMap((term) => termPoints(term.id, "grade_based"))
-    .filter((exam) => exam.term_id !== termId || computed.stage === "full" || exam.id === current[0]?.id);
+    .flatMap((term) => termPoints(term.id, "grade_based"));
+}
+
+/** Mean of the shown subjects' VA (engine values), 2 dp; null when none has one. */
+function vaAverage(subjects: ReportSubject[]): number | null {
+  const values = subjects.filter((subject) => !subject.redacted && typeof subject.va === "number").map((subject) => subject.va as number);
+  return values.length ? Math.round((values.reduce((sum, value) => sum + value, 0) / values.length) * 100) / 100 : null;
 }
 
 /**
@@ -229,7 +265,7 @@ function ratingKey(levels: ProgressGrade[]): ReportPayload["traits"]["rating_key
     .map((level) => ({ rating: level.value, descriptor: level.name, descriptors: { ...level.descriptors } }));
 }
 
-function britishSubject(computed: Computed, result: SubjectResult, reportPoint: Exam | undefined, history: Exam[], armId: string, studentId: string) {
+function britishSubject(computed: Computed, result: SubjectResult, reportPoint: Exam | undefined, history: Exam[], currentIndex: number, armId: string, studentId: string) {
   const structure = computed.gradeStructure;
   const mark = structure && reportPoint ? readGradeMark(reportPoint, result.subject_id, armId, studentId, structure) : null;
   const scores = mark?.component_scores ?? {};
@@ -258,9 +294,9 @@ function britishSubject(computed: Computed, result: SubjectResult, reportPoint: 
     // The subject Comment is a Full-report field only (null on a Progress report).
     comment: computed.stage === "full" && reportPoint?.report_variant === "full" ? mark?.subject_remark?.trim() || null : null,
     redacted: false,
-    // What was entered at each of the year's points so far (a point before the student joined stays blank).
-    history: history.map((exam) => {
-      const enrolled = enrolledForTerm(studentId, exam.term_id);
+    // What was entered at each column's point (before the student joined, or after the report point -> blank).
+    history: history.map((exam, index) => {
+      const enrolled = index <= currentIndex && enrolledForTerm(studentId, exam.term_id);
       const entry = structure && enrolled ? readGradeMark(exam, result.subject_id, armId, studentId, structure) : null;
       const at = entry?.component_scores ?? {};
       return {
@@ -272,6 +308,13 @@ function britishSubject(computed: Computed, result: SubjectResult, reportPoint: 
       };
     }),
   };
+}
+
+/** The arm's form tutor (its class teacher) with their term remark; null when the arm has no class teacher and no remark. */
+function formTutor(armId: string, comment: string | null): ReportPayload["remarks"]["form_tutor"] {
+  const staffId = SEED_CLASS_TEACHERS[armId];
+  const name = staffId ? (SEED_TEACHERS.find((teacher) => teacher.id === staffId)?.name ?? null) : null;
+  return name || comment ? { name, comment } : null;
 }
 
 /** Earlier terms of the year, each with the engine's full-term run for the arm (General reports' earlier-term figures). */
@@ -295,9 +338,10 @@ function buildPayload(
   row: ComputedRow,
   armId: string,
   termId: string,
-  template: { id: string | null; pages: 1 | 2 },
+  template: { id: string | null; pages: number },
   earlier: EarlierRun[],
   traitLists: TraitLists,
+  schoolType: string | null,
 ): ReportPayload {
   const viewer = viewerFor(armId);
   const visible = viewer.visible_subject_ids ? new Set(viewer.visible_subject_ids) : null;
@@ -305,7 +349,8 @@ function buildPayload(
   const points = termPoints(termId, computed.mode);
   const pointOf = (kind: "ca" | "exam") => points.find((exam) => exam.kind === kind);
   const reportPoint = computed.stage === "progress" ? points[0] : points[points.length - 1];
-  const britishPoints = general ? [] : britishReportPoints(computed, termId);
+  const britishPoints = general ? [] : britishReportPoints(termId);
+  const currentIndex = general || !reportPoint ? -1 : britishPoints.findIndex((exam) => exam.id === reportPoint.id);
   const earlierRow = (run: EarlierRun) => run.computed.rows.find((item) => item.student.id === row.student.id);
 
   const subjects: ReportSubject[] = computed.columns.flatMap((column) => {
@@ -318,7 +363,7 @@ function buildPayload(
       return [
         {
           ...base,
-          ...britishSubject(computed, result, reportPoint, britishPoints, armId, row.student.id),
+          ...britishSubject(computed, result, reportPoint, britishPoints, currentIndex, armId, row.student.id),
           units: column.unit,
           class_highest: null,
           class_lowest: null,
@@ -377,13 +422,14 @@ function buildPayload(
       academic_year: { id: yearOfTerm(termId), name: SEED_YEARS.find((year) => year.id === yearOfTerm(termId))?.name ?? "" },
       term: { id: termId, name: computed.termName, number: termNumber(termId), start_date: startDate, end_date: endDate },
       points: reportPoints,
+      current_point_index: general || currentIndex < 0 ? null : currentIndex,
       pages: template.pages,
       generated_at: new Date().toISOString(),
       scope: viewer.report_scope,
       assessment_mode: computed.mode,
       attainment_display: loadExamSettings().attainment_display,
     },
-    school: SEED_SCHOOL,
+    school: schoolBlock(schoolType),
     student: {
       full_name: row.student.name,
       admission_no: row.student.admission_no,
@@ -420,6 +466,7 @@ function buildPayload(
                 subjects_counted: before ? before.subjects_counted : null,
               };
             }),
+      va_average: own || general ? null : vaAverage(subjects),
     },
     traits: {
       // The class's School Type lists (Setup › Psychomotor Skills / Affective Domain), in their sort order.
@@ -435,6 +482,10 @@ function buildPayload(
     remarks: {
       class_teacher: stored?.class_teacher_remark || null,
       head_teacher: stored?.head_teacher_remark || null,
+      // Form tutor = the arm's class teacher; comment = their term remark.
+      form_tutor: formTutor(armId, stored?.class_teacher_remark || null),
+      // Boarding: Report Progression's student-wise entry isn't built — nothing to send yet.
+      boarding_house: null,
     },
     grade_key: general
       ? (computed.scale?.bands ?? []).map((band) => ({ grade: band.grade, min: band.min, max: band.max, remark: band.remark, show_on_report: true, gpa: band.gpa, weight: null }))
@@ -479,7 +530,7 @@ export async function getStudentReport(studentId: string, query: URLSearchParams
     psychomotor: (await reportTraitList("psychomotor", schoolType)) ?? SEED_PSYCHOMOTOR,
     affective: (await reportTraitList("affective", schoolType)) ?? SEED_AFFECTIVE,
   };
-  return ok(buildPayload(computed, row, armId, termId, await selectedTemplate(computed.classId), earlier, traitLists));
+  return ok(buildPayload(computed, row, armId, termId, await selectedTemplate(computed.classId), earlier, traitLists, schoolType));
 }
 
 /** Class PDF stub: the batch render is a backend job (async, cached) — the mock only answers "not available here". */

@@ -129,7 +129,8 @@ export async function uploadReportLogo(file: File): Promise<CrudResult<AttachedF
   return { ok: true, data: { file_id: fileId, name: file.name, size: file.size, type: file.type } };
 }
 
-function readMockLogoUrl(fileId: string | null | undefined): string | null {
+/** MOCK: the stored data URL for a report_logo_file_id (null = none / not in this browser). Also read by the report payload mock. */
+export function mockReportLogoUrl(fileId: string | null | undefined): string | null {
   if (!fileId) return null;
   return mockLogoCache.get(fileId) ?? readJson<Record<string, string>>(MOCK_LOGOS_KEY)?.[fileId] ?? null;
 }
@@ -137,5 +138,5 @@ function readMockLogoUrl(fileId: string | null | undefined): string | null {
 /** An <img>-ready URL for a stored report_logo_file_id (signed URL live, data URL in the mock). */
 export function useReportLogoUrl(fileId: string | null | undefined): string | null {
   const liveUrl = useFileImageUrl(SCHOOL_TYPE_ASSIGNMENTS_LIVE ? fileId : null);
-  return SCHOOL_TYPE_ASSIGNMENTS_LIVE ? liveUrl : readMockLogoUrl(fileId);
+  return SCHOOL_TYPE_ASSIGNMENTS_LIVE ? liveUrl : mockReportLogoUrl(fileId);
 }

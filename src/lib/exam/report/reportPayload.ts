@@ -25,11 +25,21 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *               academic_year: { id, name },
  *               term: { id, name, number, start_date, end_date },
  *               points: [{ label, kind, max }],  kind: ca|exam (General) or
- *                                            progress|full (British, the
- *                                            year's points up to this one);
+ *                                            progress|full (British);
                                             max (addition): the point's
-                                            share of the 100, null British
- *               pages: 1|2, generated_at,
+                                            share of the 100, null British.
+                                            British: the report's columns —
+                                            every point of each term up to
+                                            this one (Term 1 → 1A,1B; Term 3
+                                            → 1A…3B), oldest first. A point
+                                            after the report point (the
+                                            term's B on a Progress report)
+                                            is listed but blank in history.
+ *               current_point_index,    (addition) British: index in
+ *                                            points of the point this
+ *                                            report is for; null General
+ *               pages, generated_at,     pages: the template's page count
+
  *               scope: "full"|"own_subjects",              (addition)
  *               assessment_mode: component_based|grade_based,    (addition)
  *               attainment_display: "weight"|"label" },          (addition)
@@ -38,7 +48,12 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *                 points, MTG, CAG) as its weight or its label — look the
  *                 weight up in grade_key[].weight. Same setting the
  *                 Progression broadsheet and Academic Report read.
- *       school:  { name, logo_url, address, motto },
+ *       school:  { name, logo_url, address, motto, mission_statement },
+ *                  name / logo_url: the class's School Type report
+ *                  identity when it has one (its report logo; its report
+ *                  school name), else the school profile.
+ *                  mission_statement (addition): the School Type's
+ *                  mission statement for the British cover (null = none).
  *       student: { full_name, admission_no, class, arm, gender, dob,
  *                  photo_url, resumption_date },
  *                  from the student record: gender "male"|"female",
@@ -94,7 +109,13 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *                    out_of,                 students ranked (position "of")
  *                    subjects_counted, marks_obtainable, class_average,
  *                    earlier_terms: [{ number, name, grand_total,
- *                                      average, subjects_counted }] },
+ *                                      average, subjects_counted }],
+ *                    va_average },           (addition) British: mean of
+ *                                            the shown subjects' va (CAG −
+ *                                            MTG in grade weights, from the
+ *                                            results engine), 2 dp; null =
+ *                                            no subject has a VA, General,
+ *                                            or own_subjects scope
  *                                            (last four: additions;
  *                                            earlier_terms = the student's
  *                                            full-term figures in each
@@ -126,7 +147,17 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *                 (first = best), never by its value as a number.
  *                 British subjects[].components (rating) and history
  *                 ratings: a level hidden in reports comes back null.
- *       remarks: { class_teacher, head_teacher },
+ *       remarks: { class_teacher, head_teacher,
+ *                  form_tutor: { name, comment } | null,       (addition)
+ *                  boarding_house: { name, comment } | null }, (addition)
+ *                  role-keyed term remarks. form_tutor = the arm's
+ *                  class teacher (British form tutor): their name and
+ *                  their term remark (same text as class_teacher).
+ *                  boarding_house = the boarding house's term comment
+ *                  (name = the house; Report Progression's student-wise
+ *                  entry, not built — null until then). The British
+ *                  results page shows form_tutor on Full, boarding_house
+ *                  on Progress.
  *       grade_key: [{ grade, min, max, remark, show_on_report,
                      gpa, weight }]           (gpa: addition, the band's GPA
                                             for a GPA-scale legend; null =
@@ -208,15 +239,17 @@ export type ReportPayload = {
     variant: ReportVariant;
     academic_year: { id: string; name: string };
     term: { id: string; name: string; number: number; start_date: string | null; end_date: string | null };
-    /** max: what the point's part of the score is out of (General CA 30 / Exam 70); null for British. */
+    /** max: what the point's part of the score is out of (General CA 30 / Exam 70); null for British. British: every point of the terms reached. */
     points: Array<{ label: string; kind: ReportPointKind; max: number | null }>;
-    pages: 1 | 2;
+    /** British: index in points of the point this report is for (later points are blank); null for General. */
+    current_point_index: number | null;
+    pages: number;
     generated_at: string;
     scope: "full" | "own_subjects";
     assessment_mode: "component_based" | "grade_based";
     attainment_display: AttainmentDisplay;
   };
-  school: { name: string; logo_url: string | null; address: string | null; motto: string | null };
+  school: { name: string; logo_url: string | null; address: string | null; motto: string | null; mission_statement: string | null };
   student: {
     full_name: string;
     admission_no: string;
@@ -241,6 +274,8 @@ export type ReportPayload = {
     marks_obtainable: number | null;
     class_average: number | null;
     earlier_terms: Array<{ number: number; name: string; grand_total: number | null; average: number | null; subjects_counted: number | null }>;
+    /** British: mean of the shown subjects' VA (CAG − MTG, grade weights); null = none / General / own-subjects scope. */
+    va_average: number | null;
   };
   traits: {
     psychomotor: ReportTrait[];
@@ -251,7 +286,14 @@ export type ReportPayload = {
     form_tutor_comment: string | null;
     rating_key: Array<{ rating: string; descriptor: string; descriptors: Partial<Record<ProgressDomain, string>> }>;
   };
-  remarks: { class_teacher: string | null; head_teacher: string | null };
+  remarks: {
+    class_teacher: string | null;
+    head_teacher: string | null;
+    /** The arm's class teacher as British form tutor: name + their term remark. */
+    form_tutor: { name: string | null; comment: string | null } | null;
+    /** The boarding house's term comment (name = the house); null = not entered. */
+    boarding_house: { name: string | null; comment: string | null } | null;
+  };
   grade_key: Array<{ grade: string; min: number | null; max: number | null; remark: string; show_on_report: boolean; gpa: number | null; weight: number | null }>;
 };
 

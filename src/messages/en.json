@@ -3459,7 +3459,18 @@
       },
       "report": {
         "title": "Report — {name}",
-        "documentTitle": "{name} — {term} report",
+        "templateLabels": {
+          "valueAdded": "Value Added",
+          "vaHeader": "CAG-MTG",
+          "vaAbove": "At or above target",
+          "vaBelow": "Below target",
+          "coverTerm": "Term",
+          "schoolLogo": "School logo",
+          "gradeBookShort": "GB",
+          "tutorComment": "Tutor Comment",
+          "boardingComment": "Boarding House Comment",
+          "boardingGrade": "Boarding Grade"
+        },
         "frameTitle": "Report card for {name}",
         "variant": {
           "label": "Report",
