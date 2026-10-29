@@ -466,10 +466,25 @@
         "staffIdCard": { "label": "Staff ID Card (optional)" },
         "idCardNone": "None",
         "templateNotAvailable": "{name} ({status})",
+        "reportSchoolName": {
+          "label": "School Name on Reports (optional)",
+          "placeholder": "e.g. Zero Primary School",
+          "helper": "Printed as the school name on this school type's report cards. Leave blank to use the school name from Settings."
+        },
+        "reportMotto": {
+          "label": "Motto (optional)",
+          "placeholder": "e.g. Learning for life",
+          "helper": "Leave blank to use the motto from Settings."
+        },
+        "reportMissionStatement": {
+          "label": "Mission Statement (optional)",
+          "placeholder": "e.g. We provide an excellent education that inspires every learner…",
+          "helper": "Printed on the British report cover. Leave blank to use the mission statement from Settings."
+        },
         "reportLogo": {
           "label": "Report Logo",
           "choose": "Upload logo",
-          "hint": "PNG, JPEG or WebP, up to 1 MB. Printed on this school type's report cards.",
+          "hint": "Optional. PNG, JPEG or WebP, up to 1 MB. Printed on this school type's report cards; without one, reports use the school logo from Settings.",
           "errors": {
             "unsupportedType": "Use a PNG, JPEG or WebP image",
             "tooLarge": "The logo must be 1 MB or smaller"
@@ -479,8 +494,7 @@
       "errors": {
         "nameRequired": "Enter a name for this school type",
         "awardBodiesRequired": "Select at least one award body",
-        "resultTemplateRequired": "Select a result template",
-        "reportLogoRequired": "Upload a report logo"
+        "resultTemplateRequired": "Select a result template"
       },
       "confirmDelete": {
         "title": "Delete school type?",
@@ -2943,6 +2957,16 @@
       "website": { "label": "School Website (optional)", "placeholder": "https://yourschool.edu.ng" },
       "uin": { "label": "Unique Institution Number (optional)", "placeholder": "e.g. UIN-000123" },
       "clientName": { "label": "Client Name (optional)", "placeholder": "e.g. Zenith Education Group" },
+      "motto": {
+        "label": "Motto (optional)",
+        "placeholder": "e.g. Learning for life",
+        "helper": "A short tagline printed under the school name on report cards. A School Type can set its own."
+      },
+      "missionStatement": {
+        "label": "Mission Statement (optional)",
+        "placeholder": "e.g. We provide an excellent education that inspires every learner…",
+        "helper": "Printed on the British report cover. A School Type can set its own."
+      },
       "showWebsite": {
         "label": "Show school website to visitors",
         "helper": "Visitors can view your public school website when this is on."

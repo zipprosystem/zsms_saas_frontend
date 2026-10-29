@@ -60,8 +60,10 @@ import { devCreate, devList, devRemove, devUpdate } from "@/lib/setup/academicSt
  * Any other/missing code falls back to the plain status-code classification
  * (403/409/422/else), same defensive pattern as Award Bodies/Academic Years.
  *
- * TEMPLATE ASSIGNMENTS (result_template_id, student_id_card_template_id,
- * staff_id_card_template_id, report_logo_file_id) — not in the backend
+ * TEMPLATE ASSIGNMENTS + REPORT IDENTITY (result_template_id,
+ * student_id_card_template_id, staff_id_card_template_id,
+ * report_logo_file_id, report_display_name, motto, mission_statement) —
+ * not in the backend
  * yet. While SCHOOL_TYPE_ASSIGNMENTS_LIVE is false they're kept in a
  * MOCK side-store and merged on read; the real POST/PUT body above is
  * unchanged. See schoolTypeAssignments.ts.
@@ -227,10 +229,13 @@ function assignmentsOf(data: SchoolTypeInput): SchoolTypeAssignments {
     student_id_card_template_id: data.student_id_card_template_id,
     staff_id_card_template_id: data.staff_id_card_template_id,
     report_logo_file_id: data.report_logo_file_id,
+    report_display_name: data.report_display_name,
+    motto: data.motto,
+    mission_statement: data.mission_statement,
   };
 }
 
-/** Live: the four fields come back on the entity itself. Mock: merged from the side-store. */
+/** Live: the seven fields come back on the entity itself. Mock: merged from the side-store. */
 function withAssignments(row: SchoolTypeBase): SchoolType {
   const assignments = SCHOOL_TYPE_ASSIGNMENTS_LIVE
     ? assignmentsFromWire(row as unknown as Record<string, unknown>)

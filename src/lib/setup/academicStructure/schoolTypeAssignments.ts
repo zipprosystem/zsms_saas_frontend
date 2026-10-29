@@ -5,13 +5,15 @@ import { useFileImageUrl } from "@/lib/files/useFileImageUrl";
 import type { CrudResult } from "@/lib/setup/crudTypes";
 
 /**
- * A School Type's template + report-logo assignments.
+ * A School Type's template + report-logo assignments, and its optional
+ * report identity overrides (school name on reports, motto, mission
+ * statement — blank falls back to Settings › School Identity).
  *
- * SWAP FLAG. The backend's School Type PUT doesn't accept these four
+ * SWAP FLAG. The backend's School Type PUT doesn't accept these seven
  * fields yet. Until it does (false), they live in a per-browser MOCK side-store
  * keyed by school_type_id, merged onto each School Type on read
  * (schoolTypesApi.ts) — the real School Type POST/PUT body is untouched.
- * Flip to true once the backend ships them: the four fields then travel
+ * Flip to true once the backend ships them: the seven fields then travel
  * in the real POST/PUT body and are read from its response, and the
  * report logo goes through the real files service.
  */
@@ -23,8 +25,16 @@ export type SchoolTypeAssignments = {
   /** Optional — blank falls back to the school-wide default pair (General Settings, later). */
   student_id_card_template_id: string | null;
   staff_id_card_template_id: string | null;
-  /** Mandatory on save. */
+  /** Optional — blank falls back to the Settings school logo. */
   report_logo_file_id: string | null;
+  /**
+   * Optional report identity overrides; blank falls back to Settings.
+   * report_display_name is the school name printed on this type's
+   * reports — a distinct field, never the School Type's own name.
+   */
+  report_display_name: string | null;
+  motto: string | null;
+  mission_statement: string | null;
 };
 
 export const EMPTY_ASSIGNMENTS: SchoolTypeAssignments = {
@@ -32,15 +42,24 @@ export const EMPTY_ASSIGNMENTS: SchoolTypeAssignments = {
   student_id_card_template_id: null,
   staff_id_card_template_id: null,
   report_logo_file_id: null,
+  report_display_name: null,
+  motto: null,
+  mission_statement: null,
 };
 
 export function assignmentsFromWire(record: Record<string, unknown>): SchoolTypeAssignments {
-  const read = (key: keyof SchoolTypeAssignments) => (typeof record[key] === "string" && record[key] ? (record[key] as string) : null);
+  const read = (key: keyof SchoolTypeAssignments) => {
+    const value = record[key];
+    return typeof value === "string" && value.trim() ? value.trim() : null;
+  };
   return {
     result_template_id: read("result_template_id"),
     student_id_card_template_id: read("student_id_card_template_id"),
     staff_id_card_template_id: read("staff_id_card_template_id"),
     report_logo_file_id: read("report_logo_file_id"),
+    report_display_name: read("report_display_name"),
+    motto: read("motto"),
+    mission_statement: read("mission_statement"),
   };
 }
 

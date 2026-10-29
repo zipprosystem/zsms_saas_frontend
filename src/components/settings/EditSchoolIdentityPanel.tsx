@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { InputField } from "@/components/ui/Input";
+import { TextareaField } from "@/components/ui/Textarea";
 import { Toggle } from "@/components/ui/Toggle";
 import { SlideOverPanel } from "@/components/ui/SlideOverPanel";
 import { updateSchoolSettings } from "@/lib/settings/settingsApi";
@@ -23,6 +24,8 @@ const CONTRACT_FIELD_TO_FORM_FIELD: Record<string, keyof IdentityFormState> = {
   uin: "uin",
   client_name: "clientName",
   show_website_to_visitors: "showWebsiteToVisitors",
+  motto: "motto",
+  mission_statement: "missionStatement",
 };
 
 type IdentityFormState = {
@@ -33,6 +36,8 @@ type IdentityFormState = {
   uin: string;
   clientName: string;
   showWebsiteToVisitors: boolean;
+  motto: string;
+  missionStatement: string;
 };
 
 // Every identity field except school_name is string|null on the wire (the
@@ -50,6 +55,8 @@ function toFormState(identity: SettingsData["identity"]): IdentityFormState {
     uin: identity.uin ?? "",
     clientName: identity.client_name ?? "",
     showWebsiteToVisitors: identity.show_website_to_visitors,
+    motto: identity.motto ?? "",
+    missionStatement: identity.mission_statement ?? "",
   };
 }
 
@@ -85,6 +92,13 @@ function buildIdentityUpdate(
 
   const clientName = form.clientName.trim();
   if (clientName !== original.clientName.trim()) update.client_name = clientName || null;
+
+  // Report identity (School Type can override; blank on both hides it on the report).
+  const motto = form.motto.trim();
+  if (motto !== original.motto.trim()) update.motto = motto || null;
+
+  const missionStatement = form.missionStatement.trim();
+  if (missionStatement !== original.missionStatement.trim()) update.mission_statement = missionStatement || null;
 
   if (form.showWebsiteToVisitors !== original.showWebsiteToVisitors) {
     update.show_website_to_visitors = form.showWebsiteToVisitors;
@@ -275,6 +289,35 @@ export function EditSchoolIdentityPanel({
           hasError={!!fieldErrors.clientName}
           error={fieldErrors.clientName}
         />
+
+        <div className="flex flex-col gap-1.5">
+          <InputField
+            id="edit-identity-motto"
+            label={t("settings.identityPanel.motto.label")}
+            placeholder={t("settings.identityPanel.motto.placeholder")}
+            value={form.motto}
+            onChange={(event) => setForm((current) => ({ ...current, motto: event.target.value }))}
+            hasError={!!fieldErrors.motto}
+            error={fieldErrors.motto}
+            maxLength={120}
+          />
+          <p className="text-xs text-text-muted">{t("settings.identityPanel.motto.helper")}</p>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <TextareaField
+            id="edit-identity-mission"
+            label={t("settings.identityPanel.missionStatement.label")}
+            placeholder={t("settings.identityPanel.missionStatement.placeholder")}
+            value={form.missionStatement}
+            onChange={(event) => setForm((current) => ({ ...current, missionStatement: event.target.value }))}
+            hasError={!!fieldErrors.missionStatement}
+            error={fieldErrors.missionStatement}
+            maxLength={500}
+            rows={4}
+          />
+          <p className="text-xs text-text-muted">{t("settings.identityPanel.missionStatement.helper")}</p>
+        </div>
 
         <Toggle
           id="edit-identity-show-website"

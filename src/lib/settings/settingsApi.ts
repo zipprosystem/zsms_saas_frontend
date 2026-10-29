@@ -2,6 +2,8 @@ import { apiFetch } from "@/lib/api/client";
 import { DEV_AUTH_BYPASS } from "@/lib/auth/authBridge";
 import { isClientErrorStatus, TransientQueryError } from "@/lib/queryClient";
 import type { SettingsData, SettingsUpdate } from "./types";
+import { splitIdentityExtras, storeIdentityExtras, withIdentityExtras } from "./schoolIdentityExtras";
+import { devGetSettings, devPatchSettings, devUploadLogo } from "./settingsDevMock";
 
 /**
  * Muntajir's SaaS Settings API contract (GET/PATCH {API_BASE}/school/settings),
@@ -56,9 +58,16 @@ function toResult<T>(response: Response, body: unknown): SettingsResult<T> {
   return { ok: false, kind: "server", status: response.status };
 }
 
+/**
+ * DEV_AUTH_BYPASS: GET / PATCH / logo answer from a throwaway localStorage
+ * mock (settingsDevMock.ts) instead of devBypassUnavailable, so School
+ * Identity can be edited locally and shows on the exam mock's reports.
+ * Identity's motto / mission_statement go through the side-store in
+ * schoolIdentityExtras.ts (swap flag) on every path.
+ */
 export async function getSchoolSettings(): Promise<SettingsResult<SettingsData>> {
   if (DEV_AUTH_BYPASS) {
-    return { ok: false, kind: "devBypassUnavailable" };
+    return { ok: true, data: withIdentityExtras(await devGetSettings(), true) };
   }
 
   let response: Response;
@@ -72,7 +81,7 @@ export async function getSchoolSettings(): Promise<SettingsResult<SettingsData>>
 
   if (response.ok) {
     const data = (body as { data?: SettingsData } | null)?.data;
-    if (data) return { ok: true, data };
+    if (data) return { ok: true, data: withIdentityExtras(data) };
     return { ok: false, kind: "server" };
   }
 
@@ -105,7 +114,7 @@ export async function uploadSchoolLogo(payload: {
   filename?: string;
 }): Promise<UploadLogoResult> {
   if (DEV_AUTH_BYPASS) {
-    return { ok: false, kind: "devBypassUnavailable" };
+    return { ok: true, data: await devUploadLogo(payload) };
   }
 
   let response: Response;
@@ -145,15 +154,26 @@ export async function uploadSchoolLogo(payload: {
 export async function updateSchoolSettings(
   partial: SettingsUpdate,
 ): Promise<SettingsResult<SettingsData>> {
+  // Mock (swap flag off): motto / mission_statement never go in the real PATCH body.
+  const { body: patch, extras } = splitIdentityExtras(partial);
+
   if (DEV_AUTH_BYPASS) {
-    return { ok: false, kind: "devBypassUnavailable" };
+    const data = await devPatchSettings(patch);
+    if (extras) storeIdentityExtras(extras, true);
+    return { ok: true, data: withIdentityExtras(data, true) };
+  }
+
+  // Only extras changed: nothing for the backend — store them and re-read.
+  if (extras && Object.keys(patch).length === 0) {
+    storeIdentityExtras(extras);
+    return getSchoolSettings();
   }
 
   let response: Response;
   try {
     response = await apiFetch("school/settings", {
       method: "PATCH",
-      body: JSON.stringify(partial),
+      body: JSON.stringify(patch),
     });
   } catch {
     return { ok: false, kind: "network" };
@@ -163,7 +183,10 @@ export async function updateSchoolSettings(
 
   if (response.ok) {
     const data = (body as { data?: SettingsData } | null)?.data;
-    if (data) return { ok: true, data };
+    if (data) {
+      if (extras) storeIdentityExtras(extras);
+      return { ok: true, data: withIdentityExtras(data) };
+    }
     return { ok: false, kind: "server" };
   }
 

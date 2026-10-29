@@ -466,10 +466,25 @@
         "staffIdCard": { "label": "Carte d'identité personnel (optionnel)" },
         "idCardNone": "Aucune",
         "templateNotAvailable": "{name} ({status})",
+        "reportSchoolName": {
+          "label": "Nom de l'école sur les bulletins (facultatif)",
+          "placeholder": "ex. École primaire Zero",
+          "helper": "Imprimé comme nom de l'école sur les bulletins de ce type d'établissement. Laissez vide pour utiliser le nom de l'école défini dans les Paramètres."
+        },
+        "reportMotto": {
+          "label": "Devise (facultatif)",
+          "placeholder": "ex. Apprendre pour la vie",
+          "helper": "Laissez vide pour utiliser la devise définie dans les Paramètres."
+        },
+        "reportMissionStatement": {
+          "label": "Déclaration de mission (facultatif)",
+          "placeholder": "ex. Nous offrons une excellente éducation qui inspire chaque élève…",
+          "helper": "Imprimée sur la couverture du bulletin britannique. Laissez vide pour utiliser la déclaration de mission définie dans les Paramètres."
+        },
         "reportLogo": {
           "label": "Logo du bulletin",
           "choose": "Téléverser le logo",
-          "hint": "PNG, JPEG ou WebP, 1 Mo maximum. Imprimé sur les bulletins de ce type d'établissement.",
+          "hint": "Facultatif. PNG, JPEG ou WebP, 1 Mo maximum. Imprimé sur les bulletins de ce type d'établissement ; sans logo, les bulletins utilisent le logo de l'école défini dans les Paramètres.",
           "errors": {
             "unsupportedType": "Utilisez une image PNG, JPEG ou WebP",
             "tooLarge": "Le logo ne doit pas dépasser 1 Mo"
@@ -479,8 +494,7 @@
       "errors": {
         "nameRequired": "Saisissez un nom pour ce type d'établissement",
         "awardBodiesRequired": "Sélectionnez au moins un organisme d'examen",
-        "resultTemplateRequired": "Sélectionnez un modèle de bulletin",
-        "reportLogoRequired": "Téléversez un logo de bulletin"
+        "resultTemplateRequired": "Sélectionnez un modèle de bulletin"
       },
       "confirmDelete": {
         "title": "Supprimer le type d'établissement ?",
@@ -2951,6 +2965,16 @@
       "website": { "label": "Site web de l'école (optionnel)", "placeholder": "https://votreecole.edu.ng" },
       "uin": { "label": "Numéro unique d'établissement (optionnel)", "placeholder": "ex. UIN-000123" },
       "clientName": { "label": "Nom du client (optionnel)", "placeholder": "ex. Groupe Éducatif Zenith" },
+      "motto": {
+        "label": "Devise (facultatif)",
+        "placeholder": "ex. Apprendre pour la vie",
+        "helper": "Courte devise imprimée sous le nom de l'école sur les bulletins. Un type d'établissement peut définir la sienne."
+      },
+      "missionStatement": {
+        "label": "Déclaration de mission (facultatif)",
+        "placeholder": "ex. Nous offrons une excellente éducation qui inspire chaque élève…",
+        "helper": "Imprimée sur la couverture du bulletin britannique. Un type d'établissement peut définir la sienne."
+      },
       "showWebsite": {
         "label": "Afficher le site de l'école aux visiteurs",
         "helper": "Les visiteurs pourront voir le site public de votre école lorsque cette option est activée."
