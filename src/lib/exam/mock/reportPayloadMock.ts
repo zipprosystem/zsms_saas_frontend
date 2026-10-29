@@ -116,7 +116,11 @@ const CLASS_TEMPLATE_KEY: Record<string, string> = {
 };
 
 /** Pages each built-in template declares (the template file's own zsms-report-pages meta is the source of truth). */
-const TEMPLATE_PAGES: Record<string, number> = { lela_blossom: 2, british_progress: 4 };
+const TEMPLATE_PAGES: Record<string, Partial<Record<ReportVariant, number>>> = {
+  lela_blossom: { progress: 2, full: 2 },
+  // The cover + subject comments are Full-report pages.
+  british_progress: { progress: 2, full: 4 },
+};
 
 function ok(data: unknown, status = 200): WireResponse {
   return { status, body: { success: true, data } };
@@ -136,12 +140,12 @@ function resumptionDate(termId: string): string | null {
   return next ? (TERM_DATES[`${next.id}-t1`]?.[0] ?? null) : null;
 }
 
-async function selectedTemplate(classId: string): Promise<{ id: string | null; pages: number }> {
+async function selectedTemplate(classId: string, variant: ReportVariant): Promise<{ id: string | null; pages: number }> {
   const result = await resultTemplatesService.list();
   const templates = result.ok ? result.data.filter((template) => template.status !== "archived") : [];
   const key = CLASS_TEMPLATE_KEY[classId];
   const chosen = templates.find((template) => template.template_key === key) ?? templates.find((template) => template.is_default) ?? null;
-  return { id: chosen?.id ?? null, pages: (chosen?.template_key && TEMPLATE_PAGES[chosen.template_key]) || 1 };
+  return { id: chosen?.id ?? null, pages: (chosen?.template_key && TEMPLATE_PAGES[chosen.template_key]?.[variant]) || 1 };
 }
 
 function teacherOf(subjectId: string, armId: string): string | null {
@@ -532,7 +536,7 @@ export async function getStudentReport(studentId: string, query: URLSearchParams
     psychomotor: (await reportTraitList("psychomotor", schoolType)) ?? SEED_PSYCHOMOTOR,
     affective: (await reportTraitList("affective", schoolType)) ?? SEED_AFFECTIVE,
   };
-  return ok(buildPayload(computed, row, armId, termId, await selectedTemplate(computed.classId), earlier, traitLists, await schoolBlock(schoolType)));
+    return ok(buildPayload(computed, row, armId, termId, await selectedTemplate(computed.classId, computed.stage), earlier, traitLists, await schoolBlock(schoolType)));
 }
 
 /** Class PDF stub: the batch render is a backend job (async, cached) — the mock only answers "not available here". */

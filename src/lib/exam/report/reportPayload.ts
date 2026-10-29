@@ -39,6 +39,9 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *                                            points of the point this
  *                                            report is for; null General
  *               pages, generated_at,     pages: the template's page count
+ *                                            for this variant (British:
+ *                                            Full 4, Progress 2 — no cover
+ *                                            or subject comments)
 
  *               scope: "full"|"own_subjects",              (addition)
  *               assessment_mode: component_based|grade_based,    (addition)
