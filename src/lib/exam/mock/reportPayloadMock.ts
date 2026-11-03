@@ -405,9 +405,9 @@ function buildPayload(
   const reportPoints: ReportPayload["meta"]["points"] = general
     ? (computed.stage === "progress" ? (["ca"] as const) : (["ca", "exam"] as const)).flatMap((kind) => {
         const exam = pointOf(kind);
-        return exam ? [{ label: exam.name, kind, max: structure ? shownTotal(buildMarkColumns(structure, kind), {}).outOf : null }] : [];
+        return exam ? [{ label: exam.name, kind, max: structure ? shownTotal(buildMarkColumns(structure, kind), {}).outOf : null, show_grade_book: true }] : [];
       })
-    : britishPoints.map((exam) => ({ label: exam.name, kind: exam.report_variant ?? "progress", max: null }));
+    : britishPoints.map((exam) => ({ label: exam.name, kind: exam.report_variant ?? "progress", max: null, show_grade_book: exam.show_grade_book }));
 
   const own = viewer.report_scope === "own_subjects";
   const aggregate = row.aggregate;
@@ -429,6 +429,7 @@ function buildPayload(
       term: { id: termId, name: computed.termName, number: termNumber(termId), start_date: startDate, end_date: endDate },
       points: reportPoints,
       current_point_index: general || currentIndex < 0 ? null : currentIndex,
+      show_va: !general && (reportPoint?.show_va ?? true),
       pages: template.pages,
       generated_at: new Date().toISOString(),
       scope: viewer.report_scope,

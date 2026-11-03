@@ -57,6 +57,9 @@ function vaText(va: number): string {
  * Attainment grades (points, MTG, CAG, T1…Tn, T AVG) read as the grade's
  * weight or its label per the school's attainment_display setting
  * (default weight); VA is always CAG weight − MTG weight.
+ * Exam List switches (display only): a term's GB column hides when none
+ * of its points shows the Grade Book (term.show_grade_book), and its VA
+ * column when its last point's show_va is off (term.show_va).
  * Empty boxes show "—". VA is coloured on a diverging scale AND shown as
  * a signed number with a spoken label. Every value comes from the backend
  * (broadsheetApi.ts).
@@ -92,6 +95,11 @@ export function ProgressionBroadsheet({ armId, termId, armLabel, actingAs }: { a
   const dash = "—";
   const ne = t("exam.results.status.ne");
   const full = data.viewer.report_scope === "full";
+  /** All Term: the terms whose GB column shows (Exam List show_grade_book). */
+  const gbTerms = data.terms.filter((term) => term.show_grade_book);
+  // Legend entries follow the columns on screen.
+  const gbInView = layout === "perTerm" ? !!shownTerm?.show_grade_book : gbTerms.length > 0;
+  const vaInView = layout === "perTerm" ? !!shownTerm?.show_va : true;
 
   // ----- Export (the layout on screen) -----
   const shown = (code: string | null): string | null => (code === null ? null : attainmentText(code, data.levels, display));
@@ -110,17 +118,19 @@ export function ProgressionBroadsheet({ armId, termId, armLabel, actingAs }: { a
     if (layout === "perTerm" && shownTerm) {
       return [
         ...shownTerm.points.map((point) => ({ header: head(point.name), value: (row: ProgressionRow) => exportText(cellOf(row), shownTerm, (v) => shown(v.points[point.id] ?? null)) })),
-        { header: head(k("columns.gb")), value: (row) => exportText(cellOf(row), shownTerm, (v) => v.gb) },
+        ...(shownTerm.show_grade_book ? [{ header: head(k("columns.gb")), value: (row: ProgressionRow) => exportText(cellOf(row), shownTerm, (v) => v.gb) }] : []),
         { header: head(k("columns.mtg")), value: (row) => (cellOf(row).status === "ne" ? ne : (shown(cellOf(row).mtg) ?? "")) },
         { header: head(k("columns.cag")), value: (row) => exportText(cellOf(row), shownTerm, (v) => shown(v.cag)) },
-        { header: head(k("columns.va")), value: (row) => exportText(cellOf(row), shownTerm, (v) => (v.va === null ? null : vaText(v.va))) },
+        ...(shownTerm.show_va
+          ? [{ header: head(k("columns.va")), value: (row: ProgressionRow) => exportText(cellOf(row), shownTerm, (v) => (v.va === null ? null : vaText(v.va))) }]
+          : []),
       ];
     }
     const gbAverage = (row: ProgressionRow) => (cellOf(row).status === "ne" ? ne : (cellOf(row).gb_average ?? ""));
     const cagAverage = (row: ProgressionRow) => (cellOf(row).status === "ne" ? ne : (shown(cellOf(row).cag_average) ?? ""));
     return [
-      ...data.terms.map((term) => ({ header: head(k("columns.gbN", { n: term.number })), value: (row: ProgressionRow) => exportText(cellOf(row), term, (v) => v.gb) })),
-      { header: head(k("columns.gbAvg")), value: gbAverage },
+      ...gbTerms.map((term) => ({ header: head(k("columns.gbN", { n: term.number })), value: (row: ProgressionRow) => exportText(cellOf(row), term, (v) => v.gb) })),
+      ...(gbTerms.length > 0 ? [{ header: head(k("columns.gbAvg")), value: gbAverage }] : []),
       ...data.terms.map((term) => ({ header: head(k("columns.tN", { n: term.number })), value: (row: ProgressionRow) => exportText(cellOf(row), term, (v) => shown(v.cag)) })),
       { header: head(k("columns.tAvg")), value: cagAverage },
     ];
@@ -146,8 +156,8 @@ export function ProgressionBroadsheet({ armId, termId, armLabel, actingAs }: { a
   };
 
   // ----- Table -----
-  const perTermSpan = (shownTerm?.points.length ?? 0) + 4;
-  const allTermSpan = (data.terms.length + 1) * 2;
+  const perTermSpan = (shownTerm?.points.length ?? 0) + 2 + (shownTerm?.show_grade_book ? 1 : 0) + (shownTerm?.show_va ? 1 : 0);
+  const allTermSpan = (gbTerms.length > 0 ? gbTerms.length + 1 : 0) + data.terms.length + 1;
   const span = layout === "perTerm" ? perTermSpan : allTermSpan;
 
   let table: ReactNode;
@@ -270,7 +280,7 @@ export function ProgressionBroadsheet({ armId, termId, armLabel, actingAs }: { a
       </div>
 
       <ul aria-label={t("exam.broadSheet.general.legend.label")} className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-text-secondary">
-        {(["wellBelow", "below", "onTarget", "above"] as const).map((band) => (
+        {(vaInView ? (["wellBelow", "below", "onTarget", "above"] as const) : []).map((band) => (
           <LegendItem
             key={band}
             marker={
@@ -282,7 +292,7 @@ export function ProgressionBroadsheet({ armId, termId, armLabel, actingAs }: { a
             {k(`vaBands.${band}`)}
           </LegendItem>
         ))}
-        <LegendItem marker={<span className="font-semibold">{k("columns.gb")}</span>}>— {k("help.gb")}</LegendItem>
+        {gbInView ? <LegendItem marker={<span className="font-semibold">{k("columns.gb")}</span>}>— {k("help.gb")}</LegendItem> : null}
         {data.levels.length > 0 ? (
           <LegendItem marker={<span className="font-semibold">{data.grade_scale_name ?? k("scale")}</span>}>
             {display === "weight" ? `${k("weights")}: ` : "— "}
@@ -310,18 +320,22 @@ export function ProgressionBroadsheet({ armId, termId, armLabel, actingAs }: { a
             {point.name}
           </th>
         ))}
-        <th scope="col" title={k("help.gb")} className={`${BS_TH} ${term.points.length === 0 ? BS_EDGE : ""} whitespace-nowrap`}>
-          {k("columns.gb")}
-        </th>
-        <th scope="col" title={k("help.mtg")} className={`${BS_TH} whitespace-nowrap`}>
+        {term.show_grade_book ? (
+          <th scope="col" title={k("help.gb")} className={`${BS_TH} ${term.points.length === 0 ? BS_EDGE : ""} whitespace-nowrap`}>
+            {k("columns.gb")}
+          </th>
+        ) : null}
+        <th scope="col" title={k("help.mtg")} className={`${BS_TH} ${term.points.length === 0 && !term.show_grade_book ? BS_EDGE : ""} whitespace-nowrap`}>
           {k("columns.mtg")}
         </th>
         <th scope="col" title={k("help.cag")} className={`${BS_TH} whitespace-nowrap`}>
           {k("columns.cag")}
         </th>
-        <th scope="col" title={k("help.va")} className={`${BS_TH} whitespace-nowrap`}>
-          {k("columns.va")}
-        </th>
+        {term.show_va ? (
+          <th scope="col" title={k("help.va")} className={`${BS_TH} whitespace-nowrap`}>
+            {k("columns.va")}
+          </th>
+        ) : null}
       </>
     );
   }
@@ -339,11 +353,13 @@ export function ProgressionBroadsheet({ armId, termId, armLabel, actingAs }: { a
     );
     return (
       <>
-        {terms.map((term, index) => termHeader(term, k("columns.gbN", { n: term.number }), index === 0))}
-        <th scope="col" title={k("help.gbAvg")} className={`${BS_TH} whitespace-nowrap`}>
-          {k("columns.gbAvg")}
-        </th>
-        {terms.map((term) => termHeader(term, k("columns.tN", { n: term.number }), false))}
+        {gbTerms.map((term, index) => termHeader(term, k("columns.gbN", { n: term.number }), index === 0))}
+        {gbTerms.length > 0 ? (
+          <th scope="col" title={k("help.gbAvg")} className={`${BS_TH} whitespace-nowrap`}>
+            {k("columns.gbAvg")}
+          </th>
+        ) : null}
+        {terms.map((term, index) => termHeader(term, k("columns.tN", { n: term.number }), gbTerms.length === 0 && index === 0))}
         <th scope="col" title={k("help.tAvg")} className={`${BS_TH} whitespace-nowrap`}>
           {k("columns.tAvg")}
         </th>
@@ -359,16 +375,20 @@ export function ProgressionBroadsheet({ armId, termId, armLabel, actingAs }: { a
             <Grade code={value.points[point.id] ?? null} levels={levels} display={display} />
           </td>
         ))}
-        <td className={`${BS_TD} ${term.points.length === 0 ? BS_EDGE : ""} text-text-primary`}>{value.gb === null ? <Empty /> : n(value.gb)}</td>
-        <td className={BS_TD}>
+        {term.show_grade_book ? (
+          <td className={`${BS_TD} ${term.points.length === 0 ? BS_EDGE : ""} text-text-primary`}>{value.gb === null ? <Empty /> : n(value.gb)}</td>
+        ) : null}
+        <td className={`${BS_TD} ${term.points.length === 0 && !term.show_grade_book ? BS_EDGE : ""}`}>
           <Grade code={mtg} levels={levels} display={display} />
         </td>
         <td className={`${BS_TD} font-semibold`}>
           <Grade code={value.cag} levels={levels} display={display} />
         </td>
-        <td className={BS_TD}>
-          <Va va={value.va} />
-        </td>
+        {term.show_va ? (
+          <td className={BS_TD}>
+            <Va va={value.va} />
+          </td>
+        ) : null}
       </>
     );
   }
@@ -388,9 +408,11 @@ export function ProgressionBroadsheet({ armId, termId, armLabel, actingAs }: { a
     };
     return (
       <>
-        {terms.map((term, index) => termValue(term, (value) => (value.gb === null ? <Empty /> : <span className="text-text-primary">{n(value.gb)}</span>), index === 0))}
-        <td className={`${BS_TD} font-semibold text-text-primary`}>{cell.gb_average === null ? <Empty /> : n(cell.gb_average)}</td>
-        {terms.map((term) => termValue(term, (value) => <Grade code={value.cag} levels={levels} display={display} />, false))}
+        {gbTerms.map((term, index) => termValue(term, (value) => (value.gb === null ? <Empty /> : <span className="text-text-primary">{n(value.gb)}</span>), index === 0))}
+        {gbTerms.length > 0 ? (
+          <td className={`${BS_TD} font-semibold text-text-primary`}>{cell.gb_average === null ? <Empty /> : n(cell.gb_average)}</td>
+        ) : null}
+        {terms.map((term, index) => termValue(term, (value) => <Grade code={value.cag} levels={levels} display={display} />, gbTerms.length === 0 && index === 0))}
         <td className={`${BS_TD} font-semibold`}>
           <Grade code={cell.cag_average} levels={levels} display={display} />
         </td>

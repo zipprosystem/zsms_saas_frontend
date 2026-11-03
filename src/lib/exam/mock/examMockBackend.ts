@@ -21,7 +21,6 @@ import {
   SEED_RATING_SCALES,
   seedReferences,
   seedRoster,
-  SEED_EXAMS,
   SEED_SUBJECTS,
   SEED_YEARS,
   seedTerms,
@@ -55,6 +54,7 @@ import { assessmentStructuresService } from "@/lib/setup/assessmentConfiguration
 import type { GradeBookRef } from "@/lib/exam/examTypes";
 import type { AssessmentStructure } from "@/lib/setup/assessmentConfiguration/assessmentStructure";
 import { handleExamSettings } from "@/lib/exam/mock/examSettingsMock";
+import { handleExamUpdate, mockExams } from "@/lib/exam/mock/examListMock";
 import { getStudentReport, postGenerateClassPdf } from "@/lib/exam/mock/reportPayloadMock";
 import { getBroadsheet, getCumulativeBroadsheet, getProgressionBroadsheet } from "@/lib/exam/mock/broadsheetMock";
 
@@ -304,7 +304,7 @@ function listExams(query: URLSearchParams): WireResponse {
   const yearId = query.get("academic_year_id");
   const termId = query.get("term_id");
   const mode = query.get("assessment_mode");
-  const items = SEED_EXAMS.filter(
+  const items = mockExams().filter(
     (exam) =>
       (!yearId || exam.academic_year_id === yearId) &&
       (!termId || exam.term_id === termId) &&
@@ -316,7 +316,7 @@ function listExams(query: URLSearchParams): WireResponse {
 type SheetContext = { exam: Exam; subjectId: string; armId: string };
 
 function sheetContext(examId: string, subjectId: string, armId: string): SheetContext | WireResponse {
-  const exam = SEED_EXAMS.find((item) => item.id === examId);
+  const exam = mockExams().find((item) => item.id === examId);
   if (!exam) return fail(404, "EXAM_NOT_FOUND", "Exam not found");
   if (!subjectId || !armId) return fail(422, "VALIDATION_ERROR", "subject_id and class_arm_id are required");
   if (!SEED_ARM_SUBJECTS[armId]?.some((offer) => offer.subject_id === subjectId)) {
@@ -529,6 +529,8 @@ async function putGradeBook(examId: string, payload: unknown): Promise<WireRespo
 async function handle(method: HttpMethod, path: string, query: URLSearchParams, payload: unknown): Promise<WireResponse> {
   if (path === "erp/exams" && method === "GET") return listExams(query);
   if (path === "erp/exams/entry-options" && method === "GET") return entryOptions(query);
+  const examUpdate = handleExamUpdate(method, path, payload);
+  if (examUpdate) return examUpdate;
   if (path === "erp/broadsheets" && method === "GET") return getBroadsheet(query);
   if (path === "erp/broadsheets/cumulative" && method === "GET") return getCumulativeBroadsheet(query);
   if (path === "erp/broadsheets/progression" && method === "GET") return getProgressionBroadsheet(query);

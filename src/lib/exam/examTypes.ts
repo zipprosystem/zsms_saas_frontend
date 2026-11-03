@@ -59,10 +59,16 @@ export type Exam = {
   entry_closes_on: string | null;
   /**
    * grade_based only: whether this point's Grade Book shows (Academic Report
-   * GB column, report card, Progression). Default true; the Exam List toggle
-   * that changes it is a later piece.
+   * GB column, report card, Progression). Default true; set on Setup ›
+   * Exam List. Display only — the Grade Book data is kept.
    */
   show_grade_book: boolean;
+  /**
+   * grade_based only: whether Value Added (CAG − MTG) shows. Default true;
+   * set on Setup › Exam List. A report reads its own point's flag; a
+   * Progression term reads its last point's. Display only.
+   */
+  show_va: boolean;
 };
 
 /** Keyed by component id (plain component) or sub-field id (broken-down component). null = not entered. */

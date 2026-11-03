@@ -423,7 +423,7 @@ export const SEED_EXAMS: Exam[] = SEED_YEARS.flatMap((year) =>
     const [firstCloses, secondCloses] = CLOSES_ON[term.id];
     const n = index + 1;
     const [variantA, variantB] = GRADE_VARIANTS[n];
-    const base = { academic_year_id: year.id, term_id: term.id, show_grade_book: true };
+    const base = { academic_year_id: year.id, term_id: term.id, show_grade_book: true, show_va: true };
     return [
       { ...base, id: `${term.id}-ca`, name: `${term.name} CA`, assessment_mode: "component_based" as const, kind: "ca" as const, report_variant: null, entry_closes_on: firstCloses },
       { ...base, id: `${term.id}-exam`, name: `${term.name} Examination`, assessment_mode: "component_based" as const, kind: "exam" as const, report_variant: null, entry_closes_on: secondCloses },

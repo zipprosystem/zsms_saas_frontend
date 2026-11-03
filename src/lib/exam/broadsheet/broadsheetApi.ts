@@ -75,7 +75,15 @@ import { RESULT_STATUSES, type ResultStatus, type ResultsViewer } from "@/lib/ex
  *     -> { …header, viewer, student_count, grade_scale_name,
  *          levels: [{ code, label, weight }],  the attainment scale, best first
  *          terms: [{ id, name, number, included,
- *                    points: [{ id, name }] }],  the term's actual points (1A, 1B…)
+ *                    points: [{ id, name }],  the term's actual points (1A, 1B…)
+ *                    show_grade_book,    (spec §2.3) false = no point of the
+ *                                        term shows its Grade Book: hide
+ *                                        the term's GB column (Per/Term GB,
+ *                                        All Term GBn)
+ *                    show_va }],         (spec §2.3) the term's LAST
+ *                                        point's show_va: false = hide the
+ *                                        term's VA column. Display only —
+ *                                        cells still carry gb / va
  *          subjects: [{ subject_id, subject_name }],
  *          items: [{ student_id, student_name, admission_no,
  *                    baselines: {             per STUDENT, not per subject
@@ -279,7 +287,17 @@ export type ProgressionRow = {
   subjects: Record<string, ProgressionSubjectCell>;
 };
 
-export type ProgressionTerm = { id: string; name: string; number: number; included: boolean; points: Array<{ id: string; name: string }> };
+export type ProgressionTerm = {
+  id: string;
+  name: string;
+  number: number;
+  included: boolean;
+  points: Array<{ id: string; name: string }>;
+  /** false = no point of the term shows its Grade Book — hide the term's GB column. */
+  show_grade_book: boolean;
+  /** The term's last point's show_va — false = hide the term's VA column. */
+  show_va: boolean;
+};
 
 export type ProgressionBroadsheet = {
   academic_year_id: string;
@@ -465,6 +483,8 @@ function progressionFromWire(value: unknown): ProgressionBroadsheet | null {
         name: s(x.name),
         number: num(x.number) ?? 0,
         included: x.included === true,
+        show_grade_book: x.show_grade_book !== false,
+        show_va: x.show_va !== false,
         points: arr(x.points)
           .map((point) => ({ id: s(rec(point).id), name: s(rec(point).name) }))
           .filter((point) => point.id),

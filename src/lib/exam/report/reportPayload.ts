@@ -24,7 +24,7 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *       meta: { template_id, variant: "progress"|"full",
  *               academic_year: { id, name },
  *               term: { id, name, number, start_date, end_date },
- *               points: [{ label, kind, max }],  kind: ca|exam (General) or
+ *               points: [{ label, kind, max, show_grade_book }],  kind: ca|exam (General) or
  *                                            progress|full (British);
                                             max (addition): the point's
                                             share of the 100, null British.
@@ -35,9 +35,21 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
                                             after the report point (the
                                             term's B on a Progress report)
                                             is listed but blank in history.
+ *                                            show_grade_book (spec §2.3):
+                                            British: the point's exam
+                                            flag — false = hide that
+                                            point's GB column + average
+                                            (and the subject card's GB
+                                            when it's the report point);
+                                            true on General.
  *               current_point_index,    (addition) British: index in
  *                                            points of the point this
  *                                            report is for; null General
+ *               show_va,                (spec §2.3) British: the REPORT
+ *                                            point's show_va — false =
+ *                                            hide the VA column and its
+ *                                            average (data still sent);
+ *                                            false on General
  *               pages, generated_at,     pages: the template's page count
  *                                            for this variant (British:
  *                                            Full 4, Progress 2 — no cover
@@ -259,9 +271,11 @@ export type ReportPayload = {
     academic_year: { id: string; name: string };
     term: { id: string; name: string; number: number; start_date: string | null; end_date: string | null };
     /** max: what the point's part of the score is out of (General CA 30 / Exam 70); null for British. British: every point of the terms reached. */
-    points: Array<{ label: string; kind: ReportPointKind; max: number | null }>;
+    points: Array<{ label: string; kind: ReportPointKind; max: number | null; show_grade_book: boolean }>;
     /** British: index in points of the point this report is for (later points are blank); null for General. */
     current_point_index: number | null;
+    /** British: the report point's show_va (false = VA column + average hidden); false on General. */
+    show_va: boolean;
     pages: number;
     generated_at: string;
     scope: "full" | "own_subjects";
