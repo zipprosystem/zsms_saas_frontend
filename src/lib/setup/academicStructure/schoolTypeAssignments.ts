@@ -7,13 +7,15 @@ import type { CrudResult } from "@/lib/setup/crudTypes";
 /**
  * A School Type's template + report-logo assignments, and its optional
  * report identity overrides (school name on reports, motto, mission
- * statement — blank falls back to Settings › School Identity).
+ * statement — blank falls back to Settings › School Identity), and the
+ * default for its classes' "auto-fill attainment from Grade Book" switch
+ * (auto_fill_attainment_default, default false — backend field pending).
  *
- * SWAP FLAG. The backend's School Type PUT doesn't accept these seven
+ * SWAP FLAG. The backend's School Type PUT doesn't accept these eight
  * fields yet. Until it does (false), they live in a per-browser MOCK side-store
  * keyed by school_type_id, merged onto each School Type on read
  * (schoolTypesApi.ts) — the real School Type POST/PUT body is untouched.
- * Flip to true once the backend ships them: the seven fields then travel
+ * Flip to true once the backend ships them: the eight fields then travel
  * in the real POST/PUT body and are read from its response, and the
  * report logo goes through the real files service.
  */
@@ -35,6 +37,12 @@ export type SchoolTypeAssignments = {
   report_display_name: string | null;
   motto: string | null;
   mission_statement: string | null;
+  /**
+   * What this type's classes get for "auto-fill attainment from Grade
+   * Book" when the class itself has no setting (NULL). A class-level
+   * on/off always wins. Default false.
+   */
+  auto_fill_attainment_default: boolean;
 };
 
 export const EMPTY_ASSIGNMENTS: SchoolTypeAssignments = {
@@ -45,10 +53,11 @@ export const EMPTY_ASSIGNMENTS: SchoolTypeAssignments = {
   report_display_name: null,
   motto: null,
   mission_statement: null,
+  auto_fill_attainment_default: false,
 };
 
 export function assignmentsFromWire(record: Record<string, unknown>): SchoolTypeAssignments {
-  const read = (key: keyof SchoolTypeAssignments) => {
+  const read = (key: Exclude<keyof SchoolTypeAssignments, "auto_fill_attainment_default">) => {
     const value = record[key];
     return typeof value === "string" && value.trim() ? value.trim() : null;
   };
@@ -60,6 +69,7 @@ export function assignmentsFromWire(record: Record<string, unknown>): SchoolType
     report_display_name: read("report_display_name"),
     motto: read("motto"),
     mission_statement: read("mission_statement"),
+    auto_fill_attainment_default: record.auto_fill_attainment_default === true,
   };
 }
 
@@ -97,6 +107,11 @@ export function loadMockAssignments(schoolTypeId: string): SchoolTypeAssignments
 export function saveMockAssignments(schoolTypeId: string, assignments: SchoolTypeAssignments): void {
   const all = readJson<Record<string, SchoolTypeAssignments>>(ASSIGNMENTS_KEY) ?? {};
   writeJson(ASSIGNMENTS_KEY, { ...all, [schoolTypeId]: assignments });
+}
+
+/** MOCK: a School Type's auto-fill default (false for no type / nothing saved). Read by the exam settings mock. */
+export function mockAutoFillAttainmentDefault(schoolTypeId: string | null): boolean {
+  return schoolTypeId ? loadMockAssignments(schoolTypeId).auto_fill_attainment_default === true : false;
 }
 
 export function deleteMockAssignments(schoolTypeId: string): void {

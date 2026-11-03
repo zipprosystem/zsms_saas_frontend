@@ -62,9 +62,8 @@ import { devCreate, devList, devRemove, devUpdate } from "@/lib/setup/academicSt
  *
  * TEMPLATE ASSIGNMENTS + REPORT IDENTITY (result_template_id,
  * student_id_card_template_id, staff_id_card_template_id,
- * report_logo_file_id, report_display_name, motto, mission_statement) —
- * not in the backend
- * yet. While SCHOOL_TYPE_ASSIGNMENTS_LIVE is false they're kept in a
+ * report_logo_file_id, report_display_name, motto, mission_statement,
+ * auto_fill_attainment_default) — not in the backend yet. While SCHOOL_TYPE_ASSIGNMENTS_LIVE is false they're kept in a
  * MOCK side-store and merged on read; the real POST/PUT body above is
  * unchanged. See schoolTypeAssignments.ts.
  *
@@ -232,10 +231,11 @@ function assignmentsOf(data: SchoolTypeInput): SchoolTypeAssignments {
     report_display_name: data.report_display_name,
     motto: data.motto,
     mission_statement: data.mission_statement,
+    auto_fill_attainment_default: data.auto_fill_attainment_default,
   };
 }
 
-/** Live: the seven fields come back on the entity itself. Mock: merged from the side-store. */
+/** Live: the eight fields come back on the entity itself. Mock: merged from the side-store. */
 function withAssignments(row: SchoolTypeBase): SchoolType {
   const assignments = SCHOOL_TYPE_ASSIGNMENTS_LIVE
     ? assignmentsFromWire(row as unknown as Record<string, unknown>)
@@ -273,6 +273,9 @@ async function remove(id: string): Promise<CrudResult<void>> {
 
 export const schoolTypesService: CrudService<SchoolType, SchoolTypeInput, SchoolTypeInput> = {
   queryKey: ["setup", "schoolTypes"],
+  // A type's auto-fill default feeds every exam read (auto-fill list, entry
+  // sheets, results, broadsheets, report cards) — refetch them all.
+  relatedQueryKeys: [["exam"]],
   list,
   create,
   update,
