@@ -481,6 +481,10 @@
           "placeholder": "e.g. We provide an excellent education that inspires every learner…",
           "helper": "Printed on the British report cover. Leave blank to use the mission statement from Settings."
         },
+        "autoFillAttainmentDefault": {
+          "label": "Auto-fill attainment from Grade Book (default for this type's classes)",
+          "helper": "Applies to every British class of this type that has no setting of its own. A class can still be switched on or off under Assessment Configuration › Attainment Grades."
+        },
         "reportLogo": {
           "label": "Report Logo",
           "choose": "Upload logo",
@@ -561,10 +565,17 @@
       "adminOnly": "Only an administrator can manage grades. Switch the “acting as” picker (Exam › Results) to Admin to test this screen.",
       "attainmentAutoFill": {
         "title": "Auto-fill attainment from Grade Book",
-        "description": "Per class: when on, a point's Grade Book total (out of 100) is graded on the class's attainment score ranges and fills Current Attainment on the Academic Report. Teachers can still choose a different grade; Engagement and Learning Behaviour stay manual. When off, Current Attainment is entered by hand.",
-        "classHelp": "{scale} · {default}",
-        "defaultOn": "on by default (KS3)",
-        "defaultOff": "off by default (KS4)",
+        "description": "Per class: when on, a point's Grade Book total (out of 100) is graded on the class's attainment score ranges and fills Current Attainment on the Academic Report. Teachers can still choose a different grade; Engagement and Learning Behaviour stay manual. When off, Current Attainment is entered by hand. A class follows its School Type's default (Setup › School Types) until you switch it here.",
+        "classHelp": "{scale} · {source}",
+        "on": "on",
+        "off": "off",
+        "followsType": "follows {type} default ({value})",
+        "setForClass": "set for this class ({type} default: {value})",
+        "noTypeDefault": "no School Type · off by default",
+        "setNoType": "set for this class (no School Type)",
+        "unnamedType": "School Type",
+        "useTypeDefault": "Use School Type default",
+        "savedDefault": "{name} now follows its School Type default",
         "loading": "Loading classes…",
         "loadFailed": "Couldn't load the classes. Refresh to try again.",
         "empty": "No British (grade-based) classes yet.",

@@ -481,6 +481,10 @@
           "placeholder": "ex. Nous offrons une excellente éducation qui inspire chaque élève…",
           "helper": "Imprimée sur la couverture du bulletin britannique. Laissez vide pour utiliser la déclaration de mission définie dans les Paramètres."
         },
+        "autoFillAttainmentDefault": {
+          "label": "Remplir le niveau à partir du carnet de notes (par défaut pour les classes de ce type)",
+          "helper": "S'applique à chaque classe britannique de ce type sans réglage propre. Une classe peut toujours être activée ou désactivée dans Configuration des évaluations › Mentions de niveau."
+        },
         "reportLogo": {
           "label": "Logo du bulletin",
           "choose": "Téléverser le logo",
@@ -561,10 +565,17 @@
       "adminOnly": "Seul un administrateur peut gérer les mentions. Passez le sélecteur « connecté en tant que » (Examen › Résultats) sur Administrateur pour tester cet écran.",
       "attainmentAutoFill": {
         "title": "Remplir le niveau à partir du carnet de notes",
-        "description": "Par classe : activé, le total du carnet de notes d'un point (sur 100) est noté sur les plages de notes de niveau de la classe et remplit le niveau actuel du bulletin académique. Les enseignants peuvent toujours choisir une autre mention ; l'engagement et l'attitude d'apprentissage restent manuels. Désactivé, le niveau actuel est saisi à la main.",
-        "classHelp": "{scale} · {default}",
-        "defaultOn": "activé par défaut (KS3)",
-        "defaultOff": "désactivé par défaut (KS4)",
+        "description": "Par classe : activé, le total du carnet de notes d'un point (sur 100) est noté sur les plages de notes de niveau de la classe et remplit le niveau actuel du bulletin académique. Les enseignants peuvent toujours choisir une autre mention ; l'engagement et l'attitude d'apprentissage restent manuels. Désactivé, le niveau actuel est saisi à la main. Une classe suit le réglage par défaut de son type d'établissement (Configuration › Types d'établissement) jusqu'à ce que vous la modifiiez ici.",
+        "classHelp": "{scale} · {source}",
+        "on": "activé",
+        "off": "désactivé",
+        "followsType": "suit le réglage par défaut de {type} ({value})",
+        "setForClass": "défini pour cette classe (défaut de {type} : {value})",
+        "noTypeDefault": "aucun type d'établissement · désactivé par défaut",
+        "setNoType": "défini pour cette classe (aucun type d'établissement)",
+        "unnamedType": "Type d'établissement",
+        "useTypeDefault": "Utiliser le réglage du type d'établissement",
+        "savedDefault": "{name} suit désormais le réglage par défaut de son type d'établissement",
         "loading": "Chargement des classes…",
         "loadFailed": "Impossible de charger les classes. Actualisez pour réessayer.",
         "empty": "Aucune classe britannique (par niveaux) pour l'instant.",

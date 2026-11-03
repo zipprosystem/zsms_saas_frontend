@@ -8,6 +8,7 @@ import { InputField } from "@/components/ui/Input";
 import { TextareaField } from "@/components/ui/Textarea";
 import { ChipGroup } from "@/components/ui/ChipGroup";
 import { SelectField } from "@/components/ui/Select";
+import { Toggle } from "@/components/ui/Toggle";
 import { CrudScreen } from "@/components/setup/CrudScreen";
 import { ReportLogoUploadField } from "@/components/setup/academicStructure/ReportLogoUploadField";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
@@ -33,6 +34,7 @@ type FormState = {
   report_display_name: string;
   motto: string;
   mission_statement: string;
+  auto_fill_attainment_default: boolean;
 };
 
 const EMPTY_FORM: FormState = {
@@ -46,6 +48,7 @@ const EMPTY_FORM: FormState = {
   report_display_name: "",
   motto: "",
   mission_statement: "",
+  auto_fill_attainment_default: false,
 };
 
 type AssignableTemplate = { id: string; name: string; status: TemplateStatus };
@@ -72,6 +75,7 @@ function toFormInput(data: FormState): SchoolTypeInput {
     report_display_name: data.report_display_name.trim() || null,
     motto: data.motto.trim() || null,
     mission_statement: data.mission_statement.trim() || null,
+    auto_fill_attainment_default: data.auto_fill_attainment_default,
   };
 }
 
@@ -174,6 +178,7 @@ export function SchoolTypesScreen() {
         report_display_name: row.report_display_name ?? "",
         motto: row.motto ?? "",
         mission_statement: row.mission_statement ?? "",
+        auto_fill_attainment_default: row.auto_fill_attainment_default,
       })}
       validate={(data) => {
         const errors: Record<string, string> = {};
@@ -317,6 +322,14 @@ export function SchoolTypesScreen() {
             value={data.report_logo_file_id}
             onChange={(report_logo_file_id) => onChange({ report_logo_file_id })}
             error={errors.report_logo_file_id}
+          />
+
+          <Toggle
+            id="school-type-auto-fill-attainment"
+            label={t("setup.schoolTypes.fields.autoFillAttainmentDefault.label")}
+            helper={t("setup.schoolTypes.fields.autoFillAttainmentDefault.helper")}
+            checked={data.auto_fill_attainment_default}
+            onChange={(auto_fill_attainment_default) => onChange({ auto_fill_attainment_default })}
           />
         </>
       )}

@@ -30,15 +30,21 @@ import type { ScaleLevel } from "@/lib/exam/examTypes";
  * classes only. Admin-only to change.
  *
  *   GET /api/v1/erp/exam-settings/attainment-auto-fill
- *     -> { items: [{ class_id, class_name, scale_name, auto_fill_attainment,
- *                    default_on }] }   every British (grade_based) class
+ *     -> { items: [{ class_id, class_name, scale_name, school_type_id,
+ *                    school_type_name, class_setting, default_on,
+ *                    auto_fill_attainment }] }   every British (grade_based) class
  *   PUT /api/v1/erp/exam-settings/attainment-auto-fill/:class_id
- *     body { auto_fill_attainment: boolean } -> the item
- *   Default (no setting saved): ON for KS3 classes, OFF for KS4 — default_on
- *   says which; the mock decides it from the class's attainment scale
- *   (KS3 scale → ON). When ON: the point's Grade Book total → the class's
- *   attainment score ranges → grade (+ weight) fills Current Attainment on
- *   the Academic Report wherever nothing was entered, on read (GET marks,
+ *     body { auto_fill_attainment: boolean | null } -> the item
+ *       true/false = an explicit class setting; null clears it so the
+ *       class follows its School Type again.
+ *   class_setting: the class's own value, null = unset.
+ *   default_on: the class's School Type auto_fill_attainment_default
+ *     (Setup › School Types; false when the class has no School Type).
+ *   auto_fill_attainment: the EFFECTIVE value = class_setting ?? default_on
+ *     — this is what drives the fill. Nothing keys off School Type or
+ *     scale names. When ON: the point's Grade Book total → the class's
+ *     attainment score ranges → grade (+ weight) fills Current Attainment on
+ *     the Academic Report wherever nothing was entered, on read (GET marks,
  *   results, Progression, report cards — so VA computes from it). The
  *   teacher can override it by choosing a grade (saved = wins); Engagement
  *   and Learning Behaviour stay manual. OFF: attainment entered manually.
@@ -64,9 +70,14 @@ export type ClassAutoFill = {
   class_id: string;
   class_name: string;
   scale_name: string;
-  auto_fill_attainment: boolean;
-  /** What the class gets with nothing saved (KS3 on, KS4 off). */
+  school_type_id: string | null;
+  school_type_name: string | null;
+  /** The class's own setting; null = unset, follows its School Type. */
+  class_setting: boolean | null;
+  /** The School Type default the class falls back to. */
   default_on: boolean;
+  /** Effective value: class_setting ?? default_on. */
+  auto_fill_attainment: boolean;
 };
 
 export const attainmentAutoFillQueryKey = ["exam", "settings", "attainmentAutoFill"] as const;
@@ -79,8 +90,11 @@ function autoFillFromWire(value: unknown): ClassAutoFill | null {
     class_id: r.class_id,
     class_name: typeof r.class_name === "string" ? r.class_name : "",
     scale_name: typeof r.scale_name === "string" ? r.scale_name : "",
-    auto_fill_attainment: r.auto_fill_attainment === true,
+    school_type_id: typeof r.school_type_id === "string" && r.school_type_id ? r.school_type_id : null,
+    school_type_name: typeof r.school_type_name === "string" && r.school_type_name ? r.school_type_name : null,
+    class_setting: typeof r.class_setting === "boolean" ? r.class_setting : null,
     default_on: r.default_on === true,
+    auto_fill_attainment: r.auto_fill_attainment === true,
   };
 }
 
@@ -91,7 +105,8 @@ export function listAttainmentAutoFill(): Promise<CrudResult<ClassAutoFill[]>> {
   });
 }
 
-export function updateAttainmentAutoFill(classId: string, autoFill: boolean): Promise<CrudResult<ClassAutoFill>> {
+/** true/false sets the class explicitly; null clears it back to its School Type default. */
+export function updateAttainmentAutoFill(classId: string, autoFill: boolean | null): Promise<CrudResult<ClassAutoFill>> {
   return examSend("PUT", `erp/exam-settings/attainment-auto-fill/${encodeURIComponent(classId)}`, { auto_fill_attainment: autoFill }, autoFillFromWire);
 }
 

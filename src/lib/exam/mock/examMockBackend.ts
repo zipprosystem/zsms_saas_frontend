@@ -550,7 +550,7 @@ async function handle(method: HttpMethod, path: string, query: URLSearchParams, 
   if (progress) return progress;
   const masters = await handleTraitMasters(method, path, query, payload);
   if (masters) return masters;
-  const settings = handleExamSettings(method, path, payload);
+  const settings = await handleExamSettings(method, path, payload);
   if (settings) return settings;
   const studentMatch = path.match(/^erp\/results\/([^/]+)$/);
   if (studentMatch && method === "GET") return getStudentResult(decodeURIComponent(studentMatch[1]), query);
