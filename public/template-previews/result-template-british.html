@@ -302,20 +302,24 @@
     return '<td class="va '+(up?"va-up":"va-down")+'"><span aria-hidden="true">'+mark+"</span> "+num+'<span class="sr"> ('+zEsc(up?zL("vaAbove","At or above target"):zL("vaBelow","Below target"))+")</span></td>";
   }
   /* The results grid. cols = the point labels reached (Term 1 → 1A,1B …); cur = the report point's index.
-     rows[]: { name, tgt, att[], gb[], va, eng[], beh[], teacher, redacted } (cells ready-made); avg: { gb[], va }. */
-  function renderGrid(cols,cur,rows,avg){
+     rows[]: { name, tgt, att[], gb[], va, eng[], beh[], teacher, redacted } (cells ready-made); avg: { gb[], va }.
+     show (optional, default all shown): { gb: [bool per col], va: bool } — a point's show_grade_book off drops its
+     GB column + average; show_va off drops the VA column + average. Display only: the figures are untouched. */
+  function renderGrid(cols,cur,rows,avg,show){
     var n=cols.length, table=document.querySelector("#card table.grid");
-    function heads(prefix,hl){return cols.map(function(c,i){return "<th"+(hl&&i===cur?' class="cur"':"")+">"+prefix+zEsc(c)+"</th>";}).join("");}
-    function cells(list,cls){var h="";for(var i=0;i<n;i++){var c=(cls||"")+(i===cur?" cur":"");h+="<td"+(c?' class="'+c.trim()+'"':"")+">"+(list[i]==null?"—":list[i])+"</td>";}return h;}
+    var gbOn=cols.map(function(_,i){return !show||!show.gb||show.gb[i]!==false;}), vaOn=!show||show.va!==false;
+    var gbN=gbOn.filter(Boolean).length;
+    function heads(prefix,hl,mask){return cols.map(function(c,i){return mask&&!mask[i]?"":"<th"+(hl&&i===cur?' class="cur"':"")+">"+prefix+zEsc(c)+"</th>";}).join("");}
+    function cells(list,cls,mask){var h="";for(var i=0;i<n;i++){if(mask&&!mask[i])continue;var c=(cls||"")+(i===cur?" cur":"");h+="<td"+(c?' class="'+c.trim()+'"':"")+">"+(list[i]==null?"—":list[i])+"</td>";}return h;}
     table.tHead.innerHTML='<tr class="grp"><th class="subj" rowspan="2">Subject</th><th class="tgt" rowspan="2">Target<br>(MTG)</th>'+
-      '<th colspan="'+2*n+'">Current Attainment</th><th class="vah">'+zEsc(zL("valueAdded","Value Added"))+"</th>"+
+      '<th colspan="'+(n+gbN)+'">Current Attainment</th>'+(vaOn?'<th class="vah">'+zEsc(zL("valueAdded","Value Added"))+"</th>":"")+
       '<th colspan="'+n+'">Engagement</th><th colspan="'+n+'">Learning Behaviour</th><th class="tcr" rowspan="2">Teacher</th></tr>'+
-      "<tr>"+heads("",1)+heads("GB<br>",0)+'<th class="vah">'+zEsc(zL("vaHeader","CAG-MTG"))+"</th>"+heads("",1)+heads("",1)+"</tr>";
+      "<tr>"+heads("",1)+heads("GB<br>",0,gbOn)+(vaOn?'<th class="vah">'+zEsc(zL("vaHeader","CAG-MTG"))+"</th>":"")+heads("",1)+heads("",1)+"</tr>";
     document.getElementById("rows").innerHTML=rows.map(function(r){
       return "<tr"+(r.redacted?' class="zsms-redacted"':"")+'><td class="subj">'+zEsc(r.name)+'</td><td class="tgt g">'+r.tgt+"</td>"+
-        cells(r.att,"g")+cells(r.gb,"gb")+zVa(r.va)+cells(r.eng)+cells(r.beh)+'<td class="tcr">'+zTxt(r.teacher)+"</td></tr>";
+        cells(r.att,"g")+cells(r.gb,"gb",gbOn)+(vaOn?zVa(r.va):"")+cells(r.eng)+cells(r.beh)+'<td class="tcr">'+zTxt(r.teacher)+"</td></tr>";
     }).join("");
-    table.tFoot.innerHTML='<tr class="avg"><td class="subj">Average</td><td class="tgt"></td><td colspan="'+n+'"></td>'+cells(avg.gb)+zVa(avg.va)+
+    table.tFoot.innerHTML='<tr class="avg"><td class="subj">Average</td><td class="tgt"></td><td colspan="'+n+'"></td>'+cells(avg.gb,"",gbOn)+(vaOn?zVa(avg.va):"")+
       '<td colspan="'+n+'"></td><td colspan="'+n+'"></td><td></td></tr>';
   }
   /* Mean of the numbers in a list (blank → —), 0 dp — the per-point Grade Book average. */
@@ -404,17 +408,20 @@
     });
     // GB average per point: mean of the shown subjects' Grade Books at that point. VA average: the payload's.
     var shownSubs=Z.subjects.filter(function(s){return !s.redacted;});
+    // On-report switches (Exam List): each point's show_grade_book, and the report point's show_va. Missing = shown.
+    var gbShown=points.map(function(p){return p.show_grade_book!==false;}), vaShown=Z.meta.show_va!==false;
     renderGrid(cols,cur,rows,{
       gb:cols.map(function(_,i){return zMean0(shownSubs.map(function(s){var p=(s.history||[])[i];return p?p.grade_book:null;}));}),
       va:(Z.aggregate||{}).va_average
-    });
+    },{gb:gbShown,va:vaShown});
 
     // Subject comments: Target / GB / Attainment / Engagement / Behaviour at the report point; the comment itself is a Full-report field.
     if(isFull)renderNarr(shownSubs.map(function(s){
       var eng=(s.components||[])[0], beh=(s.components||[])[1], hist=s.history||[], gb=null;
-      for(var i=Math.min(cur,hist.length-1);i>=0&&gb==null;i--)if(hist[i]&&typeof hist[i].grade_book==="number")gb=hist[i].grade_book;
-      return {name:s.name,teacher:s.teacher_name,comment:s.comment,badges:[
-        ["Target",zAtt(s.mtg)],[zL("gradeBookShort","GB"),zNum(gb)],["Attainment",zAtt(s.cag)],["Engagement",zTxt(eng&&eng.score)],["Behaviour",zTxt(beh&&beh.score)]]};
+      for(var i=Math.min(cur,hist.length-1);i>=0&&gb==null;i--)if(gbShown[i]&&hist[i]&&typeof hist[i].grade_book==="number")gb=hist[i].grade_book;
+      // The report point's show_grade_book off: no GB figure on the card.
+      var badges=[["Target",zAtt(s.mtg)]].concat(gbShown[cur]===false?[]:[[zL("gradeBookShort","GB"),zNum(gb)]]).concat([["Attainment",zAtt(s.cag)],["Engagement",zTxt(eng&&eng.score)],["Behaviour",zTxt(beh&&beh.score)]]);
+      return {name:s.name,teacher:s.teacher_name,comment:s.comment,badges:badges};
     }),isFull);
 
     var b=Z.traits.boarding, rm=Z.remarks||{}, tutor=rm.form_tutor, house=rm.boarding_house;

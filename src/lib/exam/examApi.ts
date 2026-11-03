@@ -72,14 +72,20 @@ import type {
  *     -> { items: [{ id, name, assessment_mode, kind: "ca"|"exam"|null,
  *                    report_variant: "progress"|"full"|null,
  *                    academic_year_id, term_id, entry_closes_on,
- *                    show_grade_book }] }   (addition, grade_based: show
- *                    this point's Grade Book; default true — the Exam
- *                    List toggle is a later piece)
+ *                    show_grade_book, show_va }] }   (spec §2.3,
+ *                    grade_based: on-report visibility of this point's
+ *                    Grade Book / Value Added; default true. Display
+ *                    only — hiding never removes data or changes results)
  *     Each term auto-creates exactly two points per mode (names
  *     school-editable): component_based = CA + Exam (kind); grade_based
  *     (British) = A/B, e.g. 1A / 1B, no CA/Exam framing, each carrying
  *     report_variant (exam.report_variant, Exam-Backend-Spec v1.5 §2.3,
  *     §7.13–7.16). assessment_mode filter is (new).
+ *   PUT /api/v1/erp/exams/:id  (PROPOSED — Setup › Exam List)
+ *     body { show_grade_book?, show_va? } (booleans; omitted = unchanged)
+ *     -> the exam. grade_based points only. Admin-only.
+ *     Errors: 404 EXAM_NOT_FOUND, 403 FORBIDDEN, 422 VALIDATION_ERROR,
+ *     422 WRONG_ASSESSMENT_MODE (a component_based point — no GB / VA).
  *   GET /api/v1/erp/exams/entry-options?academic_year_id=
  *     -> { academic_year_id, years, terms, classes[{id,name,arms[]}],
  *          subjects[{class_arm_id, subject_id, subject_name}], full_scope }
@@ -218,6 +224,7 @@ export function examFromWire(value: unknown): Exam {
     entry_closes_on: typeof r.entry_closes_on === "string" && r.entry_closes_on ? r.entry_closes_on : null,
     // Default shown; only an explicit false hides the point's Grade Book.
     show_grade_book: r.show_grade_book !== false,
+    show_va: r.show_va !== false,
   };
 }
 
@@ -375,6 +382,13 @@ export function getEntryOptions(yearId: string | null): Promise<CrudResult<ExamE
 export function listExams(yearId: string, termId: string, mode: AssessmentMode): Promise<CrudResult<Exam[]>> {
   const query = new URLSearchParams({ academic_year_id: yearId, term_id: termId, assessment_mode: mode });
   return send("GET", `erp/exams?${query}`, undefined, (data) => arr(rec(data).items).map(examFromWire));
+}
+
+export type ExamVisibilityInput = Partial<Pick<Exam, "show_grade_book" | "show_va">>;
+
+/** Setup › Exam List: a British point's on-report Grade Book / VA switches. */
+export function updateExamVisibility(examId: string, input: ExamVisibilityInput): Promise<CrudResult<Exam>> {
+  return send("PUT", `erp/exams/${encodeURIComponent(examId)}`, input, examFromWire);
 }
 
 export function getMarks(examId: string, subjectId: string, armId: string): Promise<CrudResult<MarksSheet>> {

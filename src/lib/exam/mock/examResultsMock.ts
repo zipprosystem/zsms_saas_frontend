@@ -1,4 +1,5 @@
 import type { WireResponse } from "@/lib/setup/assessmentConfiguration/templateCatalog";
+import { mockExams } from "@/lib/exam/mock/examListMock";
 import type { AssessmentMode, AssessmentStructure } from "@/lib/setup/assessmentConfiguration/assessmentStructure";
 import { round2 } from "@/lib/setup/assessmentConfiguration/assessmentStructure";
 import type { Exam, GradeBasedStructure, ScaleLevel } from "@/lib/exam/examTypes";
@@ -36,7 +37,6 @@ import {
   SEED_AFFECTIVE,
   SEED_ARM_SUBJECTS,
   SEED_CLASSES,
-  SEED_EXAMS,
   SEED_GRADE_SCALES,
   SEED_PSYCHOMOTOR,
   SEED_SUBJECT_UNITS,
@@ -158,7 +158,7 @@ export function termsUpTo(termId: string): string[] {
 }
 
 export function termPoints(termId: string, mode: AssessmentMode): Exam[] {
-  return SEED_EXAMS.filter((exam) => exam.term_id === termId && exam.assessment_mode === mode);
+  return mockExams().filter((exam) => exam.term_id === termId && exam.assessment_mode === mode);
 }
 
 function emptyAggregate(status: StudentTermResult["status"]): StudentTermResult {

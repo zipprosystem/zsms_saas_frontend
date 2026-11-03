@@ -272,6 +272,9 @@ export async function getProgressionBroadsheet(query: URLSearchParams): Promise<
     number: termNumber(term.id),
     included: termNumber(term.id) <= termNumber(termId),
     points: termPoints(term.id, "grade_based").map((exam) => ({ id: exam.id, name: exam.name })),
+    // On-report switches (Exam List): GB shows if any point shows it; VA follows the term's last point.
+    show_grade_book: termPoints(term.id, "grade_based").some((exam) => exam.show_grade_book),
+    show_va: termPoints(term.id, "grade_based").at(-1)?.show_va ?? true,
   }));
   const included = terms.filter((term) => term.included);
   // One engine run per included term (CAG / VA); a student absent from a run wasn't in the class then.
