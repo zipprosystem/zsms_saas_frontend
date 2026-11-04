@@ -4,7 +4,6 @@ import { useDeferredValue, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { SelectField } from "@/components/ui/Select";
-import { ExportMenu } from "@/components/setup/ExportMenu";
 import { SetupPagination } from "@/components/setup/SetupPagination";
 import { AcademicCapIcon } from "@/components/icons/setup/AcademicCapIcon";
 import { PlusIcon } from "@/components/icons/PlusIcon";
@@ -13,10 +12,8 @@ import { Button } from "@/components/ui/Button";
 import { ActionsMenu } from "@/components/ui/ActionsMenu";
 import { ExamWizard, type ExamWizardProps } from "@/components/exam/list/ExamWizard";
 import { Notice, failureMessage, useMockActingAs } from "@/components/exam/examEntryShared";
-import { useExportSchoolName } from "@/components/exam/broadsheet/broadsheetShared";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import { isDevBypassUnavailable, throwIfTransient } from "@/lib/setup/crudTypes";
-import type { ExportConfig } from "@/lib/export/exportTypes";
 import {
   EXAM_USES_MOCK,
   examQueryKeys,
@@ -31,9 +28,6 @@ import type { Exam, ExamKind } from "@/lib/exam/examTypes";
 
 const PAGE_SIZE = 12;
 
-/** One exported row per listed exam. */
-type ExportRow = { card: ExamClassCard; exam: Exam };
-
 /**
  * Academics › Exam › List (Figma 2499:348304) — every class's exams as a
  * card: class + School Type, CA / Exam progress (active of listed), and the
@@ -46,7 +40,6 @@ export function ExamListScreen() {
   const t = useTranslations();
   const k = (key: string, values?: Record<string, string | number>) => t(`exam.list.${key}`, values);
   const [actingAs] = useMockActingAs();
-  const schoolName = useExportSchoolName();
   const [yearPick, setYearPick] = useState("");
   const [termId, setTermId] = useState("");
   const [classId, setClassId] = useState("");
@@ -85,25 +78,6 @@ export function ExamListScreen() {
   };
 
   const categoryLabel = (kind: ExamKind) => k(`category.${kind}`);
-  const exportRows: ExportRow[] = (cards?.items ?? []).flatMap((card) => card.exams.map((exam) => ({ card, exam })));
-  const exportConfig: ExportConfig<ExportRow> = {
-    filteredRows: exportRows,
-    allRows: exportRows,
-    title: k("title"),
-    filenamePrefix: "exam-list",
-    schoolName,
-    periodLabel: options?.years.find((year) => year.id === yearId)?.name,
-    columns: [
-      { header: k("export.class"), value: (row) => row.card.class_name },
-      { header: k("export.schoolType"), value: (row) => row.card.school_type_name ?? "" },
-      { header: k("export.term"), value: (row) => termName.get(row.exam.term_id) ?? "" },
-      { header: k("export.examTitle"), value: (row) => row.exam.name },
-      { header: k("export.category"), value: (row) => categoryLabel(row.exam.category) },
-      { header: k("export.reportType"), value: (row) => (row.exam.report_variant ? t(`exam.marks.variants.${row.exam.report_variant}`) : "") },
-      { header: k("export.status"), value: (row) => k(`status.${row.exam.status}`) },
-      { header: k("export.closes"), value: (row) => row.exam.entry_closes_on ?? "" },
-    ],
-  };
 
   let body;
   if (optionsQuery.isPending || (cardsQuery.isPending && cardsQuery.fetchStatus !== "idle")) {
@@ -151,7 +125,6 @@ export function ExamListScreen() {
           <Button type="button" onClick={() => setWizard({})} icon={<PlusIcon className="h-4 w-4" />} className="w-full px-4 text-sm sm:w-auto">
             {k("createNew")}
           </Button>
-          {exportRows.length > 0 ? <ExportMenu config={exportConfig} /> : null}
         </div>
       </div>
 

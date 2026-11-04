@@ -3225,8 +3225,7 @@
       "broadSheet": "Broad Sheet",
       "reports": "Reports",
       "reportProgression": "Report Progression",
-      "cutoff": "Cutoff Management",
-      "ace": "ACE"
+      "cutoff": "Cutoff Management"
     },
     "list": {
       "title": "Exam List/Schedules",
@@ -3249,8 +3248,8 @@
         "draft": "Draft"
       },
       "count": {
-        "ca": "CA: {n}",
-        "exam": "Exam: {n}"
+        "ca": "CA/Half Term: {n}",
+        "exam": "Exam/End of Term: {n}"
       },
       "createNew": "Create New Exam",
       "cardMenu": "{name} actions",
@@ -3271,7 +3270,7 @@
           "details": "Exam Details",
           "detailsHelp": "Set the exam dates and what the report shows",
           "schedule": "Schedule",
-          "scheduleHelp": "Exam dates for this exam (optional)"
+          "scheduleHelp": "Exam timetable for this class, all arms (optional)"
         },
         "fields": {
           "category": "Exam category",
@@ -3292,7 +3291,9 @@
           "resultTitleHelp": "Prints on the report under the school's name and address.",
           "startDate": "Start Date",
           "endDate": "End Date",
-          "duration": "Duration (hrs)",
+          "duration": "Duration (minutes)",
+          "durationPlaceholder": "e.g. 60",
+          "durationHelp": "Length of each paper: 60 = 1 hr. Auto Schedule needs it.",
           "reportDate": "Report Date",
           "reportDateHelp": "The date results are issued — prints next to the signature.",
           "gradebook": "Gradebook",
@@ -3309,10 +3310,54 @@
         "summary": {
           "dates": "Dates",
           "noDates": "Not set",
+          "minutes": "{n} min",
           "status": "Status"
         },
-        "scheduleDraft": "Scheduling the exam dates comes next. You can complete now without a schedule: the exam becomes active and marks can be entered.",
-        "scheduleActive": "This exam is active. Scheduling the exam dates comes next.",
+        "scheduleDraft": "Set when each subject's exam is sat (optional). Fill the rows by hand or use Auto Schedule. Complete makes the exam active so marks can be entered; Save & Close keeps it a draft.",
+        "scheduleActive": "This exam is active. Set when each subject's exam is sat (optional): fill the rows by hand or use Auto Schedule.",
+        "auto": {
+          "title": "Auto Schedule",
+          "help": "Apply the same settings to every subject and generate the exam dates.",
+          "helpWithDuration": "Apply the same settings to every subject: each paper gets a {minutes}-minute slot, back to back within the daily window, moving to the next school day when the window is full.",
+          "needsDuration": "Set the exam's Duration in Step 1 first (Back), then Auto Schedule can generate the timetable.",
+          "startDate": "Start Date",
+          "endDate": "End Date",
+          "startTime": "Start Time",
+          "endTime": "End Time",
+          "generate": "Auto Generate",
+          "done": "{count, plural, one {# subject scheduled} other {# subjects scheduled}}. You can still edit any row.",
+          "errors": {
+            "noDuration": "Set the exam's Duration in Step 1 first.",
+            "dates": "Enter a valid start and end date (end on or after start).",
+            "noSchoolDays": "There are no school days (Mon–Fri) in that date range.",
+            "window": "Enter a valid daily window (end time after start time).",
+            "windowTooShort": "The daily window is shorter than one paper.",
+            "tooMany": "Only {capacity} of {count} papers fit. Widen the date range or the daily window."
+          }
+        },
+        "timetable": {
+          "count": "{scheduled} of {total} subjects scheduled",
+          "clear": "Clear all",
+          "loading": "Loading subjects…",
+          "noSubjects": "This class has no subjects yet. Set up subject enrolment to build its timetable.",
+          "subject": "Subject",
+          "date": "Date",
+          "startTime": "Start time",
+          "endTime": "End time",
+          "elective": "Elective",
+          "dateOf": "{subject} exam date",
+          "startTimeOf": "{subject} start time",
+          "endTimeOf": "{subject} end time",
+          "errors": {
+            "incomplete": "Enter a date, start time and end time, or leave all three empty.",
+            "dateInvalid": "Enter a valid date.",
+            "dateOutOfRange": "This date is outside the exam's start and end dates.",
+            "timeInvalid": "Enter valid times.",
+            "endBeforeStart": "The end time must be after the start time."
+          }
+        },
+        "saveClose": "Save & Close",
+        "save": "Save",
         "saveContinue": "Save & Continue",
         "complete": "Complete",
         "back": "Back",
@@ -3327,7 +3372,7 @@
           "componentRequired": "Select an assessment component.",
           "nameRequired": "Enter the exam title.",
           "endBeforeStart": "The end date can't be before the start date.",
-          "duration": "Enter hours between 0 and 24.",
+          "duration": "Enter whole minutes from {min} to {max}.",
           "saveFailed": "Couldn't save the exam. Try again.",
           "loadFailed": "Couldn't load the form. Refresh to try again."
         }
@@ -3340,17 +3385,7 @@
       "loading": "Loading exams…",
       "loadFailed": "Couldn't load the exam list. Refresh to try again.",
       "empty": "No classes match these filters.",
-      "adminOnly": "Only an administrator can manage the Exam List. Switch the “acting as” picker (Exam › Results) to Admin to test this screen.",
-      "export": {
-        "class": "Class",
-        "schoolType": "School Type",
-        "term": "Term",
-        "examTitle": "Exam Title",
-        "category": "Exam type",
-        "reportType": "Report type",
-        "status": "Status",
-        "closes": "Entry closes"
-      }
+      "adminOnly": "Only an administrator can manage the Exam List. Switch the “acting as” picker (Exam › Results) to Admin to test this screen."
     },
     "marks": {
       "title": "Manage Exam Result",

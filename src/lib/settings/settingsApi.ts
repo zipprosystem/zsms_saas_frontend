@@ -32,6 +32,9 @@ export type SettingsResult<T> =
 // resolves normally instead. A separate small helper rather than reusing
 // crudTypes.ts's directly since SettingsResult isn't a CrudResult (no
 // `conflict` kind, and this file predates that type).
+/** react-query key for the school's settings (shared by Settings and readers such as the Create Exam wizard). */
+export const SETTINGS_QUERY_KEY = ["settings"];
+
 export function throwIfTransientSettings<T>(result: SettingsResult<T>): SettingsResult<T> {
   if (result.ok) return result;
   if (result.kind === "network") throw new TransientQueryError();

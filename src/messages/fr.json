@@ -3233,8 +3233,7 @@
       "broadSheet": "Relevé général",
       "reports": "Rapports",
       "reportProgression": "Progression des bulletins",
-      "cutoff": "Gestion des seuils",
-      "ace": "ACE"
+      "cutoff": "Gestion des seuils"
     },
     "list": {
       "title": "Liste/Calendrier des examens",
@@ -3257,8 +3256,8 @@
         "draft": "Brouillon"
       },
       "count": {
-        "ca": "CC : {n}",
-        "exam": "Examen : {n}"
+        "ca": "CC/Mi-trimestre : {n}",
+        "exam": "Examen/Fin de trimestre : {n}"
       },
       "createNew": "Créer un examen",
       "cardMenu": "Actions pour {name}",
@@ -3279,7 +3278,7 @@
           "details": "Détails de l'examen",
           "detailsHelp": "Définissez les dates et ce que le bulletin affiche",
           "schedule": "Calendrier",
-          "scheduleHelp": "Les dates de cet examen (facultatif)"
+          "scheduleHelp": "Calendrier des examens de la classe, toutes divisions (facultatif)"
         },
         "fields": {
           "category": "Catégorie d'examen",
@@ -3300,7 +3299,9 @@
           "resultTitleHelp": "Imprimé sur le bulletin sous le nom et l'adresse de l'école.",
           "startDate": "Date de début",
           "endDate": "Date de fin",
-          "duration": "Durée (h)",
+          "duration": "Durée (minutes)",
+          "durationPlaceholder": "ex. 60",
+          "durationHelp": "Durée de chaque épreuve : 60 = 1 h. Nécessaire pour la planification automatique.",
           "reportDate": "Date du bulletin",
           "reportDateHelp": "La date de publication des résultats — imprimée près de la signature.",
           "gradebook": "Carnet de notes",
@@ -3317,10 +3318,54 @@
         "summary": {
           "dates": "Dates",
           "noDates": "Non définies",
+          "minutes": "{n} min",
           "status": "Statut"
         },
-        "scheduleDraft": "La planification des dates d'examen arrive ensuite. Vous pouvez terminer maintenant sans calendrier : l'examen devient actif et les notes peuvent être saisies.",
-        "scheduleActive": "Cet examen est actif. La planification des dates d'examen arrive ensuite.",
+        "scheduleDraft": "Indiquez quand chaque matière est passée (facultatif). Remplissez les lignes à la main ou utilisez la planification automatique. Terminer rend l'examen actif pour la saisie des notes ; Enregistrer et fermer le garde en brouillon.",
+        "scheduleActive": "Cet examen est actif. Indiquez quand chaque matière est passée (facultatif) : remplissez les lignes à la main ou utilisez la planification automatique.",
+        "auto": {
+          "title": "Planification automatique",
+          "help": "Appliquez les mêmes paramètres à toutes les matières et générez les dates d'examen.",
+          "helpWithDuration": "Appliquez les mêmes paramètres à toutes les matières : chaque épreuve reçoit un créneau de {minutes} minutes, à la suite dans la plage horaire quotidienne, en passant au jour d'école suivant lorsque la plage est pleine.",
+          "needsDuration": "Définissez d'abord la durée de l'examen à l'étape 1 (Retour) ; la planification automatique pourra ensuite générer le calendrier.",
+          "startDate": "Date de début",
+          "endDate": "Date de fin",
+          "startTime": "Heure de début",
+          "endTime": "Heure de fin",
+          "generate": "Générer automatiquement",
+          "done": "{count, plural, one {# matière planifiée} other {# matières planifiées}}. Chaque ligne reste modifiable.",
+          "errors": {
+            "noDuration": "Définissez d'abord la durée de l'examen à l'étape 1.",
+            "dates": "Saisissez des dates de début et de fin valides (fin après ou égale au début).",
+            "noSchoolDays": "Aucun jour d'école (lun.–ven.) dans cette période.",
+            "window": "Saisissez une plage horaire valide (fin après le début).",
+            "windowTooShort": "La plage horaire quotidienne est plus courte qu'une épreuve.",
+            "tooMany": "Seules {capacity} épreuves sur {count} tiennent. Élargissez la période ou la plage horaire."
+          }
+        },
+        "timetable": {
+          "count": "{scheduled} matière(s) planifiée(s) sur {total}",
+          "clear": "Tout effacer",
+          "loading": "Chargement des matières…",
+          "noSubjects": "Cette classe n'a pas encore de matières. Configurez l'inscription aux matières pour établir son calendrier.",
+          "subject": "Matière",
+          "date": "Date",
+          "startTime": "Heure de début",
+          "endTime": "Heure de fin",
+          "elective": "Optionnelle",
+          "dateOf": "Date de l'examen de {subject}",
+          "startTimeOf": "Heure de début de {subject}",
+          "endTimeOf": "Heure de fin de {subject}",
+          "errors": {
+            "incomplete": "Saisissez une date, une heure de début et une heure de fin, ou laissez les trois vides.",
+            "dateInvalid": "Saisissez une date valide.",
+            "dateOutOfRange": "Cette date est hors des dates de début et de fin de l'examen.",
+            "timeInvalid": "Saisissez des heures valides.",
+            "endBeforeStart": "L'heure de fin doit être après l'heure de début."
+          }
+        },
+        "saveClose": "Enregistrer et fermer",
+        "save": "Enregistrer",
         "saveContinue": "Enregistrer et continuer",
         "complete": "Terminer",
         "back": "Retour",
@@ -3335,7 +3380,7 @@
           "componentRequired": "Choisissez une composante d'évaluation.",
           "nameRequired": "Saisissez le titre de l'examen.",
           "endBeforeStart": "La date de fin ne peut pas précéder la date de début.",
-          "duration": "Saisissez un nombre d'heures entre 0 et 24.",
+          "duration": "Saisissez un nombre entier de minutes entre {min} et {max}.",
           "saveFailed": "Impossible d'enregistrer l'examen. Réessayez.",
           "loadFailed": "Impossible de charger le formulaire. Actualisez pour réessayer."
         }
@@ -3348,17 +3393,7 @@
       "loading": "Chargement des examens…",
       "loadFailed": "Impossible de charger la liste des examens. Actualisez pour réessayer.",
       "empty": "Aucune classe ne correspond à ces filtres.",
-      "adminOnly": "Seul un administrateur peut gérer la liste des examens. Passez le sélecteur « agir en tant que » (Examen › Résultats) sur Admin pour tester cet écran.",
-      "export": {
-        "class": "Classe",
-        "schoolType": "Type d'établissement",
-        "term": "Trimestre",
-        "examTitle": "Titre de l'examen",
-        "category": "Type d'examen",
-        "reportType": "Type de bulletin",
-        "status": "Statut",
-        "closes": "Fin de saisie"
-      }
+      "adminOnly": "Seul un administrateur peut gérer la liste des examens. Passez le sélecteur « agir en tant que » (Examen › Résultats) sur Admin pour tester cet écran."
     },
     "marks": {
       "title": "Gérer les résultats d'examen",
