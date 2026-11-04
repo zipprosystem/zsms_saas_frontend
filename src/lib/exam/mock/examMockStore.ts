@@ -1,6 +1,6 @@
 import { assessmentStructuresService } from "@/lib/setup/assessmentConfiguration/assessmentStructuresApi";
 import type { AssessmentStructure } from "@/lib/setup/assessmentConfiguration/assessmentStructure";
-import { allLeaves, buildMarkColumns } from "@/lib/exam/markColumns";
+import { allLeaves, examMarkColumns } from "@/lib/exam/markColumns";
 import type { Exam, GradeBasedStructure, GradeMarkRow, SubjectMarkRow } from "@/lib/exam/examTypes";
 import {
   SEED_ARM_SUBJECTS,
@@ -153,12 +153,22 @@ export function classOfArm(armId: string): string | null {
 }
 
 export async function resolveStructure(armId: string): Promise<AssessmentStructure | null> {
+  const classId = classOfArm(armId);
+  return classId ? resolveClassStructure(classId) : null;
+}
+
+/** The score structure in force for a class: its mapped one, else the school default (null = none). */
+export async function resolveClassStructure(classId: string): Promise<AssessmentStructure | null> {
   const result = await assessmentStructuresService.list();
   if (!result.ok) return null;
+  return pickClassStructure(classId, result.data);
+}
+
+/** Same rule over an already-fetched list. */
+export function pickClassStructure(classId: string, structures: AssessmentStructure[]): AssessmentStructure | null {
   // A Grade Book structure is never in force for Manage Exam Result (it's the Grade Book page's).
-  const active = result.data.filter((structure) => structure.is_active && !structure.is_grade_book);
-  const classId = classOfArm(armId);
-  const mappedId = classId ? SEED_CLASS_STRUCTURE[classId] : undefined;
+  const active = structures.filter((structure) => structure.is_active && !structure.is_grade_book);
+  const mappedId = SEED_CLASS_STRUCTURE[classId];
   return active.find((structure) => structure.id === mappedId) ?? active.find((structure) => structure.is_default) ?? null;
 }
 
@@ -216,7 +226,7 @@ function generatedScoreMark(exam: Exam, subjectId: string, armId: string, studen
   const index = studentIndexOf(armId, studentId);
   const policy = seedPolicy(exam, armId, subjectId, index);
   if (!policy.entered) return null;
-  const leaves = allLeaves(buildMarkColumns(structure, exam.kind));
+  const leaves = allLeaves(examMarkColumns(structure, exam));
   if (leaves.length === 0) return null;
   const scores = Object.fromEntries(
     leaves.map((leaf, i) => [

@@ -1,4 +1,4 @@
-import type { Exam, ExamTermOption, ExamYearOption, GradeBasedStructure, GradeScale, RatingScale, ReportVariant } from "@/lib/exam/examTypes";
+import type { ExamTermOption, ExamYearOption, GradeBasedStructure, GradeScale, RatingScale } from "@/lib/exam/examTypes";
 import type { ScoreGradeScale } from "@/lib/exam/results/resultsTypes";
 
 /**
@@ -396,8 +396,12 @@ export const SEED_SECTIONAL_HEADS: Array<{ id: string; name: string; class_ids: 
   { id: "stf-sani", name: "Musa Sani", class_ids: ["cls-jss1", "cls-ss1"] },
 ];
 
-/** Cutoffs: the current year's first term is open; last year's exams are closed (read-only grid). */
-const CLOSES_ON: Record<string, [string, string]> = {
+/**
+ * Default entry cutoffs per term: [CA / first point, Exam / second point].
+ * The current year's first term is open; last year's are closed.
+ * Auto-created exams (examListMock.ts) take these.
+ */
+export const SEED_EXAM_CLOSES_ON: Record<string, [string, string]> = {
   "y-2026-t1": ["2026-11-30", "2026-12-18"],
   "y-2026-t2": ["2027-03-01", "2027-04-02"],
   "y-2026-t3": ["2027-06-14", "2027-07-23"],
@@ -405,33 +409,6 @@ const CLOSES_ON: Record<string, [string, string]> = {
   "y-2025-t2": ["2026-03-02", "2026-04-03"],
   "y-2025-t3": ["2026-06-12", "2026-07-24"],
 };
-
-/**
- * Each term auto-creates exactly two points per assessment mode (names are
- * school-editable; these are the defaults). Score classes: CA + Examination.
- * British (grade-based) classes: A/B per term (1A, 1B, 2A…), each carrying a
- * report_variant — Third Term uses "full" at both points (a school may).
- */
-const GRADE_VARIANTS: Record<number, [ReportVariant, ReportVariant]> = {
-  1: ["progress", "full"],
-  2: ["progress", "full"],
-  3: ["full", "full"],
-};
-
-export const SEED_EXAMS: Exam[] = SEED_YEARS.flatMap((year) =>
-  seedTerms(year.id).flatMap((term, index) => {
-    const [firstCloses, secondCloses] = CLOSES_ON[term.id];
-    const n = index + 1;
-    const [variantA, variantB] = GRADE_VARIANTS[n];
-    const base = { academic_year_id: year.id, term_id: term.id, show_grade_book: true, show_va: true };
-    return [
-      { ...base, id: `${term.id}-ca`, name: `${term.name} CA`, assessment_mode: "component_based" as const, kind: "ca" as const, report_variant: null, entry_closes_on: firstCloses },
-      { ...base, id: `${term.id}-exam`, name: `${term.name} Examination`, assessment_mode: "component_based" as const, kind: "exam" as const, report_variant: null, entry_closes_on: secondCloses },
-      { ...base, id: `${term.id}-a`, name: `${n}A`, assessment_mode: "grade_based" as const, kind: null, report_variant: variantA, entry_closes_on: firstCloses },
-      { ...base, id: `${term.id}-b`, name: `${n}B`, assessment_mode: "grade_based" as const, kind: null, report_variant: variantB, entry_closes_on: secondCloses },
-    ];
-  }),
-);
 
 // ---------------------------------------------------------------------------
 // Student-wise traits (results reframe) — MOCK. The skill lists and the

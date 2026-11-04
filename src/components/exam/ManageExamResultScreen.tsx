@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/Toast";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import { throwIfTransient } from "@/lib/setup/crudTypes";
 import { assessmentStructuresService } from "@/lib/setup/assessmentConfiguration/assessmentStructuresApi";
-import { allLeaves, buildMarkColumns, shownTotal } from "@/lib/exam/markColumns";
+import { allLeaves, examMarkColumns, shownTotal } from "@/lib/exam/markColumns";
 import { examQueryKeys, getMarks, saveMarks } from "@/lib/exam/examApi";
 import type { SubjectMarksSheet } from "@/lib/exam/examTypes";
 import { MarksGrid } from "@/components/exam/MarksGrid";
@@ -79,7 +79,7 @@ export function ManageExamResultScreen() {
       ? (structuresQuery.data.data.find((item) => item.id === sheet.assessment_structure_id) ?? null)
       : null;
   const groups = useMemo(
-    () => (structure && sheet?.exam.kind ? buildMarkColumns(structure, sheet.exam.kind) : []),
+    () => (structure && sheet ? examMarkColumns(structure, sheet.exam) : []),
     [structure, sheet],
   );
   const leaves = useMemo(() => allLeaves(groups), [groups]);

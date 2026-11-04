@@ -35,7 +35,7 @@ export const NAV_PERMISSIONS = {
   setupProgressGrades: { key: "assessment_config.progress_grades", fallback: "assessment_config.view" },
   setupPsychomotorSkills: { key: "assessment_config.psychomotor_skills", fallback: "assessment_config.view" },
   setupAffectiveDomain: { key: "assessment_config.affective_domain", fallback: "assessment_config.view" },
-  setupExamList: { key: "assessment_config.exam_list", fallback: "assessment_config.view" },
+  examList: { key: "exam.list", fallback: "exam.view" },
   hrAssignmentReview: { key: "hr.assignment_review", fallback: "hr.view" },
 } satisfies Record<string, NavPermission>;
 

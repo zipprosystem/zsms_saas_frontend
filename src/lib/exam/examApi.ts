@@ -9,6 +9,7 @@ import type {
   ComponentScores,
   Exam,
   ExamEntryOptions,
+  ExamKind,
   GradeBasedStructure,
   GradeBookRef,
   GradeMarkRow,
@@ -67,25 +68,36 @@ import type {
  *     403 OUT_OF_SCOPE      outside effective_scope
  *     409 NO_ASSESSMENT_STRUCTURE  nothing in force for the class
  *
- *   Filter support (new — confirm or replace with existing endpoints):
- *   GET /api/v1/erp/exams?academic_year_id=&term_id=&assessment_mode=
- *     -> { items: [{ id, name, assessment_mode, kind: "ca"|"exam"|null,
- *                    report_variant: "progress"|"full"|null,
- *                    academic_year_id, term_id, entry_closes_on,
- *                    show_grade_book, show_va }] }   (spec §2.3,
- *                    grade_based: on-report visibility of this point's
- *                    Grade Book / Value Added; default true. Display
- *                    only — hiding never removes data or changes results)
- *     Each term auto-creates exactly two points per mode (names
- *     school-editable): component_based = CA + Exam (kind); grade_based
- *     (British) = A/B, e.g. 1A / 1B, no CA/Exam framing, each carrying
- *     report_variant (exam.report_variant, Exam-Backend-Spec v1.5 §2.3,
- *     §7.13–7.16). assessment_mode filter is (new).
- *   PUT /api/v1/erp/exams/:id  (PROPOSED — Setup › Exam List)
- *     body { show_grade_book?, show_va? } (booleans; omitted = unchanged)
- *     -> the exam. grade_based points only. Admin-only.
+ *   EXAM LIST (Academics › Exam › List). Exams are per CLASS + term; see
+ *   the Exam type (examTypes.ts) for every field. PROPOSED shapes:
+ *   GET /api/v1/erp/exams?academic_year_id=&term_id=&class_id=&status=
+ *     -> { items: [Exam] }   class_id (new) and status=active|draft (new)
+ *     are optional filters. The entry screens ask for class_id + status=
+ *     active: only ACTIVE exams are scoreable (a draft is listed on the
+ *     Exam List but can't be scored). Order: CA before Exam, then the
+ *     assessment's component order, then creation.
+ *     Auto-create (no input needed): when a term exists, each class gets
+ *     its exams with defaults —
+ *       component_based: one exam per component of the class's structure
+ *         (CA 1, CA 2, Exam… — named after the component, kind/category
+ *         = the component's, component_ids = [that component]);
+ *       grade_based: 1A (category ca, report_variant progress) and 1B
+ *         (category exam, report_variant full).
+ *     Auto-created exams are active, flags on, titles/dates null.
+ *   GET /api/v1/erp/exams/class-cards?academic_year_id=&term_id=&class_id=
+ *       &category=&q=&page=&limit=           (new — the List page's cards)
+ *     -> { items: [{ class_id, class_name, assessment_mode,
+ *                    school_type_id|null, school_type_name|null,
+ *                    counts: { ca: { active, total }, exam: { active, total } },
+ *                    exams: [Exam] }], total, page, limit, has_more }
+ *     One card per class (q matches class name or term name); term_id /
+ *     category narrow the exams on each card. Admin-only.
+ *   PUT /api/v1/erp/exams/:id   (stage 2 widens it to the full edit body)
+ *     body { show_grade_book?, show_va? } -> the exam. grade_based only.
  *     Errors: 404 EXAM_NOT_FOUND, 403 FORBIDDEN, 422 VALIDATION_ERROR,
- *     422 WRONG_ASSESSMENT_MODE (a component_based point — no GB / VA).
+ *     422 WRONG_ASSESSMENT_MODE.
+ *   marks / grade-book on a draft exam -> 409 EXAM_NOT_SCOREABLE; on
+ *   another class's exam -> 409 EXAM_CLASS_MISMATCH.
  *   GET /api/v1/erp/exams/entry-options?academic_year_id=
  *     -> { academic_year_id, years, terms, classes[{id,name,arms[]}],
  *          subjects[{class_arm_id, subject_id, subject_name}], full_scope }
@@ -158,7 +170,8 @@ export const EXAM_USES_MOCK = USE_MOCK;
 export const examQueryKeys = {
   all: ["exam"] as const,
   entryOptions: (yearId: string | null) => ["exam", "entryOptions", yearId ?? "current"] as const,
-  exams: (yearId: string, termId: string, mode: AssessmentMode) => ["exam", "exams", yearId, termId, mode] as const,
+  exams: (yearId: string, termId: string, classId: string) => ["exam", "exams", yearId, termId, classId] as const,
+  classCards: (input: ExamClassCardsQuery) => ["exam", "exams", "classCards", input] as const,
   marks: (examId: string, subjectId: string, armId: string) => ["exam", "marks", examId, subjectId, armId] as const,
 };
 
@@ -211,6 +224,10 @@ function s(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+function optText(value: unknown): string | null {
+  return typeof value === "string" && value ? value : null;
+}
+
 export function examFromWire(value: unknown): Exam {
   const r = rec(value);
   return {
@@ -218,10 +235,20 @@ export function examFromWire(value: unknown): Exam {
     name: s(r.name),
     assessment_mode: r.assessment_mode === "grade_based" ? "grade_based" : "component_based",
     kind: r.kind === "exam" ? "exam" : r.kind === "ca" ? "ca" : null,
+    category: r.category === "ca" ? "ca" : "exam",
     report_variant: r.report_variant === "progress" || r.report_variant === "full" ? (r.report_variant as ReportVariant) : null,
     academic_year_id: s(r.academic_year_id),
     term_id: s(r.term_id),
-    entry_closes_on: typeof r.entry_closes_on === "string" && r.entry_closes_on ? r.entry_closes_on : null,
+    class_id: s(r.class_id),
+    component_ids: Array.isArray(r.component_ids) ? r.component_ids.filter((id): id is string => typeof id === "string") : null,
+    result_title: optText(r.result_title),
+    start_date: optText(r.start_date),
+    end_date: optText(r.end_date),
+    duration_hours: typeof r.duration_hours === "number" && Number.isFinite(r.duration_hours) ? r.duration_hours : null,
+    report_date: optText(r.report_date),
+    entry_closes_on: optText(r.entry_closes_on),
+    status: r.status === "draft" ? "draft" : "active",
+    is_auto: r.is_auto === true,
     // Default shown; only an explicit false hides the point's Grade Book.
     show_grade_book: r.show_grade_book !== false,
     show_va: r.show_va !== false,
@@ -379,16 +406,66 @@ export function getEntryOptions(yearId: string | null): Promise<CrudResult<ExamE
   return send("GET", `erp/exams/entry-options${query}`, undefined, optionsFromWire);
 }
 
-export function listExams(yearId: string, termId: string, mode: AssessmentMode): Promise<CrudResult<Exam[]>> {
-  const query = new URLSearchParams({ academic_year_id: yearId, term_id: termId, assessment_mode: mode });
+/** The class's ACTIVE exams for a term — what the entry screens may score. */
+export function listExams(yearId: string, termId: string, classId: string): Promise<CrudResult<Exam[]>> {
+  const query = new URLSearchParams({ academic_year_id: yearId, term_id: termId, class_id: classId, status: "active" });
   return send("GET", `erp/exams?${query}`, undefined, (data) => arr(rec(data).items).map(examFromWire));
 }
 
-export type ExamVisibilityInput = Partial<Pick<Exam, "show_grade_book" | "show_va">>;
+export type ExamCategoryCount = { active: number; total: number };
 
-/** Setup › Exam List: a British point's on-report Grade Book / VA switches. */
-export function updateExamVisibility(examId: string, input: ExamVisibilityInput): Promise<CrudResult<Exam>> {
-  return send("PUT", `erp/exams/${encodeURIComponent(examId)}`, input, examFromWire);
+/** One class card on the Exam List page. */
+export type ExamClassCard = {
+  class_id: string;
+  class_name: string;
+  assessment_mode: AssessmentMode;
+  school_type_id: string | null;
+  school_type_name: string | null;
+  counts: Record<ExamKind, ExamCategoryCount>;
+  exams: Exam[];
+};
+
+export type ExamClassCardsQuery = { yearId: string; termId: string; classId: string; category: ExamKind | ""; q: string; page: number; limit: number };
+
+export type ExamClassCardsPage = { items: ExamClassCard[]; total: number; page: number; limit: number; has_more: boolean };
+
+function countFromWire(value: unknown): ExamCategoryCount {
+  const r = rec(value);
+  return { active: typeof r.active === "number" ? r.active : 0, total: typeof r.total === "number" ? r.total : 0 };
+}
+
+function classCardFromWire(value: unknown): ExamClassCard | null {
+  const r = rec(value);
+  if (!s(r.class_id)) return null;
+  const counts = rec(r.counts);
+  return {
+    class_id: s(r.class_id),
+    class_name: s(r.class_name),
+    assessment_mode: r.assessment_mode === "grade_based" ? "grade_based" : "component_based",
+    school_type_id: optText(r.school_type_id),
+    school_type_name: optText(r.school_type_name),
+    counts: { ca: countFromWire(counts.ca), exam: countFromWire(counts.exam) },
+    exams: arr(r.exams).map(examFromWire),
+  };
+}
+
+/** The Exam List page: one card per class with its exams. */
+export function listExamClassCards(input: ExamClassCardsQuery): Promise<CrudResult<ExamClassCardsPage>> {
+  const query = new URLSearchParams({ academic_year_id: input.yearId, page: String(input.page), limit: String(input.limit) });
+  if (input.termId) query.set("term_id", input.termId);
+  if (input.classId) query.set("class_id", input.classId);
+  if (input.category) query.set("category", input.category);
+  if (input.q.trim()) query.set("q", input.q.trim());
+  return send("GET", `erp/exams/class-cards?${query}`, undefined, (data) => {
+    const r = rec(data);
+    return {
+      items: arr(r.items).map(classCardFromWire).filter((card): card is ExamClassCard => card !== null),
+      total: typeof r.total === "number" ? r.total : 0,
+      page: typeof r.page === "number" ? r.page : input.page,
+      limit: typeof r.limit === "number" ? r.limit : input.limit,
+      has_more: r.has_more === true,
+    };
+  });
 }
 
 export function getMarks(examId: string, subjectId: string, armId: string): Promise<CrudResult<MarksSheet>> {

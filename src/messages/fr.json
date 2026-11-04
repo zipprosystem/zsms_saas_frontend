@@ -189,6 +189,7 @@
       "addStudent": "Ajouter un élève"
     },
     "exams": {
+      "examList": "Liste des examens",
       "manageExamResult": "Gérer les résultats d'examen",
       "academicReport": "Bulletin académique",
       "gradeBook": "Carnet de notes",
@@ -315,7 +316,6 @@
       "progressGrades": { "name": "Niveaux de progression", "description": "Niveaux d'appréciation des comportements et, en britannique, de l'engagement, de l'attitude et de l'internat, avec descripteurs" },
       "psychomotorSkills": { "name": "Compétences psychomotrices", "description": "Les compétences appréciées sur les bulletins, par type d'école" },
       "affectiveDomain": { "name": "Domaine affectif", "description": "Les traits appréciés sur les bulletins (ex. Ponctualité), par type d'école" },
-      "examList": { "name": "Liste des examens", "description": "Les points d'examen de chaque trimestre, avec l'affichage du carnet de notes et de la valeur ajoutée sur les bulletins" },
       "assessmentTypes": { "name": "Types d'évaluation", "description": "Les composantes CC et examen qui forment les notes" },
       "resultTemplates": { "name": "Modèles de résultats" },
       "idCardTemplates": { "name": "Modèles de carte d'identité" },
@@ -724,28 +724,6 @@
         "confirmDelete": { "title": "Supprimer le trait ?", "message": "Supprimer {name} de la liste {schoolType} ?" },
         "toast": { "created": "Trait ajouté", "updated": "Trait mis à jour", "deleted": "Trait supprimé" }
       }
-    },
-    "examList": {
-      "title": "Liste des examens",
-      "subtitle": "Les points d'examen britanniques créés pour chaque trimestre (1A, 1B…). Choisissez ce que chaque point affiche sur les bulletins.",
-      "year": "Année scolaire",
-      "term": "Trimestre",
-      "help": "Décocher masque seulement la valeur sur les bulletins et le tableau de progression — rien n'est supprimé et les résultats ne changent pas. Un bulletin affiche la valeur ajoutée si son propre point l'affiche ; dans la progression, un trimestre suit son dernier point.",
-      "caption": "Points d'examen et leur affichage sur les bulletins",
-      "columns": {
-        "point": "Point",
-        "report": "Bulletin",
-        "closes": "Fin de saisie",
-        "showGradeBook": "Afficher le carnet de notes",
-        "showVa": "Afficher la valeur ajoutée (VA)"
-      },
-      "noCutoff": "Pas de date limite",
-      "loading": "Chargement des points d'examen…",
-      "loadFailed": "Impossible de charger les points d'examen. Actualisez pour réessayer.",
-      "empty": "Aucun point d'examen britannique pour ce trimestre.",
-      "saved": "{name} mis à jour",
-      "saveFailed": "Impossible d'enregistrer la modification. Réessayez.",
-      "adminOnly": "Seul un administrateur peut gérer la liste des examens. Passez le sélecteur « agir en tant que » (Examen › Résultats) sur Admin pour tester cet écran."
     },
     "progressGrades": {
       "title": "Niveaux de progression",
@@ -3255,7 +3233,52 @@
       "broadSheet": "Relevé général",
       "reports": "Rapports",
       "reportProgression": "Progression des bulletins",
-      "cutoff": "Gestion des seuils"
+      "cutoff": "Gestion des seuils",
+      "ace": "ACE"
+    },
+    "list": {
+      "title": "Liste/Calendrier des examens",
+      "searchPlaceholder": "Rechercher une classe ou un trimestre",
+      "filters": {
+        "session": "Session",
+        "term": "Trimestre",
+        "allTerms": "Tous les trimestres",
+        "class": "Classe",
+        "allClasses": "Toutes les classes",
+        "examType": "Type d'examen",
+        "allTypes": "Tous les types"
+      },
+      "category": {
+        "exam": "Examen",
+        "ca": "CC / Mi-trimestre"
+      },
+      "status": {
+        "active": "Actif",
+        "draft": "Brouillon"
+      },
+      "count": {
+        "ca": "CC : {n}",
+        "exam": "Examen : {n}"
+      },
+      "draftName": "{name} (brouillon)",
+      "closes": "saisie jusqu'au {date}",
+      "noSchoolType": "Aucun type d'établissement",
+      "noExams": "Aucun examen pour ce filtre.",
+      "chipsLabel": "Examens de {name}",
+      "loading": "Chargement des examens…",
+      "loadFailed": "Impossible de charger la liste des examens. Actualisez pour réessayer.",
+      "empty": "Aucune classe ne correspond à ces filtres.",
+      "adminOnly": "Seul un administrateur peut gérer la liste des examens. Passez le sélecteur « agir en tant que » (Examen › Résultats) sur Admin pour tester cet écran.",
+      "export": {
+        "class": "Classe",
+        "schoolType": "Type d'établissement",
+        "term": "Trimestre",
+        "examTitle": "Titre de l'examen",
+        "category": "Type d'examen",
+        "reportType": "Type de bulletin",
+        "status": "Statut",
+        "closes": "Fin de saisie"
+      }
     },
     "marks": {
       "title": "Gérer les résultats d'examen",

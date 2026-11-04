@@ -148,7 +148,6 @@ export function useExamEntryFilters(mode: AssessmentMode | null, { withExam = tr
   const allClasses = options?.classes ?? [];
   const classes = allClasses.filter((cls) => !mode || !cls.assessment_mode || cls.assessment_mode === mode);
   const classMode = classes.find((cls) => cls.id === pick(classes, selection.classId))?.assessment_mode ?? null;
-  const examMode = mode ?? classMode ?? "component_based";
   const classId = pick(classes, selection.classId);
   const arms = classes.find((cls) => cls.id === classId)?.arms ?? [];
   const armId = pick(arms, selection.armId);
@@ -159,10 +158,11 @@ export function useExamEntryFilters(mode: AssessmentMode | null, { withExam = tr
     .map((subject) => ({ id: subject.subject_id, name: subject.subject_name }));
   const subjectId = pick(subjects, selection.subjectId);
 
+  // The class's ACTIVE exams on the Exam List — not listed (or still a draft) = not scoreable.
   const examsQuery = useQuery({
-    queryKey: examQueryKeys.exams(yearId, termId, examMode),
-    queryFn: () => listExams(yearId, termId, examMode).then(throwIfTransient),
-    enabled: withExam && !!yearId && !!termId,
+    queryKey: examQueryKeys.exams(yearId, termId, classId),
+    queryFn: () => listExams(yearId, termId, classId).then(throwIfTransient),
+    enabled: withExam && !!yearId && !!termId && !!classId,
     staleTime: STRUCTURAL_STALE_TIME_MS,
   });
   const exams = withExam && examsQuery.data?.ok ? examsQuery.data.data : [];

@@ -21,7 +21,7 @@ import type {
 import { seedTerms, termNumber, yearOfTerm } from "@/lib/exam/mock/examMockSeeds";
 import { readGradeMark, seededBaselines } from "@/lib/exam/mock/examMockStore";
 import { pointGradeBook } from "@/lib/exam/mock/gradeBookMock";
-import { classAverage, compute, RANKING_RULES, termPoints, viewerFor, type Computed, type ComputedRow } from "@/lib/exam/mock/examResultsMock";
+import { classAverage, compute, RANKING_RULES, viewerFor, type Computed, type ComputedRow } from "@/lib/exam/mock/examResultsMock";
 
 /**
  * MOCK Broad Sheet (Exam Stage 2b) — contract in broadsheet/broadsheetApi.ts.
@@ -271,10 +271,10 @@ export async function getProgressionBroadsheet(query: URLSearchParams): Promise<
     name: term.name,
     number: termNumber(term.id),
     included: termNumber(term.id) <= termNumber(termId),
-    points: termPoints(term.id, "grade_based").map((exam) => ({ id: exam.id, name: exam.name })),
+    points: computed.points(term.id).map((exam) => ({ id: exam.id, name: exam.name })),
     // On-report switches (Exam List): GB shows if any point shows it; VA follows the term's last point.
-    show_grade_book: termPoints(term.id, "grade_based").some((exam) => exam.show_grade_book),
-    show_va: termPoints(term.id, "grade_based").at(-1)?.show_va ?? true,
+    show_grade_book: computed.points(term.id).some((exam) => exam.show_grade_book),
+    show_va: computed.points(term.id).at(-1)?.show_va ?? true,
   }));
   const included = terms.filter((term) => term.included);
   // One engine run per included term (CAG / VA); a student absent from a run wasn't in the class then.
@@ -308,7 +308,7 @@ export async function getProgressionBroadsheet(query: URLSearchParams): Promise<
         }
         const points = Object.fromEntries(
           term.points.map((point) => {
-            const exam = termPoints(term.id, "grade_based").find((item) => item.id === point.id);
+            const exam = computed.points(term.id).find((item) => item.id === point.id);
             const mark = exam && structure ? readGradeMark(exam, id, armId, row.student.id, structure) : null;
             return [point.id, (structure && mark?.component_scores[structure.attainment.id]) || null];
           }),
@@ -316,7 +316,7 @@ export async function getProgressionBroadsheet(query: URLSearchParams): Promise<
         // The term's Grade Book: its latest point that has one (B, else A), from the Grade Book entry page;
         // a point whose show_grade_book is off doesn't count.
         const gb =
-          [...termPoints(term.id, "grade_based")]
+          [...computed.points(term.id)]
             .reverse()
             .filter((exam) => exam.show_grade_book)
             .map((exam) => pointGradeBook(exam, id, armId, row.student.id)?.total ?? null)

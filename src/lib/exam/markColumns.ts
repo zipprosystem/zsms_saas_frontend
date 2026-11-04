@@ -1,5 +1,5 @@
 import { componentContribution, round2, type AssessmentComponent, type AssessmentStructure } from "@/lib/setup/assessmentConfiguration/assessmentStructure";
-import type { ComponentScores, ExamKind } from "@/lib/exam/examTypes";
+import type { ComponentScores, Exam, ExamKind } from "@/lib/exam/examTypes";
 
 /**
  * Turns an assessment structure (Stage 1a) into the marks grid's input
@@ -36,6 +36,17 @@ export function buildMarkColumns(structure: AssessmentStructure, kind: ExamKind)
             hasTotal: true,
           },
     );
+}
+
+/**
+ * An exam's own columns: its category's components, cut down to the
+ * components it covers (exam.component_ids — General exams cover one, e.g.
+ * CA 1). null component_ids = the whole category.
+ */
+export function examMarkColumns(structure: AssessmentStructure, exam: Pick<Exam, "kind" | "component_ids">): MarkColumnGroup[] {
+  if (!exam.kind) return [];
+  const groups = buildMarkColumns(structure, exam.kind);
+  return exam.component_ids ? groups.filter((group) => exam.component_ids?.includes(group.component.id)) : groups;
 }
 
 /** A Grade Book structure's columns: every component (no CA/Exam split), totalling 100. */

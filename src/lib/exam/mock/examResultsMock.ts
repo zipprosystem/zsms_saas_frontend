@@ -1,5 +1,5 @@
 import type { WireResponse } from "@/lib/setup/assessmentConfiguration/templateCatalog";
-import { mockExams } from "@/lib/exam/mock/examListMock";
+import { examIndex } from "@/lib/exam/mock/examListMock";
 import type { AssessmentMode, AssessmentStructure } from "@/lib/setup/assessmentConfiguration/assessmentStructure";
 import { round2 } from "@/lib/setup/assessmentConfiguration/assessmentStructure";
 import type { Exam, GradeBasedStructure, ScaleLevel } from "@/lib/exam/examTypes";
@@ -147,7 +147,12 @@ export type Computed = {
   columns: ResultSubjectColumn[];
   rows: ComputedRow[];
   rankedCount: number;
+  /** The class's ACTIVE exams for a term (Exam List order: CA before Exam / A before B). */
+  points: PointsOf;
 };
+
+/** A class's scoreable exams for a term. */
+export type PointsOf = (termId: string) => Exam[];
 
 /** This term and the earlier terms of the same academic year, oldest first. */
 export function termsUpTo(termId: string): string[] {
@@ -157,9 +162,6 @@ export function termsUpTo(termId: string): string[] {
     .filter((id) => termNumber(id) <= termNumber(termId));
 }
 
-export function termPoints(termId: string, mode: AssessmentMode): Exam[] {
-  return mockExams().filter((exam) => exam.term_id === termId && exam.assessment_mode === mode);
-}
 
 function emptyAggregate(status: StudentTermResult["status"]): StudentTermResult {
   return { status, grand_total: null, average: null, class_position: null, overall_grade: null, gpa: null, cumulative_average: null, subjects_counted: 0 };
@@ -169,13 +171,15 @@ function emptyAggregate(status: StudentTermResult["status"]): StudentTermResult 
 // General (component_based)
 // ---------------------------------------------------------------------------
 
-function generalTermTotal(structure: AssessmentStructure, termId: string, subjectId: string, armId: string, studentId: string) {
-  const points = termPoints(termId, "component_based");
-  const ca = points.find((exam) => exam.kind === "ca");
-  const exam = points.find((item) => item.kind === "exam");
+/** One category's scores for the term: every listed exam of that category (CA 1 + CA 2 …) merged — leaf ids don't collide. */
+function categoryScores(points: Exam[], kind: "ca" | "exam", structure: AssessmentStructure, subjectId: string, armId: string, studentId: string) {
+  return Object.assign({}, ...points.filter((exam) => exam.kind === kind).map((exam) => readScoreMark(exam, subjectId, armId, studentId, structure)?.component_scores ?? {}));
+}
+
+function generalTermTotal(structure: AssessmentStructure, points: Exam[], subjectId: string, armId: string, studentId: string) {
   return subjectTotal(structure, {
-    ca: ca ? (readScoreMark(ca, subjectId, armId, studentId, structure)?.component_scores ?? {}) : {},
-    exam: exam ? (readScoreMark(exam, subjectId, armId, studentId, structure)?.component_scores ?? {}) : {},
+    ca: categoryScores(points, "ca", structure, subjectId, armId, studentId),
+    exam: categoryScores(points, "exam", structure, subjectId, armId, studentId),
   });
 }
 
@@ -186,6 +190,7 @@ function computeGeneral(
   columns: ResultSubjectColumn[],
   structure: AssessmentStructure | null,
   scale: ScoreGradeScale | null,
+  pointsOf: PointsOf,
 ): ComputedRow[] {
   const earlierTerms = termsUpTo(termId);
   const rows: ComputedRow[] = students.map(({ student, index }) => {
@@ -201,11 +206,11 @@ function computeGeneral(
         subjects[id] = { ...EMPTY_SUBJECT, subject_id: id, status: "rng" };
         continue;
       }
-      const now = generalTermTotal(structure, termId, id, armId, student.id);
+      const now = generalTermTotal(structure, pointsOf(termId), id, armId, student.id);
       split[id] = { ca: now.ca, exam: now.exam };
       const band = bandFor(scale, now.total);
       const enrolledTerms = earlierTerms.filter((term) => enrolledForTerm(student.id, term));
-      const totals = enrolledTerms.map((term) => (term === termId ? now.total : generalTermTotal(structure, term, id, armId, student.id).total));
+      const totals = enrolledTerms.map((term) => (term === termId ? now.total : generalTermTotal(structure, pointsOf(term), id, armId, student.id).total));
       const cumulative = cumulativeAverage(totals, enrolledTerms.length);
       subjects[id] = {
         ...EMPTY_SUBJECT,
@@ -271,10 +276,9 @@ function computeGeneral(
 // British (grade_based)
 // ---------------------------------------------------------------------------
 
-function britishTerm(structure: GradeBasedStructure, termId: string, subjectId: string, armId: string, studentId: string, firstOnly = false) {
+function britishTerm(structure: GradeBasedStructure, points: Exam[], subjectId: string, armId: string, studentId: string, firstOnly = false) {
   const leafIds = [structure.attainment.id, ...structure.rating_domains.map((domain) => domain.id)];
   // Points in order (A then B): the CAG is the latest point's attainment.
-  const points = termPoints(termId, "grade_based");
   const entries = (firstOnly ? points.slice(0, 1) : points).map((exam) => readGradeMark(exam, subjectId, armId, studentId, structure));
   let filled = 0;
   let cag: string | null = null;
@@ -293,6 +297,7 @@ function computeBritish(
   columns: ResultSubjectColumn[],
   structure: GradeBasedStructure | null,
   levels: ScaleLevel[],
+  pointsOf: PointsOf,
   firstOnly = false,
 ): ComputedRow[] {
   const earlierTerms = termsUpTo(termId);
@@ -310,10 +315,10 @@ function computeBritish(
         subjects[id] = { ...EMPTY_SUBJECT, subject_id: id, status: "rng" };
         continue;
       }
-      const now = britishTerm(structure, termId, id, armId, student.id, firstOnly);
+      const now = britishTerm(structure, pointsOf(termId), id, armId, student.id, firstOnly);
       const mtg = scale ? seedReferences(rosterIndex.get(student.id) ?? 0, id, scale).mtg : null;
       const enrolledTerms = earlierTerms.filter((term) => enrolledForTerm(student.id, term));
-      const cags = enrolledTerms.map((term) => (term === termId ? now.cag : britishTerm(structure, term, id, armId, student.id, firstOnly).cag));
+      const cags = enrolledTerms.map((term) => (term === termId ? now.cag : britishTerm(structure, pointsOf(term), id, armId, student.id, firstOnly).cag));
       const cumulative = cumulativeAttainment(levels, cags);
       subjects[id] = {
         ...EMPTY_SUBJECT,
@@ -367,12 +372,14 @@ export async function compute(armId: string, termId: string, stage: ComputeStage
     .map((student, index) => ({ student, index }))
     .filter(({ student }) => enrolledForTerm(student.id, termId));
 
-  const base = { classId: cls.id, className: cls.name, armName: arm.name, termName: term.name, columns };
+  const exams = await examIndex();
+  const points: PointsOf = (forTerm) => exams.forClass(cls.id, forTerm);
+  const base = { classId: cls.id, className: cls.name, armName: arm.name, termName: term.name, columns, points };
   if (isGradeClass(cls.id)) {
     const structure = resolveGradeStructure(armId);
     const scale = structure ? resolveGradeScale(cls.id, SEED_GRADE_SCALES.find((item) => item.id === structure.attainment.grade_scale_id)) : undefined;
     const levels = scale?.grades ?? [];
-    const rows = computeBritish(armId, termId, students, columns, structure, levels, stage === "progress");
+    const rows = computeBritish(armId, termId, students, columns, structure, levels, points, stage === "progress");
     return {
       ...base,
       mode: "grade_based",
@@ -389,7 +396,7 @@ export async function compute(armId: string, termId: string, stage: ComputeStage
   const full = await resolveStructure(armId);
   const structure = stage === "progress" ? caOnly(full) : full;
   const scale = classGradeScale(cls.id);
-  const rows = computeGeneral(armId, termId, students, columns, structure, scale);
+  const rows = computeGeneral(armId, termId, students, columns, structure, scale, points);
   return {
     ...base,
     mode: "component_based",
