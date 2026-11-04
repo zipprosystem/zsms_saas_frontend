@@ -263,16 +263,6 @@ export const setupCategories: SetupConfig = [
         slug: "affective-domain",
         permission: NAV_PERMISSIONS.setupAffectiveDomain,
       },
-      // The exam points each term auto-creates, with their on-report Grade
-      // Book / VA switches (2026-11-03). Minimal first cut.
-      {
-        key: "examList",
-        name: "setup.items.examList.name",
-        description: "setup.items.examList.description",
-        done: false,
-        slug: "exam-list",
-        permission: NAV_PERMISSIONS.setupExamList,
-      },
       {
         key: "assessmentTypes",
         name: "setup.items.assessmentTypes.name",

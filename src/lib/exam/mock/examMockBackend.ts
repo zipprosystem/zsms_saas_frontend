@@ -1,6 +1,6 @@
 import { mockDelay } from "@/lib/onboarding/mockDelay";
 import type { HttpMethod, Transport, WireResponse } from "@/lib/setup/assessmentConfiguration/templateCatalog";
-import { allLeaves, buildMarkColumns, isScoreValid } from "@/lib/exam/markColumns";
+import { allLeaves, examMarkColumns, isScoreValid } from "@/lib/exam/markColumns";
 import {
   SUBJECT_REMARK_MAX,
   type ComponentScores,
@@ -54,7 +54,7 @@ import { assessmentStructuresService } from "@/lib/setup/assessmentConfiguration
 import type { GradeBookRef } from "@/lib/exam/examTypes";
 import type { AssessmentStructure } from "@/lib/setup/assessmentConfiguration/assessmentStructure";
 import { handleExamSettings } from "@/lib/exam/mock/examSettingsMock";
-import { handleExamUpdate, mockExams } from "@/lib/exam/mock/examListMock";
+import { examIndex, handleExamList } from "@/lib/exam/mock/examListMock";
 import { getStudentReport, postGenerateClassPdf } from "@/lib/exam/mock/reportPayloadMock";
 import { getBroadsheet, getCumulativeBroadsheet, getProgressionBroadsheet } from "@/lib/exam/mock/broadsheetMock";
 
@@ -300,24 +300,13 @@ function entryOptions(query: URLSearchParams): WireResponse {
   return ok(data);
 }
 
-function listExams(query: URLSearchParams): WireResponse {
-  const yearId = query.get("academic_year_id");
-  const termId = query.get("term_id");
-  const mode = query.get("assessment_mode");
-  const items = mockExams().filter(
-    (exam) =>
-      (!yearId || exam.academic_year_id === yearId) &&
-      (!termId || exam.term_id === termId) &&
-      (!mode || exam.assessment_mode === mode),
-  );
-  return ok({ items, total: items.length, page: 1, limit: Math.max(1, items.length), has_more: false });
-}
-
 type SheetContext = { exam: Exam; subjectId: string; armId: string };
 
-function sheetContext(examId: string, subjectId: string, armId: string): SheetContext | WireResponse {
-  const exam = mockExams().find((item) => item.id === examId);
+async function sheetContext(examId: string, subjectId: string, armId: string): Promise<SheetContext | WireResponse> {
+  const exam = (await examIndex()).byId(examId);
   if (!exam) return fail(404, "EXAM_NOT_FOUND", "Exam not found");
+  // Not listed as active = not scoreable (a draft finishes its Exam List wizard first).
+  if (exam.status !== "active") return fail(409, "EXAM_NOT_SCOREABLE", `${exam.name} is still a draft on the Exam List.`);
   if (!subjectId || !armId) return fail(422, "VALIDATION_ERROR", "subject_id and class_arm_id are required");
   if (!SEED_ARM_SUBJECTS[armId]?.some((offer) => offer.subject_id === subjectId)) {
     return fail(404, "SUBJECT_NOT_OFFERED", "This subject isn't offered to that class-arm");
@@ -326,6 +315,7 @@ function sheetContext(examId: string, subjectId: string, armId: string): SheetCo
     return fail(403, "OUT_OF_SCOPE", "You aren't assigned to this subject for this class-arm.");
   }
   const classId = classOfArm(armId);
+  if (exam.class_id !== classId) return fail(409, "EXAM_CLASS_MISMATCH", `${exam.name} belongs to another class.`);
   const classMode = classId && isGradeClass(classId) ? "grade_based" : "component_based";
   if (exam.assessment_mode !== classMode) {
     return fail(409, "EXAM_MODE_MISMATCH", `${exam.name} is a ${exam.assessment_mode === "grade_based" ? "grade-based" : "score-based"} exam point; this class reports the other way.`);
@@ -362,7 +352,7 @@ async function buildSheet({ exam, subjectId, armId }: SheetContext): Promise<Sub
 }
 
 async function getMarks(examId: string, query: URLSearchParams): Promise<WireResponse> {
-  const context = sheetContext(examId, query.get("subject_id") ?? "", query.get("class_arm_id") ?? "");
+  const context = await sheetContext(examId, query.get("subject_id") ?? "", query.get("class_arm_id") ?? "");
   if ("status" in context) return context;
   if (resolveGradeStructure(context.armId)) return ok(buildGradeSheet(context));
   return ok(await buildSheet(context));
@@ -370,7 +360,7 @@ async function getMarks(examId: string, query: URLSearchParams): Promise<WireRes
 
 async function putMarks(examId: string, payload: unknown): Promise<WireResponse> {
   const body = record(payload);
-  const context = sheetContext(examId, typeof body.subject_id === "string" ? body.subject_id : "", typeof body.class_arm_id === "string" ? body.class_arm_id : "");
+  const context = await sheetContext(examId, typeof body.subject_id === "string" ? body.subject_id : "", typeof body.class_arm_id === "string" ? body.class_arm_id : "");
   if ("status" in context) return context;
   if (!entryOpen(context.exam)) {
     return fail(403, "ENTRY_CLOSED", `Marks entry for ${context.exam.name} closed on ${context.exam.entry_closes_on}.`);
@@ -379,7 +369,7 @@ async function putMarks(examId: string, payload: unknown): Promise<WireResponse>
 
   const structure = await resolveStructure(context.armId);
   if (!structure) return fail(409, "NO_ASSESSMENT_STRUCTURE", "No active assessment structure is in force for this class.");
-  const leaves = new Map(allLeaves(buildMarkColumns(structure, context.exam.kind ?? "exam")).map((leaf) => [leaf.id, leaf]));
+  const leaves = new Map(allLeaves(examMarkColumns(structure, context.exam)).map((leaf) => [leaf.id, leaf]));
   const roster = new Set(enrolledIn(context.armId, context.subjectId, context.exam.term_id).map((student) => student.id));
 
   if (!Array.isArray(body.rows)) return fail(422, "VALIDATION_ERROR", "rows must be an array");
@@ -440,7 +430,7 @@ function pointGradeBookRef(exam: Exam, subjectId: string, armId: string, student
 
 /** The context checks of the marks sheet, plus: a British point and an active Grade Book structure. */
 async function gradeBookContext(examId: string, subjectId: string, armId: string, gradeBookId: string): Promise<{ context: SheetContext; gradeBook: AssessmentStructure } | WireResponse> {
-  const context = sheetContext(examId, subjectId, armId);
+  const context = await sheetContext(examId, subjectId, armId);
   if ("status" in context) return context;
   if (context.exam.assessment_mode !== "grade_based") return fail(422, "WRONG_ASSESSMENT_MODE", "The Grade Book is for British (grade-based) classes and points.");
   const structures = await assessmentStructuresService.list();
@@ -527,10 +517,9 @@ async function putGradeBook(examId: string, payload: unknown): Promise<WireRespo
 }
 
 async function handle(method: HttpMethod, path: string, query: URLSearchParams, payload: unknown): Promise<WireResponse> {
-  if (path === "erp/exams" && method === "GET") return listExams(query);
   if (path === "erp/exams/entry-options" && method === "GET") return entryOptions(query);
-  const examUpdate = handleExamUpdate(method, path, payload);
-  if (examUpdate) return examUpdate;
+  const examList = await handleExamList(method, path, query, payload);
+  if (examList) return examList;
   if (path === "erp/broadsheets" && method === "GET") return getBroadsheet(query);
   if (path === "erp/broadsheets/cumulative" && method === "GET") return getCumulativeBroadsheet(query);
   if (path === "erp/broadsheets/progression" && method === "GET") return getProgressionBroadsheet(query);

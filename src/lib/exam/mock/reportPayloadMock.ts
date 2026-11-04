@@ -1,5 +1,5 @@
 import type { WireResponse } from "@/lib/setup/assessmentConfiguration/templateCatalog";
-import { buildMarkColumns, shownTotal } from "@/lib/exam/markColumns";
+import { buildMarkColumns, examMarkColumns, shownTotal } from "@/lib/exam/markColumns";
 import type { Exam } from "@/lib/exam/examTypes";
 import type { SubjectResult } from "@/lib/exam/results/resultsTypes";
 import type {
@@ -34,7 +34,7 @@ import { loadMockAssignments, mockReportLogoUrl } from "@/lib/setup/academicStru
 import { getSchoolSettings } from "@/lib/settings/settingsApi";
 import { pointGradeBook } from "@/lib/exam/mock/gradeBookMock";
 import type { ProgressGrade } from "@/lib/setup/assessmentConfiguration/progressGradesApi";
-import { armOfStudent, classAverage, compute, storedTraits, termPoints, viewerFor, type Computed, type ComputedRow } from "@/lib/exam/mock/examResultsMock";
+import { armOfStudent, classAverage, compute, storedTraits, viewerFor, type Computed, type ComputedRow } from "@/lib/exam/mock/examResultsMock";
 
 /**
  * MOCK report payload (reportPayload.ts has the contract) — built on read
@@ -154,7 +154,7 @@ function teacherOf(subjectId: string, armId: string): string | null {
 
 /** Default variant: Full once the term's second point (Exam / B) has any mark for the student, else Progress. */
 function defaultVariant(computed: Computed, armId: string, termId: string, studentId: string): ReportVariant {
-  const points = termPoints(termId, computed.mode);
+  const points = computed.points(termId);
   const second = points[points.length - 1];
   if (!second) return "progress";
   const subjects = computed.columns.map((column) => column.subject_id);
@@ -192,31 +192,35 @@ const REDACTED: Omit<ReportSubject, "name" | "teacher_name"> = {
   history: [],
 };
 
-function generalSubject(computed: Computed, result: SubjectResult, point: (kind: "ca" | "exam") => Exam | undefined, armId: string, studentId: string) {
+function generalSubject(computed: Computed, result: SubjectResult, pointsOf: (kind: "ca" | "exam") => Exam[], armId: string, studentId: string) {
   const structure = computed.structure;
   const kinds = computed.stage === "progress" ? (["ca"] as const) : (["ca", "exam"] as const);
   const components: ReportComponent[] = [];
   const totals: Record<"ca" | "exam", number | null> = { ca: null, exam: null };
   let comment: string | null = null;
   for (const kind of kinds) {
-    const exam = point(kind);
-    if (!structure || !exam) continue;
-    const mark = readScoreMark(exam, result.subject_id, armId, studentId, structure);
-    const scores = mark?.component_scores ?? {};
-    const groups = buildMarkColumns(structure, kind);
-    for (const group of groups) {
-      for (const leaf of group.leaves) {
-        const score = scores[leaf.id];
-        components.push({
-          label: group.hasTotal ? `${group.component.name}: ${leaf.name}` : leaf.name,
-          score: typeof score === "number" ? score : null,
-          max: leaf.max,
-          kind,
-        });
+    // Every listed exam of the category (CA 1, CA 2 …), each with its own components; the category total runs over them all.
+    const exams = pointsOf(kind);
+    if (!structure || exams.length === 0) continue;
+    const merged: Record<string, number | null> = {};
+    for (const exam of exams) {
+      const mark = readScoreMark(exam, result.subject_id, armId, studentId, structure);
+      const scores = mark?.component_scores ?? {};
+      Object.assign(merged, scores);
+      for (const group of examMarkColumns(structure, exam)) {
+        for (const leaf of group.leaves) {
+          const score = scores[leaf.id];
+          components.push({
+            label: group.hasTotal ? `${group.component.name}: ${leaf.name}` : leaf.name,
+            score: typeof score === "number" ? score : null,
+            max: leaf.max,
+            kind,
+          });
+        }
       }
+      if (kind === "exam") comment = mark?.subject_remark?.trim() || comment;
     }
-    totals[kind] = shownTotal(groups, scores).value;
-    if (kind === "exam") comment = mark?.subject_remark?.trim() || null;
+    totals[kind] = shownTotal(buildMarkColumns(structure, kind), merged).value;
   }
   return {
     components,
@@ -241,10 +245,10 @@ function generalSubject(computed: Computed, result: SubjectResult, point: (kind:
  * to this one — Term 1 → 1A,1B; Term 3 → 1A…3B. Points after the report
  * point (the term's B on a Progress report) stay listed but blank.
  */
-function britishReportPoints(termId: string): Exam[] {
+function britishReportPoints(computed: Computed, termId: string): Exam[] {
   return seedTerms(yearOfTerm(termId))
     .filter((term) => termNumber(term.id) <= termNumber(termId))
-    .flatMap((term) => termPoints(term.id, "grade_based"));
+    .flatMap((term) => computed.points(term.id));
 }
 
 /** Mean of the shown subjects' VA (engine values), 2 dp; null when none has one. */
@@ -352,10 +356,10 @@ function buildPayload(
   const viewer = viewerFor(armId);
   const visible = viewer.visible_subject_ids ? new Set(viewer.visible_subject_ids) : null;
   const general = computed.mode === "component_based";
-  const points = termPoints(termId, computed.mode);
-  const pointOf = (kind: "ca" | "exam") => points.find((exam) => exam.kind === kind);
+  const points = computed.points(termId);
+  const pointsOf = (kind: "ca" | "exam") => points.filter((exam) => exam.kind === kind);
   const reportPoint = computed.stage === "progress" ? points[0] : points[points.length - 1];
-  const britishPoints = general ? [] : britishReportPoints(termId);
+  const britishPoints = general ? [] : britishReportPoints(computed, termId);
   const currentIndex = general || !reportPoint ? -1 : britishPoints.findIndex((exam) => exam.id === reportPoint.id);
   const earlierRow = (run: EarlierRun) => run.computed.rows.find((item) => item.student.id === row.student.id);
 
@@ -384,7 +388,7 @@ function buildPayload(
     return [
       {
         ...base,
-        ...generalSubject(computed, result, pointOf, armId, row.student.id),
+        ...generalSubject(computed, result, pointsOf, armId, row.student.id),
         units: column.unit,
         class_highest: stats.highest,
         class_lowest: stats.lowest,
@@ -404,8 +408,11 @@ function buildPayload(
   const structure = computed.structure;
   const reportPoints: ReportPayload["meta"]["points"] = general
     ? (computed.stage === "progress" ? (["ca"] as const) : (["ca", "exam"] as const)).flatMap((kind) => {
-        const exam = pointOf(kind);
-        return exam ? [{ label: exam.name, kind, max: structure ? shownTotal(buildMarkColumns(structure, kind), {}).outOf : null, show_grade_book: true }] : [];
+        // One report point per category; CA 1 + CA 2 share the CA point (label lists them).
+        const exams = pointsOf(kind);
+        return exams.length > 0
+          ? [{ label: exams.map((exam) => exam.name).join(" + "), kind, max: structure ? shownTotal(buildMarkColumns(structure, kind), {}).outOf : null, show_grade_book: true }]
+          : [];
       })
     : britishPoints.map((exam) => ({ label: exam.name, kind: exam.report_variant ?? "progress", max: null, show_grade_book: exam.show_grade_book }));
 

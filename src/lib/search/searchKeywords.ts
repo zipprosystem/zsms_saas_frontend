@@ -14,7 +14,6 @@ export const SETUP_ITEM_KEYWORDS: Record<string, string[]> = {
   attainmentGrades: ["attainment", "attainment scale", "British grades", "GCSE", "KS3", "9-1", "grade weight", "point value", "value added", "VA", "pass mark"],
   progressGrades: ["progress grade", "rating scale", "rating levels", "traits", "psychomotor", "affective", "engagement", "learning behaviour", "boarding", "descriptors", "rating key"],
   psychomotorSkills: ["psychomotor", "skills", "traits", "handwriting", "sports", "games", "handling of tools", "verbal fluency"],
-  examList: ["exam list", "exam points", "1A", "1B", "grade book", "GB", "value added", "VA", "show on report"],
   affectiveDomain: ["affective", "affective traits", "traits", "behaviour", "punctuality", "leadership", "neatness", "attentiveness", "character"],
   classSubjects: ["core", "elective"],
   studentTermDetails: ["roll number", "roll no", "promotion", "class placement"],
@@ -49,6 +48,9 @@ export const SEARCH_VIEW_RESULTS_KEYWORDS = [
   "class teacher remarks",
   "head teacher remarks",
 ];
+
+/** Exam › List (per-class exams: CA / Exam, British 1A / 1B; create / edit). */
+export const SEARCH_EXAM_LIST_KEYWORDS = ["exam list", "exams", "exam schedule", "schedules", "create exam", "CA", "half term", "1A", "1B", "exam points", "draft exam", "gradebook", "tracking"];
 
 /** Exam › Broad Sheet › Broadsheet (General, one term: CA · Exam · Total per subject). */
 export const SEARCH_BROAD_SHEET_KEYWORDS = [

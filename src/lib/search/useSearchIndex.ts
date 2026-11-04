@@ -10,6 +10,7 @@ import {
   NAV_CHILD_KEYWORDS,
   SEARCH_ACADEMIC_REPORT_KEYWORDS,
   SEARCH_BROAD_SHEET_KEYWORDS,
+  SEARCH_EXAM_LIST_KEYWORDS,
   SEARCH_CUMULATIVE_BROADSHEET_KEYWORDS,
   SEARCH_GRADE_BOOK_KEYWORDS,
   SEARCH_PROGRESSION_KEYWORDS,
@@ -117,6 +118,16 @@ export function useSearchIndex(): SearchGroup[] {
       key: "exams",
       label: t("search.groups.exams"),
       entries: [
+        ...(canSeeNavEntry(NAV_PERMISSIONS.examList, granted)
+          ? [
+              {
+                id: "exams-list",
+                title: t("search.exams.examList"),
+                href: "/admin/academics/exam/list",
+                keywords: SEARCH_EXAM_LIST_KEYWORDS,
+              },
+            ]
+          : []),
         {
           id: "exams-manage-result",
           title: t("search.exams.manageExamResult"),

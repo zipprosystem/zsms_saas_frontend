@@ -16,7 +16,6 @@ import { ResultTemplatesScreen } from "@/components/setup/assessmentConfiguratio
 import { IdCardTemplatesScreen } from "@/components/setup/assessmentConfiguration/IdCardTemplatesScreen";
 import { AttainmentGradesScreen, GradesScreen } from "@/components/setup/assessmentConfiguration/GradesScreen";
 import { ProgressGradesScreen } from "@/components/setup/assessmentConfiguration/ProgressGradesScreen";
-import { ExamListScreen } from "@/components/setup/assessmentConfiguration/ExamListScreen";
 import { AffectiveDomainScreen, PsychomotorSkillsScreen } from "@/components/setup/assessmentConfiguration/TraitMastersScreen";
 
 /**
@@ -60,7 +59,6 @@ export const setupScreenRegistry: Record<string, ComponentType> = {
   // enrolled for them).
   "academic-structure/subject-enrolment": SubjectEnrolmentScreen,
   // Score-structure builder (Exam Stage 1a) — MOCK, see assessmentStructuresApi.ts.
-  "assessment-configuration/exam-list": ExamListScreen,
   "assessment-configuration/assessment-types": AssessmentTypesScreen,
   // Per-class grade bands (admin-gated) — read by the results engine. MOCK
   // on the exam module's transport, see gradesApi.ts.

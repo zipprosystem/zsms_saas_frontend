@@ -189,6 +189,7 @@
       "addStudent": "Add Student"
     },
     "exams": {
+      "examList": "Exam List",
       "manageExamResult": "Manage Exam Result",
       "academicReport": "Academic Report",
       "gradeBook": "Grade Book",
@@ -315,7 +316,6 @@
       "progressGrades": { "name": "Progress Grades", "description": "Rating levels for traits and British engagement, behaviour and boarding, with descriptors" },
       "psychomotorSkills": { "name": "Psychomotor Skills", "description": "The skills rated on report cards, per school type" },
       "affectiveDomain": { "name": "Affective Domain", "description": "The traits rated on report cards (e.g. Punctuality), per school type" },
-      "examList": { "name": "Exam List", "description": "Each term's exam points, with on-report Grade Book and Value Added switches" },
       "assessmentTypes": { "name": "Assessment Types", "description": "The CA and exam components scores are made of" },
       "resultTemplates": { "name": "Result Templates" },
       "idCardTemplates": { "name": "ID Card Templates" },
@@ -724,28 +724,6 @@
         "confirmDelete": { "title": "Delete trait?", "message": "Delete {name} from the {schoolType} list?" },
         "toast": { "created": "Trait added", "updated": "Trait updated", "deleted": "Trait deleted" }
       }
-    },
-    "examList": {
-      "title": "Exam List",
-      "subtitle": "The British exam points each term creates (1A, 1B…). Choose what each point shows on reports.",
-      "year": "Academic year",
-      "term": "Term",
-      "help": "Unticking only hides the figure on reports and the Progression broadsheet — nothing is deleted and results don't change. A report shows Value Added if its own point does; on Progression a term follows its last point.",
-      "caption": "Exam points and their on-report switches",
-      "columns": {
-        "point": "Point",
-        "report": "Report",
-        "closes": "Entry closes",
-        "showGradeBook": "Show Grade Book",
-        "showVa": "Show Value Added (VA)"
-      },
-      "noCutoff": "No cutoff",
-      "loading": "Loading exam points…",
-      "loadFailed": "Couldn't load the exam points. Refresh to try again.",
-      "empty": "No British exam points for this term.",
-      "saved": "{name} updated",
-      "saveFailed": "Couldn't save the change. Try again.",
-      "adminOnly": "Only an administrator can manage the Exam List. Switch the “acting as” picker (Exam › Results) to Admin to test this screen."
     },
     "progressGrades": {
       "title": "Progress Grades",
@@ -3247,7 +3225,52 @@
       "broadSheet": "Broad Sheet",
       "reports": "Reports",
       "reportProgression": "Report Progression",
-      "cutoff": "Cutoff Management"
+      "cutoff": "Cutoff Management",
+      "ace": "ACE"
+    },
+    "list": {
+      "title": "Exam List/Schedules",
+      "searchPlaceholder": "Search class or term",
+      "filters": {
+        "session": "Session",
+        "term": "Term",
+        "allTerms": "All terms",
+        "class": "Class",
+        "allClasses": "All classes",
+        "examType": "Exam type",
+        "allTypes": "All types"
+      },
+      "category": {
+        "exam": "Exam",
+        "ca": "CA / Half-Term"
+      },
+      "status": {
+        "active": "Active",
+        "draft": "Draft"
+      },
+      "count": {
+        "ca": "CA: {n}",
+        "exam": "Exam: {n}"
+      },
+      "draftName": "{name} (Draft)",
+      "closes": "entry closes {date}",
+      "noSchoolType": "No School Type",
+      "noExams": "No exams listed for this filter.",
+      "chipsLabel": "{name} exams",
+      "loading": "Loading exams…",
+      "loadFailed": "Couldn't load the exam list. Refresh to try again.",
+      "empty": "No classes match these filters.",
+      "adminOnly": "Only an administrator can manage the Exam List. Switch the “acting as” picker (Exam › Results) to Admin to test this screen.",
+      "export": {
+        "class": "Class",
+        "schoolType": "School Type",
+        "term": "Term",
+        "examTitle": "Exam Title",
+        "category": "Exam type",
+        "reportType": "Report type",
+        "status": "Status",
+        "closes": "Entry closes"
+      }
     },
     "marks": {
       "title": "Manage Exam Result",

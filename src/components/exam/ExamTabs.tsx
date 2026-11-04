@@ -4,15 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { EXAM_TABS, examTabHref } from "@/components/exam/examTabsConfig";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { canSeeNavEntry, readUserPermissions } from "@/lib/auth/navPermissions";
 
 /** Underlined text tabs (Figma: List / Results / Broad Sheet / …). Each tab is a route, so it survives reloads and deep links. */
 export function ExamTabs() {
   const t = useTranslations();
   const pathname = usePathname();
+  const { user } = useAuth();
+  const granted = readUserPermissions(user);
 
   return (
     <nav aria-label={t("exam.tabs.label")} className="-mx-1 flex items-center gap-1 overflow-x-auto border-b border-border px-1">
-      {EXAM_TABS.map((tab) => {
+      {EXAM_TABS.filter((tab) => canSeeNavEntry(tab.permission, granted)).map((tab) => {
         const href = examTabHref(tab.slug);
         const active = pathname === href || pathname.startsWith(`${href}/`);
         return (

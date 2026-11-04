@@ -39,34 +39,59 @@ export type ExamEntryOptions = {
  */
 export type ReportVariant = "progress" | "full";
 
+export type ExamStatus = "draft" | "active";
+
 /**
- * An exam point. Each term auto-creates exactly two per assessment mode;
- * names are school-editable. component_based points are framed CA / Exam
- * (`kind`); grade_based (British) points have no CA/Exam framing — they're
- * labelled A/B per term (1A, 1B, 2A…) and carry a `report_variant`.
+ * An exam on the Exam List (Academics › Exam › List). Exams are per CLASS
+ * (every arm of the class shares them) and per term. Each term
+ * auto-creates its exams with defaults (is_auto):
+ *   - General (component_based): one exam per component of the class's
+ *     assessment structure — CA 1, CA 2, Exam … — CA before Exam, named
+ *     after the component (`component_ids` = that one component).
+ *   - British (grade_based): points 1A (Progress) and 1B (Full) per term.
+ * An admin can create more and edit any. Only ACTIVE exams are scoreable
+ * (the entry screens' selectors list them); a manually created exam is a
+ * DRAFT until its wizard's Step 2 is completed.
  */
 export type Exam = {
   id: string;
+  /** Exam Title — the name the entry selectors show (General default: the component's name; British: 1A / 1B). */
   name: string;
   assessment_mode: AssessmentMode;
-  /** component_based only: which of the structure's components the point shows. null on grade_based points. */
+  /** component_based only: the category of the components this exam shows (= category). null on grade_based points. */
   kind: ExamKind | null;
+  /** Exam category: "exam" | "ca" (CA / Half-Term). British: 1A = ca, 1B = exam by default. */
+  category: ExamKind;
   /** grade_based only: which report this point produces. null on component_based points. */
   report_variant: ReportVariant | null;
   academic_year_id: string;
   term_id: string;
+  class_id: string;
+  /** component_based only: the assessment components this exam covers (one). null on grade_based points. */
+  component_ids: string[] | null;
+  /** Prints on the report under the school header (e.g. "First Term Final Examination"). null = not set. */
+  result_title: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  /** Duration in hours. null = not set. */
+  duration_hours: number | null;
+  /** The result-issue date (prints by the signature on the report). null = not set. */
+  report_date: string | null;
   /** Last day marks may be entered (cutoff). null = no cutoff. */
   entry_closes_on: string | null;
+  status: ExamStatus;
+  /** true = created automatically for the term (defaults); false = created by an admin. */
+  is_auto: boolean;
   /**
-   * grade_based only: whether this point's Grade Book shows (Academic Report
-   * GB column, report card, Progression). Default true; set on Setup ›
-   * Exam List. Display only — the Grade Book data is kept.
+   * grade_based only ("Gradebook" on the form): whether this point's Grade
+   * Book shows (Academic Report GB column, report card, Progression).
+   * Default true. Display only — the Grade Book data is kept.
    */
   show_grade_book: boolean;
   /**
-   * grade_based only: whether Value Added (CAG − MTG) shows. Default true;
-   * set on Setup › Exam List. A report reads its own point's flag; a
-   * Progression term reads its last point's. Display only.
+   * grade_based only ("Tracking" on the form): whether Value Added
+   * (CAG − MTG) shows. Default true. A report reads its own point's flag;
+   * a Progression term reads its last point's. Display only.
    */
   show_va: boolean;
 };
