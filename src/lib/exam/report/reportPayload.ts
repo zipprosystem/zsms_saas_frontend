@@ -85,6 +85,25 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *                  address / phone / email / website (phone, email,
  *                  website are additions): Settings only
  *                  (regional.address, identity.phone / email / website).
+ *       result_title, report_date,          (spec Phase 1b) the REPORT
+ *                  point's exam (Exam List): result_title = the heading
+ *                  printed directly under the school header (e.g. "First
+ *                  Term Final Examination"); report_date = the
+ *                  result-issue date (YYYY-MM-DD) printed by the
+ *                  signatures. null = not set -> the template prints
+ *                  nothing (no blank line, no fallback date).
+ *       signatures: { head_teacher, principal, class_teacher },
+ *                  (spec Phase 1b) each { name, signature_url } | null.
+ *                  head_teacher / principal = the class's School Type
+ *                  signatories for the ACTIVE academic session (Setup ›
+ *                  School Types); class_teacher = the arm's class teacher
+ *                  (form tutor). name = the staff member's full name;
+ *                  signature_url = the served URL of their HR profile
+ *                  signature (signature_file_id — resolved by the
+ *                  backend), null = none on the profile. null slot = no
+ *                  one selected / no class teacher. Templates show a
+ *                  signature only when signature_url is set (auto-hide,
+ *                  as §7.27): no name line, no blank space otherwise.
  *       student: { full_name, admission_no, class, arm, gender, dob,
  *                  photo_url, resumption_date },
  *                  from the student record: gender "male"|"female",
@@ -261,6 +280,9 @@ export type ReportSubject = {
   history: Array<{ label: string; attainment: string | null; ratings: Array<string | null>; grade_book: number | null }>;
 };
 
+/** One report signature: the staff member's name + their profile signature image (null = none on the profile). */
+export type ReportSignature = { name: string; signature_url: string | null };
+
 export type ReportRating = { rating: string | null; descriptor?: string | null };
 export type ReportTrait = { skill: string; rating: string | null; descriptor?: string | null };
 
@@ -291,6 +313,16 @@ export type ReportPayload = {
     website: string | null;
     motto: string | null;
     mission_statement: string | null;
+  };
+  /** The report point's exam Result Title (heading under the school header); null = not set (nothing printed). */
+  result_title: string | null;
+  /** The report point's exam Report Date (YYYY-MM-DD), printed by the signatures; null = not set (hidden). */
+  report_date: string | null;
+  /** null slot = nobody selected / no class teacher. A template shows a signature only when signature_url is set. */
+  signatures: {
+    head_teacher: ReportSignature | null;
+    principal: ReportSignature | null;
+    class_teacher: ReportSignature | null;
   };
   student: {
     full_name: string;

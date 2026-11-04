@@ -3,15 +3,18 @@
 import { uploadFile, type AttachedFile } from "@/lib/files/filesApi";
 import { useFileImageUrl } from "@/lib/files/useFileImageUrl";
 import type { CrudResult } from "@/lib/setup/crudTypes";
+import { SEED_YEARS } from "@/lib/exam/mock/examMockSeeds";
 
 /**
  * A School Type's template + report-logo assignments, and its optional
  * report identity overrides (school name on reports, motto, mission
  * statement — blank falls back to Settings › School Identity), and the
  * default for its classes' "auto-fill attainment from Grade Book" switch
- * (auto_fill_attainment_default, default false — backend field pending).
+ * (auto_fill_attainment_default, default false — backend field pending),
+ * and its report signatories: the Head Teacher and Principal (staff ids)
+ * for the ACTIVE academic session.
  *
- * SWAP FLAG. The backend's School Type PUT doesn't accept these eight
+ * SWAP FLAG. The backend's School Type PUT doesn't accept these ten
  * fields yet. Until it does (false), they live in a per-browser MOCK side-store
  * keyed by school_type_id, merged onto each School Type on read
  * (schoolTypesApi.ts) — the real School Type POST/PUT body is untouched.
@@ -43,6 +46,14 @@ export type SchoolTypeAssignments = {
    * on/off always wins. Default false.
    */
   auto_fill_attainment_default: boolean;
+  /**
+   * Report signatories (staff ids) for the ACTIVE academic session — the
+   * backend stores them per session and carries them into the next one
+   * (Muntajir); the frontend only ever reads/writes the active session's
+   * pair. null = none selected (the report hides that signature).
+   */
+  head_teacher_staff_id: string | null;
+  principal_staff_id: string | null;
 };
 
 export const EMPTY_ASSIGNMENTS: SchoolTypeAssignments = {
@@ -54,6 +65,8 @@ export const EMPTY_ASSIGNMENTS: SchoolTypeAssignments = {
   motto: null,
   mission_statement: null,
   auto_fill_attainment_default: false,
+  head_teacher_staff_id: null,
+  principal_staff_id: null,
 };
 
 export function assignmentsFromWire(record: Record<string, unknown>): SchoolTypeAssignments {
@@ -70,6 +83,8 @@ export function assignmentsFromWire(record: Record<string, unknown>): SchoolType
     motto: read("motto"),
     mission_statement: read("mission_statement"),
     auto_fill_attainment_default: record.auto_fill_attainment_default === true,
+    head_teacher_staff_id: read("head_teacher_staff_id"),
+    principal_staff_id: read("principal_staff_id"),
   };
 }
 
@@ -99,14 +114,38 @@ function writeJson(key: string, value: unknown): boolean {
   }
 }
 
+type Signatories = Pick<SchoolTypeAssignments, "head_teacher_staff_id" | "principal_staff_id">;
+/** Stored shape: the signatories are kept per academic session (only the active one is read or written). */
+type StoredAssignments = Omit<SchoolTypeAssignments, keyof Signatories> & { signatories_by_session?: Record<string, Signatories> };
+
+/**
+ * MOCK: the active academic session. The Setup academic-years API is
+ * unreachable under the dev bypass, so this uses the exam mock's current
+ * session — the same one the mock reports read. FLAGGED: the real backend
+ * resolves the active session itself.
+ */
+export function mockActiveSessionId(): string {
+  return SEED_YEARS.find((year) => year.is_current)?.id ?? SEED_YEARS[0]?.id ?? "";
+}
+
 export function loadMockAssignments(schoolTypeId: string): SchoolTypeAssignments {
-  const all = readJson<Record<string, SchoolTypeAssignments>>(ASSIGNMENTS_KEY) ?? {};
-  return { ...EMPTY_ASSIGNMENTS, ...all[schoolTypeId] };
+  const all = readJson<Record<string, StoredAssignments>>(ASSIGNMENTS_KEY) ?? {};
+  const { signatories_by_session: bySession, ...stored } = all[schoolTypeId] ?? {};
+  const signatories = bySession?.[mockActiveSessionId()];
+  return {
+    ...EMPTY_ASSIGNMENTS,
+    ...stored,
+    head_teacher_staff_id: signatories?.head_teacher_staff_id ?? null,
+    principal_staff_id: signatories?.principal_staff_id ?? null,
+  };
 }
 
 export function saveMockAssignments(schoolTypeId: string, assignments: SchoolTypeAssignments): void {
-  const all = readJson<Record<string, SchoolTypeAssignments>>(ASSIGNMENTS_KEY) ?? {};
-  writeJson(ASSIGNMENTS_KEY, { ...all, [schoolTypeId]: assignments });
+  const all = readJson<Record<string, StoredAssignments>>(ASSIGNMENTS_KEY) ?? {};
+  const { head_teacher_staff_id, principal_staff_id, ...rest } = assignments;
+  // Other sessions' signatories are kept; only the active session's pair is replaced.
+  const bySession = { ...all[schoolTypeId]?.signatories_by_session, [mockActiveSessionId()]: { head_teacher_staff_id, principal_staff_id } };
+  writeJson(ASSIGNMENTS_KEY, { ...all, [schoolTypeId]: { ...rest, signatories_by_session: bySession } });
 }
 
 /** MOCK: a School Type's auto-fill default (false for no type / nothing saved). Read by the exam settings mock. */

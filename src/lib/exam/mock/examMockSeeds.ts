@@ -397,6 +397,52 @@ export const SEED_SECTIONAL_HEADS: Array<{ id: string; name: string; class_ids: 
 ];
 
 /**
+ * Senior staff with no teaching load — the Head Teacher / Principal
+ * candidates on Setup › School Types (report signatures). MOCK stand-ins
+ * for HR staff, used while HR is unreachable (dev bypass).
+ */
+export const SEED_SENIOR_STAFF: Array<{ id: string; name: string }> = [
+  { id: "stf-adebayo", name: "Folasade Adebayo" },
+  { id: "stf-ibekwe", name: "Ruth Ibekwe" },
+];
+
+/**
+ * A mock handwritten signature (SVG data URL) — a deterministic scribble
+ * from the name, so each staff's looks different and stays the same.
+ * Stands in for the served URL of an HR profile's signature file.
+ */
+function mockSignature(name: string): string {
+  const codes = Array.from(name).map((char) => char.charCodeAt(0));
+  let x = 8;
+  const points = codes.map((code, index) => {
+    x += 7 + (code % 5);
+    const y = 30 + ((code * (index + 3)) % 22) - 11;
+    return `${x},${y}`;
+  });
+  const path = `M8,32 Q${points.join(" T")}`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${x + 16} 60"><path d="${path}" fill="none" stroke="midnightblue" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+/**
+ * Staff signature images (the HR profile's signature, as a served URL).
+ * Only some staff have one, so the reports' auto-hide shows: Tunde Bello
+ * (SS 1 Science's class teacher) and Musa Sani have none.
+ */
+export const SEED_STAFF_SIGNATURES: Record<string, string> = {
+  "stf-adebayo": mockSignature("Folasade Adebayo"),
+  "stf-ibekwe": mockSignature("Ruth Ibekwe"),
+  "stf-eze": mockSignature("Grace Eze"),
+  "stf-okafor": mockSignature("Adaeze Okafor"),
+};
+
+/** Every mock staff member (teachers, sectional heads, senior staff) with their signature image; null = none on the profile. */
+export function seedStaffRoster(): Array<{ id: string; name: string; signature_url: string | null }> {
+  const people = [...SEED_SENIOR_STAFF, ...SEED_TEACHERS, ...SEED_SECTIONAL_HEADS];
+  return people.map((person) => ({ id: person.id, name: person.name, signature_url: SEED_STAFF_SIGNATURES[person.id] ?? null }));
+}
+
+/**
  * Default entry cutoffs per term: [CA / first point, Exam / second point].
  * The current year's first term is open; last year's are closed.
  * Auto-created exams (examListMock.ts) take these.

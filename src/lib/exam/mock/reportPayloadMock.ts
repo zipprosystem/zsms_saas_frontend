@@ -18,6 +18,7 @@ import {
   SEED_TEACHERS,
   SEED_YEARS,
   enrolledForTerm,
+  seedStaffRoster,
   seedStudentProfile,
   seedTerms,
   termNumber,
@@ -44,6 +45,13 @@ import { armOfStudent, classAverage, compute, storedTraits, viewerFor, type Comp
  *
  *   GET  erp/results/:student_id/report?term_id=&variant=
  *   POST erp/report-cards/generate       (stub: the class PDF is a server job)
+ *
+ * Signatures (Phase 1b): head teacher / principal = the class's School
+ * Type signatories (Setup › School Types side-store, active session);
+ * class teacher = the arm's class teacher. Names + signature images come
+ * from the exam mock's staff roster (seedStaffRoster) — the real backend
+ * resolves HR staff and their signature_file_id. Result Title / Report
+ * Date come from the report point's exam (Exam List).
  *
  * MOCK-ONLY data, FLAGGED: the school block, term dates and each class's
  * selected template are seeds here (the real ones come from the tenant's
@@ -327,6 +335,23 @@ function formTutor(armId: string, comment: string | null): ReportPayload["remark
   return name || comment ? { name, comment } : null;
 }
 
+/** One report signature from the mock staff roster; null = no one selected / unknown staff. */
+function signatureOf(staffId: string | null | undefined): ReportPayload["signatures"]["head_teacher"] {
+  if (!staffId) return null;
+  const staff = seedStaffRoster().find((person) => person.id === staffId);
+  return staff ? { name: staff.name, signature_url: staff.signature_url } : null;
+}
+
+/** The three report signatures: the School Type's signatories (active session) + the arm's class teacher. */
+function signatures(schoolTypeId: string | null, armId: string): ReportPayload["signatures"] {
+  const type = schoolTypeId ? loadMockAssignments(schoolTypeId) : null;
+  return {
+    head_teacher: signatureOf(type?.head_teacher_staff_id),
+    principal: signatureOf(type?.principal_staff_id),
+    class_teacher: signatureOf(SEED_CLASS_TEACHERS[armId]),
+  };
+}
+
 /** Earlier terms of the year, each with the engine's full-term run for the arm (General reports' earlier-term figures). */
 type EarlierRun = { number: number; name: string; computed: Computed };
 
@@ -352,6 +377,7 @@ function buildPayload(
   earlier: EarlierRun[],
   traitLists: TraitLists,
   school: ReportPayload["school"],
+  signed: ReportPayload["signatures"],
 ): ReportPayload {
   const viewer = viewerFor(armId);
   const visible = viewer.visible_subject_ids ? new Set(viewer.visible_subject_ids) : null;
@@ -444,6 +470,10 @@ function buildPayload(
       attainment_display: loadExamSettings().attainment_display,
     },
     school,
+    // The report point's exam (Exam List): heading + issue date. Blank -> null (the template prints nothing).
+    result_title: present(reportPoint?.result_title),
+    report_date: present(reportPoint?.report_date),
+    signatures: signed,
     student: {
       full_name: row.student.name,
       admission_no: row.student.admission_no,
@@ -544,7 +574,7 @@ export async function getStudentReport(studentId: string, query: URLSearchParams
     psychomotor: (await reportTraitList("psychomotor", schoolType)) ?? SEED_PSYCHOMOTOR,
     affective: (await reportTraitList("affective", schoolType)) ?? SEED_AFFECTIVE,
   };
-    return ok(buildPayload(computed, row, armId, termId, await selectedTemplate(computed.classId, computed.stage), earlier, traitLists, await schoolBlock(schoolType)));
+    return ok(buildPayload(computed, row, armId, termId, await selectedTemplate(computed.classId, computed.stage), earlier, traitLists, await schoolBlock(schoolType), signatures(schoolType, armId)));
 }
 
 /** Class PDF stub: the batch render is a backend job (async, cached) — the mock only answers "not available here". */
