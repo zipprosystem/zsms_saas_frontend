@@ -482,6 +482,15 @@
           "placeholder": "ex. Nous offrons une excellente éducation qui inspire chaque élève…",
           "helper": "Imprimée sur la couverture du bulletin britannique. Laissez vide pour utiliser la déclaration de mission définie dans les Paramètres."
         },
+        "signatories": {
+          "legend": "Signatures des bulletins",
+          "helper": "Qui signe les bulletins de ce type d'établissement pour la session en cours. Chaque signature provient du profil du membre du personnel ; sans image de signature, ou si personne n'est choisi, cette signature n'apparaît pas sur le bulletin.",
+          "headTeacher": "Directeur d'école (facultatif)",
+          "principal": "Proviseur (facultatif)",
+          "none": "Aucun",
+          "notListed": "Un membre du personnel qui n'est plus actif",
+          "loadError": "Impossible de charger le personnel."
+        },
         "autoFillAttainmentDefault": {
           "label": "Remplir le niveau à partir du carnet de notes (par défaut pour les classes de ce type)",
           "helper": "S'applique à chaque classe britannique de ce type sans réglage propre. Une classe peut toujours être activée ou désactivée dans Configuration des évaluations › Mentions de niveau."

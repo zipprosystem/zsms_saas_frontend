@@ -482,6 +482,15 @@
           "placeholder": "e.g. We provide an excellent education that inspires every learner…",
           "helper": "Printed on the British report cover. Leave blank to use the mission statement from Settings."
         },
+        "signatories": {
+          "legend": "Report signatures",
+          "helper": "Who signs this school type's report cards in the current session. Each signature prints from the staff member's profile; a staff member with no signature image, or no one selected, leaves that signature off the report.",
+          "headTeacher": "Head Teacher (optional)",
+          "principal": "Principal (optional)",
+          "none": "None",
+          "notListed": "A staff member who is no longer active",
+          "loadError": "Couldn't load staff."
+        },
         "autoFillAttainmentDefault": {
           "label": "Auto-fill attainment from Grade Book (default for this type's classes)",
           "helper": "Applies to every British class of this type that has no setting of its own. A class can still be switched on or off under Assessment Configuration › Attainment Grades."

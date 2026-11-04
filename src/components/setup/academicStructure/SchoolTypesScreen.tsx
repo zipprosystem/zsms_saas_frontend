@@ -22,6 +22,11 @@ import {
   type SchoolTypeInput,
 } from "@/lib/setup/academicStructure/schoolTypesApi";
 import { awardBodiesService, type AwardBody } from "@/lib/setup/academicStructure/awardBodiesApi";
+import {
+  listSignatoryOptions,
+  signatoryOptionsQueryKey,
+  type SignatoryOption,
+} from "@/lib/setup/academicStructure/schoolTypeSignatories";
 
 type FormState = {
   name: string;
@@ -35,6 +40,8 @@ type FormState = {
   motto: string;
   mission_statement: string;
   auto_fill_attainment_default: boolean;
+  head_teacher_staff_id: string;
+  principal_staff_id: string;
 };
 
 const EMPTY_FORM: FormState = {
@@ -49,6 +56,8 @@ const EMPTY_FORM: FormState = {
   motto: "",
   mission_statement: "",
   auto_fill_attainment_default: false,
+  head_teacher_staff_id: "",
+  principal_staff_id: "",
 };
 
 type AssignableTemplate = { id: string; name: string; status: TemplateStatus };
@@ -76,6 +85,8 @@ function toFormInput(data: FormState): SchoolTypeInput {
     motto: data.motto.trim() || null,
     mission_statement: data.mission_statement.trim() || null,
     auto_fill_attainment_default: data.auto_fill_attainment_default,
+    head_teacher_staff_id: data.head_teacher_staff_id || null,
+    principal_staff_id: data.principal_staff_id || null,
   };
 }
 
@@ -110,6 +121,30 @@ export function SchoolTypesScreen() {
   const resultTemplates = useTemplateList(resultTemplatesService);
   const studentCards = useTemplateList(idCardTemplatesServices.student);
   const staffCards = useTemplateList(idCardTemplatesServices.staff);
+
+  // Report signatories: picked from the school's active staff.
+  const signatoriesQuery = useQuery({
+    queryKey: signatoryOptionsQueryKey,
+    queryFn: () => listSignatoryOptions().then(throwIfTransient),
+    staleTime: STRUCTURAL_STALE_TIME_MS,
+  });
+  const signatories: SignatoryOption[] = signatoriesQuery.data?.ok ? signatoriesQuery.data.data : [];
+  const signatoriesFailed = !signatoriesQuery.isPending && !signatoriesQuery.data?.ok;
+  // A saved choice who's no longer listed (left, or not loaded) stays selectable so opening the form never clears it.
+  const signatoryOptions = (selectedId: string) => [
+    ...(selectedId && !signatories.some((staff) => staff.id === selectedId)
+      ? [
+          <option key={selectedId} value={selectedId}>
+            {t("setup.schoolTypes.fields.signatories.notListed")}
+          </option>,
+        ]
+      : []),
+    ...signatories.map((staff) => (
+      <option key={staff.id} value={staff.id}>
+        {staff.name}
+      </option>
+    )),
+  ];
 
   // Only `available` templates are assignable. A current assignment that
   // has since been archived stays listed (marked) so opening the form
@@ -179,6 +214,8 @@ export function SchoolTypesScreen() {
         motto: row.motto ?? "",
         mission_statement: row.mission_statement ?? "",
         auto_fill_attainment_default: row.auto_fill_attainment_default,
+        head_teacher_staff_id: row.head_teacher_staff_id ?? "",
+        principal_staff_id: row.principal_staff_id ?? "",
       })}
       validate={(data) => {
         const errors: Record<string, string> = {};
@@ -317,6 +354,34 @@ export function SchoolTypesScreen() {
             />
             <p className="text-xs text-text-muted">{t("setup.schoolTypes.fields.reportMissionStatement.helper")}</p>
           </div>
+
+          <fieldset className="flex flex-col gap-3">
+            <legend className="text-sm font-medium text-text-primary">{t("setup.schoolTypes.fields.signatories.legend")}</legend>
+            <p className="-mt-1 text-xs text-text-muted">{t("setup.schoolTypes.fields.signatories.helper")}</p>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <SelectField
+                id="school-type-head-teacher"
+                label={t("setup.schoolTypes.fields.signatories.headTeacher")}
+                value={data.head_teacher_staff_id}
+                onChange={(event) => onChange({ head_teacher_staff_id: event.target.value })}
+                disabled={signatoriesQuery.isPending}
+              >
+                <option value="">{t("setup.schoolTypes.fields.signatories.none")}</option>
+                {signatoryOptions(data.head_teacher_staff_id)}
+              </SelectField>
+              <SelectField
+                id="school-type-principal"
+                label={t("setup.schoolTypes.fields.signatories.principal")}
+                value={data.principal_staff_id}
+                onChange={(event) => onChange({ principal_staff_id: event.target.value })}
+                disabled={signatoriesQuery.isPending}
+              >
+                <option value="">{t("setup.schoolTypes.fields.signatories.none")}</option>
+                {signatoryOptions(data.principal_staff_id)}
+              </SelectField>
+            </div>
+            {signatoriesFailed ? <p className="text-xs text-error">{t("setup.schoolTypes.fields.signatories.loadError")}</p> : null}
+          </fieldset>
 
           <ReportLogoUploadField
             value={data.report_logo_file_id}
