@@ -42,6 +42,18 @@ export type ReportVariant = "progress" | "full";
 export type ExamStatus = "draft" | "active";
 
 /**
+ * One subject's paper on the exam timetable (wizard Step 2): when the class
+ * sits it. Class-wise (every arm). Times HH:MM. A subject with no entry
+ * isn't scheduled.
+ */
+export type ExamScheduleEntry = {
+  subject_id: string;
+  date: string | null;
+  start_time: string | null;
+  end_time: string | null;
+};
+
+/**
  * An exam on the Exam List (Academics › Exam › List). Exams are per CLASS
  * (every arm of the class shares them) and per term. Each term
  * auto-creates its exams with defaults (is_auto):
@@ -73,13 +85,15 @@ export type Exam = {
   result_title: string | null;
   start_date: string | null;
   end_date: string | null;
-  /** Duration in hours. null = not set. */
-  duration_hours: number | null;
+  /** Duration of each paper, in minutes (60 = 1 hr). Auto Generate needs it. null = not set. */
+  duration_minutes: number | null;
   /** The result-issue date (prints by the signature on the report). null = not set. */
   report_date: string | null;
   /** Last day marks may be entered (cutoff). null = no cutoff. */
   entry_closes_on: string | null;
   status: ExamStatus;
+  /** The exam timetable (wizard Step 2; optional): the scheduled subjects, ordered by date + time. */
+  schedule: ExamScheduleEntry[];
   /** true = created automatically for the term (defaults); false = created by an admin. */
   is_auto: boolean;
   /**

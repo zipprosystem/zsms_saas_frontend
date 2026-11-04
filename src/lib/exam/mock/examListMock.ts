@@ -1,9 +1,10 @@
 import type { WireResponse } from "@/lib/setup/assessmentConfiguration/templateCatalog";
 import type { AssessmentStructure } from "@/lib/setup/assessmentConfiguration/assessmentStructure";
-import type { Exam, ExamKind } from "@/lib/exam/examTypes";
+import type { Exam, ExamKind, ExamScheduleEntry } from "@/lib/exam/examTypes";
+import { DURATION_MAX_MINUTES, DURATION_MIN_MINUTES, scheduledOnly, scheduleErrors, type ScheduleRowError } from "@/lib/exam/examSchedule";
 import { assessmentStructuresService } from "@/lib/setup/assessmentConfiguration/assessmentStructuresApi";
 import { schoolTypesService } from "@/lib/setup/academicStructure/schoolTypesApi";
-import { SEED_CLASS_SCHOOL_TYPE, SEED_CLASSES, SEED_EXAM_CLOSES_ON, SEED_YEARS, seedTerms, termNumber, yearOfTerm } from "@/lib/exam/mock/examMockSeeds";
+import { SEED_ARM_SUBJECTS, SEED_CLASS_SCHOOL_TYPE, SEED_CLASSES, SEED_EXAM_CLOSES_ON, SEED_SUBJECTS, SEED_YEARS, seedTerms, termNumber, yearOfTerm } from "@/lib/exam/mock/examMockSeeds";
 import { isGradeClass, pickClassStructure, readStore, writeStore } from "@/lib/exam/mock/examMockStore";
 import { getMockActingAs, MOCK_ADMIN } from "@/lib/exam/mock/mockActingAs";
 
@@ -47,9 +48,10 @@ function baseExam(classId: string, termId: string): Omit<Exam, "id" | "name" | "
     result_title: null,
     start_date: null,
     end_date: null,
-    duration_hours: null,
+    duration_minutes: null,
     report_date: null,
     status: "active",
+    schedule: [],
     is_auto: true,
     show_grade_book: true,
     show_va: true,
@@ -113,7 +115,12 @@ export async function examIndex(): Promise<ExamIndex> {
   const structuresResult = await assessmentStructuresService.list();
   const structures = structuresResult.ok ? structuresResult.data : [];
   const store = loadStore();
-  const withEdits = (exam: Exam): Exam => (store.overrides[exam.id] ? { ...exam, ...store.overrides[exam.id], id: exam.id } : exam);
+  // Rows stored before the per-subject timetable read as unscheduled.
+  const withEdits = (exam: Exam): Exam => {
+    const edited = store.overrides[exam.id] ? { ...exam, ...store.overrides[exam.id], id: exam.id } : exam;
+    const schedule = Array.isArray(edited.schedule) ? edited.schedule.filter((entry) => typeof entry?.subject_id === "string") : [];
+    return { ...edited, schedule };
+  };
   const rows: Ordered[] = [
     ...autoExams(structures).map(({ exam, order }) => ({ exam: withEdits(exam), order })),
     ...store.manual.map((exam, index) => ({ exam: withEdits(exam), order: 100 + index })),
@@ -226,6 +233,20 @@ function takenComponents(index: ExamIndex, classId: string, termId: string, exce
   return new Set(index.forClass(classId, termId, { includeDrafts: true }).filter((exam) => exam.id !== exceptId).flatMap((exam) => exam.component_ids ?? []));
 }
 
+/**
+ * Every subject the class takes — core and elective, across its arms (the
+ * exam timetable is class-wise). Elective if it's elective in any arm.
+ * MOCK: from the arm subject seeds; the real backend reads subject enrolment.
+ */
+function classSubjects(classId: string): Array<{ id: string; name: string; elective: boolean }> {
+  const cls = SEED_CLASSES.find((item) => item.id === classId);
+  const subjects = new Map<string, boolean>();
+  for (const arm of cls?.arms ?? []) {
+    for (const offer of SEED_ARM_SUBJECTS[arm.id] ?? []) subjects.set(offer.subject_id, (subjects.get(offer.subject_id) ?? false) || !!offer.elective);
+  }
+  return Array.from(subjects, ([id, elective]) => ({ id, name: SEED_SUBJECTS[id] ?? id, elective }));
+}
+
 /** GET erp/exams/form-options — the class's components (General) and which are taken that term. */
 async function formOptions(index: ExamIndex, query: URLSearchParams): Promise<WireResponse> {
   if (getMockActingAs() !== MOCK_ADMIN) return fail(403, "FORBIDDEN", "Only an admin can manage the Exam List.");
@@ -238,10 +259,11 @@ async function formOptions(index: ExamIndex, query: URLSearchParams): Promise<Wi
     assessment_mode: isGradeClass(classId) ? "grade_based" : "component_based",
     components,
     taken_component_ids: Array.from(takenComponents(index, classId, termId)),
+    subjects: classSubjects(classId),
   });
 }
 
-type ParsedInput = Omit<Exam, "id" | "assessment_mode" | "kind" | "entry_closes_on" | "status" | "is_auto">;
+type ParsedInput = Omit<Exam, "id" | "assessment_mode" | "kind" | "entry_closes_on" | "status" | "schedule" | "is_auto">;
 
 function optionalText(body: Record<string, unknown>, key: string): string | null {
   const value = body[key];
@@ -285,9 +307,11 @@ async function parseInput(index: ExamIndex, payload: unknown, self: Exam | null)
   }
   if (dates.start_date && dates.end_date && dates.end_date < dates.start_date) return invalid("end_date", "can't be before the start date");
   let duration: number | null = null;
-  if (body.duration_hours !== null && body.duration_hours !== undefined && body.duration_hours !== "") {
-    duration = Number(body.duration_hours);
-    if (!Number.isFinite(duration) || duration <= 0 || duration > 24) return invalid("duration_hours", "must be more than 0 and at most 24 hours");
+  if (body.duration_minutes !== null && body.duration_minutes !== undefined && body.duration_minutes !== "") {
+    duration = Number(body.duration_minutes);
+    if (!Number.isInteger(duration) || duration < DURATION_MIN_MINUTES || duration > DURATION_MAX_MINUTES) {
+      return invalid("duration_minutes", `must be whole minutes from ${DURATION_MIN_MINUTES} to ${DURATION_MAX_MINUTES}`);
+    }
   }
 
   let reportVariant: Exam["report_variant"] = null;
@@ -317,7 +341,7 @@ async function parseInput(index: ExamIndex, payload: unknown, self: Exam | null)
     result_title: resultTitle,
     start_date: dates.start_date,
     end_date: dates.end_date,
-    duration_hours: duration,
+    duration_minutes: duration,
     report_date: dates.report_date,
     // Gradebook / Tracking are British; a General exam keeps the defaults.
     show_grade_book: british ? body.show_grade_book !== false : true,
@@ -341,6 +365,7 @@ async function createExam(index: ExamIndex, payload: unknown): Promise<WireRespo
     // FLAGGED: cutoffs belong to Cutoff Management (not built) — a new exam takes its term's default.
     entry_closes_on: input.category === "ca" ? caCloses : examCloses,
     status: "draft",
+    schedule: [],
     is_auto: false,
   };
   const store = loadStore();
@@ -370,6 +395,39 @@ function writeExam(exam: Exam, patch: Partial<Exam>): Exam {
   return next;
 }
 
+const SCHEDULE_MESSAGES: Record<ScheduleRowError, string> = {
+  incomplete: "needs a date, a start time and an end time",
+  dateInvalid: "the date must be YYYY-MM-DD",
+  dateOutOfRange: "the date is outside the exam's start and end dates",
+  timeInvalid: "times must be HH:MM",
+  endBeforeStart: "the end time must be after the start time",
+};
+
+/** PUT erp/exams/:id/schedule — Step 2: replace the exam timetable (status kept; [] clears). */
+function saveSchedule(index: ExamIndex, examId: string, payload: unknown): WireResponse {
+  if (getMockActingAs() !== MOCK_ADMIN) return fail(403, "FORBIDDEN", "Only an admin can manage the Exam List.");
+  const exam = index.byId(examId);
+  if (!exam) return fail(404, "EXAM_NOT_FOUND", "Exam not found");
+  const body = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
+  if (!Array.isArray(body.schedule)) return invalid("schedule", "must be a list of subjects");
+  const text = (value: unknown) => (typeof value === "string" && value ? value : null);
+  const entries: ExamScheduleEntry[] = body.schedule.map((item) => {
+    const r = item && typeof item === "object" ? (item as Record<string, unknown>) : {};
+    return { subject_id: text(r.subject_id) ?? "", date: text(r.date), start_time: text(r.start_time), end_time: text(r.end_time) };
+  });
+  const subjects = new Map(classSubjects(exam.class_id).map((subject) => [subject.id, subject.name]));
+  const seen = new Set<string>();
+  for (const entry of entries) {
+    if (!subjects.has(entry.subject_id)) return invalid("schedule", `${entry.subject_id || "a row"} isn't a subject of this class`);
+    if (seen.has(entry.subject_id)) return invalid("schedule", `${subjects.get(entry.subject_id)} is listed twice`);
+    seen.add(entry.subject_id);
+  }
+  const schedule = scheduledOnly(entries);
+  const first = Object.entries(scheduleErrors(schedule, exam.start_date, exam.end_date))[0];
+  if (first) return invalid("schedule", `${subjects.get(first[0])} — ${SCHEDULE_MESSAGES[first[1]]}`);
+  return ok(writeExam(exam, { schedule }));
+}
+
 /** POST erp/exams/:id/complete — Step 2 done (schedule optional): the exam becomes active. */
 function completeExam(index: ExamIndex, examId: string): WireResponse {
   if (getMockActingAs() !== MOCK_ADMIN) return fail(403, "FORBIDDEN", "Only an admin can manage the Exam List.");
@@ -386,6 +444,8 @@ export async function handleExamList(method: string, path: string, query: URLSea
   if (path === "erp/exams" && method === "POST") return createExam(await examIndex(), payload);
   const complete = path.match(/^erp\/exams\/([^/]+)\/complete$/);
   if (complete && method === "POST") return completeExam(await examIndex(), decodeURIComponent(complete[1]));
+  const schedule = path.match(/^erp\/exams\/([^/]+)\/schedule$/);
+  if (schedule && method === "PUT") return saveSchedule(await examIndex(), decodeURIComponent(schedule[1]), payload);
   const match = path.match(/^erp\/exams\/([^/]+)$/);
   if (match && method === "PUT") return updateExam(await examIndex(), decodeURIComponent(match[1]), payload);
   return null;

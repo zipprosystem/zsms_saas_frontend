@@ -19,14 +19,13 @@ import { BankingPanel } from "@/components/settings/BankingPanel";
 import { SocialMediaPanel } from "@/components/settings/SocialMediaPanel";
 import { ApiIntegrationsPanel } from "@/components/settings/ApiIntegrationsPanel";
 import { ComingSoonPanel } from "@/components/settings/ComingSoonPanel";
-import { getSchoolSettings, throwIfTransientSettings, type SettingsResult } from "@/lib/settings/settingsApi";
+import { getSchoolSettings, SETTINGS_QUERY_KEY, throwIfTransientSettings, type SettingsResult } from "@/lib/settings/settingsApi";
 import { SETTINGS_SECTION_KEYS, type SettingsSectionKey } from "@/lib/settings/settingsSections";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import type { SettingsData } from "@/lib/settings/types";
 import type { TenantStatus } from "@/types/tenant";
 
 /** Shared by useQuery here and queryClient.setQueryData in every panel's onSaved below — must match exactly. */
-const SETTINGS_QUERY_KEY = ["settings"];
 
 // Shared with the global search index (src/lib/search) — see
 // settingsSections.ts's own header comment for why this moved out of here.

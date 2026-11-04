@@ -8,7 +8,6 @@ export const EXAM_TABS: ReadonlyArray<{ slug: string; labelKey: string; permissi
   { slug: "reports", labelKey: "exam.tabs.reports" },
   { slug: "report-progression", labelKey: "exam.tabs.reportProgression" },
   { slug: "cutoff", labelKey: "exam.tabs.cutoff" },
-  { slug: "ace", labelKey: "exam.tabs.ace" },
 ];
 
 /** Exam › List — the per-class exam list (and, next, Create / Edit Exam). */

@@ -10,6 +10,7 @@ import type {
   Exam,
   ExamEntryOptions,
   ExamKind,
+  ExamScheduleEntry,
   GradeBasedStructure,
   GradeBookRef,
   GradeMarkRow,
@@ -95,25 +96,39 @@ import type {
  *   CREATE / EDIT (the Create Exam wizard; admin-only):
  *   GET  /api/v1/erp/exams/form-options?class_id=&term_id=
  *     -> { class_id, assessment_mode, components: [{ id, name, category,
- *          max }], taken_component_ids }   the class's assessment
- *          components (General) and those already covered by an exam that
- *          term — a component can't be covered twice.
+ *          max }], taken_component_ids, subjects: [{ id, name, elective }] }
+ *          the class's assessment components (General) and those already
+ *          covered by an exam that term — a component can't be covered
+ *          twice; subjects = every subject the class takes (core +
+ *          elective, across its arms, from subject enrolment) for the
+ *          exam timetable.
  *   POST /api/v1/erp/exams  body ExamInput -> the exam, status "draft"
  *   PUT  /api/v1/erp/exams/:id  body ExamInput -> the exam (status kept)
  *     ExamInput: { category, academic_year_id, term_id, class_id, name,
  *       result_title|null, start_date|null, end_date|null,
- *       duration_hours|null, report_date|null,
+ *       duration_minutes|null, report_date|null,
  *       report_variant (grade_based: required; component_based: null),
  *       component_ids (component_based: exactly one id of the class's
  *         structure, of the chosen category; grade_based: null),
  *       show_grade_book, show_va (grade_based; component_based keeps true) }
  *     On PUT the identity fields (academic_year_id, term_id, class_id,
  *     category, component_ids) can't change.
+ *   PUT  /api/v1/erp/exams/:id/schedule  body { schedule: [{ subject_id,
+ *       date, start_time, end_time }] } -> the exam (status kept).
+ *     The EXAM TIMETABLE (Step 2; optional; [] clears it): when each
+ *     subject's paper is sat — CLASS-wise (all arms). The wizard lists
+ *     every subject of the class (form-options.subjects) and can Auto
+ *     Generate (client-side) from the exam's duration_minutes, a date
+ *     range and a daily window. Rules: subject_id one of the class's
+ *     subjects, once each; date YYYY-MM-DD within start_date..end_date
+ *     when set; times HH:MM, end_time > start_time; all three required.
+ *     Errors 422 VALIDATION_ERROR "schedule: …".
+ *     Every exam read carries schedule (auto exams: []).
  *   POST /api/v1/erp/exams/:id/complete   (Step 2 done; schedule optional)
  *     -> the exam, status "active" (scoreable from now on).
  *   Errors: 422 VALIDATION_ERROR (message led by the field, e.g.
  *     "name: …"; name is unique per class + term, end_date ≥ start_date,
- *     duration_hours 0–24), 422 COMPONENT_TAKEN (field component_ids),
+ *     duration_minutes 5–600), 422 COMPONENT_TAKEN (field component_ids),
  *     422 IDENTITY_LOCKED, 404 EXAM_NOT_FOUND, 403 FORBIDDEN.
  *   marks / grade-book on a draft exam -> 409 EXAM_NOT_SCOREABLE; on
  *   another class's exam -> 409 EXAM_CLASS_MISMATCH.
@@ -248,6 +263,11 @@ function optText(value: unknown): string | null {
   return typeof value === "string" && value ? value : null;
 }
 
+function scheduleEntryFromWire(value: unknown): ExamScheduleEntry {
+  const r = rec(value);
+  return { subject_id: s(r.subject_id), date: optText(r.date), start_time: optText(r.start_time), end_time: optText(r.end_time) };
+}
+
 export function examFromWire(value: unknown): Exam {
   const r = rec(value);
   return {
@@ -264,10 +284,11 @@ export function examFromWire(value: unknown): Exam {
     result_title: optText(r.result_title),
     start_date: optText(r.start_date),
     end_date: optText(r.end_date),
-    duration_hours: typeof r.duration_hours === "number" && Number.isFinite(r.duration_hours) ? r.duration_hours : null,
+    duration_minutes: typeof r.duration_minutes === "number" && Number.isFinite(r.duration_minutes) ? r.duration_minutes : null,
     report_date: optText(r.report_date),
     entry_closes_on: optText(r.entry_closes_on),
     status: r.status === "draft" ? "draft" : "active",
+    schedule: arr(r.schedule).map(scheduleEntryFromWire),
     is_auto: r.is_auto === true,
     // Default shown; only an explicit false hides the point's Grade Book.
     show_grade_book: r.show_grade_book !== false,
@@ -479,7 +500,7 @@ export type ExamInput = Pick<
   | "result_title"
   | "start_date"
   | "end_date"
-  | "duration_hours"
+  | "duration_minutes"
   | "report_date"
   | "report_variant"
   | "component_ids"
@@ -494,7 +515,11 @@ export type ExamFormOptions = {
   assessment_mode: AssessmentMode;
   components: ExamFormComponent[];
   taken_component_ids: string[];
+  /** Every subject the class takes (core + elective, all arms) — the exam timetable's rows. */
+  subjects: ExamFormSubject[];
 };
+
+export type ExamFormSubject = { id: string; name: string; elective: boolean };
 
 export function getExamFormOptions(classId: string, termId: string): Promise<CrudResult<ExamFormOptions>> {
   const query = new URLSearchParams({ class_id: classId, term_id: termId });
@@ -508,6 +533,10 @@ export function getExamFormOptions(classId: string, termId: string): Promise<Cru
         return { id: s(c.id), name: s(c.name), category: c.category === "ca" ? "ca" : "exam", max: typeof c.max === "number" ? c.max : 0 };
       }),
       taken_component_ids: arr(r.taken_component_ids).filter((id): id is string => typeof id === "string"),
+      subjects: arr(r.subjects).map((item) => {
+        const c = rec(item);
+        return { id: s(c.id), name: s(c.name), elective: c.elective === true };
+      }),
     };
   });
 }
@@ -518,6 +547,11 @@ export function createExam(input: ExamInput): Promise<CrudResult<Exam>> {
 
 export function updateExam(examId: string, input: ExamInput): Promise<CrudResult<Exam>> {
   return send("PUT", `erp/exams/${encodeURIComponent(examId)}`, input, examFromWire);
+}
+
+/** Step 2: replace the exam's schedule (status kept). */
+export function saveExamSchedule(examId: string, schedule: ExamScheduleEntry[]): Promise<CrudResult<Exam>> {
+  return send("PUT", `erp/exams/${encodeURIComponent(examId)}/schedule`, { schedule }, examFromWire);
 }
 
 /** Step 2 done — the exam becomes active (scoreable). */
