@@ -3260,6 +3260,86 @@
         "ca": "CC : {n}",
         "exam": "Examen : {n}"
       },
+      "createNew": "Créer un examen",
+      "cardMenu": "Actions pour {name}",
+      "createForClass": "Créer un examen pour cette classe",
+      "editExam": "Modifier {name}",
+      "wizard": {
+        "titleCreate": "Créer un examen",
+        "titleEdit": "Modifier l'examen : {name}",
+        "subtitle": "Détails du calendrier d'examen",
+        "loading": "Chargement…",
+        "steps": {
+          "details": "Informations et détails",
+          "schedule": "Calendrier"
+        },
+        "sections": {
+          "basic": "Informations de base",
+          "basicHelp": "Choisissez le type d'examen à créer",
+          "details": "Détails de l'examen",
+          "detailsHelp": "Définissez les dates et ce que le bulletin affiche",
+          "schedule": "Calendrier",
+          "scheduleHelp": "Les dates de cet examen (facultatif)"
+        },
+        "fields": {
+          "category": "Catégorie d'examen",
+          "session": "Session",
+          "term": "Trimestre",
+          "termPlaceholder": "Choisir le trimestre",
+          "class": "Classe",
+          "classPlaceholder": "Choisir la classe",
+          "reportType": "Type de bulletin",
+          "component": "Composante d'évaluation",
+          "componentOption": "{name} (/{max})",
+          "componentNone": "Aucune composante libre",
+          "name": "Titre de l'examen",
+          "namePlaceholder": "ex. Trimestre 1A ou CC1",
+          "nameHelp": "Le nom choisi par les enseignants lors de la saisie des notes.",
+          "resultTitle": "Titre des résultats",
+          "resultTitlePlaceholder": "ex. Examen final du premier trimestre",
+          "resultTitleHelp": "Imprimé sur le bulletin sous le nom et l'adresse de l'école.",
+          "startDate": "Date de début",
+          "endDate": "Date de fin",
+          "duration": "Durée (h)",
+          "reportDate": "Date du bulletin",
+          "reportDateHelp": "La date de publication des résultats — imprimée près de la signature.",
+          "gradebook": "Carnet de notes",
+          "tracking": "Suivi",
+          "flagsHelp": "Carnet de notes affiche le carnet de ce point sur les bulletins ; Suivi affiche la valeur ajoutée (VA). Décocher les masque seulement.",
+          "flagsBritishOnly": "Carnet de notes et Suivi concernent uniquement les classes britanniques."
+        },
+        "reportType": {
+          "progress": "Progression",
+          "full": "Complet"
+        },
+        "lockedHelp": "La session, le trimestre, la classe, la catégorie et la composante sont fixés une fois l'examen créé.",
+        "componentsTaken": "Chaque composante {category} de cette classe a déjà un examen ce trimestre.",
+        "summary": {
+          "dates": "Dates",
+          "noDates": "Non définies",
+          "status": "Statut"
+        },
+        "scheduleDraft": "La planification des dates d'examen arrive ensuite. Vous pouvez terminer maintenant sans calendrier : l'examen devient actif et les notes peuvent être saisies.",
+        "scheduleActive": "Cet examen est actif. La planification des dates d'examen arrive ensuite.",
+        "saveContinue": "Enregistrer et continuer",
+        "complete": "Terminer",
+        "back": "Retour",
+        "toast": {
+          "createdDraft": "{name} enregistré comme brouillon",
+          "saved": "{name} enregistré",
+          "completed": "{name} est actif"
+        },
+        "errors": {
+          "termRequired": "Choisissez un trimestre.",
+          "classRequired": "Choisissez une classe.",
+          "componentRequired": "Choisissez une composante d'évaluation.",
+          "nameRequired": "Saisissez le titre de l'examen.",
+          "endBeforeStart": "La date de fin ne peut pas précéder la date de début.",
+          "duration": "Saisissez un nombre d'heures entre 0 et 24.",
+          "saveFailed": "Impossible d'enregistrer l'examen. Réessayez.",
+          "loadFailed": "Impossible de charger le formulaire. Actualisez pour réessayer."
+        }
+      },
       "draftName": "{name} (brouillon)",
       "closes": "saisie jusqu'au {date}",
       "noSchoolType": "Aucun type d'établissement",
