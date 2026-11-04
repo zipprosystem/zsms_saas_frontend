@@ -3252,6 +3252,86 @@
         "ca": "CA: {n}",
         "exam": "Exam: {n}"
       },
+      "createNew": "Create New Exam",
+      "cardMenu": "{name} actions",
+      "createForClass": "Create exam for this class",
+      "editExam": "Edit {name}",
+      "wizard": {
+        "titleCreate": "Create New Exam",
+        "titleEdit": "Edit Exam: {name}",
+        "subtitle": "Exam Schedule Details",
+        "loading": "Loading…",
+        "steps": {
+          "details": "Basic Info & Details",
+          "schedule": "Schedule"
+        },
+        "sections": {
+          "basic": "Basic Info",
+          "basicHelp": "Select the type of exam you want to create",
+          "details": "Exam Details",
+          "detailsHelp": "Set the exam dates and what the report shows",
+          "schedule": "Schedule",
+          "scheduleHelp": "Exam dates for this exam (optional)"
+        },
+        "fields": {
+          "category": "Exam category",
+          "session": "Session",
+          "term": "Term",
+          "termPlaceholder": "Select term",
+          "class": "Class",
+          "classPlaceholder": "Select class",
+          "reportType": "Report Type",
+          "component": "Assessment component",
+          "componentOption": "{name} (/{max})",
+          "componentNone": "No free component",
+          "name": "Exam Title",
+          "namePlaceholder": "e.g. Term 1A or CA1",
+          "nameHelp": "The name teachers pick when entering marks.",
+          "resultTitle": "Result Title",
+          "resultTitlePlaceholder": "e.g. First Term Final Examination",
+          "resultTitleHelp": "Prints on the report under the school's name and address.",
+          "startDate": "Start Date",
+          "endDate": "End Date",
+          "duration": "Duration (hrs)",
+          "reportDate": "Report Date",
+          "reportDateHelp": "The date results are issued — prints next to the signature.",
+          "gradebook": "Gradebook",
+          "tracking": "Tracking",
+          "flagsHelp": "Gradebook shows this point's Grade Book on reports; Tracking shows Value Added (VA). Unticking only hides them.",
+          "flagsBritishOnly": "Gradebook and Tracking are for British classes only."
+        },
+        "reportType": {
+          "progress": "Progress",
+          "full": "Full"
+        },
+        "lockedHelp": "Session, term, class, category and component are fixed once an exam exists.",
+        "componentsTaken": "Every {category} component of this class already has an exam this term.",
+        "summary": {
+          "dates": "Dates",
+          "noDates": "Not set",
+          "status": "Status"
+        },
+        "scheduleDraft": "Scheduling the exam dates comes next. You can complete now without a schedule: the exam becomes active and marks can be entered.",
+        "scheduleActive": "This exam is active. Scheduling the exam dates comes next.",
+        "saveContinue": "Save & Continue",
+        "complete": "Complete",
+        "back": "Back",
+        "toast": {
+          "createdDraft": "{name} saved as a draft",
+          "saved": "{name} saved",
+          "completed": "{name} is active"
+        },
+        "errors": {
+          "termRequired": "Select a term.",
+          "classRequired": "Select a class.",
+          "componentRequired": "Select an assessment component.",
+          "nameRequired": "Enter the exam title.",
+          "endBeforeStart": "The end date can't be before the start date.",
+          "duration": "Enter hours between 0 and 24.",
+          "saveFailed": "Couldn't save the exam. Try again.",
+          "loadFailed": "Couldn't load the form. Refresh to try again."
+        }
+      },
       "draftName": "{name} (Draft)",
       "closes": "entry closes {date}",
       "noSchoolType": "No School Type",

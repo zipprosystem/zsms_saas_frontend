@@ -92,10 +92,29 @@ import type {
  *                    exams: [Exam] }], total, page, limit, has_more }
  *     One card per class (q matches class name or term name); term_id /
  *     category narrow the exams on each card. Admin-only.
- *   PUT /api/v1/erp/exams/:id   (stage 2 widens it to the full edit body)
- *     body { show_grade_book?, show_va? } -> the exam. grade_based only.
- *     Errors: 404 EXAM_NOT_FOUND, 403 FORBIDDEN, 422 VALIDATION_ERROR,
- *     422 WRONG_ASSESSMENT_MODE.
+ *   CREATE / EDIT (the Create Exam wizard; admin-only):
+ *   GET  /api/v1/erp/exams/form-options?class_id=&term_id=
+ *     -> { class_id, assessment_mode, components: [{ id, name, category,
+ *          max }], taken_component_ids }   the class's assessment
+ *          components (General) and those already covered by an exam that
+ *          term — a component can't be covered twice.
+ *   POST /api/v1/erp/exams  body ExamInput -> the exam, status "draft"
+ *   PUT  /api/v1/erp/exams/:id  body ExamInput -> the exam (status kept)
+ *     ExamInput: { category, academic_year_id, term_id, class_id, name,
+ *       result_title|null, start_date|null, end_date|null,
+ *       duration_hours|null, report_date|null,
+ *       report_variant (grade_based: required; component_based: null),
+ *       component_ids (component_based: exactly one id of the class's
+ *         structure, of the chosen category; grade_based: null),
+ *       show_grade_book, show_va (grade_based; component_based keeps true) }
+ *     On PUT the identity fields (academic_year_id, term_id, class_id,
+ *     category, component_ids) can't change.
+ *   POST /api/v1/erp/exams/:id/complete   (Step 2 done; schedule optional)
+ *     -> the exam, status "active" (scoreable from now on).
+ *   Errors: 422 VALIDATION_ERROR (message led by the field, e.g.
+ *     "name: …"; name is unique per class + term, end_date ≥ start_date,
+ *     duration_hours 0–24), 422 COMPONENT_TAKEN (field component_ids),
+ *     422 IDENTITY_LOCKED, 404 EXAM_NOT_FOUND, 403 FORBIDDEN.
  *   marks / grade-book on a draft exam -> 409 EXAM_NOT_SCOREABLE; on
  *   another class's exam -> 409 EXAM_CLASS_MISMATCH.
  *   GET /api/v1/erp/exams/entry-options?academic_year_id=
@@ -172,6 +191,7 @@ export const examQueryKeys = {
   entryOptions: (yearId: string | null) => ["exam", "entryOptions", yearId ?? "current"] as const,
   exams: (yearId: string, termId: string, classId: string) => ["exam", "exams", yearId, termId, classId] as const,
   classCards: (input: ExamClassCardsQuery) => ["exam", "exams", "classCards", input] as const,
+  formOptions: (classId: string, termId: string) => ["exam", "exams", "formOptions", classId, termId] as const,
   marks: (examId: string, subjectId: string, armId: string) => ["exam", "marks", examId, subjectId, armId] as const,
 };
 
@@ -447,6 +467,62 @@ function classCardFromWire(value: unknown): ExamClassCard | null {
     counts: { ca: countFromWire(counts.ca), exam: countFromWire(counts.exam) },
     exams: arr(r.exams).map(examFromWire),
   };
+}
+
+export type ExamInput = Pick<
+  Exam,
+  | "category"
+  | "academic_year_id"
+  | "term_id"
+  | "class_id"
+  | "name"
+  | "result_title"
+  | "start_date"
+  | "end_date"
+  | "duration_hours"
+  | "report_date"
+  | "report_variant"
+  | "component_ids"
+  | "show_grade_book"
+  | "show_va"
+>;
+
+export type ExamFormComponent = { id: string; name: string; category: ExamKind; max: number };
+
+export type ExamFormOptions = {
+  class_id: string;
+  assessment_mode: AssessmentMode;
+  components: ExamFormComponent[];
+  taken_component_ids: string[];
+};
+
+export function getExamFormOptions(classId: string, termId: string): Promise<CrudResult<ExamFormOptions>> {
+  const query = new URLSearchParams({ class_id: classId, term_id: termId });
+  return send("GET", `erp/exams/form-options?${query}`, undefined, (data) => {
+    const r = rec(data);
+    return {
+      class_id: s(r.class_id),
+      assessment_mode: r.assessment_mode === "grade_based" ? "grade_based" : "component_based",
+      components: arr(r.components).map((item) => {
+        const c = rec(item);
+        return { id: s(c.id), name: s(c.name), category: c.category === "ca" ? "ca" : "exam", max: typeof c.max === "number" ? c.max : 0 };
+      }),
+      taken_component_ids: arr(r.taken_component_ids).filter((id): id is string => typeof id === "string"),
+    };
+  });
+}
+
+export function createExam(input: ExamInput): Promise<CrudResult<Exam>> {
+  return send("POST", "erp/exams", input, examFromWire);
+}
+
+export function updateExam(examId: string, input: ExamInput): Promise<CrudResult<Exam>> {
+  return send("PUT", `erp/exams/${encodeURIComponent(examId)}`, input, examFromWire);
+}
+
+/** Step 2 done — the exam becomes active (scoreable). */
+export function completeExam(examId: string): Promise<CrudResult<Exam>> {
+  return send("POST", `erp/exams/${encodeURIComponent(examId)}/complete`, {}, examFromWire);
 }
 
 /** The Exam List page: one card per class with its exams. */

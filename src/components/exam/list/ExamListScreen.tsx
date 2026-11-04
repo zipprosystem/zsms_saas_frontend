@@ -7,6 +7,11 @@ import { SelectField } from "@/components/ui/Select";
 import { ExportMenu } from "@/components/setup/ExportMenu";
 import { SetupPagination } from "@/components/setup/SetupPagination";
 import { AcademicCapIcon } from "@/components/icons/setup/AcademicCapIcon";
+import { PlusIcon } from "@/components/icons/PlusIcon";
+import { MoreVerticalIcon } from "@/components/icons/students/MoreVerticalIcon";
+import { Button } from "@/components/ui/Button";
+import { ActionsMenu } from "@/components/ui/ActionsMenu";
+import { ExamWizard, type ExamWizardProps } from "@/components/exam/list/ExamWizard";
 import { Notice, failureMessage, useMockActingAs } from "@/components/exam/examEntryShared";
 import { useExportSchoolName } from "@/components/exam/broadsheet/broadsheetShared";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
@@ -34,7 +39,8 @@ type ExportRow = { card: ExamClassCard; exam: Exam };
  * card: class + School Type, CA / Exam progress (active of listed), and the
  * exam chips (active vs draft). Exams are created automatically per term
  * (General: one per assessment component; British: 1A / 1B) — contract in
- * examApi.ts. Create / Edit (the wizard) is the next stage. Admin-gated.
+ * examApi.ts. Create New Exam / a card's menu open the wizard; a chip opens
+ * it on that exam (edit). Admin-gated.
  */
 export function ExamListScreen() {
   const t = useTranslations();
@@ -48,6 +54,8 @@ export function ExamListScreen() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const q = useDeferredValue(search);
+  /** The open wizard: create (optionally for a class) or edit an exam; null = closed. */
+  const [wizard, setWizard] = useState<Omit<ExamWizardProps, "onClose"> | null>(null);
 
   const optionsQuery = useQuery({
     queryKey: [...examQueryKeys.entryOptions(yearPick || null), actingAs],
@@ -111,7 +119,13 @@ export function ExamListScreen() {
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {cards.items.map((card) => (
             <li key={card.class_id}>
-              <ClassCard card={card} termName={termName} showTerms={!termId} />
+              <ClassCard
+                card={card}
+                termName={termName}
+                showTerms={!termId}
+                onEdit={(exam) => setWizard({ exam })}
+                onCreate={() => setWizard({ classId: card.class_id })}
+              />
             </li>
           ))}
         </ul>
@@ -133,7 +147,12 @@ export function ExamListScreen() {
         <h2 id="exam-list-title" className="text-base font-semibold text-text-primary">
           {k("title")}
         </h2>
-        {exportRows.length > 0 ? <ExportMenu config={exportConfig} /> : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" onClick={() => setWizard({})} icon={<PlusIcon className="h-4 w-4" />} className="w-full px-4 text-sm sm:w-auto">
+            {k("createNew")}
+          </Button>
+          {exportRows.length > 0 ? <ExportMenu config={exportConfig} /> : null}
+        </div>
       </div>
 
       <div className="flex flex-col gap-4 p-4 sm:p-5">
@@ -189,11 +208,24 @@ export function ExamListScreen() {
         </div>
         {body}
       </div>
+      {wizard ? <ExamWizard {...wizard} onClose={() => setWizard(null)} /> : null}
     </section>
   );
 }
 
-function ClassCard({ card, termName, showTerms }: { card: ExamClassCard; termName: Map<string, string>; showTerms: boolean }) {
+function ClassCard({
+  card,
+  termName,
+  showTerms,
+  onEdit,
+  onCreate,
+}: {
+  card: ExamClassCard;
+  termName: Map<string, string>;
+  showTerms: boolean;
+  onEdit: (exam: Exam) => void;
+  onCreate: () => void;
+}) {
   const t = useTranslations();
   const k = (key: string, values?: Record<string, string | number>) => t(`exam.list.${key}`, values);
   // Chips grouped by term when every term is shown (General titles like "CA 1" repeat each term).
@@ -207,10 +239,26 @@ function ClassCard({ card, termName, showTerms }: { card: ExamClassCard; termNam
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-category-green-tint text-category-green">
           <AcademicCapIcon className="h-5 w-5" />
         </span>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h3 className="truncate text-sm font-semibold text-text-primary">{card.class_name}</h3>
           <p className="truncate text-xs text-text-secondary">{card.school_type_name ?? k("noSchoolType")}</p>
         </div>
+        <ActionsMenu
+          menuLabel={k("cardMenu", { name: card.class_name })}
+          items={[{ key: "create", label: k("createForClass"), onClick: onCreate }]}
+          trigger={({ isOpen, toggle }) => (
+            <button
+              type="button"
+              onClick={toggle}
+              aria-haspopup="menu"
+              aria-expanded={isOpen}
+              aria-label={k("cardMenu", { name: card.class_name })}
+              className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-background hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+            >
+              <MoreVerticalIcon className="h-4 w-4" />
+            </button>
+          )}
+        />
       </header>
 
       <div className="flex flex-col gap-1.5">
@@ -228,7 +276,7 @@ function ClassCard({ card, termName, showTerms }: { card: ExamClassCard; termNam
               <ul className="flex flex-wrap gap-1.5" aria-label={k("chipsLabel", { name: card.class_name })}>
                 {group.exams.map((exam) => (
                   <li key={exam.id}>
-                    <ExamChip exam={exam} />
+                    <ExamChip exam={exam} onEdit={() => onEdit(exam)} />
                   </li>
                 ))}
               </ul>
@@ -256,7 +304,7 @@ function ProgressRow({ label, count, barClass, dotClass }: { label: string; coun
   );
 }
 
-function ExamChip({ exam }: { exam: Exam }) {
+function ExamChip({ exam, onEdit }: { exam: Exam; onEdit: () => void }) {
   const t = useTranslations();
   const k = (key: string, values?: Record<string, string | number>) => t(`exam.list.${key}`, values);
   const draft = exam.status === "draft";
@@ -267,14 +315,18 @@ function ExamChip({ exam }: { exam: Exam }) {
   ]
     .filter(Boolean)
     .join(" · ");
+  const label = draft ? k("draftName", { name: exam.name }) : exam.name;
   return (
-    <span
+    <button
+      type="button"
+      onClick={onEdit}
       title={detail}
-      className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs ${
+      aria-label={k("editExam", { name: label })}
+      className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs transition-colors hover:border-accent hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
         draft ? "border-dashed border-border text-text-muted" : "border-border bg-surface text-text-primary"
       }`}
     >
-      {draft ? k("draftName", { name: exam.name }) : exam.name}
-    </span>
+      {label}
+    </button>
   );
 }
