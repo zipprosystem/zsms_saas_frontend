@@ -3674,7 +3674,12 @@
           "gradeBookShort": "GB",
           "tutorComment": "Tutor Comment",
           "boardingComment": "Boarding House Comment",
-          "boardingGrade": "Boarding Grade"
+          "boardingGrade": "Boarding Grade",
+          "sigHeadTeacher": "Head Teacher",
+          "sigPrincipal": "Principal",
+          "sigClassTeacher": "Class Teacher",
+          "sigDate": "Date",
+          "sigImageAlt": "Signature"
         },
         "frameTitle": "Report card for {name}",
         "variant": {

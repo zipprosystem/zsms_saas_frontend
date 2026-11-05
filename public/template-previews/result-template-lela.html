@@ -96,6 +96,18 @@
   .remarks .lbl{background:var(--soft);color:var(--navy);font-weight:700;padding:6px 9px;}
   .remarks .txt{padding:6px 9px;line-height:1.4;}
   .remarks .sig{padding:6px 9px;border-left:1px solid var(--rule);color:var(--ink-soft);font-size:8.5px;}
+  /* Signatures (payload: Z.signatures + Z.report_date) — a slot shows only with a signature image; empty → removed. */
+  .sg{display:flex;flex-direction:column;line-height:1.25;}
+  .sg img{display:block;height:38px;max-width:100%;object-fit:contain;object-position:left bottom;}
+  .sg .scrib{font-family:"Playfair Display";font-style:italic;font-weight:700;font-size:15px;color:var(--blue-dk);height:24px;line-height:24px;}
+  .sg .nm{font-weight:700;color:var(--ink);font-size:8.6px;border-top:1px solid var(--rule);padding-top:2px;margin-top:1px;}
+  .sg .role{font-size:7.8px;color:var(--ink-soft);}
+  .remarks .rrow.nosig{grid-template-columns:150px 1fr;}
+  .sigline{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:6px 9px;border-top:1px solid var(--rule);font-size:9px;}
+  .sigline .sg{min-width:120px;}
+  .sigline .dt{color:var(--ink-soft);margin-left:auto;}
+  .sigline .dt b{color:var(--navy);}
+  .rtitle{font-family:"Playfair Display";font-weight:800;font-size:15px;color:var(--navy);text-align:center;margin-top:6px;letter-spacing:.02em;}
 
   /* Page 2 — subject teachers' comments */
   .sheet + .sheet{margin-top:24px;}
@@ -142,6 +154,7 @@
       </div>
       <div class="photo">PHOTO</div>
     </div>
+    <div class="rtitle" id="rTitle">First Term Examination</div>
 
     <div class="bio">
       <div class="r">
@@ -192,9 +205,13 @@
 
     <div class="remarks">
       <div class="rrow"><div class="lbl">Class Teacher's Remarks</div><div class="txt" id="ctRem"></div>
-        <div class="sig">Signature<br><b>A. T.</b><br><span id="sig1"></span></div></div>
+        <div class="sig" id="sigCt"><div class="sg"><span class="scrib">A. Okafor</span><span class="nm">Mrs A. Okafor</span><span class="role">Class Teacher</span></div></div></div>
       <div class="rrow"><div class="lbl">Head Teacher's Remarks</div><div class="txt">Sample remark — a good result.</div>
-        <div class="sig">Signature<br><b>H. T.</b><br><span id="sig2"></span></div></div>
+        <div class="sig" id="sigHt"><div class="sg"><span class="scrib">B. Adeyemi</span><span class="nm">Mr B. Adeyemi</span><span class="role">Head Teacher</span></div></div></div>
+      <div class="sigline" id="sigLine">
+        <div class="sg" id="sigPr"><span class="scrib">C. Ibrahim</span><span class="nm">Dr C. Ibrahim</span><span class="role">Principal</span></div>
+        <div class="dt" id="sigDt">Date: <b id="sigDate">05/12/2025</b></div>
+      </div>
     </div>
   </div>
 
@@ -247,6 +264,10 @@
   function zLeaves(kind){var s=(Z.subjects||[]).filter(function(x){return !x.redacted&&(x.components||[]).some(function(c){return c.kind===kind;});})[0];return s?s.components.filter(function(c){return c.kind===kind;}):[];}
   function zComp(s,kind,i){var c=(s.components||[]).filter(function(x){return x.kind===kind;})[i];return c?c.score:null;}
   function zImg(url,fallback){return url?'<img src="'+zEsc(url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':fallback;}
+  var L=window.__ZSMS_LABELS__||{};function zL(k,fb){return L[k]||fb;}
+  /* One signature slot: image + name + role. Nothing unless the signatory has a signature image. */
+  function zSig(sig,key,fb){if(!sig||!sig.signature_url)return "";var r=zL(key,fb);
+    return '<div class="sg"><img src="'+zEsc(sig.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+" — "+sig.name)+'"><span class="nm">'+zEsc(sig.name)+'</span><span class="role">'+zEsc(r)+"</span></div>";}
   function zRow(s){return s.redacted?' class="zsms-redacted"':"";}
   /* Header motto slot: School Type motto, else Settings motto (resolved in the payload). None → the slot hides. */
   function zMotto(el){var m=Z.school.motto;el.textContent=m||"";el.style.display=m?"":"none";}
@@ -322,8 +343,15 @@
     document.querySelector(".ratingkey").innerHTML=(Z.traits.rating_key||[]).map(function(r){return "<div>"+zEsc(r.rating)+" — "+zEsc(String(r.descriptor).toUpperCase())+"</div>";}).join("");
     document.getElementById("ctRem").textContent=Z.remarks.class_teacher||"—";
     document.querySelectorAll(".remarks .rrow .txt")[1].textContent=Z.remarks.head_teacher||"—";
-    document.querySelectorAll(".remarks .sig b").forEach(function(b){b.innerHTML="&nbsp;";});
-    document.getElementById("sig1").textContent=""; document.getElementById("sig2").textContent="";
+    // Result title under the school header; signatures beside the remarks (Principal + Date on the strip below). Empty → removed.
+    var rt=document.getElementById("rTitle"); if(Z.result_title){rt.textContent=Z.result_title;}else{rt.remove();}
+    var sg=Z.signatures||{}, ct=zSig(sg.class_teacher,"sigClassTeacher","Class Teacher"), ht=zSig(sg.head_teacher,"sigHeadTeacher","Head Teacher"), pr=zSig(sg.principal,"sigPrincipal","Principal");
+    // A remark row whose signer isn't shown drops its signature cell; the remark text takes the width (no empty slot).
+    [["sigCt",ct],["sigHt",ht]].forEach(function(pair){var cell=document.getElementById(pair[0]);
+      if(pair[1]){cell.innerHTML=pair[1];}else{cell.parentNode.classList.add("nosig");cell.remove();}});
+    var line=document.getElementById("sigLine");
+    if(!pr&&!Z.report_date){line.remove();}else{
+      line.innerHTML=pr+(Z.report_date?'<div class="dt">'+zEsc(zL("sigDate","Date"))+": <b>"+zDate(Z.report_date)+"</b></div>":"");}
 
     // Page 2: header band + Subject · Comments · Teacher name.
     document.getElementById("p2Adm").innerHTML=zTxt(st.admission_no);
@@ -430,8 +458,8 @@
     document.getElementById("bOpened").textContent=t.opened;
     document.getElementById("bAttend").textContent=t.attend;
     document.getElementById("bResume").textContent=t.resume;
-    document.getElementById("sig1").textContent=t.sig;
-    document.getElementById("sig2").textContent=t.sig;
+    document.getElementById("sigDate").textContent=t.sig.replace(/-/g,"/");
+    document.getElementById("rTitle").textContent=["First","Second","Third"][state.term-1]+" Term "+(state.type==="ca"?"Continuous Assessment":"Examination");
     document.getElementById("ctRem").textContent = state.type==="ca"
       ? "Sample remark — steady continuous-assessment work this term."
       : "Sample remark — a good term; keep up the effort.";

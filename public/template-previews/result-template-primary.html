@@ -80,6 +80,11 @@
   .school .title{display:inline-block;margin-top:5px;font-family:"Libre Franklin";font-weight:800;
     font-size:12.5px;color:#fff;background:var(--accent);padding:3px 14px;border-radius:4px;letter-spacing:.03em;}
 
+  /* result title (payload result_title; removed when empty) */
+  .rtitle{margin-top:6px;text-align:center;font-family:"Libre Franklin";font-weight:800;font-size:13px;
+    color:var(--accent-dark);letter-spacing:.03em;text-transform:uppercase;padding:4px 10px;
+    border-top:2px solid var(--accent);border-bottom:1px solid var(--accent-line);background:var(--accent-soft);}
+
   /* bio */
   .bio{margin-top:7px;border:1px solid var(--accent-line);border-radius:6px;overflow:hidden;}
   .bio .row{display:grid;grid-template-columns:repeat(3,1fr);}
@@ -98,7 +103,7 @@
     text-align:center;border:1px solid var(--accent);line-height:1.15;
   }
   .subjects thead th.sub{text-align:left;width:34%;}
-  .subjects tbody td{padding:5px 8px;border:1px solid var(--rule);text-align:center;}
+  .subjects tbody td{padding:4px 8px;border:1px solid var(--rule);text-align:center;}
   .subjects tbody td.sub{text-align:left;font-weight:600;}
   .subjects tbody tr:nth-child(odd){background:var(--stripe);}
   .subjects td.grade{font-weight:700;color:var(--accent-dark);}
@@ -140,11 +145,15 @@
   .comments .cl{background:var(--accent-soft);color:var(--accent-dark);font-weight:700;padding:6px 10px;}
   .comments .cv{padding:6px 10px;min-height:22px;color:var(--ink);}
 
-  .signs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px;}
-  .sign{border:1px solid var(--accent-line);border-radius:6px;padding:9px 10px;font-size:9.5px;color:var(--ink-soft);}
-  .sign .nm{font-family:"Libre Franklin";font-style:italic;color:var(--accent-dark);font-size:15px;
-    border-bottom:1px dashed var(--rule);padding:6px 0 8px;margin-bottom:5px;font-weight:600;}
-  .sign .dt{font-weight:700;color:var(--ink);}
+  .signs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px;}
+  .sign{border:1px solid var(--accent-line);border-radius:6px;padding:7px 10px;font-size:9.5px;color:var(--ink-soft);}
+  .sign .rl{font-weight:600;}
+  .sign .sg{height:36px;display:flex;align-items:flex-end;border-bottom:1px dashed var(--rule);margin:3px 0 4px;padding-bottom:2px;}
+  .sign .sg img{height:34px;max-width:100%;object-fit:contain;object-position:left bottom;}
+  .sign .sg i{font-family:"Libre Franklin";color:var(--accent-dark);font-size:15px;font-weight:600;}
+  .sign .sn{font-weight:700;color:var(--ink);}
+  .sign .dt{margin-top:2px;}
+  .sign .dt b{font-weight:700;color:var(--ink);}
 
   @media (max-width:800px){ .sheet{width:100%;min-height:0;padding:14px;} .wm b{font-size:72px;} }
 
@@ -189,6 +198,9 @@
       </div>
       <div class="photo">PHOTO</div>
     </div>
+
+    <!-- result title -->
+    <div class="rtitle" id="rTitle">First Term Mid-Term Report</div>
 
     <!-- bio -->
     <div class="bio">
@@ -262,9 +274,10 @@
       <div class="cr"><div class="cl">Next Resumption Date</div><div class="cv">2026-01-12</div></div>
     </div>
 
-    <div class="signs">
-      <div class="sign">Class Teacher Signature:<div class="nm">Mrs. A. Teacher</div><span class="dt" id="sDate1">09-11-2025</span></div>
-      <div class="sign">Head Teacher Signature:<div class="nm">&nbsp;</div><span class="dt" id="sDate2">09-11-2025</span></div>
+    <div class="signs" id="signs">
+      <div class="sign"><div class="rl">Class Teacher</div><div class="sg"><i>A. Teacher</i></div><div class="sn">Mrs. A. Teacher</div><div class="dt">Date: <b id="sDate1">09/11/2025</b></div></div>
+      <div class="sign"><div class="rl">Head Teacher</div><div class="sg"><i>B. Head</i></div><div class="sn">Mr. B. Head</div><div class="dt">Date: <b id="sDate2">09/11/2025</b></div></div>
+      <div class="sign"><div class="rl">Principal</div><div class="sg"><i>C. Principal</i></div><div class="sn">Dr. C. Principal</div><div class="dt">Date: <b id="sDate3">09/11/2025</b></div></div>
     </div>
   </div>
 
@@ -291,6 +304,19 @@
   function zLeaves(kind){var s=(Z.subjects||[]).filter(function(x){return !x.redacted&&(x.components||[]).some(function(c){return c.kind===kind;});})[0];return s?s.components.filter(function(c){return c.kind===kind;}):[];}
   function zComp(s,kind,i){var c=(s.components||[]).filter(function(x){return x.kind===kind;})[i];return c?c.score:null;}
   function zImg(url,fallback){return url?'<img src="'+zEsc(url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':fallback;}
+  var L=window.__ZSMS_LABELS__||{};function zL(k,fb){return L[k]||fb;}
+  /* Signature blocks (spec Phase 1b): Class Teacher, Head Teacher, Principal — each only when
+     signed (signature_url set); report_date printed in each block. Nothing at all → the area hides. */
+  function zSigns(el){
+    var g=Z.signatures||{}, d=Z.report_date?zDate(Z.report_date):"";
+    var dt=d?'<div class="dt">'+zEsc(zL("sigDate","Date"))+': <b>'+zEsc(d)+"</b></div>":"";
+    var rows=[["class_teacher","sigClassTeacher","Class Teacher"],["head_teacher","sigHeadTeacher","Head Teacher"],["principal","sigPrincipal","Principal"]];
+    var h=rows.filter(function(r){var x=g[r[0]];return x&&x.signature_url;}).map(function(r){var x=g[r[0]];
+      return '<div class="sign"><div class="rl">'+zEsc(zL(r[1],r[2]))+'</div><div class="sg"><img src="'+zEsc(x.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+" — "+(x.name||""))+'"></div><div class="sn">'+zEsc(x.name)+"</div>"+dt+"</div>";});
+    if(!h.length&&d) h=['<div class="sign">'+dt+"</div>"];
+    el.innerHTML=h.join("");
+    el.style.display=h.length?"":"none";
+  }
   function zRow(s){return s.redacted?' class="zsms-redacted"':"";}
   /* Header motto slot: School Type motto, else Settings motto (resolved in the payload). None → the slot hides. */
   function zMotto(el){var m=Z.school.motto;el.textContent=m||"";el.style.display=m?"":"none";}
@@ -311,6 +337,7 @@
     document.querySelector(".school h1").textContent=Z.school.name;
     zMotto(document.querySelector(".school .motto"));
     zContact(document.querySelector(".school .meta"));
+    var rt=document.getElementById("rTitle"); if(Z.result_title){rt.textContent=Z.result_title;}else{rt.parentNode.removeChild(rt);}
     document.getElementById("docTitle").textContent=termUpper+(isFull?" EXAMINATION":" CONTINUOUS ASSESSMENT");
     document.querySelector(".head .photo").innerHTML=zImg(st.photo_url,"PHOTO");
 
@@ -360,8 +387,7 @@
     document.getElementById("cTeacher").textContent=Z.remarks.class_teacher||"—";
     document.getElementById("cHead").textContent=Z.remarks.head_teacher||"—";
     document.querySelectorAll(".comments .cr .cv")[2].textContent=Z.student.resumption_date||"—";
-    document.querySelectorAll(".signs .nm").forEach(function(e){e.innerHTML="&nbsp;";});
-    document.getElementById("sDate1").textContent=""; document.getElementById("sDate2").textContent="";
+    zSigns(document.getElementById("signs"));
   }
 
   // ---- sample data (placeholders) ----
@@ -391,7 +417,7 @@
             {label:"3rd", total:1283, avg:91.64} ]
   };
   var TERMNAME = ["FIRST TERM","SECOND TERM","THIRD TERM"];
-  var SIGN_DATE = ["09-11-2025","26-03-2026","24-07-2026"];
+  var SIGN_DATE = ["09/11/2025","26/03/2026","24/07/2026"];
 
   var state = { type:"ca", term:1 };
 
@@ -467,6 +493,7 @@
     document.getElementById("bioAvg").textContent = currentAvg();
     document.getElementById("sDate1").textContent = SIGN_DATE[state.term-1];
     document.getElementById("sDate2").textContent = SIGN_DATE[state.term-1];
+    document.getElementById("sDate3").textContent = SIGN_DATE[state.term-1];
     document.getElementById("cTeacher").textContent = state.type==="ca"
       ? "Sample remark — steady continuous-assessment work."
       : "Sample remark — keep up the effort next term.";

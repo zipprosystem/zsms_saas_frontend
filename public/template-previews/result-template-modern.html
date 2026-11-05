@@ -84,6 +84,18 @@
   .remark .by{margin-top:10px;font-size:12px;color:var(--muted)}
   .remark .by b{font-family:var(--disp);font-style:italic;color:var(--ink);font-weight:600}
 
+  /* Result title (payload result_title) — directly under the school header; removed when unset. */
+  .rtitle{margin:0 24px 14px;padding:7px 14px;border-radius:10px;background:var(--tint);border:1px solid var(--line);color:var(--accent);font:600 16px/1.25 var(--disp);letter-spacing:-.005em;text-align:center;text-wrap:balance}
+  :root[data-theme="dark"] .rtitle{color:var(--ink)} @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .rtitle{color:var(--ink)}}
+  /* Signatures: image + name + role. A slot renders only when its signature has an image; no slot and no date → no strip. */
+  .sig{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+  .sig .sig-img{display:block;height:40px;width:150px;max-width:100%;object-fit:contain;object-position:left bottom;color:var(--ink)}
+  .sig .nm{margin-top:2px;padding-top:3px;border-top:1px solid var(--line-strong);min-width:130px;font-family:var(--disp);font-style:italic;font-weight:600;font-size:13px;color:var(--ink)}
+  .sig .role{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+  .remark .sig{margin-top:10px}
+  .sigs{display:flex;flex-wrap:wrap;gap:12px 40px;align-items:flex-end;padding:12px 24px 14px;border-top:1px solid var(--line)}
+  .sigs .sig-date{margin-left:auto;align-items:flex-end;text-align:right}
+  .sigs .sig-date .nm{font-family:var(--sans);font-style:normal;font-variant-numeric:tabular-nums;min-width:110px}
   .legend{display:flex;flex-wrap:wrap;gap:8px;padding:14px 24px 20px;border-top:1px solid var(--line);align-items:center}
   .legend .lab{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;margin-right:4px}
   .chip{font-size:11.5px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
@@ -94,6 +106,7 @@
     .stats{grid-template-columns:1fr 1fr}
     .domains,.remarks{grid-template-columns:1fr}
     .remark:first-child{border-right:0;border-bottom:1px solid var(--line)}
+    .sigs .sig-date{margin-left:0;align-items:flex-start;text-align:left}
   }
   .zsms-redacted td{opacity:.38}
   @media print{html.zsms-live,html.zsms-live body{background:#fff}.zsms-live .wrap{padding:0}.zsms-live .card{border:0;box-shadow:none;max-width:none}}
@@ -120,6 +133,7 @@
       </div>
       <div class="photo" aria-label="Student photo placeholder"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z"/></svg></div>
     </div>
+    <h2 class="rtitle">First Term Final Examination</h2>
 
     <div class="ident">
       <div><span class="k">Student</span><span class="v">Zainab Ibrahim</span></div>
@@ -172,9 +186,11 @@
     </div>
 
     <div class="remarks">
-      <div class="remark"><h3>Class Teacher</h3><p>&ldquo;Zainab is diligent and kind-hearted, and a steadying presence in class. A little more speaking practice in French will round out an excellent term.&rdquo;</p><p class="by">— <b>Mrs A. Danladi</b> &middot; 05 Dec 2025</p></div>
-      <div class="remark"><h3>Head of School</h3><p>&ldquo;A splendid set of results built on real consistency. Well done — we look forward to seeing you build on this.&rdquo;</p><p class="by">— <b>Dr O. Eze</b> &middot; 05 Dec 2025</p></div>
+      <div class="remark"><h3>Class Teacher</h3><p>&ldquo;Zainab is diligent and kind-hearted, and a steadying presence in class. A little more speaking practice in French will round out an excellent term.&rdquo;</p><div class="sig"><svg class="sig-img" viewBox="0 0 150 40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M6 30c8-14 14-22 18-20s-6 22-2 20 10-16 14-14-2 12 2 12 8-10 12-9 0 8 4 8 12-6 20-7 20 2 34-1"/></svg><span class="nm">Mrs A. Danladi</span><span class="role">Class Teacher</span></div></div>
+      <div class="remark"><h3>Head of School</h3><p>&ldquo;A splendid set of results built on real consistency. Well done — we look forward to seeing you build on this.&rdquo;</p></div>
     </div>
+
+    <div class="sigs"><div class="sig"><svg class="sig-img" viewBox="0 0 150 40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 26c6-10 16-20 20-16s-10 20-4 18 14-18 20-16-4 14 2 14 10-12 16-10 2 8 8 6 24-4 40-6"/></svg><span class="nm">Dr O. Eze</span><span class="role">Head Teacher</span></div><div class="sig"><svg class="sig-img" viewBox="0 0 150 40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M10 28c10-4 14-18 10-18s-6 18 4 16 12-10 18-8-2 10 6 8 16-12 22-8 4 6 14 4 22-2 34-6"/></svg><span class="nm">Mr K. Bello</span><span class="role">Principal</span></div><div class="sig sig-date"><span class="nm">05/12/2025</span><span class="role">Date</span></div></div>
 
     <div class="legend">
       <span class="lab">Grading</span>
@@ -200,6 +216,7 @@
       </div>
       <div class="photo" aria-label="Student photo placeholder"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z"/></svg></div>
     </div>
+    <h2 class="rtitle">First Term Mid-Term Report</h2>
 
     <div class="ident">
       <div><span class="k">Student</span><span class="v">Zainab Ibrahim</span></div>
@@ -233,9 +250,11 @@
     </div>
 
     <div class="remarks">
-      <div class="remark"><h3>Class Teacher</h3><p>&ldquo;A strong, focused start to the term — Zainab is well prepared and participates readily.&rdquo;</p><p class="by">— <b>Mrs A. Danladi</b> &middot; 17 Oct 2025</p></div>
+      <div class="remark"><h3>Class Teacher</h3><p>&ldquo;A strong, focused start to the term — Zainab is well prepared and participates readily.&rdquo;</p><div class="sig"><svg class="sig-img" viewBox="0 0 150 40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M6 30c8-14 14-22 18-20s-6 22-2 20 10-16 14-14-2 12 2 12 8-10 12-9 0 8 4 8 12-6 20-7 20 2 34-1"/></svg><span class="nm">Mrs A. Danladi</span><span class="role">Class Teacher</span></div></div>
       <div class="remark"><h3>Note</h3><p>Mid-term shows continuous assessment only, scaled to 100%. Examination scores are added on the end-of-term report.</p></div>
     </div>
+
+    <div class="sigs"><div class="sig"><svg class="sig-img" viewBox="0 0 150 40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 26c6-10 16-20 20-16s-10 20-4 18 14-18 20-16-4 14 2 14 10-12 16-10 2 8 8 6 24-4 40-6"/></svg><span class="nm">Dr O. Eze</span><span class="role">Head Teacher</span></div><div class="sig"><svg class="sig-img" viewBox="0 0 150 40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M10 28c10-4 14-18 10-18s-6 18 4 16 12-10 18-8-2 10 6 8 16-12 22-8 4 6 14 4 22-2 34-6"/></svg><span class="nm">Mr K. Bello</span><span class="role">Principal</span></div><div class="sig sig-date"><span class="nm">17/10/2025</span><span class="role">Date</span></div></div>
 
     <div class="legend">
       <span class="lab">Grading</span>
@@ -271,6 +290,10 @@
   function zLeaves(kind){var s=(Z.subjects||[]).filter(function(x){return !x.redacted&&(x.components||[]).some(function(c){return c.kind===kind;});})[0];return s?s.components.filter(function(c){return c.kind===kind;}):[];}
   function zComp(s,kind,i){var c=(s.components||[]).filter(function(x){return x.kind===kind;})[i];return c?c.score:null;}
   function zImg(url,fallback){return url?'<img src="'+zEsc(url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':fallback;}
+  var L=window.__ZSMS_LABELS__||{};function zL(k,fb){return L[k]||fb;}
+  /* Signature slot (spec Phase 1b): only when the signature exists AND has an image — else "" (no name line, no space). */
+  function zSig(sg,role){if(!sg||!sg.signature_url)return "";var nm=sg.name||"";
+    return '<div class="sig"><img class="sig-img" src="'+zEsc(sg.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+" — "+nm)+'"><span class="nm">'+zEsc(nm)+'</span><span class="role">'+zEsc(role)+"</span></div>";}
   function zRow(s){return s.redacted?' class="zsms-redacted"':"";}
   /* Header motto slot: School Type motto, else Settings motto (resolved in the payload). None → the slot hides. */
   function zMotto(el){var m=Z.school.motto;el.textContent=m||"";el.style.display=m?"":"none";}
@@ -294,6 +317,8 @@
     zContact(card.querySelector(".head .sub"));
     card.querySelector(".badge-term").innerHTML=(isFull?zEsc(Z.meta.term.name)+" Report":"Mid-Term Assessment")+" &middot; "+zEsc(Z.meta.academic_year.name);
     card.querySelector(".photo").innerHTML=zImg(st.photo_url,card.querySelector(".photo").innerHTML);
+    var rt=card.querySelector(".rtitle");
+    if(Z.result_title) rt.textContent=Z.result_title; else rt.parentNode.removeChild(rt);
 
     function kv(k,v){return '<div><span class="k">'+k+'</span><span class="v">'+v+"</span></div>";}
     card.querySelector(".ident").innerHTML=kv("Student",zTxt(st.full_name))+kv("Class",zTxt(st["class"])+" — "+zTxt(st.arm))+
@@ -326,10 +351,16 @@
       domains[1].innerHTML="<h3>Psychomotor Skills</h3>"+traits(Z.traits.psychomotor||[]);
     }
 
-    function remark(title,text){return '<div class="remark"><h3>'+title+"</h3><p>"+(text?"&ldquo;"+zEsc(text)+"&rdquo;":"—")+'</p><p class="by">— <b>&nbsp;</b></p></div>';}
-    var remarks=card.querySelector(".remarks");
-    if(isFull) remarks.innerHTML=remark("Class Teacher",Z.remarks.class_teacher)+remark("Head of School",Z.remarks.head_teacher);
-    else remarks.querySelector(".remark").outerHTML=remark("Class Teacher",Z.remarks.class_teacher);
+    var sg=Z.signatures||{};
+    function remark(title,text,sig){return '<div class="remark"><h3>'+title+"</h3><p>"+(text?"&ldquo;"+zEsc(text)+"&rdquo;":"—")+"</p>"+(sig||"")+"</div>";}
+    var remarks=card.querySelector(".remarks"), ctSig=zSig(sg.class_teacher,zL("sigClassTeacher","Class Teacher"));
+    if(isFull) remarks.innerHTML=remark("Class Teacher",Z.remarks.class_teacher,ctSig)+remark("Head of School",Z.remarks.head_teacher);
+    else remarks.querySelector(".remark").outerHTML=remark("Class Teacher",Z.remarks.class_teacher,ctSig);
+    // Strip under the remarks: Head Teacher + Principal + Date; each drops out alone, all absent → strip removed.
+    var strip=zSig(sg.head_teacher,zL("sigHeadTeacher","Head Teacher"))+zSig(sg.principal,zL("sigPrincipal","Principal"))+
+      (Z.report_date?'<div class="sig sig-date"><span class="nm">'+zDate(Z.report_date)+'</span><span class="role">'+zEsc(zL("sigDate","Date"))+"</span></div>":"");
+    var sigs=card.querySelector(".sigs");
+    if(strip) sigs.innerHTML=strip; else sigs.parentNode.removeChild(sigs);
 
     var key=Z.traits.rating_key||[];
     card.querySelector(".legend").innerHTML='<span class="lab">Grading</span>'+zKey().map(function(b){
