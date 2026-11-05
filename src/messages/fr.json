@@ -3976,6 +3976,8 @@
         "rowActions": "Actions pour {name}",
         "progressionOf": "Progression du bulletin de {name}",
         "viewPdfOf": "Voir le PDF de {name}",
+        "subjectScope": "Vous ne voyez que les élèves et la ou les matières que vous enseignez. La publication, le tamponnage et les appréciations du professeur principal / du chef d'établissement relèvent du professeur principal.",
+        "mixedScope": "Dans les divisions où vous enseignez seulement une matière, vous ne voyez que vos élèves et votre ou vos matières — ces bulletins sont en lecture seule ici.",
         "empty": {
           "noStudents": "Aucun élève n'est inscrit dans cette classe pour ce trimestre.",
           "noStatus": "Aucun élève ne correspond à ce statut.",

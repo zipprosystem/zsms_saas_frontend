@@ -37,11 +37,20 @@ import type { AssessmentMode } from "@/lib/setup/assessmentConfiguration/assessm
  *          academic_year_id, term_id, term_name, point, years, terms,
  *          classes: [{ id, name }],   (the class filter's options)
  *          items: [ProgressionStudent] }
- *     Every student enrolled in the class for the term, cut to the
- *     caller's effective_scope: admin / HOD / sectional head = all arms;
- *     a class teacher / form tutor = only their assigned arm (a subject
- *     teaching assignment in another arm doesn't add it). Both endpoints
- *     and the actions apply the same scope (403 OUT_OF_SCOPE outside it).
+ *     The class's students for the term, cut to the caller's standard
+ *     effective_scope (the same resolver as Results / marks entry):
+ *       admin → all; HOD / sectional head → the roll-up of their classes;
+ *       class teacher / form tutor → every student in their arm;
+ *       subject teacher → only the students they teach, by SUBJECT SET
+ *       where the assignment names one, and only their subject(s) — the
+ *       row's filled / required / missing count those subjects only (no
+ *       traits / remarks: those are the class teacher's).
+ *     A caller can hold different roles per arm (a form tutor of 1 A who
+ *     teaches English in 1 B gets all of 1 A + 1 B's English takers).
+ *     can_manage (per row, and any-row on the class) = a full-report
+ *     role on that arm; Publish / Unpublish / Stamp / Send and the
+ *     comments are never available on a subject-only row, regardless of
+ *     the exam.report_progression.* credentials (403 FORBIDDEN).
  *     A class is bounded (≈ tens of students), so no paging — FLAGGED.
  *
  *   POST /api/v1/erp/report-progression/publish    body { term_id, point, student_ids[] }
@@ -96,6 +105,10 @@ export type ProgressionStudent = {
   /** The published PDF (DEC-008 backend job). null until that exists — View PDF falls back to the on-screen report. */
   pdf_file_id: string | null;
   pdf_url: string | null;
+  /** The caller holds a full-report role on this student's arm (may publish / stamp it). false = subject-scoped row. */
+  can_manage: boolean;
+  /** The subjects this row is scoped to; null = the whole report. */
+  visible_subject_ids: string[] | null;
 };
 
 type YearOption = { id: string; name: string; is_current: boolean };
@@ -135,6 +148,10 @@ export type ClassProgression = {
   term_name: string;
   point: ProgressionPoint;
   classes: Array<{ id: string; name: string }>;
+  /** Any row is manageable (shows the report-management actions). */
+  can_manage: boolean;
+  /** Any row is limited to the caller's subject(s). */
+  subject_scoped: boolean;
   items: ProgressionStudent[];
 };
 

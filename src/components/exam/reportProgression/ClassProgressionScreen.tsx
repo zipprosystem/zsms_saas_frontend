@@ -149,7 +149,8 @@ export function ClassProgressionScreen({ classId }: { classId: string }) {
 
   const visibleRows = rows.map(({ row }) => row);
   const ticked = visibleRows.filter((row) => selected.has(row.student_id));
-  const targets = ticked.length > 0 ? ticked : (data?.items ?? []);
+  // Report management only ever targets rows the caller manages (subject-scoped rows are view-only).
+  const targets = (ticked.length > 0 ? ticked : (data?.items ?? [])).filter((row) => row.can_manage);
   const publishTargets = targets.filter((row) => !row.published);
   const stampTargets = targets.filter((row) => !row.stamped);
   const allTicked = visibleRows.length > 0 && ticked.length === visibleRows.length;
@@ -201,14 +202,14 @@ export function ClassProgressionScreen({ classId }: { classId: string }) {
               const items: ActionsMenuItem[] = [
                 { key: "details", label: k("menu.viewDetails"), onClick: () => router.push(studentHref(row)) },
                 { key: "report", label: k("menu.viewReport"), onClick: () => openReport(row) },
-                ...(canPublish
+                ...(canPublish && row.can_manage
                   ? [
                       row.published
                         ? { key: "unpublish", label: k("menu.unpublish"), onClick: () => run("unpublish", [row]) }
                         : { key: "publish", label: k("menu.publish"), onClick: () => requestPublish([row], false) },
                     ]
                   : []),
-                ...(canStamp
+                ...(canStamp && row.can_manage
                   ? [{ key: "stamp", label: row.stamped ? k("menu.stamped") : k("menu.stamp"), disabled: !!row.stamped, onClick: () => run("stamp", [row]) }]
                   : []),
               ];
@@ -290,7 +291,9 @@ export function ClassProgressionScreen({ classId }: { classId: string }) {
 
       <MockActingAsPicker value={actingAs} onChange={setActingAs} />
 
-      {data && (canPublish || canStamp || canSend) ? (
+      {data?.subject_scoped ? <Notice>{data.can_manage ? k("class.mixedScope") : k("class.subjectScope")}</Notice> : null}
+
+      {data?.can_manage && (canPublish || canStamp || canSend) ? (
         <div className="flex flex-col gap-2 border-b border-border pb-4 sm:flex-row sm:flex-wrap sm:justify-end">
           {canPublish ? (
             <button

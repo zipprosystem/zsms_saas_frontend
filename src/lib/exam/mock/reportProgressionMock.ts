@@ -23,7 +23,7 @@ import {
   seedTerms,
   yearOfTerm,
 } from "@/lib/exam/mock/examMockSeeds";
-import { armRole, loadGradeMarks, loadMarks, readStore, writeStore } from "@/lib/exam/mock/examMockStore";
+import { armInScope, armRole, loadGradeMarks, taughtSubjects, teachesStudent, loadMarks, readStore, writeStore } from "@/lib/exam/mock/examMockStore";
 import { armOfStudent, compute, storedTraits, type Computed, type ComputedRow } from "@/lib/exam/mock/examResultsMock";
 import { examIndex } from "@/lib/exam/mock/examListMock";
 import { getMockActingAs, MOCK_ADMIN, mockActors } from "@/lib/exam/mock/mockActingAs";
@@ -104,18 +104,20 @@ const PSYCHOMOTOR_KEYS = SEED_PSYCHOMOTOR.map((item) => item.key);
 const AFFECTIVE_KEYS = SEED_AFFECTIVE.map((item) => item.key);
 
 /** §7.30 filled ÷ required for one student's report (see the contract). */
-function completeness(computed: Computed, row: ComputedRow, termId: string): Completeness {
+function completeness(computed: Computed, row: ComputedRow, termId: string, visible: Set<string> | null): Completeness {
   let filled = 0;
   let required = 0;
   const missing: MissingItem[] = [];
   for (const column of computed.columns) {
+    if (visible && !visible.has(column.subject_id)) continue;
     const result = row.subjects[column.subject_id];
     if (!result || result.status === "ne") continue;
     required += 1;
     if (result.status === "ready") filled += 1;
     else missing.push({ kind: "subject", label: column.subject_name });
   }
-  if (computed.mode === "component_based") {
+  // Traits + remarks belong to the class teacher's full report, not a subject-scoped view.
+  if (computed.mode === "component_based" && !visible) {
     const traits = storedTraits(termId, row.student.id);
     const rated = (keys: string[]) => keys.filter((key) => !!progressGradeById(traits?.ratings[key] ?? null)).length;
     for (const [kind, keys] of [["psychomotor", PSYCHOMOTOR_KEYS], ["affective", AFFECTIVE_KEYS]] as const) {
@@ -150,42 +152,45 @@ function latestEntry(examIds: Set<string>, armId: string, studentId: string): Pr
   return latest;
 }
 
+/** One scoped student: the subjects their row covers (null = the whole report). */
+type ScopedRow = { row: ComputedRow; visible: Set<string> | null };
+type ArmRun = { armId: string; armName: string; computed: Computed; canManage: boolean; rows: ScopedRow[] };
+type ClassRun = { cls: (typeof SEED_CLASSES)[number]; runs: ArmRun[] };
+
 /**
- * effective_scope for report publishing: admin / HOD / sectional head =
- * every arm of their classes; a class teacher (form tutor) = only their
- * own arm. Teaching a subject in an arm doesn't add it — the report
- * belongs to the arm's class teacher, so a form tutor of JSS 1 A who
- * also teaches English in JSS 1 B still sees only 1 A here.
+ * The caller's rows in one arm (standard effective_scope): a full-report
+ * role sees every student; a subject teacher sees only the students they
+ * teach (subject-set aware), each limited to the subjects they teach them.
  */
-function reportArmInScope(armId: string): boolean {
+function scopeArm(armId: string, computed: Computed): { canManage: boolean; rows: ScopedRow[] } {
   const role = armRole(armId);
-  return role === "admin" || role === "sectional_head" || role === "class_teacher";
+  if (role !== "subject_teacher") return { canManage: true, rows: computed.rows.map((row) => ({ row, visible: null })) };
+  const subjects = taughtSubjects(armId);
+  const rows: ScopedRow[] = [];
+  for (const row of computed.rows) {
+    const taught = subjects.filter((id) => row.subjects[id] && row.subjects[id].status !== "ne" && teachesStudent(armId, id, row.student.id));
+    if (taught.length > 0) rows.push({ row, visible: new Set(taught) });
+  }
+  return { canManage: false, rows };
 }
 
-type ClassRun = { cls: (typeof SEED_CLASSES)[number]; runs: Array<{ armId: string; armName: string; computed: Computed }> };
-
-/** Every in-scope arm of the class, computed for the point. null = no arm in scope. */
+/** Every in-scope arm of the class, computed for the point. null = nobody in scope. */
 async function runClass(classId: string, termId: string, point: ProgressionPoint): Promise<ClassRun | WireResponse | null> {
   const cls = SEED_CLASSES.find((item) => item.id === classId);
   if (!cls) return fail(404, "CLASS_NOT_FOUND", "Class not found");
-  const runs: ClassRun["runs"] = [];
+  const runs: ArmRun[] = [];
   for (const arm of cls.arms) {
-    if (!reportArmInScope(arm.id)) continue;
+    if (!armInScope(arm.id)) continue;
     const computed = await compute(arm.id, termId, stageOf(point));
     if ("status" in computed) return computed;
-    runs.push({ armId: arm.id, armName: arm.name, computed });
+    const scoped = scopeArm(arm.id, computed);
+    if (scoped.rows.length > 0) runs.push({ armId: arm.id, armName: arm.name, computed, ...scoped });
   }
   return runs.length > 0 ? { cls, runs } : null;
 }
 
-function studentRow(
-  run: ClassRun["runs"][number],
-  row: ComputedRow,
-  termId: string,
-  point: ProgressionPoint,
-  examIds: Set<string>,
-): ProgressionStudent {
-  const { filled, required, missing } = completeness(run.computed, row, termId);
+function studentRow(run: ArmRun, { row, visible }: ScopedRow, termId: string, point: ProgressionPoint, examIds: Set<string>): ProgressionStudent {
+  const { filled, required, missing } = completeness(run.computed, row, termId, visible);
   const stored = loadPublications()[publicationKey(termId, point, row.student.id)];
   const traits = storedTraits(termId, row.student.id);
   const event = (kind: ProgressionActivity["kind"], value: StoredEvent | null | undefined): ProgressionActivity | null =>
@@ -214,6 +219,8 @@ function studentRow(
     // DEC-008: the published PDF job isn't built — no file yet.
     pdf_file_id: null,
     pdf_url: null,
+    can_manage: run.canManage,
+    visible_subject_ids: visible ? Array.from(visible) : null,
   };
 }
 
@@ -249,9 +256,11 @@ async function getClasses(query: URLSearchParams): Promise<WireResponse> {
     let students = 0;
     const subjects = new Set<string>();
     for (const armRun of run.runs) {
-      armRun.computed.columns.forEach((column) => subjects.add(column.subject_id));
-      for (const row of armRun.computed.rows) {
-        const result = completeness(armRun.computed, row, termId);
+      for (const { row, visible } of armRun.rows) {
+        armRun.computed.columns.forEach((column) => {
+          if (!visible || visible.has(column.subject_id)) subjects.add(column.subject_id);
+        });
+        const result = completeness(armRun.computed, row, termId, visible);
         filled += result.filled;
         required += result.required;
         students += 1;
@@ -286,7 +295,7 @@ async function classRows(classId: string, termId: string, point: ProgressionPoin
   if (!run) return fail(403, "OUT_OF_SCOPE", "You don't have access to this class's reports.");
   if ("status" in run) return run;
   const examIds = await pointExamIds(classId, termId, point);
-  const rows = run.runs.flatMap((armRun) => armRun.computed.rows.map((row) => studentRow(armRun, row, termId, point, examIds)));
+  const rows = run.runs.flatMap((armRun) => armRun.rows.map((scoped) => studentRow(armRun, scoped, termId, point, examIds)));
   return { run, rows };
 }
 
@@ -315,7 +324,9 @@ async function getClassView(classId: string, query: URLSearchParams): Promise<Wi
     term_id: termId,
     term_name: terms.find((term) => term.id === termId)?.name ?? "",
     point,
-    classes: SEED_CLASSES.filter((cls) => cls.arms.some((arm) => reportArmInScope(arm.id))).map((cls) => ({ id: cls.id, name: cls.name })),
+    classes: SEED_CLASSES.filter((cls) => cls.arms.some((arm) => armInScope(arm.id))).map((cls) => ({ id: cls.id, name: cls.name })),
+    can_manage: rows.some((row) => row.can_manage),
+    subject_scoped: rows.some((row) => !row.can_manage),
     items,
   };
   return ok(data);
@@ -344,6 +355,7 @@ async function postAction(action: ProgressionAction, payload: unknown): Promise<
     if ("status" in result) return result;
     for (const row of result.rows) {
       if (!wanted.has(row.student_id)) continue;
+      if (!row.can_manage) return fail(403, "FORBIDDEN", "Only the form tutor or a report manager can publish or stamp this report.");
       found.add(row.student_id);
       const key = publicationKey(termId, point, row.student_id);
       const current = next[key] ?? { published: null, unpublished: null, stamped: null };
