@@ -37,6 +37,11 @@ export const NAV_PERMISSIONS = {
   setupAffectiveDomain: { key: "assessment_config.affective_domain", fallback: "assessment_config.view" },
   examList: { key: "exam.list", fallback: "exam.view" },
   hrAssignmentReview: { key: "hr.assignment_review", fallback: "hr.view" },
+  // Report Progression (group-credential sub-menu keys): the tab, then one per action.
+  examReportProgression: { key: "exam.report_progression.view", fallback: "exam.view" },
+  examReportProgressionPublish: { key: "exam.report_progression.publish", fallback: "exam.view" },
+  examReportProgressionStamp: { key: "exam.report_progression.stamp", fallback: "exam.view" },
+  examReportProgressionSend: { key: "exam.report_progression.send", fallback: "exam.view" },
 } satisfies Record<string, NavPermission>;
 
 /** The user's permission keys, or null when the payload carries none. */

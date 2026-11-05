@@ -196,7 +196,8 @@
       "viewResults": "Voir les résultats",
       "broadSheetProgression": "Progression (tableau britannique)",
       "broadSheetCumulative": "Tableau récapitulatif cumulé",
-      "broadSheet": "Tableau récapitulatif"
+      "broadSheet": "Tableau récapitulatif",
+      "reportProgression": "Progression des bulletins"
     }
   },
   "tenant": {
@@ -3925,6 +3926,132 @@
       },
       "toast": {
         "saved": "Saisies du bulletin enregistrées pour {count, plural, one {# élève} other {# élèves}}"
+      }
+    },
+    "reportProgression": {
+      "title": "Progression des bulletins",
+      "subtitle": "Le niveau de complétude des bulletins de chaque classe ; publiez-les ou tamponnez-les quand ils sont prêts.",
+      "noAccess": "Vous n'avez pas accès à la progression des bulletins.",
+      "percent": "{percent} %",
+      "classesCount": "Classes ({count})",
+      "filters": {
+        "search": "Rechercher une classe ou un trimestre",
+        "searchStudent": "Rechercher un élève",
+        "allClasses": "Toutes les classes",
+        "point": "Bulletin",
+        "status": "Statut"
+      },
+      "points": {
+        "ca": "CC / Mi-trimestre",
+        "exam": "Examen / Fin de trimestre"
+      },
+      "status": {
+        "all": "Tous",
+        "published": "Publié",
+        "unpublished": "Non publié"
+      },
+      "badge": {
+        "stamped": "Tamponné"
+      },
+      "card": {
+        "students": "Élèves : {count}",
+        "subjects": "Matières : {count}",
+        "studentsLabel": "Élèves",
+        "subjectsLabel": "Matières",
+        "progressionOf": "Progression des bulletins de {class}",
+        "view": "Voir la progression de la classe"
+      },
+      "empty": {
+        "noClasses": "Aucune classe n'a encore d'élèves pour ce trimestre.",
+        "noScope": "Aucune de vos classes n'a d'élèves pour ce trimestre.",
+        "noMatch": "Aucune classe ne correspond à votre recherche."
+      },
+      "class": {
+        "back": "Retour à la liste des classes",
+        "title": "{class} - Progression des bulletins",
+        "subtitle": "{term} · {point}",
+        "caption": "Élèves de {class} et progression de leurs bulletins",
+        "selectAll": "Sélectionner tous les élèves affichés",
+        "selectRow": "Sélectionner {name}",
+        "rowActions": "Actions pour {name}",
+        "progressionOf": "Progression du bulletin de {name}",
+        "viewPdfOf": "Voir le PDF de {name}",
+        "empty": {
+          "noStudents": "Aucun élève n'est inscrit dans cette classe pour ce trimestre.",
+          "noStatus": "Aucun élève ne correspond à ce statut.",
+          "noMatch": "Aucun élève ne correspond à votre recherche."
+        }
+      },
+      "columns": {
+        "sn": "N°",
+        "students": "Élèves ({count})",
+        "arm": "Division",
+        "progression": "Progression",
+        "latestActivity": "Dernière activité / Par",
+        "timeStamp": "Horodatage",
+        "actions": "Actions"
+      },
+      "actions": {
+        "publishAll": "Tout publier",
+        "publishSelected": "Publier la sélection ({count})",
+        "stamp": "Tamponner",
+        "stampSelected": "Tamponner la sélection ({count})",
+        "send": "Envoyer le résultat aux parents"
+      },
+      "menu": {
+        "viewDetails": "Voir les détails",
+        "viewReport": "Voir le bulletin",
+        "viewPdf": "Voir le PDF",
+        "publish": "Publier",
+        "unpublish": "Dépublier",
+        "stamp": "Tamponner",
+        "stamped": "Tamponné"
+      },
+      "activity": {
+        "none": "Aucune activité",
+        "byAdmin": "Administration",
+        "kinds": {
+          "marks": "Résultats saisis",
+          "traits": "Traits et appréciations",
+          "published": "Publié",
+          "unpublished": "Dépublié",
+          "stamped": "Tamponné"
+        }
+      },
+      "missing": {
+        "subject": "{subject}",
+        "psychomotor": "Psychomotricité : {count} non noté(s)",
+        "affective": "Affectif : {count} non noté(s)",
+        "class_teacher_remark": "Appréciation du professeur principal",
+        "head_teacher_remark": "Appréciation du directeur"
+      },
+      "warning": {
+        "title": "Certains bulletins sont incomplets",
+        "intro": "{count, plural, one {# bulletin sur {total} est} other {# bulletins sur {total} sont}} en dessous de 100 %. Vous pouvez quand même publier — ces éléments seront vides :",
+        "introOne": "Ce bulletin est en dessous de 100 %. Vous pouvez quand même publier — ces éléments seront vides :",
+        "studentLine": "{name} — {percent} %",
+        "more": "{count, plural, one {+# autre élève} other {+# autres élèves}}",
+        "publishAnyway": "Publier quand même",
+        "confirmTitle": "Publier les bulletins ?",
+        "confirmBody": "{count, plural, one {# bulletin sera publié} other {# bulletins seront publiés}}.",
+        "publish": "Publier"
+      },
+      "toast": {
+        "publish": "{count, plural, one {# bulletin publié} other {# bulletins publiés}}",
+        "unpublish": "{count, plural, one {# bulletin dépublié} other {# bulletins dépubliés}}",
+        "stamp": "{count, plural, one {# bulletin tamponné} other {# bulletins tamponnés}}",
+        "failed": "L'opération n'a pas abouti. Veuillez réessayer."
+      },
+      "placeholder": {
+        "backToClass": "Retour à la progression de la classe",
+        "details": {
+          "title": "Détails du bulletin de l'élève",
+          "body": "La saisie du bulletin par élève arrive à la prochaine étape."
+        },
+        "send": {
+          "title": "Envoyer le résultat aux parents",
+          "body": "L'envoi des résultats aux parents arrive à une étape ultérieure."
+        }
       }
     }
   }

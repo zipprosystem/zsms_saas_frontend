@@ -52,6 +52,9 @@ export const SEARCH_VIEW_RESULTS_KEYWORDS = [
 /** Exam › List (per-class exams: CA / Exam, British 1A / 1B; create / edit). */
 export const SEARCH_EXAM_LIST_KEYWORDS = ["exam list", "exams", "exam schedule", "schedules", "create exam", "CA", "half term", "1A", "1B", "exam points", "draft exam", "gradebook", "tracking"];
 
+/** Exam › Report Progression (publish / stamp report cards, completeness per class). */
+export const SEARCH_REPORT_PROGRESSION_KEYWORDS = ["report progression", "publish results", "publish report", "report cards", "stamp", "unpublish", "completeness", "send result to parent", "release results"];
+
 /** Exam › Broad Sheet › Broadsheet (General, one term: CA · Exam · Total per subject). */
 export const SEARCH_BROAD_SHEET_KEYWORDS = [
   "broadsheet",

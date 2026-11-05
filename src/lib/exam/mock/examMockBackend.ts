@@ -57,6 +57,7 @@ import { handleExamSettings } from "@/lib/exam/mock/examSettingsMock";
 import { examIndex, handleExamList } from "@/lib/exam/mock/examListMock";
 import { getStudentReport, postGenerateClassPdf } from "@/lib/exam/mock/reportPayloadMock";
 import { getBroadsheet, getCumulativeBroadsheet, getProgressionBroadsheet } from "@/lib/exam/mock/broadsheetMock";
+import { handleReportProgression } from "@/lib/exam/mock/reportProgressionMock";
 
 /**
  * MOCK Exam backend (Stage 1b: marks entry) — localStorage-backed,
@@ -87,7 +88,8 @@ import { getBroadsheet, getCumulativeBroadsheet, getProgressionBroadsheet } from
  *     payload (GET erp/results/:student_id/report) and the class PDF stub
  *     (POST erp/report-cards/generate) are reportPayloadMock.ts; the Broad
  *     Sheet (GET erp/broadsheets, …/cumulative, …/progression) is
- *     broadsheetMock.ts.
+ *     broadsheetMock.ts; Report Progression (erp/report-progression/*) is
+ *     reportProgressionMock.ts.
  *   - PUT upserts the rows it's given (others untouched) and stamps
  *     entered_by_staff_id with the caller. No totals/grades are stored —
  *     computation is Stage 2.
@@ -520,6 +522,8 @@ async function handle(method: HttpMethod, path: string, query: URLSearchParams, 
   if (path === "erp/exams/entry-options" && method === "GET") return entryOptions(query);
   const examList = await handleExamList(method, path, query, payload);
   if (examList) return examList;
+  const progression = await handleReportProgression(method, path, query, payload);
+  if (progression) return progression;
   if (path === "erp/broadsheets" && method === "GET") return getBroadsheet(query);
   if (path === "erp/broadsheets/cumulative" && method === "GET") return getCumulativeBroadsheet(query);
   if (path === "erp/broadsheets/progression" && method === "GET") return getProgressionBroadsheet(query);

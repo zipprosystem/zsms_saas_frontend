@@ -1,12 +1,12 @@
 import { NAV_PERMISSIONS, type NavPermission } from "@/lib/auth/navPermissions";
 
-/** The Exam area's tabs (Figma: Academics › Exam). List, Results and Broad Sheet are built; the rest render a placeholder. */
+/** The Exam area's tabs (Figma: Academics › Exam). List, Results, Broad Sheet and Report Progression are built; the rest render a placeholder. */
 export const EXAM_TABS: ReadonlyArray<{ slug: string; labelKey: string; permission?: NavPermission }> = [
   { slug: "list", labelKey: "exam.tabs.list", permission: NAV_PERMISSIONS.examList },
   { slug: "results", labelKey: "exam.tabs.results" },
   { slug: "broad-sheet", labelKey: "exam.tabs.broadSheet" },
   { slug: "reports", labelKey: "exam.tabs.reports" },
-  { slug: "report-progression", labelKey: "exam.tabs.reportProgression" },
+  { slug: "report-progression", labelKey: "exam.tabs.reportProgression", permission: NAV_PERMISSIONS.examReportProgression },
   { slug: "cutoff", labelKey: "exam.tabs.cutoff" },
 ];
 
@@ -15,6 +15,12 @@ export const EXAM_LIST_HREF = "/admin/academics/exam/list";
 
 export function examTabHref(slug: string): string {
   return `/admin/academics/exam/${slug}`;
+}
+
+/** Report Progression: class cards; a class's students; (Stage 2) a student's entry; (Stage 4) Send Result to Parent. */
+export const REPORT_PROGRESSION_HREF = "/admin/academics/exam/report-progression";
+export function reportProgressionClassHref(classId: string): string {
+  return `${REPORT_PROGRESSION_HREF}/${encodeURIComponent(classId)}`;
 }
 
 /** The two subject-wise entry screens inside Results: scores (component_based) and the British Academic Report (grade_based). */

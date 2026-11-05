@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
 
@@ -9,6 +10,10 @@ type ConfirmDialogProps = {
   message: string;
   isDangerous?: boolean;
   isConfirming?: boolean;
+  /** Extra body under the message (e.g. a list of what's affected). */
+  children?: ReactNode;
+  /** Replaces "Confirm" on the confirm button. */
+  confirmLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -26,6 +31,8 @@ export function ConfirmDialog({
   message,
   isDangerous,
   isConfirming,
+  children,
+  confirmLabel,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -46,6 +53,7 @@ export function ConfirmDialog({
           {title}
         </h2>
         <p className="text-sm text-text-secondary">{message}</p>
+        {children}
         <div className="mt-2 flex justify-end gap-3">
           <Button type="button" variant="secondary" onClick={onCancel} className="h-10 px-4 text-sm">
             {t("common.cancel")}
@@ -56,7 +64,7 @@ export function ConfirmDialog({
             disabled={isConfirming}
             className={`h-10 px-4 text-sm ${isDangerous ? "bg-error hover:bg-error/90" : ""}`}
           >
-            {isConfirming ? t("common.saving") : t("common.confirm")}
+            {isConfirming ? t("common.saving") : (confirmLabel ?? t("common.confirm"))}
           </Button>
         </div>
       </div>

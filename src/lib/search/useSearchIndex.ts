@@ -14,6 +14,7 @@ import {
   SEARCH_CUMULATIVE_BROADSHEET_KEYWORDS,
   SEARCH_GRADE_BOOK_KEYWORDS,
   SEARCH_PROGRESSION_KEYWORDS,
+  SEARCH_REPORT_PROGRESSION_KEYWORDS,
   SEARCH_VIEW_RESULTS_KEYWORDS,
   SETUP_ITEM_KEYWORDS,
 } from "./searchKeywords";
@@ -174,6 +175,16 @@ export function useSearchIndex(): SearchGroup[] {
           href: "/admin/academics/exam/broad-sheet?view=progression",
           keywords: SEARCH_PROGRESSION_KEYWORDS,
         },
+        ...(canSeeNavEntry(NAV_PERMISSIONS.examReportProgression, granted)
+          ? [
+              {
+                id: "exams-report-progression",
+                title: t("search.exams.reportProgression"),
+                href: "/admin/academics/exam/report-progression",
+                keywords: SEARCH_REPORT_PROGRESSION_KEYWORDS,
+              },
+            ]
+          : []),
       ],
     };
 

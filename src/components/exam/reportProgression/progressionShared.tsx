@@ -1,0 +1,99 @@
+"use client";
+
+import type { ReactNode } from "react";
+import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { canSeeNavEntry, readUserPermissions, type NavPermission } from "@/lib/auth/navPermissions";
+import { SelectField } from "@/components/ui/Select";
+import { PROGRESSION_POINTS, type MissingItem, type ProgressionPoint } from "@/lib/exam/reportProgression/reportProgressionApi";
+
+/** Sub-menu permission check (group credential); shown when the user carries no permission list yet. */
+export function useCanSee(permission: NavPermission): boolean {
+  const { user } = useAuth();
+  return canSeeNavEntry(permission, readUserPermissions(user));
+}
+
+/** Bar tone: below 40 % red, below 70 % amber, else green (Figma). */
+function toneOf(percent: number): string {
+  if (percent < 40) return "bg-error";
+  if (percent < 70) return "bg-warning";
+  return "bg-success";
+}
+
+/** Progression % bar + figure. A 0 % bar keeps a small stub so the tone still reads. */
+export function ProgressionBar({ percent, label }: { percent: number; label: string }) {
+  const t = useTranslations("exam.reportProgression");
+  const clamped = Math.min(100, Math.max(0, percent));
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <div
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={clamped}
+        className="h-2 min-w-[80px] flex-1 overflow-hidden rounded-full bg-background"
+      >
+        <div className={`h-full rounded-full ${toneOf(clamped)}`} style={{ width: `${Math.max(clamped, 2)}%` }} />
+      </div>
+      <span className="w-11 shrink-0 text-right text-sm font-medium text-text-primary">{t("percent", { percent: clamped })}</span>
+    </div>
+  );
+}
+
+export function PointSelect({ id, value, onChange }: { id: string; value: ProgressionPoint; onChange: (point: ProgressionPoint) => void }) {
+  const t = useTranslations("exam.reportProgression");
+  return (
+    <SelectField id={id} label={t("filters.point")} value={value} onChange={(event) => onChange(event.target.value as ProgressionPoint)}>
+      {PROGRESSION_POINTS.map((point) => (
+        <option key={point} value={point}>
+          {t(`points.${point}`)}
+        </option>
+      ))}
+    </SelectField>
+  );
+}
+
+export function SearchBox({ id, value, onChange, placeholder }: { id: string; value: string; onChange: (value: string) => void; placeholder: string }) {
+  return (
+    <div className="flex w-full flex-col gap-1.5">
+      <label htmlFor={id} className="sr-only">
+        {placeholder}
+      </label>
+      <input
+        id={id}
+        type="search"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className="h-11 w-full rounded-md border border-border bg-surface px-4 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent"
+      />
+    </div>
+  );
+}
+
+/** One unpopulated item, worded for the publish warning. */
+export function useMissingLabel(): (item: MissingItem) => string {
+  const t = useTranslations("exam.reportProgression.missing");
+  return (item) => {
+    if (item.kind === "subject") return t("subject", { subject: item.label });
+    if (item.kind === "psychomotor" || item.kind === "affective") return t(item.kind, { count: item.count });
+    return t(item.kind);
+  };
+}
+
+/** Back link + a "coming in a later stage" body (Stage 2 entry, Stage 4 Send-to-Parent). */
+export function StagePlaceholder({ backHref, backLabel, title, body }: { backHref: string; backLabel: string; title: string; body: ReactNode }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-5">
+      <Link href={backHref} className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent hover:underline">
+        <span aria-hidden>←</span> {backLabel}
+      </Link>
+      <div className="flex min-w-0 flex-col items-center rounded-xl border border-border bg-surface px-6 py-16 text-center shadow-sm">
+        <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
+        <p className="mt-2 max-w-md text-sm text-text-muted">{body}</p>
+      </div>
+    </div>
+  );
+}
