@@ -15,6 +15,7 @@ import {
   SEED_CLASS_TEACHERS,
   SEED_CLASS_SCHOOL_TYPE,
   SEED_PSYCHOMOTOR,
+  SEED_SUBJECT_SETS,
   SEED_TEACHERS,
   SEED_YEARS,
   enrolledForTerm,
@@ -156,8 +157,12 @@ async function selectedTemplate(classId: string, variant: ReportVariant): Promis
   return { id: chosen?.id ?? null, pages: (chosen?.template_key && TEMPLATE_PAGES[chosen.template_key]?.[variant]) || 1 };
 }
 
-function teacherOf(subjectId: string, armId: string): string | null {
-  return SEED_TEACHERS.find((teacher) => teacher.assignments.some((a) => a.subject_id === subjectId && a.class_arm_id === armId))?.name ?? null;
+/** The student's teacher for the subject: an assignment naming a subject set covers only its members. */
+function teacherOf(subjectId: string, armId: string, studentId: string): string | null {
+  const covers = (setId: string | undefined) => !setId || !!SEED_SUBJECT_SETS.find((set) => set.id === setId)?.student_ids.includes(studentId);
+  return (
+    SEED_TEACHERS.find((teacher) => teacher.assignments.some((a) => a.subject_id === subjectId && a.class_arm_id === armId && covers(a.subject_set_id)))?.name ?? null
+  );
 }
 
 /** Default variant: Full once the term's second point (Exam / B) has any mark for the student, else Progress. */
@@ -393,7 +398,7 @@ function buildPayload(
     const result = row.subjects[column.subject_id];
     // Not offered / explicitly not enrolled -> not on the report.
     if (!result || result.status === "ne") return [];
-    const base = { name: column.subject_name, teacher_name: teacherOf(column.subject_id, armId) };
+    const base = { name: column.subject_name, teacher_name: teacherOf(column.subject_id, armId, row.student.id) };
     if (visible && !visible.has(column.subject_id)) return [{ ...base, ...REDACTED }];
     if (!general) {
       return [

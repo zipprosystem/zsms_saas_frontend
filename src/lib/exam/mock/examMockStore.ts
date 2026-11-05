@@ -11,6 +11,7 @@ import {
   SEED_GRADE_SCALES,
   SEED_GRADE_STRUCTURES,
   SEED_SECTIONAL_HEADS,
+  SEED_SUBJECT_SETS,
   SEED_TEACHERS,
   seedHash,
   seedRoster,
@@ -146,6 +147,23 @@ export function taughtSubjects(armId: string): string[] {
   const teacher = SEED_TEACHERS.find((item) => item.id === getMockActingAs());
   const offered = new Set((SEED_ARM_SUBJECTS[armId] ?? []).map((offer) => offer.subject_id));
   return (teacher?.assignments ?? []).filter((a) => a.class_arm_id === armId && offered.has(a.subject_id)).map((a) => a.subject_id);
+}
+
+/**
+ * Subject-set-aware student scope for a subject teacher: whether the
+ * caller teaches this student this subject in the arm. An assignment that
+ * names a subject set covers only that set's members; one without a set
+ * covers everyone in the arm taking the subject (enrolment is the
+ * caller's check). Full-report roles (admin / sectional head / class
+ * teacher) aren't narrowed by this — see armRole.
+ */
+export function teachesStudent(armId: string, subjectId: string, studentId: string): boolean {
+  const teacher = SEED_TEACHERS.find((item) => item.id === getMockActingAs());
+  return !!teacher?.assignments.some((a) => {
+    if (a.class_arm_id !== armId || a.subject_id !== subjectId) return false;
+    if (!a.subject_set_id) return true;
+    return !!SEED_SUBJECT_SETS.find((set) => set.id === a.subject_set_id)?.student_ids.includes(studentId);
+  });
 }
 
 export function classOfArm(armId: string): string | null {

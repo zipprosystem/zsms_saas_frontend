@@ -87,28 +87,31 @@ export function StudentReportViewer({
   termId,
   isOpen,
   onClose,
+  defaultVariant = null,
 }: {
   student: { id: string; name: string } | null;
   termId: string;
   isOpen: boolean;
   onClose: () => void;
+  /** Open on this report (e.g. Report Progression's CA / Exam point); null = the backend's default. */
+  defaultVariant?: ReportVariant | null;
 }) {
   const t = useTranslations();
   const k = (key: string, values?: Record<string, string | number>) => t(`exam.viewResults.report.${key}`, values);
   const frameRef = useRef<HTMLIFrameElement>(null);
   /** null = the backend's default for what's been entered. */
-  const [variant, setVariant] = useState<ReportVariant | null>(null);
+  const [variant, setVariant] = useState<ReportVariant | null>(defaultVariant);
   const [page, setPage] = useState<PageChoice>(1);
   /** Dev only (DEV_TEMPLATE_PICKER): preview the same payload in another template. */
   const [templateOverride, setTemplateOverride] = useState("");
 
   useEffect(() => {
     if (!isOpen) {
-      setVariant(null);
+      setVariant(defaultVariant);
       setPage(1);
       setTemplateOverride("");
     }
-  }, [isOpen]);
+  }, [isOpen, defaultVariant]);
 
   const payloadQuery = useQuery({
     queryKey: reportQueryKeys.payload(student?.id ?? "", termId, variant),

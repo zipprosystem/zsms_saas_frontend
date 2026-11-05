@@ -196,7 +196,8 @@
       "viewResults": "View Results",
       "broadSheetProgression": "Progression (British broadsheet)",
       "broadSheetCumulative": "Cumulative Broadsheet",
-      "broadSheet": "Broad Sheet"
+      "broadSheet": "Broad Sheet",
+      "reportProgression": "Report Progression"
     }
   },
   "tenant": {
@@ -3917,6 +3918,134 @@
       },
       "toast": {
         "saved": "Report entries saved for {count, plural, one {# student} other {# students}}"
+      }
+    },
+    "reportProgression": {
+      "title": "Report Progression",
+      "subtitle": "How complete each class's reports are, and publish or stamp them when they're ready.",
+      "noAccess": "You don't have access to Report Progression.",
+      "percent": "{percent}%",
+      "classesCount": "Classes ({count})",
+      "filters": {
+        "search": "Search class or term",
+        "searchStudent": "Search student",
+        "allClasses": "All Classes",
+        "point": "Report",
+        "status": "Status"
+      },
+      "points": {
+        "ca": "CA / Half Term",
+        "exam": "Exam / End of Term"
+      },
+      "status": {
+        "all": "All",
+        "published": "Published",
+        "unpublished": "Unpublished"
+      },
+      "badge": {
+        "stamped": "Stamped"
+      },
+      "card": {
+        "students": "Students: {count}",
+        "subjects": "Subjects: {count}",
+        "studentsLabel": "Students",
+        "subjectsLabel": "Subjects",
+        "progressionOf": "Report progression for {class}",
+        "view": "View Class Progression"
+      },
+      "empty": {
+        "noClasses": "No classes have students for this term yet.",
+        "noScope": "None of your classes have students for this term.",
+        "noMatch": "No classes match your search."
+      },
+      "class": {
+        "back": "Back to Class List",
+        "title": "{class} - Report Progression",
+        "subtitle": "{term} · {point}",
+        "caption": "{class} students and their report progression",
+        "selectAll": "Select all students shown",
+        "selectRow": "Select {name}",
+        "rowActions": "Actions for {name}",
+        "progressionOf": "Report progression for {name}",
+        "viewPdfOf": "View PDF for {name}",
+        "subjectScope": "You see only the students and subject(s) you teach. Publishing, stamping and the class / head teacher comments are for the form tutor.",
+        "mixedScope": "In arms where you only teach a subject, you see just your students and subject(s) — those reports are view-only here.",
+        "empty": {
+          "noStudents": "No students are enrolled in this class for the term.",
+          "noStatus": "No students match this status.",
+          "noMatch": "No students match your search."
+        }
+      },
+      "columns": {
+        "sn": "S/N",
+        "students": "Students ({count})",
+        "arm": "Arm",
+        "progression": "Progression",
+        "latestActivity": "Latest Activity / By",
+        "timeStamp": "Time Stamp",
+        "actions": "Actions"
+      },
+      "actions": {
+        "publishAll": "Publish All",
+        "publishSelected": "Publish selected ({count})",
+        "stamp": "Stamp",
+        "stampSelected": "Stamp selected ({count})",
+        "send": "Send Result to Parent"
+      },
+      "menu": {
+        "viewDetails": "View Details",
+        "viewReport": "View Report",
+        "viewPdf": "View PDF",
+        "publish": "Publish",
+        "unpublish": "Unpublish",
+        "stamp": "Stamp",
+        "stamped": "Stamped"
+      },
+      "activity": {
+        "none": "No activity yet",
+        "byAdmin": "School admin",
+        "kinds": {
+          "marks": "Results entered",
+          "traits": "Traits & remarks",
+          "published": "Published",
+          "unpublished": "Unpublished",
+          "stamped": "Stamped"
+        }
+      },
+      "missing": {
+        "subject": "{subject}",
+        "psychomotor": "Psychomotor: {count} unrated",
+        "affective": "Affective: {count} unrated",
+        "class_teacher_remark": "Class teacher's remark",
+        "head_teacher_remark": "Head teacher's remark"
+      },
+      "warning": {
+        "title": "Some reports aren't complete",
+        "intro": "{count, plural, one {# of {total} reports is} other {# of {total} reports are}} below 100%. You can still publish — these parts will be empty:",
+        "introOne": "This report is below 100%. You can still publish — these parts will be empty:",
+        "studentLine": "{name} — {percent}%",
+        "more": "{count, plural, one {+# more student} other {+# more students}}",
+        "publishAnyway": "Publish anyway",
+        "confirmTitle": "Publish reports?",
+        "confirmBody": "{count, plural, one {# report} other {# reports}} will be published.",
+        "publish": "Publish"
+      },
+      "toast": {
+        "publish": "{count, plural, one {# report published} other {# reports published}}",
+        "unpublish": "{count, plural, one {# report unpublished} other {# reports unpublished}}",
+        "stamp": "{count, plural, one {# report stamped} other {# reports stamped}}",
+        "failed": "That didn't go through. Please try again."
+      },
+      "placeholder": {
+        "backToClass": "Back to Class Progression",
+        "details": {
+          "title": "Student report details",
+          "body": "Student-wise report entry is coming in the next stage."
+        },
+        "send": {
+          "title": "Send Result to Parent",
+          "body": "Sending results to parents is coming in a later stage."
+        }
       }
     }
   }

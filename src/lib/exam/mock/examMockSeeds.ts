@@ -346,8 +346,16 @@ export function seedHash(text: string): number {
   return hash >>> 0;
 }
 
-/** Mock teachers and their teaching assignments (subject + class-arm) — the effective_scope the mock simulates. */
-export const SEED_TEACHERS: Array<{ id: string; name: string; assignments: Array<{ subject_id: string; class_arm_id: string }> }> = [
+/**
+ * Mock teachers and their teaching assignments (subject + class-arm) — the
+ * effective_scope the mock simulates. `subject_set_id` narrows an
+ * assignment to that set's students in the arm (subject sets, below).
+ */
+export const SEED_TEACHERS: Array<{
+  id: string;
+  name: string;
+  assignments: Array<{ subject_id: string; class_arm_id: string; subject_set_id?: string }>;
+}> = [
   {
     id: "stf-okafor",
     name: "Adaeze Okafor",
@@ -377,6 +385,37 @@ export const SEED_TEACHERS: Array<{ id: string; name: string; assignments: Array
       { subject_id: "sub-eng", class_arm_id: "arm-y9-oak" },
       { subject_id: "sub-eng", class_arm_id: "arm-y11-a" },
     ],
+  },
+  {
+    // A set teacher: Basic Science "Set 1" spans JSS 1 A and B (5 + 3 students).
+    id: "stf-adeyemi",
+    name: "Kunle Adeyemi",
+    assignments: [
+      { subject_id: "sub-bsc", class_arm_id: "arm-jss1-a", subject_set_id: "set-jss1-bsc-1" },
+      { subject_id: "sub-bsc", class_arm_id: "arm-jss1-b", subject_set_id: "set-jss1-bsc-1" },
+    ],
+  },
+];
+
+/**
+ * Subject sets — MOCK (FLAGGED: the backend's set model isn't confirmed).
+ * A set groups some of a class's students for one subject across its
+ * arms; a teaching assignment that names a set covers only its members.
+ */
+export const SEED_SUBJECT_SETS: Array<{ id: string; name: string; class_id: string; subject_id: string; student_ids: string[] }> = [
+  {
+    id: "set-jss1-bsc-1",
+    name: "Basic Science Set 1",
+    class_id: "cls-jss1",
+    subject_id: "sub-bsc",
+    student_ids: [1, 2, 3, 4, 5].map((n) => `stu-arm-jss1-a-${n}`).concat([1, 2, 3].map((n) => `stu-arm-jss1-b-${n}`)),
+  },
+  {
+    id: "set-jss1-bsc-2",
+    name: "Basic Science Set 2",
+    class_id: "cls-jss1",
+    subject_id: "sub-bsc",
+    student_ids: [6, 7, 8, 9, 10].map((n) => `stu-arm-jss1-a-${n}`).concat([4, 5, 6, 7, 8, 9, 10].map((n) => `stu-arm-jss1-b-${n}`)),
   },
 ];
 
