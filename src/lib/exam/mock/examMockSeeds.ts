@@ -419,7 +419,9 @@ function mockSignature(name: string): string {
     const y = 30 + ((code * (index + 3)) % 22) - 11;
     return `${x},${y}`;
   });
-  const path = `M8,32 Q${points.join(" T")}`;
+  // A quadratic curve needs a control + end point; the rest chain smoothly (T).
+  const [control, end, ...rest] = points;
+  const path = `M8,32 Q${control} ${end}${rest.map((point) => ` T${point}`).join("")}`;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${x + 16} 60"><path d="${path}" fill="none" stroke="midnightblue" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }

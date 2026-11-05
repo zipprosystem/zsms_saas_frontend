@@ -51,6 +51,8 @@
   .cover-page p{margin:0}
   .c-school{font:800 clamp(22px,4.2vw,36px)/1.15 var(--disp);color:var(--accent);text-wrap:balance}
   :root[data-theme="dark"] .c-school{color:var(--ink)} @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .c-school{color:var(--ink)}}
+  .c-title{font:700 clamp(15px,2.2vw,19px)/1.25 var(--disp);color:var(--ink);text-wrap:balance}
+  .c-title[hidden],.school .rtitle[hidden]{display:none}
   .c-term{font:800 clamp(16px,2.6vw,21px)/1.2 var(--disp);letter-spacing:.14em;text-transform:uppercase}
   .c-dates{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
   .c-logo{width:150px;height:150px;margin:22px 0;border-radius:18px;border:1px solid var(--line);background:var(--tint);display:grid;place-items:center;font:800 12px/1 var(--disp);letter-spacing:.06em;color:var(--muted)}
@@ -62,6 +64,7 @@
   .masthead{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;background:linear-gradient(100deg,var(--band1),var(--band2));color:#fff;padding:16px 20px}
   .crest{width:54px;height:54px;border-radius:11px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.4);display:grid;place-items:center;font:800 10px/1 var(--disp);letter-spacing:.05em}
   .school h1{font-family:var(--disp);font-weight:800;font-size:clamp(18px,3vw,27px);margin:0;text-wrap:balance}
+  .school .rtitle{margin:2px 0 0;font:700 clamp(12.5px,1.6vw,15px)/1.25 var(--disp);letter-spacing:.02em}
   .school .term{margin:3px 0 0;font-weight:600;font-size:12.5px;opacity:.92}
   .school .cem{margin:2px 0 0;font-size:11.5px;opacity:.85}
   .passport{width:52px;height:64px;border-radius:6px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.1);display:grid;place-items:center}
@@ -101,10 +104,13 @@
   .card .cur{background:var(--yellow);box-shadow:inset 0 0 0 1px var(--yellow-bd)}
 
   /* footer: comment (Progress: boarding house; Full: form tutor) | boarding grades (Progress) | principal */
-  .foot{display:grid;grid-template-columns:1fr 150px 230px;border-top:2px solid var(--line-strong)}
+  .foot{display:grid;grid-template-columns:1fr 150px auto;border-top:2px solid var(--line-strong)}
   .foot .cmt{padding:10px 14px;border-right:1px solid var(--line);min-width:0}
   /* Full: the Form Tutor's comment, with the Boarding Grade as a strip (points across, grades below) */
-  .foot.tutor{grid-template-columns:1fr auto 230px}
+  .foot.tutor{grid-template-columns:1fr auto auto}
+  /* nobody to sign + no date: the signature column is removed and the others fill the footer */
+  .foot.noprin{grid-template-columns:1fr 150px}.foot.tutor.noprin{grid-template-columns:1fr auto}
+  .foot.noprin .bhg{border-right:0}
   .foot .cmt h4,.foot .bhg h4,.foot .prin h4{margin:0 0 5px;font:800 10px/1 var(--disp);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
   .foot .cmt p{margin:0;font-size:11.5px;line-height:1.45}
   .foot .bhg{border-right:1px solid var(--line);padding:0}
@@ -117,9 +123,16 @@
   .foot .bhg table.strip th:first-child,.foot .bhg table.strip td:first-child{border-left:0}
   .foot .bhg table.strip th{background:var(--head);font:700 9.5px/1.2 var(--disp)}
   .foot .bhg table.strip td{font-weight:700}
-  .foot .prin{padding:10px 14px;display:flex;flex-direction:column}
-  .foot .prin .scribble{font-family:var(--disp);font-style:italic;font-weight:700;font-size:17px;transform:rotate(-4deg);margin:6px 0}
-  .foot .prin .date{margin-top:auto;font-size:11px;color:var(--muted)}
+  /* the Principal's signature (only when assigned and it has an image), the report date below. British reports carry no other signatures — the form tutor and boarding house sign off with their comments. */
+  .foot .prin{padding:10px 14px;display:flex;flex-direction:column;gap:6px;min-width:0;max-width:480px}
+  .foot .prin[hidden]{display:none}
+  .foot .prin .sigs{display:flex;gap:14px;margin-top:auto}
+  .foot .prin .sig{display:flex;flex-direction:column;align-items:flex-start;width:130px;min-width:0}
+  .foot .prin .sig img{height:36px;width:100%;object-fit:contain;object-position:left bottom;display:block}
+  .foot .prin .sig .nm{border-top:1px solid var(--line-strong);width:100%;padding-top:3px;font-size:11px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
+  .foot .prin .sig .rl{font:800 9px/1.2 var(--disp);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .foot .prin .date{font-size:11px;color:var(--muted)}
+  .foot .prin .date[hidden],.foot .prin .sigs[hidden]{display:none}
 
   /* (2) subject comments (the comment text is a Full-report field) */
   .narr{display:grid;gap:10px;padding:4px 16px 10px}
@@ -143,6 +156,7 @@
     .bio{grid-template-columns:1fr 1fr}.bio .cellb{border-right:0}
     .foot,.foot.tutor{grid-template-columns:1fr}.foot .cmt,.foot .bhg{border-right:0;border-bottom:1px solid var(--line)}
     .foot .bhg table.strip{width:100%}
+    .foot .prin{max-width:none}.foot .prin .sigs{flex-wrap:wrap}
   }
   @media print{
     @page{size:A4 landscape;margin:7mm}
@@ -172,6 +186,7 @@
   <section class="card portrait cover-page fullonly" data-zsms-page="1" aria-label="Cover">
     <div class="c-main">
       <p class="c-school" id="c-school">Westbridge International College</p>
+      <p class="c-title" id="c-title">Third Term Mid-Term Report</p>
       <p class="c-term" id="c-term">Term 3A</p>
       <p class="c-dates" id="c-dates">19/04/2026 – 09/07/2026</p>
       <div class="c-logo" id="c-logo">CREST</div>
@@ -191,6 +206,7 @@
       <div class="crest">CREST</div>
       <div class="school">
         <h1>Westbridge International College</h1>
+        <div class="rtitle" id="rtitle">Third Term Mid-Term Report</div>
         <div class="term" id="term">Progress Report — Term 3A (Interim) · 28 May 2026</div>
         <div class="cem">CEM MidYIS score: <strong>138</strong></div>
       </div>
@@ -222,10 +238,9 @@
           <tr><td>3A</td><td>1</td></tr><tr><td>3B</td><td>1</td></tr>
         </tbody></table>
       </div>
-      <div class="prin">
-        <h4>Principal</h4>
-        <span class="scribble">A. T. Cole</span>
-        <span class="date" id="pdate">Date: 28 May 2026</span>
+      <div class="prin" id="prin">
+        <div class="sigs" id="sigs"></div>
+        <span class="date" id="pdate">Date: 28/05/2026</span>
       </div>
     </div>
   </article>
@@ -369,6 +384,27 @@
     var m=document.getElementById("c-mission");m.textContent=o.mission||"";m.hidden=!o.mission;
   }
 
+  /* Result Title (the report point's exam heading): under the school name on the cover and the results masthead; empty → removed. */
+  function setResultTitle(title){
+    ["c-title","rtitle"].forEach(function(id){var e=document.getElementById(id);if(!e)return;e.textContent=title||"";e.hidden=!title;});
+  }
+  /* British: the PRINCIPAL's signature only — when assigned AND it has a signature image; the date only when set.
+     Nothing to show → the signature column is removed and the footer's other columns take its width. */
+  function setSignatures(sigs,isoDate){
+    sigs=sigs||{};
+    var roles=[["principal","sigPrincipal","Principal"]];
+    var html=roles.map(function(r){
+      var s=sigs[r[0]];if(!s||!s.signature_url)return "";
+      var nm=s.name||"";
+      return '<div class="sig"><img src="'+zEsc(s.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+(nm?" — "+nm:""))+'"><span class="nm">'+zEsc(nm)+'</span><span class="rl">'+zEsc(zL(r[1],r[2]))+"</span></div>";
+    }).join("");
+    var box=document.getElementById("sigs"), d=document.getElementById("pdate"), prin=document.getElementById("prin");
+    box.innerHTML=html;box.hidden=!html;
+    d.textContent=isoDate?zL("sigDate","Date")+": "+zDate(isoDate):"";d.hidden=!isoDate;
+    prin.hidden=!html&&!isoDate;
+    document.querySelector("#card .foot").classList.toggle("noprin",prin.hidden);
+  }
+
   if (Z) (function(){
     document.querySelector(".toolbar").style.display="none";
     var isFull=Z.meta.variant==="full", st=Z.student, card=document.getElementById("card");
@@ -382,6 +418,7 @@
 
     card.querySelector(".crest").innerHTML=zImg(Z.school.logo_url,"CREST");
     card.querySelector(".school h1").textContent=Z.school.name;
+    setResultTitle(Z.result_title);
     document.getElementById("term").innerHTML="Progress Report — "+zEsc(t.name)+" "+zEsc(curLabel)+" ("+(isFull?"Full":"Interim")+")"+(dates?" · "+dates:"");
     card.querySelector(".school .cem").style.display="none";
     card.querySelector(".passport").innerHTML=zImg(st.photo_url,card.querySelector(".passport").innerHTML);
@@ -434,8 +471,7 @@
       var d=r.descriptors||{}, c=lvClass(r.rating);
       return '<tr><td class="lvl"><span class="lv lv-tag'+c+'"'+(c?"":' style="background:var(--muted)"')+">"+zEsc(r.rating)+"</span>"+zEsc(r.descriptor)+"</td><td>"+zTxt(d.engagement)+"</td><td>"+zTxt(d.learning_behaviour)+"</td><td>"+zTxt(d.boarding)+"</td></tr>";
     }).join(""):'<tr><td colspan="4">—</td></tr>';
-    card.querySelector(".foot .prin .scribble").innerHTML="&nbsp;";
-    document.getElementById("pdate").textContent="Date: "+zDate(String(Z.meta.generated_at||"").slice(0,10));
+    setSignatures(Z.signatures,Z.report_date);
   })();
 
   if (!Z) (function(){
@@ -443,7 +479,12 @@
     function lv(n){return n==null?null:'<span class="lv lv'+n+'">'+n+"</span>";}
     function upTo(list,cur){return list.map(function(v,i){return i>cur?null:v;});}
     var bI=document.getElementById("btn-interim"),bF=document.getElementById("btn-full");
-    var term=document.getElementById("term"),pdate=document.getElementById("pdate");
+    var term=document.getElementById("term");
+    /* sample signature: a handwritten-looking scribble for the Principal */
+    function scribble(d){return "data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40"><path d="'+d+'" fill="none" stroke="#1d2b4f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>');}
+    var SAMPLE_SIGS={
+      principal:{name:"Dr A. T. Cole",signature_url:scribble("M6 32C20 4 30 6 26 22s14-18 20-6 4 10 12-4 12 12 20 0 14-8 22 2 18-2 26-6")}
+    };
     var SAMPLE_BOARDING=document.querySelector("#card .foot .cmt p").textContent;
     function set(full){
       var cur=full?5:4;
@@ -463,7 +504,8 @@
       setBoardingGrades(COLS,upTo([2,2,1,null,1,1],cur),full);
       bF.setAttribute("aria-pressed",String(full)); bI.setAttribute("aria-pressed",String(!full));
       term.textContent = full ? "Progress Report — Term 3B (Full) · 19 Apr – 09 Jul 2026" : "Progress Report — Term 3A (Interim) · 28 May 2026";
-      pdate.textContent = full ? "Date: 09 Jul 2026" : "Date: 28 May 2026";
+      setResultTitle(full ? "Third Term Final Examination" : "Third Term Mid-Term Report");
+      setSignatures(SAMPLE_SIGS, full ? "2026-07-09" : "2026-05-28");
     }
     bI.addEventListener("click",function(){set(false)});
     bF.addEventListener("click",function(){set(true)});

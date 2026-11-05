@@ -105,8 +105,23 @@
   .sign{border:1px solid var(--line);border-radius:4px;padding:9px 11px;font-size:8.6px;color:var(--ink-soft);}
   .sign .ttl{font-weight:700;color:var(--blue-dk);}
   .sign .rm{line-height:1.35;margin:3px 0;}
-  .sign .ln{font-family:"Archivo";font-style:italic;color:var(--blue-dk);font-size:14px;border-bottom:1px dashed var(--rule);padding:6px 0 5px;margin:3px 0;}
-  .sign .dt{font-weight:700;color:var(--ink);}
+
+  .rtitle{margin-top:7px;text-align:center;font-family:"Archivo";font-weight:800;font-size:13px;letter-spacing:.05em;
+    text-transform:uppercase;color:var(--blue-dk);}
+  .rtitle:empty{display:none;}
+
+  /* Signatures: one slot per signatory with an image, then the report date. Empty slots are removed; nothing → the block hides. */
+  .sigs{margin-top:8px;display:flex;align-items:flex-end;border:1px solid var(--line);border-radius:4px;overflow:hidden;}
+  .sigs:empty{display:none;}
+  .sigs .sl{flex:1;min-width:0;text-align:center;padding:6px 10px 6px;}
+  .sigs .sl + .sl{border-left:1px solid var(--rule);}
+  .sigs .im{height:40px;text-align:center;border-bottom:1px solid var(--line);padding-bottom:2px;white-space:nowrap;}
+  .sigs .im img{display:inline-block;vertical-align:bottom;height:36px;width:auto;max-width:100%;object-fit:contain;object-position:center bottom;}
+  .sigs .im svg{display:inline-block;vertical-align:bottom;height:32px;width:auto;}
+  .sigs .nm{margin-top:3px;font-size:9px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sigs .rl{font-size:8px;font-weight:600;color:var(--blue-dk);text-transform:uppercase;letter-spacing:.03em;}
+  .sigs .sl.dt{flex:0 0 auto;min-width:110px;align-self:stretch;display:flex;flex-direction:column;justify-content:flex-end;background:var(--soft);}
+  .sigs .sl.dt .dv{font-size:10.5px;font-weight:700;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:4px;}
 
   @media (max-width:800px){.sheet{width:100%;min-height:0;padding:12px;}.wmk b{font-size:48px;}}
   @media print{@page{size:A4 portrait;margin:0;}body{background:#fff;padding:0;}.controls,.hint{display:none!important;}
@@ -136,6 +151,7 @@
         <div class="mo" id="bMonth">JUNE, 2026</div>
       </div>
     </div>
+    <div class="rtitle" id="rTitle">First Term Final Examination</div>
 
     <div class="bio">
       <div class="photo">PHOTO</div>
@@ -191,9 +207,10 @@
     </div>
 
     <div class="signs">
-      <div class="sign"><span class="ttl">Classroom Teacher</span><div class="rm" id="ctRem"></div><div class="ln">I. Teacher</div><span>Date: </span><span class="dt" id="ctDate"></span></div>
-      <div class="sign"><span class="ttl">Head of School</span><div class="rm" id="htRem"></div><div class="ln">&nbsp;</div><span>Date: </span><span class="dt" id="htDate"></span></div>
+      <div class="sign"><span class="ttl">Classroom Teacher</span><div class="rm" id="ctRem"></div></div>
+      <div class="sign"><span class="ttl">Head of School</span><div class="rm" id="htRem"></div></div>
     </div>
+    <div class="sigs" id="sigs"><div class="sl"><div class="im"><svg viewBox="0 0 120 40" aria-hidden="true"><path d="M6 30c8-14 14-22 18-18s-6 18 0 16 10-20 16-18-2 16 4 14 8-12 14-10 0 10 6 8 10-8 16-6 6 4 14 2" fill="none" stroke="#14568f" stroke-width="2" stroke-linecap="round"/></svg></div><div class="nm">I. Teacher</div><div class="rl">Class Teacher</div></div><div class="sl"><div class="im"><svg viewBox="0 0 120 40" aria-hidden="true"><path d="M6 30c8-14 14-22 18-18s-6 18 0 16 10-20 16-18-2 16 4 14 8-12 14-10 0 10 6 8 10-8 16-6 6 4 14 2" fill="none" stroke="#14568f" stroke-width="2" stroke-linecap="round"/></svg></div><div class="nm">J. Head</div><div class="rl">Head Teacher</div></div><div class="sl"><div class="im"><svg viewBox="0 0 120 40" aria-hidden="true"><path d="M6 30c8-14 14-22 18-18s-6 18 0 16 10-20 16-18-2 16 4 14 8-12 14-10 0 10 6 8 10-8 16-6 6 4 14 2" fill="none" stroke="#14568f" stroke-width="2" stroke-linecap="round"/></svg></div><div class="nm">K. Principal</div><div class="rl">Principal</div></div><div class="sl dt"><div class="dv">15/12/2025</div><div class="rl">Date</div></div></div>
   </div>
 
 <script>
@@ -206,6 +223,7 @@
      arithmetic beyond the Total Point (G.p. × units) and its column sums. */
   var Z = window.__ZSMS_REPORT__ || null;
   if (Z) document.documentElement.classList.add("zsms-live");
+  var L=window.__ZSMS_LABELS__||{};function zL(k,fb){return L[k]||fb;}
   function zEsc(v){return v==null?"":String(v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
   function zTxt(v){return v==null||v===""?"—":zEsc(v);}
   function zNum(v,dp){if(v==null||typeof v!=="number"||!isFinite(v))return "—";return dp==null?String(Math.round(v*100)/100):v.toFixed(dp);}
@@ -225,6 +243,16 @@
   /* Header contact block (spec §7.27): address, then phone · email · website from Settings. A missing field drops out; nothing set hides the block. */
   function zContact(el){var s=Z.school,c=[s.phone,s.email,s.website].filter(Boolean).map(zEsc).join(" &middot; ");var h=[s.address?zEsc(s.address):"",c].filter(Boolean).join("<br>");el.innerHTML=h;el.style.display=h?"":"none";}
 
+  /* Result title under the header; null/empty → the element empties and hides (no reserved space). */
+  function zTitle(el){var t=Z.result_title;el.textContent=t||"";el.style.display=t?"":"none";}
+  /* Signature strip: a slot only for a signatory with a signature image; the date only when set; nothing → hidden. */
+  function zSigs(el){var g=Z.signatures||{};
+    var slots=[["class_teacher","sigClassTeacher","Class Teacher"],["head_teacher","sigHeadTeacher","Head Teacher"],["principal","sigPrincipal","Principal"]];
+    var h=slots.map(function(x){var p=g[x[0]];if(!p||!p.signature_url)return "";
+      return '<div class="sl"><div class="im"><img src="'+zEsc(p.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+" — "+(p.name||""))+'"></div><div class="nm">'+zEsc(p.name)+'</div><div class="rl">'+zEsc(zL(x[1],x[2]))+"</div></div>";}).join("");
+    if(Z.report_date)h+='<div class="sl dt"><div class="dv">'+zDate(Z.report_date)+'</div><div class="rl">'+zEsc(zL("sigDate","Date"))+"</div></div>";
+    el.innerHTML=h;el.style.display=h?"":"none";}
+
   /* Total Point (T.p.) = the subject's grade point (the G.p. column) × its units. Computed here, from two payload values (Matthew, 2026-10-28). No units set -> —. */
   function zTp(s){return s.gpa==null||s.units==null?null:Math.round(s.gpa*s.units*100)/100;}
   var Z_MONTHS=["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"];
@@ -239,6 +267,7 @@
     document.querySelector(".sch h1").textContent=Z.school.name;
     zMotto(document.querySelector(".sch .mt"));
     zContact(document.querySelector(".sch .ad"));
+    zTitle(document.getElementById("rTitle"));
     var gen=new Date(Z.meta.generated_at);
     document.getElementById("bMonth").textContent=isNaN(gen)?"":Z_MONTHS[gen.getMonth()]+", "+gen.getFullYear();
     document.querySelector(".bio .photo").innerHTML=zImg(st.photo_url,"PHOTO");
@@ -287,8 +316,7 @@
     scaleRow("gpaScale",function(b){return b.gpa==null?"—":zNum(b.gpa);});
     document.getElementById("ctRem").textContent=Z.remarks.class_teacher||"—";
     document.getElementById("htRem").textContent=Z.remarks.head_teacher||"—";
-    document.querySelectorAll(".signs .ln").forEach(function(e){e.innerHTML="&nbsp;";});
-    document.getElementById("ctDate").textContent=""; document.getElementById("htDate").textContent="";
+    zSigs(document.getElementById("sigs"));
   }
 
   // CA report: [subject, test1,test2,asgmt,note,attnd, score40, pct100, grade, units, gradeWeight, remark, teacher]
@@ -356,7 +384,8 @@
       ranks.classList.add("hide");
       document.getElementById("ctRem").textContent="Sample remark — steady continuous-assessment work this term.";
       document.getElementById("htRem").textContent="Sample remark — good progress.";
-      document.getElementById("ctDate").textContent="04-06-2026"; document.getElementById("htDate").textContent="04-06-2026";
+      document.getElementById("rTitle").textContent="First Term Continuous Assessment";
+      document.querySelector("#sigs .dt .dv").textContent="04/06/2026";
     } else {
       document.getElementById("bMonth").textContent="DECEMBER, 2025";
       document.getElementById("bClassAvg").textContent="55.19%";
@@ -375,7 +404,8 @@
       ranks.classList.remove("hide");
       document.getElementById("ctRem").textContent="Sample remark — a good term; keep up the effort.";
       document.getElementById("htRem").textContent="Sample remark — a good result.";
-      document.getElementById("ctDate").textContent="15-12-2025"; document.getElementById("htDate").textContent="15-12-2025";
+      document.getElementById("rTitle").textContent="First Term Final Examination";
+      document.querySelector("#sigs .dt .dv").textContent="15/12/2025";
     }
   }
 

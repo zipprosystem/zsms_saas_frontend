@@ -3682,7 +3682,12 @@
           "gradeBookShort": "GB",
           "tutorComment": "Commentaire du tuteur",
           "boardingComment": "Commentaire de l'internat",
-          "boardingGrade": "Note d'internat"
+          "boardingGrade": "Note d'internat",
+          "sigHeadTeacher": "Directeur d'école",
+          "sigPrincipal": "Proviseur",
+          "sigClassTeacher": "Professeur principal",
+          "sigDate": "Date",
+          "sigImageAlt": "Signature"
         },
         "frameTitle": "Bulletin de {name}",
         "variant": {
