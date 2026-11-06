@@ -4069,6 +4069,47 @@
           "body": "L'envoi des résultats aux parents arrive à une étape ultérieure."
         }
       },
+      "traits": {
+        "back": "Retour",
+        "title": {
+          "psychomotor": "Ajouter les compétences psychomotrices",
+          "affective": "Ajouter le domaine affectif"
+        },
+        "subtitle": "Évaluez les élèves sur leurs compétences",
+        "columns": {
+          "serial": "N°",
+          "item": {
+            "psychomotor": "Compétences de l'élève",
+            "affective": "Compétences de l'élève"
+          }
+        },
+        "save": {
+          "psychomotor": "Enregistrer les compétences psychomotrices",
+          "affective": "Enregistrer le domaine affectif"
+        },
+        "saving": "Enregistrement…",
+        "saved": {
+          "psychomotor": "Compétences psychomotrices enregistrées",
+          "affective": "Domaine affectif enregistré"
+        },
+        "ratedCount": "{rated} sur {total} évalués",
+        "loading": "Chargement…",
+        "readOnly": "Seul le professeur principal de l'élève (ou un administrateur) peut les évaluer.",
+        "noScale": "Aucune note de progression générale n'est encore configurée. Ajoutez-les dans Configuration › Notes de progression pour évaluer les traits.",
+        "noItems": {
+          "psychomotor": "Aucune compétence psychomotrice n'est listée pour le type d'école de cette classe. Ajoutez-les dans Configuration › Compétences psychomotrices.",
+          "affective": "Aucun trait affectif n'est listé pour le type d'école de cette classe. Ajoutez-les dans Configuration › Domaine affectif."
+        },
+        "hint": "Choisissez une note par ligne. Choisissez-la à nouveau pour l'effacer.",
+        "aria": {
+          "rate": "Évaluer {item} : {level}"
+        },
+        "discard": {
+          "title": "Abandonner les modifications ?",
+          "message": "Vos évaluations ne sont pas enregistrées. Fermer et les perdre ?",
+          "confirm": "Abandonner"
+        }
+      },
       "entry": {
         "back": "Retour à la progression de la classe",
         "classArm": "{class} {arm}",
@@ -4135,9 +4176,7 @@
         },
         "traits": {
           "psychomotor": "Compétences psychomotrices",
-          "affective": "Domaine affectif",
-          "comingSoon": "La notation de ces traits élève par élève arrive à la prochaine étape.",
-          "close": "Fermer"
+          "affective": "Domaine affectif"
         },
         "errors": {
           "invalidCount": "{count, plural, one {# saisie doit} other {# saisies doivent}} être corrigée(s) avant d'enregistrer."

@@ -9,7 +9,6 @@ import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { TextareaField } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
-import { ConfirmDialog } from "@/components/setup/ConfirmDialog";
 import { STRUCTURAL_STALE_TIME_MS } from "@/lib/queryClient";
 import { isDevBypassUnavailable, throwIfTransient } from "@/lib/setup/crudTypes";
 import { NAV_PERMISSIONS } from "@/lib/auth/navPermissions";
@@ -36,8 +35,9 @@ import {
 } from "@/lib/exam/reportProgression/studentEntryApi";
 import { examOptionLabel, failureMessage, InfoItem, MockActingAsPicker, Notice, useMockActingAs, useUnsavedGuard } from "@/components/exam/examEntryShared";
 import { reportProgressionClassHref } from "@/components/exam/examTabsConfig";
-import { PointSelect, ProgressionBar, useCanSee, useMissingLabel } from "@/components/exam/reportProgression/progressionShared";
+import { PointSelect, ProgressionBar, StudentAvatar, useCanSee, useMissingLabel } from "@/components/exam/reportProgression/progressionShared";
 import { useStudentMarksEntry } from "@/components/exam/reportProgression/useStudentMarksEntry";
+import { StudentTraitsModal } from "@/components/exam/reportProgression/StudentTraitsModal";
 
 const REMARK_MAX = 500;
 
@@ -422,14 +422,8 @@ export function StudentEntryScreen({ classId, studentId }: { classId: string; st
         </div>
       ) : null}
 
-      <ConfirmDialog
-        isOpen={traitsDialog !== null}
-        title={traitsDialog ? k(`traits.${traitsDialog}`) : ""}
-        message={k("traits.comingSoon")}
-        confirmLabel={k("traits.close")}
-        onConfirm={() => setTraitsDialog(null)}
-        onCancel={() => setTraitsDialog(null)}
-      />
+      {/* Stage 3: rate the student's Psychomotor Skills / Affective Domain (General, Exam point). */}
+      <StudentTraitsModal kind={traitsDialog} studentId={studentId} termId={entry.term_id} onClose={() => setTraitsDialog(null)} />
       {dialog}
     </div>
   );
@@ -503,22 +497,5 @@ function AttendanceBox({
       {invalid ? <span className="text-xs text-error">{t("invalid", { total: attendance.total_sessions })}</span> : null}
       {!editable ? <span className="text-xs text-text-muted">{t("readOnly")}</span> : null}
     </div>
-  );
-}
-
-function StudentAvatar({ name, photoUrl }: { name: string; photoUrl: string | null }) {
-  if (photoUrl) {
-    // eslint-disable-next-line @next/next/no-img-element -- a data URL / signed photo URL, not an optimizable static asset
-    return <img src={photoUrl} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover" />;
-  }
-  const initials = name
-    .split(" ")
-    .map((part) => part.charAt(0))
-    .join("")
-    .slice(0, 2);
-  return (
-    <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-tint text-sm font-semibold text-accent">
-      {initials}
-    </span>
   );
 }

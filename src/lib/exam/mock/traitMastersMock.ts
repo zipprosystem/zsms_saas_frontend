@@ -8,7 +8,7 @@ import {
   type TraitMasterKind,
 } from "@/lib/setup/assessmentConfiguration/traitMastersApi";
 import { schoolTypesService } from "@/lib/setup/academicStructure/schoolTypesApi";
-import { SEED_AFFECTIVE, SEED_PSYCHOMOTOR } from "@/lib/exam/mock/examMockSeeds";
+import { SEED_AFFECTIVE, SEED_CLASS_SCHOOL_TYPE, SEED_PSYCHOMOTOR } from "@/lib/exam/mock/examMockSeeds";
 import { readStore, writeStore } from "@/lib/exam/mock/examMockStore";
 import { getMockActingAs, MOCK_ADMIN } from "@/lib/exam/mock/mockActingAs";
 
@@ -120,6 +120,22 @@ export async function reportTraitList(kind: TraitMasterKind, schoolTypeId: strin
   const store = load(kind);
   if (!store.seeded.includes(schoolTypeId)) return null;
   return traitMasterItems(kind, schoolTypeId).map((item) => ({ key: item.id.includes("@") ? item.id.split("@")[0] : item.id, label: item.name }));
+}
+
+export type TraitList = Array<{ key: string; label: string }>;
+
+/**
+ * The class's Psychomotor / Affective lists (its School Type's masters, in
+ * sort_order) — what the report prints, the rating modals list and
+ * completeness counts. A class without a School Type list keeps the
+ * default lists (FLAGGED: SS 1 in the dev mock).
+ */
+export async function classTraitLists(classId: string): Promise<Record<TraitMasterKind, TraitList>> {
+  const schoolType = SEED_CLASS_SCHOOL_TYPE[classId] ?? null;
+  return {
+    psychomotor: (await reportTraitList("psychomotor", schoolType)) ?? SEED_PSYCHOMOTOR,
+    affective: (await reportTraitList("affective", schoolType)) ?? SEED_AFFECTIVE,
+  };
 }
 
 function ok(data: unknown, status = 200): WireResponse {

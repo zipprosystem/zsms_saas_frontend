@@ -491,6 +491,25 @@ export function storedTraits(termId: string, studentId: string): StoredTraits | 
   return loadTraits()[traitsKey(termId, studentId)];
 }
 
+/**
+ * Merges ratings into the student's stored traits for the term (Report
+ * Progression's rating modals): only the given keys change; the other
+ * kind, unsent keys and the legacy remark fields are kept.
+ */
+export function writeTraitRatings(termId: string, studentId: string, patch: Record<string, string | null>): void {
+  const store = { ...loadTraits() };
+  const key = traitsKey(termId, studentId);
+  const current = store[key];
+  store[key] = {
+    ratings: { ...(current?.ratings ?? {}), ...patch },
+    class_teacher_remark: current?.class_teacher_remark ?? "",
+    head_teacher_remark: current?.head_teacher_remark ?? "",
+    updated_at: new Date().toISOString(),
+  };
+  traitsCache = store;
+  writeStore(TRAITS_STORAGE_KEY, store);
+}
+
 export function armOfStudent(studentId: string): string | undefined {
   return SEED_CLASSES.flatMap((cls) => cls.arms).find((arm) => seedRoster(arm.id).some((student) => student.id === studentId))?.id;
 }
@@ -687,7 +706,8 @@ export function putStudentTraits(studentId: string, payload: unknown): WireRespo
 
   const store = { ...loadTraits() };
   store[traitsKey(termId, studentId)] = {
-    ratings,
+    // Merged: the panel lists the default traits only — keep ratings of School Type items it doesn't show.
+    ratings: { ...(store[traitsKey(termId, studentId)]?.ratings ?? {}), ...ratings },
     class_teacher_remark: remark("class_teacher_remark"),
     head_teacher_remark: remark("head_teacher_remark"),
     updated_at: new Date().toISOString(),
