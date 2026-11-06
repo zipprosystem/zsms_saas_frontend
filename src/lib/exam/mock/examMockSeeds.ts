@@ -540,3 +540,37 @@ export const SEED_AFFECTIVE = [
   { key: "aff-neatness", label: "Neatness" },
   { key: "aff-punctuality", label: "Punctuality" },
 ];
+
+/** Term start/end dates — the academic calendar isn't in the Exam mock yet (FLAGGED: Setup › Academic Years owns them). */
+export const SEED_TERM_DATES: Record<string, [string, string]> = {
+  "y-2025-t1": ["2025-09-08", "2025-12-19"],
+  "y-2025-t2": ["2026-01-12", "2026-04-03"],
+  "y-2025-t3": ["2026-04-27", "2026-07-24"],
+  "y-2026-t1": ["2026-09-07", "2026-12-18"],
+  "y-2026-t2": ["2027-01-11", "2027-04-02"],
+  "y-2026-t3": ["2027-04-26", "2027-07-23"],
+};
+
+/**
+ * Days the school is closed inside each term — public holidays and the
+ * mid-term break (inclusive ranges). FLAGGED: no holiday / break calendar
+ * exists in Setup yet; the real backend reads the school calendar.
+ */
+export const SEED_TERM_CLOSURES: Record<string, Array<{ name: string; from: string; to: string }>> = {
+  "y-2025-t1": [
+    { name: "Independence Day", from: "2025-10-01", to: "2025-10-01" },
+    { name: "Mid-term break", from: "2025-10-27", to: "2025-10-31" },
+  ],
+  "y-2025-t2": [{ name: "Mid-term break", from: "2026-02-16", to: "2026-02-20" }],
+  "y-2025-t3": [
+    { name: "Workers' Day", from: "2026-05-01", to: "2026-05-01" },
+    { name: "Mid-term break", from: "2026-06-01", to: "2026-06-05" },
+  ],
+  "y-2026-t1": [
+    { name: "Independence Day", from: "2026-10-01", to: "2026-10-01" },
+    { name: "Mid-term break", from: "2026-10-26", to: "2026-10-30" },
+  ],
+  "y-2026-t2": [{ name: "Mid-term break", from: "2027-02-15", to: "2027-02-19" }],
+  "y-2026-t3": [{ name: "Mid-term break", from: "2027-05-31", to: "2027-06-04" }],
+};
+

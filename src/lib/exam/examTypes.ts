@@ -232,3 +232,26 @@ export type GradeMarkInput = Omit<SubjectMarkInput, "component_scores"> & { comp
 export type SaveGradeMarksInput = { subject_id: string; class_arm_id: string; rows: GradeMarkInput[] };
 
 export const SUBJECT_REMARK_MAX = 500;
+
+// ---------------------------------------------------------------------------
+// Student-wise sheet (Report Progression › View Details). The SAME
+// subject_mark rows as the subject-wise sheets, pivoted to one student:
+// one row per subject the student takes (and the caller may see).
+// ---------------------------------------------------------------------------
+
+type SubjectKeyed = { subject_id: string; subject_name: string };
+
+export type StudentScoreMarkRow = SubjectMarkRow & SubjectKeyed;
+export type StudentGradeMarkRow = GradeMarkRow & SubjectKeyed;
+
+export type StudentScoreMarksSheet = Omit<SubjectMarksSheet, "subject_id" | "items"> & { student_id: string; items: StudentScoreMarkRow[] };
+export type StudentGradeMarksSheet = Omit<GradeMarksSheet, "subject_id" | "items"> & { student_id: string; items: StudentGradeMarkRow[] };
+
+/** GET erp/exams/:id/marks/students/:student_id — discriminated by assessment_mode like MarksSheet. */
+export type StudentMarksSheet = StudentScoreMarksSheet | StudentGradeMarksSheet;
+
+/** One row of the student-wise PUT: the subject replaces the student. */
+export type StudentSubjectMarkInput = Omit<SubjectMarkInput, "student_id"> & { subject_id: string };
+export type StudentSubjectGradeInput = Omit<GradeMarkInput, "student_id"> & { subject_id: string };
+
+export type SaveStudentMarksInput = { class_arm_id: string; rows: Array<StudentSubjectMarkInput | StudentSubjectGradeInput> };

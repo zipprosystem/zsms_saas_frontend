@@ -110,6 +110,14 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *                  dob = date_of_birth (YYYY-MM-DD), photo_url = the
  *                  served URL of photo_file_id (null = no photo).
  *       attendance: { present, absent, total_days, time_school_opened },
+ *                  Report Progression's per-term attendance: present =
+ *                  the recorded present-count (sessions), total_days =
+ *                  open days (term dates on Settings Working Days −
+ *                  holidays − breaks),
+ *                  time_school_opened = total sessions (open days ×
+ *                  Settings › General Behaviour attendance mapping
+ *                  1:1 / 1:2), absent = sessions −
+ *                  present. null = not recorded.
  *       subjects: [{ name, teacher_name,
  *                    components: [{ label, score, max, kind }],
  *                      General: the score leaves (kind ca|exam).
@@ -200,12 +208,14 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *       remarks: { class_teacher, head_teacher,
  *                  form_tutor: { name, comment } | null,       (addition)
  *                  boarding_house: { name, comment } | null }, (addition)
- *                  role-keyed term remarks. form_tutor = the arm's
- *                  class teacher (British form tutor): their name and
- *                  their term remark (same text as class_teacher).
- *                  boarding_house = the boarding house's term comment
- *                  (name = the house; Report Progression's student-wise
- *                  entry, not built — null until then). The British
+ *                  role-keyed remarks = the term_remark of the REPORT
+ *                  POINT (Report Progression student-wise entry: the
+ *                  CA / A point for Progress, Exam / B for Full).
+ *                  form_tutor = the arm's class teacher (British form
+ *                  tutor): their name and their remark (same text as
+ *                  class_teacher). boarding_house = the boarding
+ *                  house's comment (name = the house — not modelled
+ *                  yet, null; null slot = no comment). The British
  *                  results page shows form_tutor on Full, boarding_house
  *                  on Progress.
  *       grade_key: [{ grade, min, max, remark, show_on_report,

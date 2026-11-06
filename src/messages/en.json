@@ -2884,6 +2884,10 @@
         "email": "Email",
         "sms": "SMS",
         "emailAndSms": "Email & SMS"
+      },
+      "attendanceMapping": {
+        "s1": "1:1 — one session per school day",
+        "s2": "1:2 — two sessions per school day (morning + afternoon)"
       }
     },
     "comingSoonPanel": {
@@ -2916,7 +2920,8 @@
         "absenceEndDelayValue": "{days} days",
         "notificationChannel": "Notification channel",
         "studentIdPrefix": "Student ID prefix",
-        "staffIdPrefix": "Staff ID prefix"
+        "staffIdPrefix": "Staff ID prefix",
+        "attendanceMapping": "Attendance mapping"
       },
       "regional": {
         "title": "Regional Settings",
@@ -3044,6 +3049,10 @@
       "notificationChannel": { "label": "Notification channel" },
       "studentIdPrefix": { "label": "Student ID prefix" },
       "staffIdPrefix": { "label": "Staff ID prefix" },
+      "attendanceMapping": {
+        "label": "Attendance mapping",
+        "hint": "How many attendance sessions each school day counts as on reports. Total sessions = open days in the term (working days less holidays and breaks) × this."
+      },
       "errors": {
         "invalidNumber": "Enter a whole number, 0 or greater",
         "submitField": "Please fix the highlighted fields and try again.",
@@ -3446,6 +3455,7 @@
       "columns": {
         "sn": "S/N",
         "student": "Students ({count})",
+        "subject": "Subjects ({count})",
         "seatNo": "Seat No.",
         "present": "Present?",
         "componentTotal": "Total",
@@ -3891,6 +3901,7 @@
       "columns": {
         "sn": "S/N",
         "student": "Students ({count})",
+        "subject": "Subjects ({count})",
         "seatNo": "Seat No.",
         "target": "Target (MTG)",
         "gradeBook": "Grade Book",
@@ -4007,6 +4018,7 @@
         "kinds": {
           "marks": "Results entered",
           "traits": "Traits & remarks",
+          "comments": "Comments & attendance",
           "published": "Published",
           "unpublished": "Unpublished",
           "stamped": "Stamped"
@@ -4016,8 +4028,14 @@
         "subject": "{subject}",
         "psychomotor": "Psychomotor: {count} unrated",
         "affective": "Affective: {count} unrated",
-        "class_teacher_remark": "Class teacher's remark",
-        "head_teacher_remark": "Head teacher's remark"
+        "remark": {
+          "class_teacher": "Class teacher's comment",
+          "form_tutor": "Form tutor's comment",
+          "head_teacher": "Head teacher's comment",
+          "principal": "Principal's comment",
+          "boarding_house": "Boarding house comment"
+        },
+        "attendance": "Attendance"
       },
       "warning": {
         "title": "Some reports aren't complete",
@@ -4038,13 +4056,92 @@
       },
       "placeholder": {
         "backToClass": "Back to Class Progression",
-        "details": {
-          "title": "Student report details",
-          "body": "Student-wise report entry is coming in the next stage."
-        },
         "send": {
           "title": "Send Result to Parent",
           "body": "Sending results to parents is coming in a later stage."
+        }
+      },
+      "entry": {
+        "back": "Back to Class Progression",
+        "classArm": "{class} {arm}",
+        "nav": {
+          "previous": "Previous",
+          "next": "Next",
+          "position": "{index} of {count}"
+        },
+        "search": {
+          "label": "Search student",
+          "placeholder": "Search student"
+        },
+        "summary": {
+          "passMarks": "Pass marks",
+          "totalMarks": "Total marks",
+          "marksValue": "{marks} marks",
+          "attainment": "Attainment entered",
+          "ofSubjects": "{done} of {total} subjects",
+          "subjects": "Subjects",
+          "subjectsValue": "{count, plural, one {# subject} other {# subjects}} · {done} completed",
+          "progression": "Report progression",
+          "progressionOf": "Report progression for {name}",
+          "section": "{section} {filled}/{required}",
+          "missing": "Still to fill: {items}"
+        },
+        "sections": {
+          "scores": "Scores",
+          "comments": "Comments",
+          "attendance": "Attendance",
+          "traits": "Traits"
+        },
+        "subjectScope": "You're seeing the subjects you teach this student. Comments and attendance are entered by the form tutor.",
+        "empty": {
+          "noExams": "No active exam for this point yet. Check the Exam List."
+        },
+        "notices": {
+          "noStructure": "No assessment structure is in force for this class.",
+          "noColumns": "This exam has no score columns in the class's structure.",
+          "noSubjects": "No subjects to show for this student on this exam."
+        },
+        "fields": {
+          "title": "Report comments",
+          "subtitle": "What this class's result template prints for this point.",
+          "placeholder": "Write a comment…",
+          "empty": "No comment yet",
+          "count": "{count}/{max}",
+          "readOnlyClassTeacher": "Only the student's class teacher (or an admin) can edit this comment.",
+          "readOnlyOther": "You can't edit this comment.",
+          "roles": {
+            "class_teacher": "Class Teacher's Comment",
+            "form_tutor": "Form Tutor's Comment",
+            "head_teacher": "Head Teacher's Comment",
+            "principal": "Principal's Comment",
+            "boarding_house": "Boarding House Comment"
+          }
+        },
+        "attendance": {
+          "label": "Attendance (present)",
+          "outOf": "of {total}",
+          "absent": "Absent: {absent}",
+          "basis": "{days} open days × {sessions, plural, one {# session} other {# sessions}} a day (attendance mapping 1:{sessions})",
+          "invalid": "Enter a whole number from 0 to {total}.",
+          "readOnly": "Recorded by the class teacher."
+        },
+        "traits": {
+          "psychomotor": "Psychomotor Skill",
+          "affective": "Affective Domain",
+          "comingSoon": "Rating these traits student by student is coming in the next stage.",
+          "close": "Close"
+        },
+        "errors": {
+          "invalidCount": "{count, plural, one {# entry needs} other {# entries need}} fixing before you can save."
+        },
+        "saveBar": {
+          "unsaved": "{count, plural, one {# unsaved change} other {# unsaved changes}}",
+          "allSaved": "All changes saved",
+          "discard": "Discard changes",
+          "save": "Save Changes"
+        },
+        "toast": {
+          "saved": "Report saved"
         }
       }
     }

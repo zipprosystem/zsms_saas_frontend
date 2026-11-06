@@ -11,6 +11,7 @@ import type { WorkingDay } from "@/lib/onboarding/types";
 import { DATE_FORMATS, TIME_FORMATS, NOTIFICATION_CHANNELS } from "@/lib/settings/config";
 import { parseNonNegativeInt, toNumberFieldState } from "@/lib/settings/numberField";
 import { sameStringSet } from "@/lib/settings/arrayDiff";
+import { ATTENDANCE_SESSIONS_OPTIONS, toSessionsPerDay } from "@/lib/settings/generalBehaviourExtras";
 import { updateSchoolSettings } from "@/lib/settings/settingsApi";
 import type { SettingsData, SettingsUpdate } from "@/lib/settings/types";
 
@@ -25,6 +26,7 @@ type FormState = {
   notificationChannel: string;
   studentIdPrefix: string;
   staffIdPrefix: string;
+  attendanceSessionsPerDay: string;
 };
 
 function toFormState(section: SettingsData["general_behaviour"]): FormState {
@@ -37,6 +39,7 @@ function toFormState(section: SettingsData["general_behaviour"]): FormState {
     notificationChannel: section.notification_channel ?? "",
     studentIdPrefix: section.student_id_prefix ?? "",
     staffIdPrefix: section.staff_id_prefix ?? "",
+    attendanceSessionsPerDay: String(section.attendance_sessions_per_day),
   };
 }
 
@@ -73,6 +76,10 @@ function buildUpdate(original: FormState, form: FormState): GeneralBehaviourUpda
 
   const staffIdPrefix = form.staffIdPrefix.trim();
   if (staffIdPrefix !== original.staffIdPrefix.trim()) update.staff_id_prefix = staffIdPrefix || null;
+
+  if (form.attendanceSessionsPerDay !== original.attendanceSessionsPerDay) {
+    update.attendance_sessions_per_day = toSessionsPerDay(Number(form.attendanceSessionsPerDay));
+  }
 
   return update;
 }
@@ -243,6 +250,22 @@ export function GeneralBehaviourPanel({
             </option>
           ))}
         </SelectField>
+
+        <div className="flex flex-col gap-1.5">
+          <SelectField
+            id="edit-general-attendance-mapping"
+            label={t("settings.generalBehaviourPanel.attendanceMapping.label")}
+            value={form.attendanceSessionsPerDay}
+            onChange={(event) => setForm((current) => ({ ...current, attendanceSessionsPerDay: event.target.value }))}
+          >
+            {ATTENDANCE_SESSIONS_OPTIONS.map((sessions) => (
+              <option key={sessions} value={String(sessions)}>
+                {t(`settings.options.attendanceMapping.s${sessions}`)}
+              </option>
+            ))}
+          </SelectField>
+          <p className="text-xs text-text-muted">{t("settings.generalBehaviourPanel.attendanceMapping.hint")}</p>
+        </div>
 
         <InputField
           id="edit-general-student-id-prefix"

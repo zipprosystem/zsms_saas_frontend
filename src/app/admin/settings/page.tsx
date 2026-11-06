@@ -12,6 +12,8 @@ import { SettingsCard, SettingsField } from "@/components/settings/SettingsCard"
 import { EditSchoolIdentityPanel } from "@/components/settings/EditSchoolIdentityPanel";
 import { BrandingPanel } from "@/components/settings/BrandingPanel";
 import { GeneralBehaviourPanel } from "@/components/settings/GeneralBehaviourPanel";
+import { reportProgressionQueryKeys } from "@/lib/exam/reportProgression/reportProgressionApi";
+import { reportQueryKeys } from "@/lib/exam/report/reportPayload";
 import { RegionalSettingsPanel } from "@/components/settings/RegionalSettingsPanel";
 import { QuestionBankPanel } from "@/components/settings/QuestionBankPanel";
 import { NotificationRoutingPanel } from "@/components/settings/NotificationRoutingPanel";
@@ -276,6 +278,10 @@ function SettingsContent() {
               label={t("settings.sections.generalBehaviour.staffIdPrefix")}
               value={orNotSet(settings.general_behaviour.staff_id_prefix, t("settings.notSet"))}
             />
+            <SettingsField
+              label={t("settings.sections.generalBehaviour.attendanceMapping")}
+              value={t(`settings.options.attendanceMapping.s${settings.general_behaviour.attendance_sessions_per_day}`)}
+            />
           </div>
         </SettingsCard>
 
@@ -479,6 +485,13 @@ function SettingsContent() {
           // match the object literal against setQueryData's updater overload.
           const nextSettingsResult: SettingsResult<SettingsData> = { ok: true, data: updated };
           queryClient.setQueryData(SETTINGS_QUERY_KEY, nextSettingsResult);
+          // Working Days + the attendance mapping total every report's attendance box: re-read them.
+          const before = settings.general_behaviour;
+          const after = updated.general_behaviour;
+          if (after.attendance_sessions_per_day !== before.attendance_sessions_per_day || [...after.working_days].sort().join() !== [...before.working_days].sort().join()) {
+            void queryClient.invalidateQueries({ queryKey: reportProgressionQueryKeys.all });
+            void queryClient.invalidateQueries({ queryKey: reportQueryKeys.all });
+          }
           closeEditPanel();
           showToast(t("settings.toast.generalBehaviourUpdated"));
         }}

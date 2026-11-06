@@ -11,6 +11,7 @@ import {
   type GradeScores,
   type RatingScale,
   type SubjectMarkRow,
+  type StudentMarksSheet,
   type SubjectMarksSheet,
 } from "@/lib/exam/examTypes";
 import {
@@ -40,10 +41,11 @@ import {
   resolveStructure,
   saveGradeMarks,
   saveMarks,
+  studentSubjectInScope,
   type StoredGradeMark,
   type StoredMark,
 } from "@/lib/exam/mock/examMockStore";
-import { getResultArms, getResults, getStudentResult, getStudentTraits, progressGradeInUse, putStudentTraits } from "@/lib/exam/mock/examResultsMock";
+import { armOfStudent, getResultArms, getResults, getStudentResult, getStudentTraits, progressGradeInUse, putStudentTraits } from "@/lib/exam/mock/examResultsMock";
 import { handleGrades, resolveGradeScale } from "@/lib/exam/mock/gradesMock";
 import { handleProgressGrades, progressGrades } from "@/lib/exam/mock/progressGradesMock";
 import { handleTraitMasters } from "@/lib/exam/mock/traitMastersMock";
@@ -304,7 +306,8 @@ function entryOptions(query: URLSearchParams): WireResponse {
 
 type SheetContext = { exam: Exam; subjectId: string; armId: string };
 
-async function sheetContext(examId: string, subjectId: string, armId: string): Promise<SheetContext | WireResponse> {
+/** checkScope false = the caller applies its own scope (the student-wise sheet's). */
+async function sheetContext(examId: string, subjectId: string, armId: string, checkScope = true): Promise<SheetContext | WireResponse> {
   const exam = (await examIndex()).byId(examId);
   if (!exam) return fail(404, "EXAM_NOT_FOUND", "Exam not found");
   // Not listed as active = not scoreable (a draft finishes its Exam List wizard first).
@@ -313,7 +316,7 @@ async function sheetContext(examId: string, subjectId: string, armId: string): P
   if (!SEED_ARM_SUBJECTS[armId]?.some((offer) => offer.subject_id === subjectId)) {
     return fail(404, "SUBJECT_NOT_OFFERED", "This subject isn't offered to that class-arm");
   }
-  if (!inScope(subjectId, armId)) {
+  if (checkScope && !inScope(subjectId, armId)) {
     return fail(403, "OUT_OF_SCOPE", "You aren't assigned to this subject for this class-arm.");
   }
   const classId = classOfArm(armId);
@@ -368,7 +371,11 @@ async function putMarks(examId: string, payload: unknown): Promise<WireResponse>
     return fail(403, "ENTRY_CLOSED", `Marks entry for ${context.exam.name} closed on ${context.exam.entry_closes_on}.`);
   }
   if (resolveGradeStructure(context.armId)) return putGradeMarks(context, body);
+  return putScoreMarks(context, body);
+}
 
+/** Validates + upserts score rows for one exam × subject × arm (the context is already checked, entry open). */
+async function putScoreMarks(context: SheetContext, body: Record<string, unknown>): Promise<WireResponse> {
   const structure = await resolveStructure(context.armId);
   if (!structure) return fail(409, "NO_ASSESSMENT_STRUCTURE", "No active assessment structure is in force for this class.");
   const leaves = new Map(allLeaves(examMarkColumns(structure, context.exam)).map((leaf) => [leaf.id, leaf]));
@@ -419,6 +426,100 @@ async function putMarks(examId: string, payload: unknown): Promise<WireResponse>
   }
   saveMarks(marks);
   return ok(await buildSheet(context));
+}
+
+// ---------------------------------------------------------------------------
+// Student-wise sheet (Report Progression › View Details) — the same marks,
+// pivoted to one student. Built from the subject-wise sheets and written
+// through the same validation, so both views read / write the same rows.
+// ---------------------------------------------------------------------------
+
+/** The subjects of the student's sheet: offered to their arm, taken that term, inside the caller's student-wise scope. */
+function studentSubjects(armId: string, studentId: string, termId: string): string[] {
+  return (SEED_ARM_SUBJECTS[armId] ?? [])
+    .map((offer) => offer.subject_id)
+    .filter((subjectId) => enrolledIn(armId, subjectId, termId).some((student) => student.id === studentId))
+    .filter((subjectId) => studentSubjectInScope(armId, subjectId, studentId));
+}
+
+async function studentSheet(examId: string, studentId: string): Promise<StudentMarksSheet | WireResponse> {
+  const armId = armOfStudent(studentId);
+  if (!armId) return fail(404, "STUDENT_NOT_FOUND", "Student not found");
+  const exam = (await examIndex()).byId(examId);
+  if (!exam) return fail(404, "EXAM_NOT_FOUND", "Exam not found");
+  const subjects = studentSubjects(armId, studentId, exam.term_id);
+  if (subjects.length === 0) return fail(403, "OUT_OF_SCOPE", "You don't have access to this student's marks for this exam.");
+
+  const grade = !!resolveGradeStructure(armId);
+  let header: SubjectMarksSheet | GradeMarksSheet | null = null;
+  const scoreRows: Array<SubjectMarkRow & { subject_id: string; subject_name: string }> = [];
+  const gradeRows: Array<GradeMarkRow & { subject_id: string; subject_name: string }> = [];
+  for (const subjectId of subjects) {
+    const context = await sheetContext(examId, subjectId, armId, false);
+    if ("status" in context) return context;
+    const sheet = grade ? buildGradeSheet(context) : await buildSheet(context);
+    header = header ?? sheet;
+    const keyed = { subject_id: subjectId, subject_name: SEED_SUBJECTS[subjectId] ?? subjectId };
+    if (sheet.assessment_mode === "grade_based") {
+      const row = sheet.items.find((item) => item.student_id === studentId);
+      if (row) gradeRows.push({ ...row, ...keyed });
+    } else {
+      const row = sheet.items.find((item) => item.student_id === studentId);
+      if (row) scoreRows.push({ ...row, ...keyed });
+    }
+  }
+  if (!header) return fail(403, "OUT_OF_SCOPE", "You don't have access to this student's marks for this exam.");
+  const common = {
+    exam: header.exam,
+    student_id: studentId,
+    class_arm_id: header.class_arm_id,
+    assessment_structure_id: header.assessment_structure_id,
+    entry_open: header.entry_open,
+  };
+  if (header.assessment_mode === "grade_based") {
+    const { auto_fill_attainment, structure, grade_scales, rating_scales } = header;
+    return { ...common, assessment_mode: "grade_based", auto_fill_attainment, structure, grade_scales, rating_scales, items: gradeRows };
+  }
+  return { ...common, assessment_mode: "component_based", items: scoreRows };
+}
+
+async function getStudentMarks(examId: string, studentId: string): Promise<WireResponse> {
+  const sheet = await studentSheet(examId, studentId);
+  return "status" in sheet ? sheet : ok(sheet);
+}
+
+async function putStudentMarks(examId: string, studentId: string, payload: unknown): Promise<WireResponse> {
+  const body = record(payload);
+  const armId = armOfStudent(studentId);
+  if (!armId) return fail(404, "STUDENT_NOT_FOUND", "Student not found");
+  if (body.class_arm_id !== armId) return fail(422, "VALIDATION_ERROR", "class_arm_id: not this student's class-arm");
+  const exam = (await examIndex()).byId(examId);
+  if (!exam) return fail(404, "EXAM_NOT_FOUND", "Exam not found");
+  if (!entryOpen(exam)) return fail(403, "ENTRY_CLOSED", `Marks entry for ${exam.name} closed on ${exam.entry_closes_on}.`);
+  if (!Array.isArray(body.rows)) return fail(422, "VALIDATION_ERROR", "rows must be an array");
+  const allowed = new Set(studentSubjects(armId, studentId, exam.term_id));
+
+  // All-or-nothing: each row goes through the subject-wise validation + upsert; any failure restores both stores.
+  const scoreBefore = loadMarks();
+  const gradeBefore = loadGradeMarks();
+  const restore = (response: WireResponse, index: number): WireResponse => {
+    saveMarks(scoreBefore);
+    saveGradeMarks(gradeBefore);
+    const error = record(record(response.body).error);
+    const message = typeof error.message === "string" ? error.message.replace(/^rows\.0/, `rows.${index}`) : "";
+    return { status: response.status, body: { success: false, error: { ...error, message } } };
+  };
+  for (let index = 0; index < body.rows.length; index += 1) {
+    const row = record(body.rows[index]);
+    const subjectId = typeof row.subject_id === "string" ? row.subject_id : "";
+    if (!allowed.has(subjectId)) return restore(fail(403, "OUT_OF_SCOPE", `rows.${index}.subject_id: not a subject you can enter for this student`), index);
+    const context = await sheetContext(examId, subjectId, armId, false);
+    if ("status" in context) return restore(context, index);
+    const single = { subject_id: subjectId, class_arm_id: armId, rows: [{ ...row, student_id: studentId }] };
+    const result = resolveGradeStructure(armId) ? await putGradeMarks(context, single) : await putScoreMarks(context, single);
+    if (result.status < 200 || result.status >= 300) return restore(result, index);
+  }
+  return getStudentMarks(examId, studentId);
 }
 
 // ---------------------------------------------------------------------------
@@ -554,6 +655,14 @@ async function handle(method: HttpMethod, path: string, query: URLSearchParams, 
     const examId = decodeURIComponent(gradeBookMatch[1]);
     if (method === "GET") return getGradeBook(examId, query);
     if (method === "PUT") return putGradeBook(examId, payload);
+    return fail(405, "METHOD_NOT_ALLOWED", "Method not allowed");
+  }
+  const studentMarksMatch = path.match(/^erp\/exams\/([^/]+)\/marks\/students\/([^/]+)$/);
+  if (studentMarksMatch) {
+    const examId = decodeURIComponent(studentMarksMatch[1]);
+    const studentId = decodeURIComponent(studentMarksMatch[2]);
+    if (method === "GET") return getStudentMarks(examId, studentId);
+    if (method === "PUT") return putStudentMarks(examId, studentId, payload);
     return fail(405, "METHOD_NOT_ALLOWED", "Method not allowed");
   }
   const match = path.match(/^erp\/exams\/([^/]+)\/marks$/);
