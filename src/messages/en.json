@@ -3051,7 +3051,7 @@
       "staffIdPrefix": { "label": "Staff ID prefix" },
       "attendanceMapping": {
         "label": "Attendance mapping",
-        "hint": "How many attendance sessions each school day counts as on reports. Total sessions = open days in the term × this."
+        "hint": "How many attendance sessions each school day counts as on reports. Total sessions = open days in the term (working days less holidays and breaks) × this."
       },
       "errors": {
         "invalidNumber": "Enter a whole number, 0 or greater",

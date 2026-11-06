@@ -8,6 +8,7 @@ import { armRole, isGradeClass, readStore, writeStore } from "@/lib/exam/mock/ex
 import { getMockActingAs, MOCK_ADMIN } from "@/lib/exam/mock/mockActingAs";
 import { getSchoolSettings } from "@/lib/settings/settingsApi";
 import { DEFAULT_ATTENDANCE_SESSIONS_PER_DAY, type AttendanceSessionsPerDay } from "@/lib/settings/generalBehaviourExtras";
+import type { WorkingDay } from "@/lib/onboarding/types";
 
 /**
  * MOCK report-only fields (Report Progression Stage 2): what each result
@@ -19,17 +20,19 @@ import { DEFAULT_ATTENDANCE_SESSIONS_PER_DAY, type AttendanceSessionsPerDay } fr
  *     report prints exactly those. The declarations below mirror the
  *     built-in template files in public/template-previews (FLAGGED: the
  *     real backend reads them from the template's manifest).
- *   - ENTRY (PO rule): the heads' comments — class teacher / form tutor
+ *   - ENTRY (PO rule, General only): the heads' comments — class teacher
  *     and head teacher / principal — are entered at BOTH points (a
  *     separate instance per point) whenever the template has them at
- *     either point; the rest (attendance, boarding house) follow the
- *     point's own declaration.
+ *     either point. British stays point-specific: Progress = boarding
+ *     house, Full = form tutor. The rest (attendance) follow the point's
+ *     own declaration.
  *   - term_remark: one row per student × term × point with a column per
  *     role (class_teacher — also the British Form Tutor, who IS the arm's
  *     class teacher — head_teacher, principal, boarding_house).
  *   - Attendance: one present-count per student × term (FLAGGED: per
  *     term, shown on both points' reports). Total = open days (term dates
- *     − holidays − breaks, weekdays only) × Settings › General Behaviour
+ *     on the school's Settings › General Behaviour Working Days − holidays
+ *     − breaks) × Settings › General Behaviour
  *     attendance mapping (1:1 = 1, 1:2 = 2 sessions a day); absent =
  *     total − present. Both derived on read.
  *   - Who writes (DEC-009): the class-teacher / form-tutor comment and
@@ -105,15 +108,17 @@ const orderOf = (decl: FieldDecl) => ORDER[decl.kind === "attendance" ? "attenda
 
 /**
  * The report-only fields entered at this point, in print order: the
- * point's own declaration, plus any heads' comment the template declares
- * only at the other point (PO rule — heads on both points; label taken
- * from where it's declared). The report still prints per the template.
+ * point's own declaration, plus (General only) any heads' comment the
+ * template declares only at the other point (PO rule — heads on both
+ * points; label taken from where it's declared). British comments stay
+ * point-specific. The report still prints per the template.
  */
 export async function reportFieldDecls(classId: string, point: ProgressionPoint): Promise<FieldDecl[]> {
   const template = await classTemplate(classId);
   const declared = template?.template_key ? TEMPLATE_REPORT_FIELDS[template.template_key] : undefined;
   if (!declared) return fallbackFields(classId);
   const own = declared[variantOf(point)];
+  if (isGradeClass(classId)) return own;
   const other = declared[variantOf(point === "ca" ? "exam" : "ca")];
   const has = (decl: FieldDecl) => own.some((item) => item.kind === "comment" && decl.kind === "comment" && item.key === decl.key);
   return [...own, ...other.filter((decl) => isHeadComment(decl) && !has(decl))].sort((a, b) => orderOf(a) - orderOf(b));
@@ -187,21 +192,31 @@ function isoDays(from: string, to: string): string[] {
   return days;
 }
 
-/** Settings › General Behaviour attendance mapping (via its API — the dev mock under the dev bypass); unreadable → the setting's default. */
-export async function attendanceSessionsPerDay(): Promise<AttendanceSessionsPerDay> {
+/** The school week the attendance total is counted on. */
+export type SchoolWeek = { workingDays: WorkingDay[]; sessions: AttendanceSessionsPerDay };
+
+/** Mon–Fri: used only when Settings can't be read (or Working Days is empty). */
+const DEFAULT_WORKING_DAYS: WorkingDay[] = ["mon", "tue", "wed", "thu", "fri"];
+/** getUTCDay() index → Settings day code. */
+const DAY_CODES: WorkingDay[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+
+/** Settings › General Behaviour Working Days + attendance mapping (via its API — the dev mock under the dev bypass); unreadable → defaults. */
+export async function schoolWeek(): Promise<SchoolWeek> {
   const result = await getSchoolSettings().catch(() => null);
-  return result?.ok ? result.data.general_behaviour.attendance_sessions_per_day : DEFAULT_ATTENDANCE_SESSIONS_PER_DAY;
+  const general = result?.ok ? result.data.general_behaviour : null;
+  return {
+    workingDays: general && general.working_days.length > 0 ? general.working_days : DEFAULT_WORKING_DAYS,
+    sessions: general ? general.attendance_sessions_per_day : DEFAULT_ATTENDANCE_SESSIONS_PER_DAY,
+  };
 }
 
-/** Open days = the term's weekdays minus its holidays / breaks; total sessions = open days × sessions per day. */
-export function termCalendar(termId: string, sessions: AttendanceSessionsPerDay): { open_days: number; sessions_per_day: AttendanceSessionsPerDay; total_sessions: number } {
+/** Open days = the term's days that fall on a working day, minus its holidays / breaks; total sessions = open days × sessions per day. */
+export function termCalendar(termId: string, { workingDays, sessions }: SchoolWeek): { open_days: number; sessions_per_day: AttendanceSessionsPerDay; total_sessions: number } {
   const dates = SEED_TERM_DATES[termId];
   if (!dates) return { open_days: 0, sessions_per_day: sessions, total_sessions: 0 };
   const closed = new Set((SEED_TERM_CLOSURES[termId] ?? []).flatMap((closure) => isoDays(closure.from, closure.to)));
-  const open = isoDays(dates[0], dates[1]).filter((day) => {
-    const weekday = new Date(`${day}T00:00:00Z`).getUTCDay();
-    return weekday !== 0 && weekday !== 6 && !closed.has(day);
-  }).length;
+  const working = new Set(workingDays);
+  const open = isoDays(dates[0], dates[1]).filter((day) => working.has(DAY_CODES[new Date(`${day}T00:00:00Z`).getUTCDay()]) && !closed.has(day)).length;
   return { open_days: open, sessions_per_day: sessions, total_sessions: open * sessions };
 }
 
@@ -213,7 +228,7 @@ export function readAttendance(termId: string, studentId: string): { present: nu
 
 /** The full attendance box: present + the derived totals at the school's current mapping. */
 export async function attendanceOf(termId: string, studentId: string): Promise<Attendance & { updated_at: string | null }> {
-  const calendar = termCalendar(termId, await attendanceSessionsPerDay());
+  const calendar = termCalendar(termId, await schoolWeek());
   const { present, updated_at } = readAttendance(termId, studentId);
   return { ...calendar, present, absent: present === null ? null : Math.max(0, calendar.total_sessions - present), updated_at };
 }

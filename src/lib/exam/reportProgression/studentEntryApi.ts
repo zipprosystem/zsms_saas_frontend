@@ -21,10 +21,11 @@ import type { MissingItem, ProgressionPoint, PublishStatusFilter } from "@/lib/e
  *       point). The marks sheet is per exam (GET …/marks/students/:id).
  *     - report_fields: TEMPLATE-DRIVEN — the report-only fields the
  *       class's result template declares for this point's variant (CA →
- *       progress, Exam → full), PLUS (PO rule) the heads' comments —
- *       class teacher / form tutor, head teacher / principal — at BOTH
+ *       progress, Exam → full), PLUS (PO rule, General only) the heads'
+ *       comments — class teacher, head teacher / principal — at BOTH
  *       points whenever the template has them at either (one instance
- *       per point). The report itself still prints per the template.
+ *       per point). British stays point-specific (Progress = boarding
+ *       house, Full = form tutor). The report still prints per the template.
  *       In print order:
  *         { kind: "comment", key, role, editable }  key = the term_remark
  *           column; role = how the template labels it (class_teacher,
@@ -47,7 +48,8 @@ import type { MissingItem, ProgressionPoint, PublishStatusFilter } from "@/lib/e
  *       columns); null for a subject-scoped caller.
  *     - attendance: { present, absent, open_days, sessions_per_day,
  *       total_sessions } per student × term — total_sessions = open days
- *       (term dates − holidays − breaks, weekdays only) × Settings ›
+ *       (term dates on Settings › General Behaviour working_days −
+ *       holidays − breaks) × Settings ›
  *       General Behaviour attendance_sessions_per_day (attendance mapping
  *       1:1 = 1 / 1:2 = 2, default 2); absent = total − present; both
  *       derived on read, so changing the mapping re-totals every report.

@@ -485,8 +485,10 @@ function SettingsContent() {
           // match the object literal against setQueryData's updater overload.
           const nextSettingsResult: SettingsResult<SettingsData> = { ok: true, data: updated };
           queryClient.setQueryData(SETTINGS_QUERY_KEY, nextSettingsResult);
-          // The attendance mapping re-totals every report's attendance box: re-read them.
-          if (updated.general_behaviour.attendance_sessions_per_day !== settings.general_behaviour.attendance_sessions_per_day) {
+          // Working Days + the attendance mapping total every report's attendance box: re-read them.
+          const before = settings.general_behaviour;
+          const after = updated.general_behaviour;
+          if (after.attendance_sessions_per_day !== before.attendance_sessions_per_day || [...after.working_days].sort().join() !== [...before.working_days].sort().join()) {
             void queryClient.invalidateQueries({ queryKey: reportProgressionQueryKeys.all });
             void queryClient.invalidateQueries({ queryKey: reportQueryKeys.all });
           }

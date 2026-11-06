@@ -20,8 +20,8 @@ import type { CommentRole, ProgressionSection, ProgressionSectionKey } from "@/l
  *                  covers; filled when its result for the point is
  *                  complete (status "ready").
  *     comments   — each comment entered at this point (report_fields,
- *                  studentEntryApi.ts: the template's own plus the heads'
- *                  comments on both points); filled = non-empty
+ *                  studentEntryApi.ts: the template's own plus, General,
+ *                  the heads' comments on both points); filled = non-empty
  *                  term_remark for the point.
  *     attendance — only where the template has attendance; filled =
  *                  present recorded.

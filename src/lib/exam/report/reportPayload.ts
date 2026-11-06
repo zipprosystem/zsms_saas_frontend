@@ -112,7 +112,8 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *       attendance: { present, absent, total_days, time_school_opened },
  *                  Report Progression's per-term attendance: present =
  *                  the recorded present-count (sessions), total_days =
- *                  open days (term dates − holidays − breaks),
+ *                  open days (term dates on Settings Working Days −
+ *                  holidays − breaks),
  *                  time_school_opened = total sessions (open days ×
  *                  Settings › General Behaviour attendance mapping
  *                  1:1 / 1:2), absent = sessions −

@@ -3059,7 +3059,7 @@
       "staffIdPrefix": { "label": "Préfixe ID personnel" },
       "attendanceMapping": {
         "label": "Correspondance des présences",
-        "hint": "Nombre de séances de présence que compte chaque jour d'école sur les bulletins. Total des séances = jours d'ouverture du trimestre × cette valeur."
+        "hint": "Nombre de séances de présence que compte chaque jour d'école sur les bulletins. Total des séances = jours d'ouverture du trimestre (jours ouvrables moins congés et vacances) × cette valeur."
       },
       "errors": {
         "invalidNumber": "Saisissez un nombre entier, 0 ou plus",
