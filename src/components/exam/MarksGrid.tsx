@@ -32,6 +32,12 @@ type MarksGridProps = {
   showCompleted?: boolean;
   /** An extra read-only column after Total, derived from the row's live total (the Grade Book's Grade). */
   totalExtra?: { header: ReactNode; render: (total: number | null) => ReactNode };
+  /**
+   * "subject" = the student-wise sheet (Report Progression › View Details):
+   * one row per subject, keyed by subject id (row.student_id / student_name
+   * carry the subject id / name) — a Subject column, no Seat No. Default "student".
+   */
+  rowKind?: "student" | "subject";
 };
 
 /** Derived numbers: integers as-is, otherwise up to 2 decimals. */
@@ -76,7 +82,9 @@ export function MarksGrid({
   showRemarks = true,
   showCompleted = true,
   totalExtra,
+  rowKind = "student",
 }: MarksGridProps) {
+  const bySubject = rowKind === "subject";
   const t = useTranslations("exam.marks");
   const hasSecondHeaderRow = groups.some((group) => group.hasTotal);
   const outOf = shownTotal(groups, {}).outOf;
@@ -87,8 +95,8 @@ export function MarksGrid({
         <thead className="bg-brand-tint">
           <tr>
             <th rowSpan={hasSecondHeaderRow ? 2 : 1} className={TH}>{t("columns.sn")}</th>
-            <th rowSpan={hasSecondHeaderRow ? 2 : 1} className={TH}>{t("columns.student", { count: rows.length })}</th>
-            <th rowSpan={hasSecondHeaderRow ? 2 : 1} className={TH}>{t("columns.seatNo")}</th>
+            <th rowSpan={hasSecondHeaderRow ? 2 : 1} className={TH}>{t(bySubject ? "columns.subject" : "columns.student", { count: rows.length })}</th>
+            {bySubject ? null : <th rowSpan={hasSecondHeaderRow ? 2 : 1} className={TH}>{t("columns.seatNo")}</th>}
             {showPresent ? <th rowSpan={hasSecondHeaderRow ? 2 : 1} className={`${TH} text-center`}>{t("columns.present")}</th> : null}
             {groups.map((group) =>
               group.hasTotal ? (
@@ -157,15 +165,19 @@ export function MarksGrid({
                   </span>
                 </td>
                 <td className={TD}>
-                  <span className="flex items-center gap-2.5">
-                    <Initials name={row.student_name} />
-                    <span className="flex min-w-0 flex-col">
-                      <span className="font-medium text-text-primary">{row.student_name}</span>
-                      <span className="text-xs text-text-muted">{row.admission_no}</span>
+                  {bySubject ? (
+                    <span className="font-medium text-text-primary">{row.student_name}</span>
+                  ) : (
+                    <span className="flex items-center gap-2.5">
+                      <Initials name={row.student_name} />
+                      <span className="flex min-w-0 flex-col">
+                        <span className="font-medium text-text-primary">{row.student_name}</span>
+                        <span className="text-xs text-text-muted">{row.admission_no}</span>
+                      </span>
                     </span>
-                  </span>
+                  )}
                 </td>
-                <td className={`${TD} text-text-secondary`}>{row.seat_no || "—"}</td>
+                {bySubject ? null : <td className={`${TD} text-text-secondary`}>{row.seat_no || "—"}</td>}
                 {showPresent ? (
                   <td className={`${TD} text-center`}>
                     <input

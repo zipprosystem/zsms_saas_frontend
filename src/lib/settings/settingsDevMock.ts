@@ -36,6 +36,8 @@ const SEED: SettingsData = {
     notification_channel: null,
     student_id_prefix: null,
     staff_id_prefix: null,
+    // Filled from the general-behaviour side-store (generalBehaviourExtras.ts), like on staging.
+    attendance_sessions_per_day: 2,
   },
   regional: {
     address: "1 Example Road, Lagos",

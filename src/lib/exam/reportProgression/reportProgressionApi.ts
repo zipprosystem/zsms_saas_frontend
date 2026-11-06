@@ -1,6 +1,7 @@
 import type { CrudResult } from "@/lib/setup/crudTypes";
 import { examSend } from "@/lib/exam/examApi";
 import type { AssessmentMode } from "@/lib/setup/assessmentConfiguration/assessmentStructure";
+import type { CommentRole, ProgressionSection, ProgressionSectionKey } from "@/lib/exam/reportProgression/studentEntryApi";
 
 /**
  * REPORT PROGRESSION — Stage 1: the publish surface (Academics › Exam ›
@@ -11,17 +12,29 @@ import type { AssessmentMode } from "@/lib/setup/assessmentConfiguration/assessm
  * British: the term's A point, Progress) or "exam" (the Exam / End-of-Term
  * report; British: B, Full). Publish / stamp state is kept per point.
  *
- * COMPLETENESS (§7.30) is BACKEND-OWNED and computed on read:
- *   progression_percent = round(filled ÷ required × 100), where one
- *   required slot is:
- *     - each subject the student takes (not NE) — filled when its result
- *       for that point is complete (status "ready");
- *     - General classes: each Psychomotor and Affective trait (rated) and
- *       the class teacher + head teacher remarks (non-empty).
- *   British: subjects only for now — FLAGGED: the student-wise British
- *   items (Stages 2–3) join `required` when those screens land.
+ * COMPLETENESS (§7.30) is BACKEND-OWNED, computed on read, and
+ * TEMPLATE + POINT driven and SECTION-WEIGHTED (Stage 2), so no one kind
+ * of item dominates (traits won't swamp the bar once Stage 3 lands):
+ *   sections (each filled ÷ required):
+ *     scores     — each subject the student takes (not NE) that the row
+ *                  covers; filled when its result for the point is
+ *                  complete (status "ready").
+ *     comments   — each comment entered at this point (report_fields,
+ *                  studentEntryApi.ts: the template's own plus the heads'
+ *                  comments on both points); filled = non-empty
+ *                  term_remark for the point.
+ *     attendance — only where the template has attendance; filled =
+ *                  present recorded.
+ *     traits     — General Exam point only: each Psychomotor and
+ *                  Affective trait rated (never at the CA point; British
+ *                  student-wise domains join with Stage 3).
+ *   progression_percent = round(Σ weight × filled ÷ required ÷ Σ weight)
+ *   over the sections that have anything required — weights
+ *   PROGRESSION_SECTION_WEIGHTS (scores 60, comments 20, attendance 10,
+ *   traits 10; FLAGGED, tune with Matthew). A subject-scoped row is
+ *   scores only. filled / required stay the raw slot counts.
  *   `missing` lists what's still unpopulated (the publish warning shows it).
- *   The class card's percent = Σ filled ÷ Σ required over its students.
+ *   The class card's percent = the mean of its students' percents.
  *
  * PROPOSED REST contract (names are proposals — reconcile with Muntajir):
  *
@@ -72,17 +85,18 @@ export type ProgressionPoint = (typeof PROGRESSION_POINTS)[number];
 export const PUBLISH_STATUS_FILTERS = ["all", "published", "unpublished"] as const;
 export type PublishStatusFilter = (typeof PUBLISH_STATUS_FILTERS)[number];
 
-/** What a report still lacks. subject: label = the subject; psychomotor / affective: count = unrated traits. */
+/** What a report still lacks. subject: label = the subject; psychomotor / affective: count = unrated traits; remark: role = the comment as the template labels it. */
 export type MissingItem =
   | { kind: "subject"; label: string }
   | { kind: "psychomotor" | "affective"; count: number }
-  | { kind: "class_teacher_remark" | "head_teacher_remark" };
+  | { kind: "remark"; role: CommentRole }
+  | { kind: "attendance" };
 
 export type ProgressionActor = { staff_id: string | null; name: string | null };
 
 /** Who did what last on this report (entry, traits, publish, stamp). by.name null = a school admin. */
 export type ProgressionActivity = {
-  kind: "marks" | "traits" | "published" | "unpublished" | "stamped";
+  kind: "marks" | "traits" | "comments" | "published" | "unpublished" | "stamped";
   at: string;
   by: ProgressionActor | null;
 };
@@ -163,6 +177,18 @@ export const reportProgressionQueryKeys = {
   classView: (classId: string, termId: string, point: ProgressionPoint, status: PublishStatusFilter) =>
     ["exam", "report-progression", "class", classId, termId, point, status] as const,
 };
+
+/** Each completeness section's share of the bar (see COMPLETENESS above). FLAGGED: proposed weights. */
+export const PROGRESSION_SECTION_WEIGHTS: Record<ProgressionSectionKey, number> = { scores: 60, comments: 20, attendance: 10, traits: 10 };
+
+/** Section-weighted percent, 0–100: sections with nothing required drop out (0 when none apply). */
+export function weightedProgressionPercent(sections: ProgressionSection[]): number {
+  const applicable = sections.filter((section) => section.required > 0);
+  const weight = applicable.reduce((total, section) => total + section.weight, 0);
+  if (weight === 0) return 0;
+  const score = applicable.reduce((total, section) => total + section.weight * (section.filled / section.required), 0);
+  return Math.round((score / weight) * 100);
+}
 
 /** Percent of required slots filled, 0–100 (0 when nothing is required). */
 export function progressionPercent(filled: number, required: number): number {

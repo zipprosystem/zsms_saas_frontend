@@ -66,6 +66,7 @@ import {
 import { classGradeScale, resolveGradeScale } from "@/lib/exam/mock/gradesMock";
 import { progressGradeById, progressGrades, seededProgressGradeId } from "@/lib/exam/mock/progressGradesMock";
 import { getMockActingAs, MOCK_ADMIN } from "@/lib/exam/mock/mockActingAs";
+import { readRemarks, writeRemarks } from "@/lib/exam/mock/reportFieldsMock";
 
 /**
  * MOCK computed results (Exam Stage 2a). Runs the pure engine
@@ -471,10 +472,16 @@ function traitsKey(termId: string, studentId: string): string {
 
 const TRAIT_KEYS = [...SEED_PSYCHOMOTOR, ...SEED_AFFECTIVE].map((item) => item.key);
 
-function traitsStatus(stored: StoredTraits | undefined): TraitsStatus {
-  if (!stored) return "none";
-  const rated = TRAIT_KEYS.filter((key) => !!progressGradeById(stored.ratings[key])).length;
-  const remarks = [stored.class_teacher_remark, stored.head_teacher_remark].filter((text) => text.trim()).length;
+/** The panel's remarks = the Exam point's term_remark (Report Progression, reportFieldsMock.ts). */
+function examRemarks(termId: string, studentId: string) {
+  return readRemarks(termId, "exam", studentId);
+}
+
+function traitsStatus(termId: string, studentId: string): TraitsStatus {
+  const stored = loadTraits()[traitsKey(termId, studentId)];
+  const remark = examRemarks(termId, studentId);
+  const rated = stored ? TRAIT_KEYS.filter((key) => !!progressGradeById(stored.ratings[key])).length : 0;
+  const remarks = [remark.class_teacher, remark.head_teacher].filter((text) => text.trim()).length;
   if (rated === TRAIT_KEYS.length && remarks === 2) return "complete";
   return rated + remarks > 0 ? "partial" : "none";
 }
@@ -532,7 +539,7 @@ export async function getResults(query: URLSearchParams): Promise<WireResponse> 
         Object.entries(row.subjects).map(([id, result]) => [id, leanSubject(result, view, computed.mode) as SubjectResult]),
       ),
       aggregate: leanAggregate(row.aggregate, view) as StudentTermResult,
-      traits_status: traitsStatus(loadTraits()[traitsKey(termId, row.student.id)]),
+      traits_status: traitsStatus(termId, row.student.id),
     }),
   );
   const data: ClassResults = {
@@ -631,8 +638,8 @@ function traitsPayload(studentId: string, studentName: string, termId: string, a
     rating_scale: progressGrades("general").map((level) => ({ id: level.id, value: level.value, label: level.name, hide_in_report: level.hide_in_report })),
     psychomotor: SEED_PSYCHOMOTOR.map(item),
     affective: SEED_AFFECTIVE.map(item),
-    class_teacher_remark: stored?.class_teacher_remark ?? "",
-    head_teacher_remark: stored?.head_teacher_remark ?? "",
+    class_teacher_remark: examRemarks(termId, studentId).class_teacher,
+    head_teacher_remark: examRemarks(termId, studentId).head_teacher,
     updated_at: stored?.updated_at ?? null,
     editable: armRole(armId) === "class_teacher",
   };
@@ -687,5 +694,7 @@ export function putStudentTraits(studentId: string, payload: unknown): WireRespo
   };
   traitsCache = store;
   writeStore(TRAITS_STORAGE_KEY, store);
+  // The remarks live in term_remark (Exam point) — the same text Report Progression's student-wise entry edits.
+  writeRemarks(termId, "exam", studentId, { class_teacher: remark("class_teacher_remark"), head_teacher: remark("head_teacher_remark") });
   return ok(traitsPayload(studentId, context.name, termId, context.armId));
 }

@@ -166,6 +166,18 @@ export function teachesStudent(armId: string, subjectId: string, studentId: stri
   });
 }
 
+/**
+ * Student-wise (Report Progression › View Details) scope for one subject
+ * row: a full-report role on the arm (admin / sectional head / class
+ * teacher) sees and enters every subject; a subject teacher only the
+ * subjects they teach this student (subject-set aware).
+ */
+export function studentSubjectInScope(armId: string, subjectId: string, studentId: string): boolean {
+  const role = armRole(armId);
+  if (!role) return false;
+  return role !== "subject_teacher" || teachesStudent(armId, subjectId, studentId);
+}
+
 export function classOfArm(armId: string): string | null {
   return SEED_CLASSES.find((cls) => cls.arms.some((arm) => arm.id === armId))?.id ?? null;
 }

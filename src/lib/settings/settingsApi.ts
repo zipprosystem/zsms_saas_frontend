@@ -3,7 +3,13 @@ import { DEV_AUTH_BYPASS } from "@/lib/auth/authBridge";
 import { isClientErrorStatus, TransientQueryError } from "@/lib/queryClient";
 import type { SettingsData, SettingsUpdate } from "./types";
 import { splitIdentityExtras, storeIdentityExtras, withIdentityExtras } from "./schoolIdentityExtras";
+import { splitGeneralBehaviourExtras, storeGeneralBehaviourExtras, withGeneralBehaviourExtras } from "./generalBehaviourExtras";
 import { devGetSettings, devPatchSettings, devUploadLogo } from "./settingsDevMock";
+
+/** Every side-store field merged onto a settings read (identity extras + general-behaviour extras). */
+function withExtras(data: SettingsData, devSeed = false): SettingsData {
+  return withGeneralBehaviourExtras(withIdentityExtras(data, devSeed));
+}
 
 /**
  * Muntajir's SaaS Settings API contract (GET/PATCH {API_BASE}/school/settings),
@@ -66,11 +72,12 @@ function toResult<T>(response: Response, body: unknown): SettingsResult<T> {
  * mock (settingsDevMock.ts) instead of devBypassUnavailable, so School
  * Identity can be edited locally and shows on the exam mock's reports.
  * Identity's motto / mission_statement go through the side-store in
- * schoolIdentityExtras.ts (swap flag) on every path.
+ * schoolIdentityExtras.ts, and general_behaviour's attendance mapping
+ * through generalBehaviourExtras.ts (swap flags), on every path.
  */
 export async function getSchoolSettings(): Promise<SettingsResult<SettingsData>> {
   if (DEV_AUTH_BYPASS) {
-    return { ok: true, data: withIdentityExtras(await devGetSettings(), true) };
+    return { ok: true, data: withExtras(await devGetSettings(), true) };
   }
 
   let response: Response;
@@ -84,7 +91,7 @@ export async function getSchoolSettings(): Promise<SettingsResult<SettingsData>>
 
   if (response.ok) {
     const data = (body as { data?: SettingsData } | null)?.data;
-    if (data) return { ok: true, data: withIdentityExtras(data) };
+    if (data) return { ok: true, data: withExtras(data) };
     return { ok: false, kind: "server" };
   }
 
@@ -157,18 +164,24 @@ export async function uploadSchoolLogo(payload: {
 export async function updateSchoolSettings(
   partial: SettingsUpdate,
 ): Promise<SettingsResult<SettingsData>> {
-  // Mock (swap flag off): motto / mission_statement never go in the real PATCH body.
-  const { body: patch, extras } = splitIdentityExtras(partial);
+  // Mock (swap flags off): motto / mission_statement / attendance mapping never go in the real PATCH body.
+  const identitySplit = splitIdentityExtras(partial);
+  const { body: patch, sessions } = splitGeneralBehaviourExtras(identitySplit.body);
+  const extras = identitySplit.extras;
+  const storeExtras = (devSeed: boolean) => {
+    if (extras) storeIdentityExtras(extras, devSeed);
+    if (sessions !== null) storeGeneralBehaviourExtras(sessions);
+  };
 
   if (DEV_AUTH_BYPASS) {
     const data = await devPatchSettings(patch);
-    if (extras) storeIdentityExtras(extras, true);
-    return { ok: true, data: withIdentityExtras(data, true) };
+    storeExtras(true);
+    return { ok: true, data: withExtras(data, true) };
   }
 
   // Only extras changed: nothing for the backend — store them and re-read.
-  if (extras && Object.keys(patch).length === 0) {
-    storeIdentityExtras(extras);
+  if ((extras || sessions !== null) && Object.keys(patch).length === 0) {
+    storeExtras(false);
     return getSchoolSettings();
   }
 
@@ -187,8 +200,8 @@ export async function updateSchoolSettings(
   if (response.ok) {
     const data = (body as { data?: SettingsData } | null)?.data;
     if (data) {
-      if (extras) storeIdentityExtras(extras);
-      return { ok: true, data: withIdentityExtras(data) };
+      storeExtras(false);
+      return { ok: true, data: withExtras(data) };
     }
     return { ok: false, kind: "server" };
   }

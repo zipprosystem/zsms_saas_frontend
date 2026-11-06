@@ -23,6 +23,8 @@ type AcademicReportGridProps = {
   showComment: boolean;
   /** The GB column — this point's Grade Book; off when the point's show_grade_book is off. */
   showGradeBook: boolean;
+  /** "subject" = the student-wise sheet: one row per subject (row.student_id / student_name carry the subject id / name); no Seat No. */
+  rowKind?: "student" | "subject";
 };
 
 const TH = "px-3 py-2.5 text-left text-xs font-semibold text-text-secondary align-bottom";
@@ -134,7 +136,9 @@ export function AcademicReportGrid({
   onClearEntries,
   showComment,
   showGradeBook,
+  rowKind = "student",
 }: AcademicReportGridProps) {
+  const bySubject = rowKind === "subject";
   const t = useTranslations("exam.academicReport");
   const display = useAttainmentDisplay();
   const gradeLevels = levelsByLeaf[structure.attainment.id] ?? [];
@@ -145,8 +149,8 @@ export function AcademicReportGrid({
         <thead className="bg-brand-tint">
           <tr>
             <th className={TH}>{t("columns.sn")}</th>
-            <th className={TH}>{t("columns.student", { count: rows.length })}</th>
-            <th className={TH}>{t("columns.seatNo")}</th>
+            <th className={TH}>{t(bySubject ? "columns.subject" : "columns.student", { count: rows.length })}</th>
+            {bySubject ? null : <th className={TH}>{t("columns.seatNo")}</th>}
             <th className={TH}>{t("columns.target")}</th>
             {showGradeBook ? (
               <th className={TH} title={t("gradeBookHelp")}>
@@ -189,15 +193,19 @@ export function AcademicReportGrid({
                   </span>
                 </td>
                 <td className={TD}>
-                  <span className="flex items-center gap-2.5">
-                    <Initials name={row.student_name} />
-                    <span className="flex min-w-0 flex-col">
-                      <span className="font-medium text-text-primary">{row.student_name}</span>
-                      <span className="text-xs text-text-muted">{row.admission_no}</span>
+                  {bySubject ? (
+                    <span className="font-medium text-text-primary">{row.student_name}</span>
+                  ) : (
+                    <span className="flex items-center gap-2.5">
+                      <Initials name={row.student_name} />
+                      <span className="flex min-w-0 flex-col">
+                        <span className="font-medium text-text-primary">{row.student_name}</span>
+                        <span className="text-xs text-text-muted">{row.admission_no}</span>
+                      </span>
                     </span>
-                  </span>
+                  )}
                 </td>
-                <td className={`${TD} text-text-secondary`}>{row.seat_no || "—"}</td>
+                {bySubject ? null : <td className={`${TD} text-text-secondary`}>{row.seat_no || "—"}</td>}
                 <td className={TD}>
                   <CodeChip code={row.mtg} levels={gradeLevels} display={display} />
                 </td>

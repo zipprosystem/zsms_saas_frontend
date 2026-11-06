@@ -9,7 +9,8 @@ import type {
   ReportSubject,
   ReportVariant,
 } from "@/lib/exam/report/reportPayload";
-import { resultTemplatesService } from "@/lib/setup/assessmentConfiguration/resultTemplatesApi";
+import { attendanceOf, classTemplate, readRemarks } from "@/lib/exam/mock/reportFieldsMock";
+import type { Attendance } from "@/lib/exam/reportProgression/studentEntryApi";
 import {
   SEED_AFFECTIVE,
   SEED_CLASS_TEACHERS,
@@ -17,6 +18,7 @@ import {
   SEED_PSYCHOMOTOR,
   SEED_SUBJECT_SETS,
   SEED_TEACHERS,
+  SEED_TERM_DATES,
   SEED_YEARS,
   enrolledForTerm,
   seedStaffRoster,
@@ -60,10 +62,11 @@ import { armOfStudent, classAverage, compute, storedTraits, viewerFor, type Comp
  * result template). Gender, date of birth and photo come from a seeded
  * stand-in for the student record (examMockSeeds.seedStudentProfile).
  *
- * Still null (the template shows "—"), each waiting on a later build:
- * attendance (Report Progression's present field), Form Tutor and
- * boarding (Report Progression's student-wise entry — the traits entry
- * doesn't capture them), British grade-boundary scores (grading
+ * Remarks + attendance come from Report Progression's student-wise entry
+ * (reportFieldsMock.ts: the report point's term_remark, the term's
+ * attendance). Still null (the template shows "—"), each waiting on a
+ * later build: the boarding grades and traits.boarding /
+ * form_tutor_comment (Stage 3), British grade-boundary scores (grading
  * completion), the Grade Book GB score (Grade Book entry) and CEM / GL SAS
  * (external import).
  */
@@ -102,27 +105,8 @@ async function schoolBlock(schoolTypeId: string | null): Promise<ReportPayload["
   };
 }
 
-/** Term start/end dates — the academic calendar isn't in the Exam mock yet. */
-const TERM_DATES: Record<string, [string, string]> = {
-  "y-2025-t1": ["2025-09-08", "2025-12-19"],
-  "y-2025-t2": ["2026-01-12", "2026-04-03"],
-  "y-2025-t3": ["2026-04-27", "2026-07-24"],
-  "y-2026-t1": ["2026-09-07", "2026-12-18"],
-  "y-2026-t2": ["2027-01-11", "2027-04-02"],
-  "y-2026-t3": ["2027-04-26", "2027-07-23"],
-};
-
-/**
- * The result template each mock class reports in (template_key in the
- * Result Templates catalog). Stands in for "the School Type's selected
- * template" — the Exam mock's classes aren't linked to School Types.
- */
-const CLASS_TEMPLATE_KEY: Record<string, string> = {
-  "cls-jss1": "lela_blossom",
-  "cls-ss1": "nigerian_terminal",
-  "cls-y9": "british_progress",
-  "cls-y11": "british_progress",
-};
+/** Term start/end dates (seeded — the academic calendar isn't in the Exam mock yet). */
+const TERM_DATES = SEED_TERM_DATES;
 
 /** Pages each built-in template declares (the template file's own zsms-report-pages meta is the source of truth). */
 const TEMPLATE_PAGES: Record<string, Partial<Record<ReportVariant, number>>> = {
@@ -150,10 +134,7 @@ function resumptionDate(termId: string): string | null {
 }
 
 async function selectedTemplate(classId: string, variant: ReportVariant): Promise<{ id: string | null; pages: number }> {
-  const result = await resultTemplatesService.list();
-  const templates = result.ok ? result.data.filter((template) => template.status !== "archived") : [];
-  const key = CLASS_TEMPLATE_KEY[classId];
-  const chosen = templates.find((template) => template.template_key === key) ?? templates.find((template) => template.is_default) ?? null;
+  const chosen = await classTemplate(classId);
   return { id: chosen?.id ?? null, pages: (chosen?.template_key && TEMPLATE_PAGES[chosen.template_key]?.[variant]) || 1 };
 }
 
@@ -383,6 +364,7 @@ function buildPayload(
   traitLists: TraitLists,
   school: ReportPayload["school"],
   signed: ReportPayload["signatures"],
+  attendance: Attendance,
 ): ReportPayload {
   const viewer = viewerFor(armId);
   const visible = viewer.visible_subject_ids ? new Set(viewer.visible_subject_ids) : null;
@@ -450,6 +432,7 @@ function buildPayload(
   const own = viewer.report_scope === "own_subjects";
   const aggregate = row.aggregate;
   const stored = storedTraits(termId, row.student.id);
+  const remarks = readRemarks(termId, computed.stage === "progress" ? "ca" : "exam", row.student.id);
   // A trait rating = a General Progress Grade (by id): its value + name. Hidden in reports -> the whole level is suppressed.
   const traitOf = ({ key, label }: { key: string; label: string }) => {
     const level = progressGradeById(stored?.ratings[key]);
@@ -489,7 +472,8 @@ function buildPayload(
       photo_url: profile?.photo_url ?? null,
       resumption_date: resumptionDate(termId),
     },
-    attendance: { present: null, absent: null, total_days: null, time_school_opened: null },
+    // Report Progression's attendance (per term): days open, times opened = sessions, absent derived.
+    attendance: { present: attendance.present, absent: attendance.absent, total_days: attendance.open_days, time_school_opened: attendance.total_sessions },
     subjects,
     aggregate: {
       grand_total: own ? null : aggregate.grand_total,
@@ -528,13 +512,14 @@ function buildPayload(
       // General: the trait scale. British: the Engagement / Learning Behaviour / Boarding level key.
       rating_key: ratingKey(progressGrades(general ? "general" : "british")),
     },
+    // The report point's term_remark (Report Progression: CA point → Progress, Exam point → Full).
     remarks: {
-      class_teacher: stored?.class_teacher_remark || null,
-      head_teacher: stored?.head_teacher_remark || null,
+      class_teacher: remarks.class_teacher || null,
+      head_teacher: remarks.head_teacher || null,
       // Form tutor = the arm's class teacher; comment = their term remark.
-      form_tutor: formTutor(armId, stored?.class_teacher_remark || null),
-      // Boarding: Report Progression's student-wise entry isn't built — nothing to send yet.
-      boarding_house: null,
+      form_tutor: formTutor(armId, remarks.class_teacher || null),
+      // The boarding house isn't modelled (no house name) — the comment alone.
+      boarding_house: remarks.boarding_house ? { name: null, comment: remarks.boarding_house } : null,
     },
     grade_key: general
       ? (computed.scale?.bands ?? []).map((band) => ({ grade: band.grade, min: band.min, max: band.max, remark: band.remark, show_on_report: true, gpa: band.gpa, weight: null }))
@@ -579,7 +564,7 @@ export async function getStudentReport(studentId: string, query: URLSearchParams
     psychomotor: (await reportTraitList("psychomotor", schoolType)) ?? SEED_PSYCHOMOTOR,
     affective: (await reportTraitList("affective", schoolType)) ?? SEED_AFFECTIVE,
   };
-    return ok(buildPayload(computed, row, armId, termId, await selectedTemplate(computed.classId, computed.stage), earlier, traitLists, await schoolBlock(schoolType), signatures(schoolType, armId)));
+    return ok(buildPayload(computed, row, armId, termId, await selectedTemplate(computed.classId, computed.stage), earlier, traitLists, await schoolBlock(schoolType), signatures(schoolType, armId), await attendanceOf(termId, row.student.id)));
 }
 
 /** Class PDF stub: the batch render is a backend job (async, cached) — the mock only answers "not available here". */

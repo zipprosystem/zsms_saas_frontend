@@ -79,11 +79,12 @@ export function useMissingLabel(): (item: MissingItem) => string {
   return (item) => {
     if (item.kind === "subject") return t("subject", { subject: item.label });
     if (item.kind === "psychomotor" || item.kind === "affective") return t(item.kind, { count: item.count });
-    return t(item.kind);
+    if (item.kind === "remark") return t(`remark.${item.role}`);
+    return t("attendance");
   };
 }
 
-/** Back link + a "coming in a later stage" body (Stage 2 entry, Stage 4 Send-to-Parent). */
+/** Back link + a "coming in a later stage" body (Stage 4 Send-to-Parent). */
 export function StagePlaceholder({ backHref, backLabel, title, body }: { backHref: string; backLabel: string; title: string; body: ReactNode }) {
   return (
     <div className="flex min-w-0 flex-col gap-5">

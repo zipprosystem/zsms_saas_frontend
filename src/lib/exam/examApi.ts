@@ -20,6 +20,8 @@ import type {
   RatingScale,
   SaveGradeMarksInput,
   SaveMarksInput,
+  SaveStudentMarksInput,
+  StudentMarksSheet,
   ReportVariant,
   ScaleLevel,
   SubjectMarkRow,
@@ -186,6 +188,34 @@ import type {
  *     (Present once CAG is in; completed once the variant's required fields
  *     are in: progress = CAG + Engagement + Learning Behaviour, full = those
  *     + Comment) — UI behaviour, no server derivation.
+ *
+ * STUDENT-WISE (Report Progression Stage 2 — View Details). The same
+ * subject_mark rows, pivoted to ONE student (all their subjects); reads and
+ * writes go to the same rows as the subject-wise sheets above, so the two
+ * views stay in sync both ways. PROPOSED:
+ *
+ *   GET /api/v1/erp/exams/:id/marks/students/:student_id
+ *     -> the subject-wise GET's shape with student_id in place of
+ *        subject_id, and items = one row per subject: { subject_id,
+ *        subject_name, …the same row fields (student_* repeat the
+ *        student) }. Score sheets as component_based; British as
+ *        grade_based with the structure / scales inline. Rows = the
+ *        subjects the student takes that term (electives: only if taken;
+ *        NE never listed), cut to the caller's student-wise scope:
+ *          admin / sectional head / the arm's class teacher (form tutor)
+ *            -> every subject;
+ *          subject teacher -> only the subjects they teach THIS student
+ *            (subject-set aware, as Report Progression).
+ *        Every listed row is editable (scope = what you may enter).
+ *        403 OUT_OF_SCOPE when the caller may see none of them.
+ *   PUT /api/v1/erp/exams/:id/marks/students/:student_id
+ *     body { class_arm_id, rows: [{ subject_id, component_scores, present,
+ *            mark_completed, subject_remark }] }
+ *     Same per-row validation and errors as the subject-wise PUT (message
+ *     led by "rows.<i>…"); a subject outside the caller's student-wise
+ *     scope -> 403 OUT_OF_SCOPE. All-or-nothing. Returns the GET shape.
+ *     FLAGGED: the form tutor may enter EVERY subject here (brief), wider
+ *     than the subject-wise screens (their own assignments only).
  *
  * Reconcile with Muntajir (Matthew, 2026-10-23): attainment + ratings in
  * component_scores, comment as subject_remark, MTG + Grade Book as
@@ -585,4 +615,39 @@ export function getMarks(examId: string, subjectId: string, armId: string): Prom
 
 export function saveMarks(examId: string, input: SaveMarksInput | SaveGradeMarksInput): Promise<CrudResult<MarksSheet>> {
   return send("PUT", `erp/exams/${encodeURIComponent(examId)}/marks`, input, sheetFromWire);
+}
+
+// ---------------------------------------------------------------------------
+// Student-wise sheet (Report Progression › View Details)
+// ---------------------------------------------------------------------------
+
+function subjectKeyed(value: unknown): { subject_id: string; subject_name: string } {
+  const r = rec(value);
+  return { subject_id: s(r.subject_id), subject_name: s(r.subject_name) };
+}
+
+function studentSheetFromWire(value: unknown): StudentMarksSheet | null {
+  const r = rec(value);
+  // Same readers as the subject-wise sheet; the pivot swaps subject_id for student_id and keys each row by its subject.
+  const base = r.exam ? sheetFromWire(r) : null;
+  if (!base) return null;
+  const wireItems = arr(r.items);
+  const keyed = <T,>(rows: T[]) => rows.map((row, i) => ({ ...row, ...subjectKeyed(wireItems[i]) }));
+  const student_id = s(r.student_id);
+  if (base.assessment_mode === "grade_based") {
+    const { exam, class_arm_id, assessment_structure_id, entry_open, auto_fill_attainment, structure, grade_scales, rating_scales } = base;
+    return { assessment_mode: "grade_based", exam, student_id, class_arm_id, assessment_structure_id, entry_open, auto_fill_attainment, structure, grade_scales, rating_scales, items: keyed(base.items) };
+  }
+  const { exam, class_arm_id, assessment_structure_id, entry_open } = base;
+  return { assessment_mode: "component_based", exam, student_id, class_arm_id, assessment_structure_id, entry_open, items: keyed(base.items) };
+}
+
+export const studentMarksQueryKey = (examId: string, studentId: string) => ["exam", "marks", "student", examId, studentId] as const;
+
+export function getStudentMarks(examId: string, studentId: string): Promise<CrudResult<StudentMarksSheet>> {
+  return send("GET", `erp/exams/${encodeURIComponent(examId)}/marks/students/${encodeURIComponent(studentId)}`, undefined, studentSheetFromWire);
+}
+
+export function saveStudentMarks(examId: string, studentId: string, input: SaveStudentMarksInput): Promise<CrudResult<StudentMarksSheet>> {
+  return send("PUT", `erp/exams/${encodeURIComponent(examId)}/marks/students/${encodeURIComponent(studentId)}`, input, studentSheetFromWire);
 }

@@ -61,6 +61,10 @@ export type SettingsData = {
     notification_channel: string | null;
     student_id_prefix: string | null;
     staff_id_prefix: string | null;
+    // ADDITION, not in the backend yet (generalBehaviourExtras.ts swap
+    // flag): attendance mapping — sessions counted per school day, 1 (1:1)
+    // or 2 (1:2, morning + afternoon). Default 2.
+    attendance_sessions_per_day: 1 | 2;
   };
   regional: {
     address: string | null;

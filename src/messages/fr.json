@@ -2887,6 +2887,10 @@
         "email": "E-mail",
         "sms": "SMS",
         "emailAndSms": "E-mail et SMS"
+      },
+      "attendanceMapping": {
+        "s1": "1:1 — une séance par jour d'école",
+        "s2": "1:2 — deux séances par jour d'école (matin + après-midi)"
       }
     },
     "errors": {
@@ -2924,7 +2928,8 @@
         "absenceEndDelayValue": "{days} jours",
         "notificationChannel": "Canal de notification",
         "studentIdPrefix": "Préfixe ID élève",
-        "staffIdPrefix": "Préfixe ID personnel"
+        "staffIdPrefix": "Préfixe ID personnel",
+        "attendanceMapping": "Correspondance des présences"
       },
       "regional": {
         "title": "Paramètres régionaux",
@@ -3052,6 +3057,10 @@
       "notificationChannel": { "label": "Canal de notification" },
       "studentIdPrefix": { "label": "Préfixe ID élève" },
       "staffIdPrefix": { "label": "Préfixe ID personnel" },
+      "attendanceMapping": {
+        "label": "Correspondance des présences",
+        "hint": "Nombre de séances de présence que compte chaque jour d'école sur les bulletins. Total des séances = jours d'ouverture du trimestre × cette valeur."
+      },
       "errors": {
         "invalidNumber": "Saisissez un nombre entier, 0 ou plus",
         "submitField": "Veuillez corriger les champs signalés et réessayer.",
@@ -3454,6 +3463,7 @@
       "columns": {
         "sn": "N°",
         "student": "Élèves ({count})",
+        "subject": "Matières ({count})",
         "seatNo": "N° de place",
         "present": "Présent ?",
         "componentTotal": "Total",
@@ -3899,6 +3909,7 @@
       "columns": {
         "sn": "N°",
         "student": "Élèves ({count})",
+        "subject": "Matières ({count})",
         "seatNo": "N° de place",
         "target": "Objectif (MTG)",
         "gradeBook": "Carnet de notes",
@@ -4015,6 +4026,7 @@
         "kinds": {
           "marks": "Résultats saisis",
           "traits": "Traits et appréciations",
+          "comments": "Appréciations et assiduité",
           "published": "Publié",
           "unpublished": "Dépublié",
           "stamped": "Tamponné"
@@ -4024,8 +4036,14 @@
         "subject": "{subject}",
         "psychomotor": "Psychomotricité : {count} non noté(s)",
         "affective": "Affectif : {count} non noté(s)",
-        "class_teacher_remark": "Appréciation du professeur principal",
-        "head_teacher_remark": "Appréciation du directeur"
+        "remark": {
+          "class_teacher": "Appréciation du professeur principal",
+          "form_tutor": "Appréciation du tuteur",
+          "head_teacher": "Appréciation du directeur",
+          "principal": "Appréciation du proviseur",
+          "boarding_house": "Appréciation de l'internat"
+        },
+        "attendance": "Assiduité"
       },
       "warning": {
         "title": "Certains bulletins sont incomplets",
@@ -4046,13 +4064,92 @@
       },
       "placeholder": {
         "backToClass": "Retour à la progression de la classe",
-        "details": {
-          "title": "Détails du bulletin de l'élève",
-          "body": "La saisie du bulletin par élève arrive à la prochaine étape."
-        },
         "send": {
           "title": "Envoyer le résultat aux parents",
           "body": "L'envoi des résultats aux parents arrive à une étape ultérieure."
+        }
+      },
+      "entry": {
+        "back": "Retour à la progression de la classe",
+        "classArm": "{class} {arm}",
+        "nav": {
+          "previous": "Précédent",
+          "next": "Suivant",
+          "position": "{index} sur {count}"
+        },
+        "search": {
+          "label": "Rechercher un élève",
+          "placeholder": "Rechercher un élève"
+        },
+        "summary": {
+          "passMarks": "Note de passage",
+          "totalMarks": "Total des notes",
+          "marksValue": "{marks} pts",
+          "attainment": "Niveaux saisis",
+          "ofSubjects": "{done} matières sur {total}",
+          "subjects": "Matières",
+          "subjectsValue": "{count, plural, one {# matière} other {# matières}} · {done} terminée(s)",
+          "progression": "Progression du bulletin",
+          "progressionOf": "Progression du bulletin de {name}",
+          "section": "{section} {filled}/{required}",
+          "missing": "Reste à remplir : {items}"
+        },
+        "sections": {
+          "scores": "Notes",
+          "comments": "Appréciations",
+          "attendance": "Assiduité",
+          "traits": "Traits"
+        },
+        "subjectScope": "Vous voyez les matières que vous enseignez à cet élève. Les appréciations et l'assiduité sont saisies par le professeur principal.",
+        "empty": {
+          "noExams": "Aucun examen actif pour ce point. Vérifiez la liste des examens."
+        },
+        "notices": {
+          "noStructure": "Aucune structure d'évaluation n'est en vigueur pour cette classe.",
+          "noColumns": "Cet examen n'a aucune colonne de notes dans la structure de la classe.",
+          "noSubjects": "Aucune matière à afficher pour cet élève à cet examen."
+        },
+        "fields": {
+          "title": "Appréciations du bulletin",
+          "subtitle": "Ce que le modèle de bulletin de cette classe imprime pour ce point.",
+          "placeholder": "Rédigez une appréciation…",
+          "empty": "Aucune appréciation",
+          "count": "{count}/{max}",
+          "readOnlyClassTeacher": "Seul le professeur principal de l'élève (ou un administrateur) peut modifier cette appréciation.",
+          "readOnlyOther": "Vous ne pouvez pas modifier cette appréciation.",
+          "roles": {
+            "class_teacher": "Appréciation du professeur principal",
+            "form_tutor": "Appréciation du tuteur",
+            "head_teacher": "Appréciation du directeur",
+            "principal": "Appréciation du proviseur",
+            "boarding_house": "Appréciation de l'internat"
+          }
+        },
+        "attendance": {
+          "label": "Assiduité (présences)",
+          "outOf": "sur {total}",
+          "absent": "Absences : {absent}",
+          "basis": "{days} jours d'ouverture × {sessions, plural, one {# séance} other {# séances}} par jour (correspondance des présences 1:{sessions})",
+          "invalid": "Saisissez un nombre entier de 0 à {total}.",
+          "readOnly": "Saisie par le professeur principal."
+        },
+        "traits": {
+          "psychomotor": "Compétences psychomotrices",
+          "affective": "Domaine affectif",
+          "comingSoon": "La notation de ces traits élève par élève arrive à la prochaine étape.",
+          "close": "Fermer"
+        },
+        "errors": {
+          "invalidCount": "{count, plural, one {# saisie doit} other {# saisies doivent}} être corrigée(s) avant d'enregistrer."
+        },
+        "saveBar": {
+          "unsaved": "{count, plural, one {# modification non enregistrée} other {# modifications non enregistrées}}",
+          "allSaved": "Toutes les modifications sont enregistrées",
+          "discard": "Annuler les modifications",
+          "save": "Enregistrer les modifications"
+        },
+        "toast": {
+          "saved": "Bulletin enregistré"
         }
       }
     }
