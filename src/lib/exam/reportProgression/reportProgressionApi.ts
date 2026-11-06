@@ -1,7 +1,7 @@
 import type { CrudResult } from "@/lib/setup/crudTypes";
 import { examSend } from "@/lib/exam/examApi";
 import type { AssessmentMode } from "@/lib/setup/assessmentConfiguration/assessmentStructure";
-import type { CommentRole, ProgressionSection, ProgressionSectionKey } from "@/lib/exam/reportProgression/studentEntryApi";
+import type { CommentGradeRole, CommentRole, ProgressionSection, ProgressionSectionKey } from "@/lib/exam/reportProgression/studentEntryApi";
 
 /**
  * REPORT PROGRESSION — Stage 1: the publish surface (Academics › Exam ›
@@ -23,6 +23,8 @@ import type { CommentRole, ProgressionSection, ProgressionSectionKey } from "@/l
  *                  studentEntryApi.ts: the template's own plus, General,
  *                  the heads' comments on both points); filled = non-empty
  *                  term_remark for the point.
+ *                  British: each graded comment (Form Tutor / Boarding
+ *                  House) also needs its grade — one more slot each.
  *     attendance — only where the template has attendance; filled =
  *                  present recorded.
  *     traits     — General Exam point only: each Psychomotor and
@@ -90,6 +92,8 @@ export type MissingItem =
   | { kind: "subject"; label: string }
   | { kind: "psychomotor" | "affective"; count: number }
   | { kind: "remark"; role: CommentRole }
+  /** British: a graded comment's grade (Form Tutor / Boarding House) not given. */
+  | { kind: "grade"; role: CommentGradeRole }
   | { kind: "attendance" };
 
 export type ProgressionActor = { staff_id: string | null; name: string | null };

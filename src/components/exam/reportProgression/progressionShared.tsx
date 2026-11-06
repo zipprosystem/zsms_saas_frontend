@@ -80,6 +80,7 @@ export function useMissingLabel(): (item: MissingItem) => string {
     if (item.kind === "subject") return t("subject", { subject: item.label });
     if (item.kind === "psychomotor" || item.kind === "affective") return t(item.kind, { count: item.count });
     if (item.kind === "remark") return t(`remark.${item.role}`);
+    if (item.kind === "grade") return t(`grade.${item.role}`);
     return t("attendance");
   };
 }
@@ -115,5 +116,27 @@ export function StudentAvatar({ name, photoUrl, size = "md" }: { name: string; p
     <span aria-hidden className={`flex ${box} shrink-0 items-center justify-center rounded-full bg-brand-tint font-semibold text-accent`}>
       {initials}
     </span>
+  );
+}
+
+/**
+ * Phase 5 hook on a teacher comment: "Generate with AI" will draft the
+ * comment (saved as term_remark.source = ai_draft) for the teacher to edit.
+ * Disabled until then, in the same visual language as the broadsheets'
+ * "Analyze with AI".
+ */
+export function GenerateWithAiButton() {
+  const t = useTranslations("exam.reportProgression.entry.ai");
+  return (
+    <button
+      type="button"
+      disabled
+      title={t("soon")}
+      className="inline-flex h-8 cursor-not-allowed items-center gap-1.5 rounded-md border border-dashed border-accent/60 px-2.5 text-xs font-medium text-accent"
+    >
+      <span aria-hidden>✦</span>
+      {t("generate")}
+      <span className="rounded-full bg-brand-tint px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent">{t("soon")}</span>
+    </button>
   );
 }

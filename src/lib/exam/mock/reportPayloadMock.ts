@@ -9,8 +9,8 @@ import type {
   ReportSubject,
   ReportVariant,
 } from "@/lib/exam/report/reportPayload";
-import { attendanceOf, classTemplate, readRemarks } from "@/lib/exam/mock/reportFieldsMock";
-import type { Attendance } from "@/lib/exam/reportProgression/studentEntryApi";
+import { attendanceOf, classTemplate, commentGradeKey, readRemarks } from "@/lib/exam/mock/reportFieldsMock";
+import type { Attendance, CommentGradeRole } from "@/lib/exam/reportProgression/studentEntryApi";
 import {
   SEED_CLASS_TEACHERS,
   SEED_CLASS_SCHOOL_TYPE,
@@ -437,6 +437,16 @@ function buildPayload(
     if (!level || level.hide_in_report) return { skill: label, rating: null, descriptor: null };
     return { skill: label, rating: level.value, descriptor: level.name };
   };
+  // British Grade table (§7.26): each point's Form Tutor / Boarding House grade (Report Progression), later points blank.
+  const gradesFor = (role: CommentGradeRole) =>
+    britishPoints.map((exam, index) =>
+      index > currentIndex ? null : britishRatingShown(storedTraits(exam.term_id, row.student.id)?.ratings[commentGradeKey(role, exam.category)]),
+    );
+  const commentGrades: ReportPayload["traits"]["comment_grades"] = general ? null : { form_tutor: gradesFor("form_tutor"), boarding_house: gradesFor("boarding_house") };
+  const boardingAt = (index: number, comment: string | null): ReportPayload["traits"]["boarding"] => {
+    const rating = commentGrades && index >= 0 ? commentGrades.boarding_house[index] : null;
+    return rating || comment ? { rating, comment } : null;
+  };
   const [startDate, endDate] = TERM_DATES[termId] ?? [null, null];
   const profile = seedStudentProfile(row.student.id);
 
@@ -505,8 +515,9 @@ function buildPayload(
       affective: traitLists.affective.map(traitOf),
       engagement: null,
       learning_behaviour: null,
-      boarding: null,
+      boarding: general ? null : boardingAt(currentIndex, remarks.boarding_house || null),
       form_tutor_comment: null,
+      comment_grades: commentGrades,
       // General: the trait scale. British: the Engagement / Learning Behaviour / Boarding level key.
       rating_key: ratingKey(progressGrades(general ? "general" : "british")),
     },

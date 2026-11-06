@@ -15,6 +15,7 @@ import { NAV_PERMISSIONS } from "@/lib/auth/navPermissions";
 import { assessmentStructuresService } from "@/lib/setup/assessmentConfiguration/assessmentStructuresApi";
 import { getStudentMarks, saveStudentMarks, studentMarksQueryKey } from "@/lib/exam/examApi";
 import { resultsQueryKeys } from "@/lib/exam/resultsApi";
+import { reportQueryKeys } from "@/lib/exam/report/reportPayload";
 import {
   getClassProgression,
   isProgressionPoint,
@@ -22,31 +23,41 @@ import {
   reportProgressionQueryKeys,
   type ProgressionPoint,
   type PublishStatusFilter,
+  variantOfPoint,
 } from "@/lib/exam/reportProgression/reportProgressionApi";
 import {
   getStudentEntry,
+  COMMENT_GRADE_ROLES,
+  isCommentGradeRole,
   REMARK_KEYS,
   saveReportFields,
   studentEntryQueryKey,
   type Attendance,
+  type CommentGradeRole,
+  type CommentGrades,
   type Remarks,
   type ReportField,
   type StudentEntry,
 } from "@/lib/exam/reportProgression/studentEntryApi";
 import { examOptionLabel, failureMessage, InfoItem, MockActingAsPicker, Notice, useMockActingAs, useUnsavedGuard } from "@/components/exam/examEntryShared";
 import { reportProgressionClassHref } from "@/components/exam/examTabsConfig";
-import { PointSelect, ProgressionBar, StudentAvatar, useCanSee, useMissingLabel } from "@/components/exam/reportProgression/progressionShared";
+import { GenerateWithAiButton, PointSelect, ProgressionBar, StudentAvatar, useCanSee, useMissingLabel } from "@/components/exam/reportProgression/progressionShared";
 import { useStudentMarksEntry } from "@/components/exam/reportProgression/useStudentMarksEntry";
 import { StudentTraitsModal } from "@/components/exam/reportProgression/StudentTraitsModal";
+import { StudentReportViewer } from "@/components/exam/results/StudentReportViewer";
+import { AnalyzeWithAiButton } from "@/components/exam/broadsheet/broadsheetShared";
+import { ConfirmDialog } from "@/components/setup/ConfirmDialog";
 
 const REMARK_MAX = 500;
 
-type FieldsDraft = { remarks: Remarks; present: string };
+/** grades: British comment grade per role, "" = not graded. */
+type FieldsDraft = { remarks: Remarks; present: string; grades: Record<CommentGradeRole, string> };
 
 function fieldsBaseline(entry: StudentEntry | null): FieldsDraft {
   const remarks = Object.fromEntries(REMARK_KEYS.map((key) => [key, entry?.remarks?.[key] ?? ""])) as Remarks;
   const present = entry?.attendance?.present;
-  return { remarks, present: typeof present === "number" ? String(present) : "" };
+  const grades = Object.fromEntries(COMMENT_GRADE_ROLES.map((role) => [role, entry?.comment_grades?.values[role] ?? ""])) as Record<CommentGradeRole, string>;
+  return { remarks, present: typeof present === "number" ? String(present) : "", grades };
 }
 
 /** "" = not recorded; otherwise a whole number 0..total. NaN = invalid. */
@@ -139,13 +150,21 @@ export function StudentEntryScreen({ classId, studentId }: { classId: string; st
   const presentInvalid = Number.isNaN(presentValue);
   const changedRemarks = commentFields.filter((field) => field.editable && fields.remarks[field.key].trim() !== baseline.remarks[field.key].trim());
   const presentChanged = !!attendanceField?.editable && fields.present.trim() !== baseline.present.trim();
-  const fieldsDirty = changedRemarks.length + (presentChanged ? 1 : 0);
+  // British: the graded comments' grades (Form Tutor / Boarding House).
+  const changedGrades = commentFields
+    .filter((field) => field.graded && field.editable && isCommentGradeRole(field.role))
+    .map((field) => field.role as CommentGradeRole)
+    .filter((role) => fields.grades[role] !== baseline.grades[role]);
+  const fieldsDirty = changedRemarks.length + (presentChanged ? 1 : 0) + changedGrades.length;
   const dirtyCount = marks.dirtyCount + fieldsDirty;
   const invalidCount = marks.invalidCount + (presentChanged && presentInvalid ? 1 : 0);
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [traitsDialog, setTraitsDialog] = useState<"psychomotor" | "affective" | null>(null);
+  /** View Report: the overlay, and the "save first?" prompt when there are unsaved changes. */
+  const [reportOpen, setReportOpen] = useState(false);
+  const [saveBeforeReport, setSaveBeforeReport] = useState(false);
   const { guarded, dialog } = useUnsavedGuard(dirtyCount);
   useEffect(() => setSaveError(null), [studentId, termId, point, examId, actingAs]);
 
@@ -165,14 +184,17 @@ export function StudentEntryScreen({ classId, studentId }: { classId: string; st
   const backHref = `${reportProgressionClassHref(classId)}?${listQuery}`;
   const studentPath = (id: string) => `${reportProgressionClassHref(classId)}/students/${encodeURIComponent(id)}`;
 
-  const handleSave = async () => {
-    if (!entry || dirtyCount === 0 || invalidCount > 0) return;
+  /** true = everything saved (or nothing to save). */
+  const handleSave = async (): Promise<boolean> => {
+    if (!entry || dirtyCount === 0) return true;
+    if (invalidCount > 0) return false;
     setSaving(true);
     setSaveError(null);
     const fail = (message: string) => {
       setSaving(false);
       setSaveError(message);
       showToast(message, "error");
+      return false;
     };
     if (marks.dirtyCount > 0 && sheet) {
       const result = await saveStudentMarks(sheet.exam.id, studentId, { class_arm_id: sheet.class_arm_id, rows: marks.saveRows() });
@@ -186,6 +208,7 @@ export function StudentEntryScreen({ classId, studentId }: { classId: string; st
         point,
         ...(changedRemarks.length > 0 ? { remarks } : {}),
         ...(presentChanged ? { attendance_present: presentValue } : {}),
+        ...(changedGrades.length > 0 ? { comment_grades: Object.fromEntries(changedGrades.map((role) => [role, fields.grades[role] || null])) } : {}),
       });
       if (!result.ok) return fail(failureMessage(result, t) ?? t("setup.crudScreen.errors.saveFailed"));
     }
@@ -195,6 +218,18 @@ export function StudentEntryScreen({ classId, studentId }: { classId: string; st
     void queryClient.invalidateQueries({ queryKey: ["exam", "marks"] });
     void queryClient.invalidateQueries({ queryKey: resultsQueryKeys.all });
     void queryClient.invalidateQueries({ queryKey: reportProgressionQueryKeys.all });
+    void queryClient.invalidateQueries({ queryKey: reportQueryKeys.all });
+    return true;
+  };
+
+  /** View Report reflects what's saved: with unsaved changes, offer to save them first. */
+  const openReport = () => {
+    if (dirtyCount > 0) setSaveBeforeReport(true);
+    else setReportOpen(true);
+  };
+  const saveThenOpenReport = async () => {
+    setSaveBeforeReport(false);
+    if (await handleSave()) setReportOpen(true);
   };
 
   if (!canView) return <Notice tone="warning">{t("exam.reportProgression.noAccess")}</Notice>;
@@ -207,6 +242,18 @@ export function StudentEntryScreen({ classId, studentId }: { classId: string; st
     >
       <span aria-hidden>←</span> {k("back")}
     </button>
+  );
+  /** Header: Back to List · View Report (this student, this point — scoped like the class view's) · Analyze with AI (Phase 5). */
+  const header = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {back}
+      <div className="flex flex-wrap gap-2">
+        <AnalyzeWithAiButton />
+        <Button type="button" variant="secondary" onClick={openReport} disabled={saving} className="h-10 px-4 text-sm">
+          {k("viewReport.action")}
+        </Button>
+      </div>
+    </div>
   );
 
   if (entryQuery.isPending) return <div className="flex flex-col gap-5">{back}<Notice>{t("exam.marks.loading")}</Notice></div>;
@@ -243,7 +290,7 @@ export function StudentEntryScreen({ classId, studentId }: { classId: string; st
 
   return (
     <div className="flex min-w-0 flex-col gap-5">
-      {back}
+      {header}
 
       <MockActingAsPicker value={actingAs} onChange={(id) => guarded(() => setActingAs(id))} />
 
@@ -379,11 +426,21 @@ export function StudentEntryScreen({ classId, studentId }: { classId: string; st
             {attendanceBox && commentFields.length === 0 ? attendanceBox : null}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {commentFields.map((field) => {
+                const gradeRole = field.graded && entry.comment_grades && isCommentGradeRole(field.role) ? field.role : null;
                 const comment = (
                   <CommentField
                     field={field}
                     value={fields.remarks[field.key]}
                     onChange={(value) => setFields((current) => ({ ...current, remarks: { ...current.remarks, [field.key]: value } }))}
+                    grade={
+                      gradeRole && entry.comment_grades
+                        ? {
+                            scale: entry.comment_grades.scale,
+                            value: fields.grades[gradeRole],
+                            onChange: (value) => setFields((current) => ({ ...current, grades: { ...current.grades, [gradeRole]: value } })),
+                          }
+                        : null
+                    }
                   />
                 );
                 if (field.key !== attendancePairKey || !attendanceBox) return <div key={field.key} className="min-w-0">{comment}</div>;
@@ -422,6 +479,24 @@ export function StudentEntryScreen({ classId, studentId }: { classId: string; st
         </div>
       ) : null}
 
+      {/* View Report: the same viewer as the class view, this student at this point; closing returns here with the draft intact. */}
+      <StudentReportViewer
+        student={{ id: entry.student.id, name: entry.student.name }}
+        termId={entry.term_id}
+        isOpen={reportOpen}
+        defaultVariant={variantOfPoint(point)}
+        onClose={() => setReportOpen(false)}
+      />
+      <ConfirmDialog
+        isOpen={saveBeforeReport}
+        title={k("viewReport.saveTitle")}
+        message={invalidCount > 0 ? k("viewReport.invalid", { count: invalidCount }) : k("viewReport.saveMessage", { count: dirtyCount })}
+        confirmLabel={invalidCount > 0 ? t("common.close") : k("viewReport.saveAndView")}
+        isConfirming={saving}
+        onConfirm={() => (invalidCount > 0 ? setSaveBeforeReport(false) : void saveThenOpenReport())}
+        onCancel={() => setSaveBeforeReport(false)}
+      />
+
       {/* Stage 3: rate the student's Psychomotor Skills / Affective Domain (General, Exam point). */}
       <StudentTraitsModal kind={traitsDialog} studentId={studentId} termId={entry.term_id} onClose={() => setTraitsDialog(null)} />
       {dialog}
@@ -429,12 +504,27 @@ export function StudentEntryScreen({ classId, studentId }: { classId: string; st
   );
 }
 
-function CommentField({ field, value, onChange }: { field: Extract<ReportField, { kind: "comment" }>; value: string; onChange: (value: string) => void }) {
+/**
+ * One report comment. British Form Tutor / Boarding House: its grade (the
+ * British Progress Grade scale) sits in front of it, as the report prints it.
+ * "Generate with AI" is the Phase 5 hook (drafts the comment as
+ * term_remark.source = ai_draft) — disabled until then.
+ */
+function CommentField({
+  field,
+  value,
+  onChange,
+  grade,
+}: {
+  field: Extract<ReportField, { kind: "comment" }>;
+  value: string;
+  onChange: (value: string) => void;
+  grade: { scale: CommentGrades["scale"]; value: string; onChange: (value: string) => void } | null;
+}) {
   const t = useTranslations("exam.reportProgression.entry.fields");
   const id = `report-comment-${field.key}`;
-  return (
-    <div className="flex flex-col gap-1">
-      <TextareaField
+  const textarea = (
+    <TextareaField
         id={id}
         label={t(`roles.${field.role}`)}
         value={value}
@@ -445,9 +535,38 @@ function CommentField({ field, value, onChange }: { field: Extract<ReportField, 
         placeholder={field.editable ? t("placeholder") : t("empty")}
         onChange={(event) => onChange(event.target.value)}
       />
-      <span className="text-xs text-text-muted">
-        {field.editable ? t("count", { count: value.length, max: REMARK_MAX }) : t(field.key === "class_teacher" ? "readOnlyClassTeacher" : "readOnlyOther")}
-      </span>
+  );
+  return (
+    <div className="flex flex-col gap-1">
+      {grade ? (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+          <div className="w-full shrink-0 sm:w-44">
+            <SelectField
+              id={`${id}-grade`}
+              label={t("grade.label")}
+              value={grade.value}
+              disabled={!field.editable}
+              onChange={(event) => grade.onChange(event.target.value)}
+            >
+              <option value="">{t("grade.none")}</option>
+              {grade.scale.map((level) => (
+                <option key={level.id} value={level.id}>
+                  {t("grade.option", { value: level.value, label: level.label })}
+                </option>
+              ))}
+            </SelectField>
+          </div>
+          <div className="min-w-0 flex-1">{textarea}</div>
+        </div>
+      ) : (
+        textarea
+      )}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-xs text-text-muted">
+          {field.editable ? t("count", { count: value.length, max: REMARK_MAX }) : t(field.key === "class_teacher" ? "readOnlyClassTeacher" : "readOnlyOther")}
+        </span>
+        {field.editable ? <GenerateWithAiButton /> : null}
+      </div>
     </div>
   );
 }

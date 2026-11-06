@@ -3694,6 +3694,7 @@
           "tutorComment": "Commentaire du tuteur",
           "boardingComment": "Commentaire de l'internat",
           "boardingGrade": "Note d'internat",
+          "tutorGrade": "Note du tuteur",
           "sigHeadTeacher": "Directeur d'école",
           "sigPrincipal": "Proviseur",
           "sigClassTeacher": "Professeur principal",
@@ -4036,6 +4037,7 @@
         "subject": "{subject}",
         "psychomotor": "Psychomotricité : {count} non noté(s)",
         "affective": "Affectif : {count} non noté(s)",
+        "grade": { "form_tutor": "Note du tuteur", "boarding_house": "Note d'internat" },
         "remark": {
           "class_teacher": "Appréciation du professeur principal",
           "form_tutor": "Appréciation du tuteur",
@@ -4111,6 +4113,14 @@
         }
       },
       "entry": {
+        "viewReport": {
+          "action": "Voir le bulletin",
+          "saveTitle": "Enregistrer avant d'afficher ?",
+          "saveMessage": "Le bulletin affiche ce qui est enregistré. Enregistrez d'abord {count, plural, one {votre # modification} other {vos # modifications}}, puis ouvrez le bulletin.",
+          "invalid": "{count, plural, one {# saisie doit} other {# saisies doivent}} être corrigée(s) avant d'enregistrer. Corrigez-les, puis affichez le bulletin.",
+          "saveAndView": "Enregistrer et voir le bulletin"
+        },
+        "ai": { "generate": "Générer avec l'IA", "soon": "Bientôt disponible" },
         "back": "Retour à la progression de la classe",
         "classArm": "{class} {arm}",
         "nav": {
@@ -4158,6 +4168,7 @@
           "count": "{count}/{max}",
           "readOnlyClassTeacher": "Seul le professeur principal de l'élève (ou un administrateur) peut modifier cette appréciation.",
           "readOnlyOther": "Vous ne pouvez pas modifier cette appréciation.",
+          "grade": { "label": "Note", "none": "Non noté", "option": "{value} — {label}" },
           "roles": {
             "class_teacher": "Appréciation du professeur principal",
             "form_tutor": "Appréciation du tuteur",

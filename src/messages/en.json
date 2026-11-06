@@ -3686,6 +3686,7 @@
           "tutorComment": "Tutor Comment",
           "boardingComment": "Boarding House Comment",
           "boardingGrade": "Boarding Grade",
+          "tutorGrade": "Tutor Grade",
           "sigHeadTeacher": "Head Teacher",
           "sigPrincipal": "Principal",
           "sigClassTeacher": "Class Teacher",
@@ -4028,6 +4029,7 @@
         "subject": "{subject}",
         "psychomotor": "Psychomotor: {count} unrated",
         "affective": "Affective: {count} unrated",
+        "grade": { "form_tutor": "Form tutor's grade", "boarding_house": "Boarding house grade" },
         "remark": {
           "class_teacher": "Class teacher's comment",
           "form_tutor": "Form tutor's comment",
@@ -4103,6 +4105,14 @@
         }
       },
       "entry": {
+        "viewReport": {
+          "action": "View Report",
+          "saveTitle": "Save before viewing?",
+          "saveMessage": "The report shows what's saved. Save your {count, plural, one {# change} other {# changes}} first, then open the report.",
+          "invalid": "{count, plural, one {# entry needs} other {# entries need}} fixing before you can save. Fix them, then view the report.",
+          "saveAndView": "Save & view report"
+        },
+        "ai": { "generate": "Generate with AI", "soon": "Coming soon" },
         "back": "Back to Class Progression",
         "classArm": "{class} {arm}",
         "nav": {
@@ -4150,6 +4160,7 @@
           "count": "{count}/{max}",
           "readOnlyClassTeacher": "Only the student's class teacher (or an admin) can edit this comment.",
           "readOnlyOther": "You can't edit this comment.",
+          "grade": { "label": "Grade", "none": "Not graded", "option": "{value} — {label}" },
           "roles": {
             "class_teacher": "Class Teacher's Comment",
             "form_tutor": "Form Tutor's Comment",

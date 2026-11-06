@@ -192,6 +192,14 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *                 learning_behaviour: { rating, descriptor? } | null,
  *                 boarding: { rating, comment? } | null,
  *                 form_tutor_comment,
+ *                 comment_grades: { form_tutor[], boarding_house[] } | null,
+ *                   (addition) British Grade table (§7.26): per
+ *                   meta.points entry, the Form Tutor / Boarding House
+ *                   comment's British Progress Grade value (Report
+ *                   Progression student-wise entry, per point); null =
+ *                   not graded / hidden / later point. General: null.
+ *                   boarding.rating = the boarding grade at the report
+ *                   point (same source).
  *                 rating_key: [{ rating, descriptor, descriptors }] },
  *                   (addition) the Progress Grades level key for the
  *                   template's legend — General classes: the General
@@ -368,6 +376,14 @@ export type ReportPayload = {
     learning_behaviour: ReportRating | null;
     boarding: { rating: string | null; comment?: string | null } | null;
     form_tutor_comment: string | null;
+    /**
+     * (addition) British: the §7.26 Grade table — each comment's grade per
+     * meta.points entry (same order): the British Progress Grade value, null
+     * = not graded / hidden in reports / a point after the report's. The Form
+     * Tutor's sits on Full (B) points, the Boarding House's on Progress (A)
+     * points. null on General reports.
+     */
+    comment_grades: { form_tutor: Array<string | null>; boarding_house: Array<string | null> } | null;
     rating_key: Array<{ rating: string; descriptor: string; descriptors: Partial<Record<ProgressDomain, string>> }>;
   };
   remarks: {

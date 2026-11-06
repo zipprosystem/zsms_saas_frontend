@@ -15,8 +15,8 @@ import {
   type ProgressionStudent,
   type PublishStatusFilter,
 } from "@/lib/exam/reportProgression/reportProgressionApi";
-import type { ProgressionSection, RemarkKey, ReportField, StudentEntry } from "@/lib/exam/reportProgression/studentEntryApi";
-import { REMARK_KEYS } from "@/lib/exam/reportProgression/studentEntryApi";
+import type { CommentGradeRole, CommentGrades, ProgressionSection, RemarkKey, ReportField, StudentEntry } from "@/lib/exam/reportProgression/studentEntryApi";
+import { isCommentGradeRole, REMARK_KEYS } from "@/lib/exam/reportProgression/studentEntryApi";
 import {
   enrolledForTerm,
   SEED_CLASS_SCHOOL_TYPE,
@@ -39,6 +39,7 @@ import {
   attendanceOf,
   readAttendance,
   canWriteField,
+  commentGradeKey,
   readRemarks,
   REMARK_MAX,
   reportFieldDecls,
@@ -166,6 +167,12 @@ function completeness(
         comments.required += 1;
         if (remarks[field.key].trim()) comments.filled += 1;
         else missing.push({ kind: "remark", role: field.role });
+        // British: the Form Tutor / Boarding House comment also needs its grade.
+        if (computed.mode === "grade_based" && isCommentGradeRole(field.role)) {
+          comments.required += 1;
+          if (commentGradeOf(termId, point, studentId, field.role)) comments.filled += 1;
+          else missing.push({ kind: "grade", role: field.role });
+        }
       }
     }
     sections.push(comments, attendance);
@@ -469,9 +476,20 @@ async function lookupStudent(studentId: string, termParam: string, pointParam: s
   return { run: result.run, armRun, scoped, rows: result.rows, termId, yearId, point: pointParam };
 }
 
-function reportFieldOf(armId: string, decl: FieldDecl): ReportField {
+/** British: the Form Tutor / Boarding House comments carry a grade. */
+function isGraded(mode: Computed["mode"], decl: FieldDecl): boolean {
+  return mode === "grade_based" && decl.kind === "comment" && isCommentGradeRole(decl.role);
+}
+
+/** The saved grade (a live British Progress Grade id) for the comment at the point; null = not graded. */
+function commentGradeOf(termId: string, point: ProgressionPoint, studentId: string, role: CommentGradeRole): string | null {
+  const id = storedTraits(termId, studentId)?.ratings[commentGradeKey(role, point)] ?? null;
+  return progressGradeById(id)?.mode === "british" ? id : null;
+}
+
+function reportFieldOf(armId: string, decl: FieldDecl, mode: Computed["mode"]): ReportField {
   const editable = canWriteField(armId, decl);
-  return decl.kind === "attendance" ? { kind: "attendance", editable } : { kind: "comment", key: decl.key, role: decl.role, editable };
+  return decl.kind === "attendance" ? { kind: "attendance", editable } : { kind: "comment", key: decl.key, role: decl.role, editable, graded: isGraded(mode, decl) };
 }
 
 async function studentEntry(found: StudentLookup, status: PublishStatusFilter): Promise<StudentEntry> {
@@ -512,12 +530,25 @@ async function studentEntry(found: StudentLookup, status: PublishStatusFilter): 
     exams,
     can_manage: canManage,
     visible_subject_ids: scoped.visible ? Array.from(scoped.visible) : null,
-    report_fields: fields.map((decl) => reportFieldOf(armRun.armId, decl)),
+    report_fields: fields.map((decl) => reportFieldOf(armRun.armId, decl, armRun.computed.mode)),
     remarks: canManage ? remarks : null,
     attendance: canManage && fields.some((decl) => decl.kind === "attendance") ? attendance : null,
+    comment_grades: commentGradesOf(found, fields),
     traits_apply: canManage && armRun.computed.mode === "component_based" && point === "exam",
     progression: { percent: progress.percent, filled: progress.filled, required: progress.required, sections: progress.sections, missing: progress.missing },
     navigation: { index, count: list.length, previous: ref(list[index - 1]), next: ref(list[index + 1]) },
+  };
+}
+
+/** The graded comments' scale + this point's saved grades (British, full-report caller); null = none graded here. */
+function commentGradesOf(found: StudentLookup, fields: FieldDecl[]): CommentGrades | null {
+  const roles = fields.filter((decl) => isGraded(found.armRun.computed.mode, decl)).map((decl) => (decl.kind === "comment" ? decl.role : null));
+  const graded = roles.filter((role): role is CommentGradeRole => !!role && isCommentGradeRole(role));
+  if (graded.length === 0) return null;
+  const studentId = found.scoped.row.student.id;
+  return {
+    scale: progressGrades("british").map((level) => ({ id: level.id, value: String(level.value), label: level.name })),
+    values: Object.fromEntries(graded.map((role) => [role, commentGradeOf(found.termId, found.point, studentId, role)])),
   };
 }
 
@@ -561,7 +592,19 @@ async function putReportFields(studentId: string, payload: unknown): Promise<Wir
     present = value as number | null;
   }
 
+  // British comment grades: only on a graded comment of this report, writable by whoever may write the comment.
+  const grades: Record<string, string | null> = {};
+  const britishLevels = new Set(progressGrades("british").map((level) => level.id));
+  for (const [role, value] of Object.entries(record(body.comment_grades))) {
+    const decl = run.fields.find((field) => field.kind === "comment" && field.role === role);
+    if (!decl || !isCommentGradeRole(role) || !isGraded(armRun.computed.mode, decl)) return fail(422, "VALIDATION_ERROR", `comment_grades.${role}: not a graded comment on this report`);
+    if (!canWriteField(armRun.armId, decl)) return fail(403, "FORBIDDEN", `comment_grades.${role}: you can't grade this comment`);
+    if (value !== null && !(typeof value === "string" && britishLevels.has(value))) return fail(422, "VALIDATION_ERROR", `comment_grades.${role}: not a level of the British progress grades`);
+    grades[commentGradeKey(role, point)] = value as string | null;
+  }
+
   if (Object.keys(remarks).length > 0) writeRemarks(found.termId, point, studentId, remarks);
+  if (Object.keys(grades).length > 0) writeTraitRatings(found.termId, studentId, grades);
   if (present !== undefined) writeAttendance(found.termId, studentId, present);
   const refreshed = await lookupStudent(studentId, found.termId, point);
   if ("status" in refreshed) return refreshed;

@@ -14,7 +14,7 @@ import { getReportPayload, REPORT_VARIANTS, reportQueryKeys, type ReportVariant 
 import { buildReportSrcDoc, declaredPages, HEIGHT_MESSAGE, PRINT_MESSAGE, reportFileName } from "@/lib/exam/report/reportSrcDoc";
 
 /** Template text the viewer translates (exam.viewResults.report.templateLabels.*), passed in as window.__ZSMS_LABELS__. */
-const TEMPLATE_LABEL_KEYS = ["valueAdded", "vaHeader", "vaAbove", "vaBelow", "coverTerm", "schoolLogo", "gradeBookShort", "tutorComment", "boardingComment", "boardingGrade", "sigHeadTeacher", "sigPrincipal", "sigClassTeacher", "sigDate", "sigImageAlt"] as const;
+const TEMPLATE_LABEL_KEYS = ["valueAdded", "vaHeader", "vaAbove", "vaBelow", "coverTerm", "schoolLogo", "gradeBookShort", "tutorComment", "boardingComment", "boardingGrade", "tutorGrade", "sigHeadTeacher", "sigPrincipal", "sigClassTeacher", "sigDate", "sigImageAlt"] as const;
 import { resultTemplatesQueryKey, resultTemplatesService } from "@/lib/setup/assessmentConfiguration/resultTemplatesApi";
 import { failureMessage, Notice } from "@/components/exam/examEntryShared";
 
