@@ -12,10 +12,8 @@ import type {
 import { attendanceOf, classTemplate, readRemarks } from "@/lib/exam/mock/reportFieldsMock";
 import type { Attendance } from "@/lib/exam/reportProgression/studentEntryApi";
 import {
-  SEED_AFFECTIVE,
   SEED_CLASS_TEACHERS,
   SEED_CLASS_SCHOOL_TYPE,
-  SEED_PSYCHOMOTOR,
   SEED_SUBJECT_SETS,
   SEED_TEACHERS,
   SEED_TERM_DATES,
@@ -33,7 +31,7 @@ import { loadExamSettings } from "@/lib/exam/mock/examSettingsMock";
 import { levelWeight } from "@/lib/exam/results/resultsEngine";
 import { classAttainmentBands } from "@/lib/exam/mock/gradesMock";
 import { progressGradeById, progressGrades } from "@/lib/exam/mock/progressGradesMock";
-import { reportTraitList } from "@/lib/exam/mock/traitMastersMock";
+import { classTraitLists } from "@/lib/exam/mock/traitMastersMock";
 import { loadMockAssignments, mockReportLogoUrl } from "@/lib/setup/academicStructure/schoolTypeAssignments";
 import { getSchoolSettings } from "@/lib/settings/settingsApi";
 import { pointGradeBook } from "@/lib/exam/mock/gradeBookMock";
@@ -560,10 +558,8 @@ export async function getStudentReport(studentId: string, query: URLSearchParams
   if (!row) return fail(404, "NOT_ENROLLED_FOR_TERM", "This student wasn't enrolled in their class for that term.");
   const earlier = computed.mode === "component_based" ? await earlierRuns(armId, termId) : [];
   const schoolType = SEED_CLASS_SCHOOL_TYPE[computed.classId] ?? null;
-  const traitLists: TraitLists = {
-    psychomotor: (await reportTraitList("psychomotor", schoolType)) ?? SEED_PSYCHOMOTOR,
-    affective: (await reportTraitList("affective", schoolType)) ?? SEED_AFFECTIVE,
-  };
+  // The class's School Type lists (Setup › Psychomotor Skills / Affective Domain), in their sort order.
+  const traitLists: TraitLists = await classTraitLists(computed.classId);
     return ok(buildPayload(computed, row, armId, termId, await selectedTemplate(computed.classId, computed.stage), earlier, traitLists, await schoolBlock(schoolType), signatures(schoolType, armId), await attendanceOf(termId, row.student.id)));
 }
 

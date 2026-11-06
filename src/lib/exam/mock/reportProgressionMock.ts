@@ -19,20 +19,21 @@ import type { ProgressionSection, RemarkKey, ReportField, StudentEntry } from "@
 import { REMARK_KEYS } from "@/lib/exam/reportProgression/studentEntryApi";
 import {
   enrolledForTerm,
-  SEED_AFFECTIVE,
   SEED_CLASS_SCHOOL_TYPE,
   SEED_CLASSES,
-  SEED_PSYCHOMOTOR,
   SEED_YEARS,
   seedStudentProfile,
   seedTerms,
   yearOfTerm,
 } from "@/lib/exam/mock/examMockSeeds";
 import { armInScope, armRole, classOfArm, loadGradeMarks, taughtSubjects, teachesStudent, loadMarks, readStore, writeStore } from "@/lib/exam/mock/examMockStore";
-import { armOfStudent, compute, storedTraits, type Computed, type ComputedRow } from "@/lib/exam/mock/examResultsMock";
+import { armOfStudent, compute, storedTraits, writeTraitRatings, type Computed, type ComputedRow } from "@/lib/exam/mock/examResultsMock";
+import { classTraitLists, type TraitList } from "@/lib/exam/mock/traitMastersMock";
+import { TRAIT_MASTER_KINDS, type TraitMasterKind } from "@/lib/setup/assessmentConfiguration/traitMastersApi";
+import type { StudentTraitEntry } from "@/lib/exam/reportProgression/studentTraitsApi";
 import { examIndex } from "@/lib/exam/mock/examListMock";
 import { getMockActingAs, MOCK_ADMIN, mockActors } from "@/lib/exam/mock/mockActingAs";
-import { progressGradeById } from "@/lib/exam/mock/progressGradesMock";
+import { progressGradeById, progressGrades } from "@/lib/exam/mock/progressGradesMock";
 import { devList } from "@/lib/setup/academicStructure/schoolTypesDevMock";
 import {
   attendanceOf,
@@ -119,8 +120,8 @@ function stageOf(point: ProgressionPoint): "progress" | "full" {
 
 type Completeness = { filled: number; required: number; percent: number; sections: ProgressionSection[]; missing: MissingItem[] };
 
-const PSYCHOMOTOR_KEYS = SEED_PSYCHOMOTOR.map((item) => item.key);
-const AFFECTIVE_KEYS = SEED_AFFECTIVE.map((item) => item.key);
+/** What the class's report asks for besides the scores: the template's report-only fields at the point + its School Type trait lists. */
+type ReportSpec = { fields: FieldDecl[]; traits: Record<TraitMasterKind, TraitList> };
 
 function section(key: ProgressionSection["key"]): ProgressionSection {
   return { key, weight: PROGRESSION_SECTION_WEIGHTS[key], filled: 0, required: 0 };
@@ -137,7 +138,7 @@ function completeness(
   termId: string,
   point: ProgressionPoint,
   visible: Set<string> | null,
-  fields: FieldDecl[],
+  { fields, traits: traitLists }: ReportSpec,
 ): Completeness {
   const missing: MissingItem[] = [];
   const scores = section("scores");
@@ -172,7 +173,9 @@ function completeness(
     if (computed.mode === "component_based" && point === "exam") {
       const traits = section("traits");
       const stored = storedTraits(termId, studentId);
-      for (const [kind, keys] of [["psychomotor", PSYCHOMOTOR_KEYS], ["affective", AFFECTIVE_KEYS]] as const) {
+      // Each item on the class's School Type list (Setup › Psychomotor Skills / Affective Domain), rated with a live level.
+      for (const kind of TRAIT_MASTER_KINDS) {
+        const keys = traitLists[kind].map((item) => item.key);
         const count = keys.filter((key) => !!progressGradeById(stored?.ratings[key] ?? null)).length;
         traits.required += keys.length;
         traits.filled += count;
@@ -206,7 +209,7 @@ function latestEntry(examIds: Set<string>, armId: string, studentId: string): Pr
 /** One scoped student: the subjects their row covers (null = the whole report). */
 type ScopedRow = { row: ComputedRow; visible: Set<string> | null };
 type ArmRun = { armId: string; armName: string; computed: Computed; canManage: boolean; rows: ScopedRow[] };
-type ClassRun = { cls: (typeof SEED_CLASSES)[number]; runs: ArmRun[]; fields: FieldDecl[] };
+type ClassRun = { cls: (typeof SEED_CLASSES)[number]; runs: ArmRun[] } & ReportSpec;
 
 /**
  * The caller's rows in one arm (standard effective_scope): a full-report
@@ -237,11 +240,11 @@ async function runClass(classId: string, termId: string, point: ProgressionPoint
     const scoped = scopeArm(arm.id, computed);
     if (scoped.rows.length > 0) runs.push({ armId: arm.id, armName: arm.name, computed, ...scoped });
   }
-  return runs.length > 0 ? { cls, runs, fields: await reportFieldDecls(cls.id, point) } : null;
+  return runs.length > 0 ? { cls, runs, fields: await reportFieldDecls(cls.id, point), traits: await classTraitLists(cls.id) } : null;
 }
 
-function studentRow(run: ArmRun, { row, visible }: ScopedRow, termId: string, point: ProgressionPoint, examIds: Set<string>, fields: FieldDecl[]): ProgressionStudent {
-  const { filled, required, percent, missing } = completeness(run.computed, row, termId, point, visible, fields);
+function studentRow(run: ArmRun, { row, visible }: ScopedRow, termId: string, point: ProgressionPoint, examIds: Set<string>, spec: ReportSpec): ProgressionStudent {
+  const { filled, required, percent, missing } = completeness(run.computed, row, termId, point, visible, spec);
   const remarks = readRemarks(termId, point, row.student.id);
   const attendance = readAttendance(termId, row.student.id);
   const commentsAt = [remarks.updated_at, attendance.updated_at].filter((at): at is string => !!at).sort().pop() ?? null;
@@ -317,7 +320,7 @@ async function getClasses(query: URLSearchParams): Promise<WireResponse> {
         armRun.computed.columns.forEach((column) => {
           if (!visible || visible.has(column.subject_id)) subjects.add(column.subject_id);
         });
-        const result = completeness(armRun.computed, row, termId, point, visible, run.fields);
+        const result = completeness(armRun.computed, row, termId, point, visible, run);
         filled += result.filled;
         required += result.required;
         percents += result.percent;
@@ -354,7 +357,7 @@ async function classRows(classId: string, termId: string, point: ProgressionPoin
   if (!run) return fail(403, "OUT_OF_SCOPE", "You don't have access to this class's reports.");
   if ("status" in run) return run;
   const examIds = await pointExamIds(classId, termId, point);
-  const rows = run.runs.flatMap((armRun) => armRun.rows.map((scoped) => studentRow(armRun, scoped, termId, point, examIds, run.fields)));
+  const rows = run.runs.flatMap((armRun) => armRun.rows.map((scoped) => studentRow(armRun, scoped, termId, point, examIds, run)));
   return { run, rows };
 }
 
@@ -476,7 +479,7 @@ async function studentEntry(found: StudentLookup, status: PublishStatusFilter): 
   const studentId = scoped.row.student.id;
   const canManage = armRun.canManage;
   const fields = canManage ? run.fields : [];
-  const progress = completeness(armRun.computed, scoped.row, termId, point, scoped.visible, run.fields);
+  const progress = completeness(armRun.computed, scoped.row, termId, point, scoped.visible, run);
 
   // Prev / next through the class view's list (same scope + order, status filter applied; the student stays reachable).
   const list = found.rows.filter((row) => status === "all" || (status === "published" ? !!row.published : !row.published) || row.student_id === studentId);
@@ -565,6 +568,75 @@ async function putReportFields(studentId: string, payload: unknown): Promise<Wir
   return ok(await studentEntry(refreshed, "all"));
 }
 
+// ---------------------------------------------------------------------------
+// Stage 3: Psychomotor / Affective ratings (contract: studentTraitsApi.ts)
+// ---------------------------------------------------------------------------
+
+function isTraitKind(value: unknown): value is TraitMasterKind {
+  return (TRAIT_MASTER_KINDS as readonly unknown[]).includes(value);
+}
+
+/** The student's Exam-point report in scope, General only, viewable by a full-report role. */
+async function lookupTraits(studentId: string, termId: string, kind: unknown): Promise<StudentLookup | WireResponse> {
+  if (!isTraitKind(kind)) return fail(422, "VALIDATION_ERROR", "kind must be psychomotor or affective");
+  if (!termId) return fail(422, "VALIDATION_ERROR", "term_id is required");
+  const found = await lookupStudent(studentId, termId, "exam");
+  if ("status" in found) return found;
+  if (found.armRun.computed.mode !== "component_based") return fail(422, "TRAITS_NOT_APPLICABLE", "Psychomotor and affective ratings apply to General classes only.");
+  if (!found.armRun.canManage) return fail(403, "FORBIDDEN", "Only the form tutor or a report manager can see this student's traits.");
+  return found;
+}
+
+/** DEC-009, like the class-teacher comment: the arm's directly-assigned class teacher, or an admin (the credential). */
+function canRateTraits(armId: string): boolean {
+  const role = armRole(armId);
+  return role === "admin" || role === "class_teacher";
+}
+
+function traitEntry(found: StudentLookup, kind: TraitMasterKind): StudentTraitEntry {
+  const studentId = found.scoped.row.student.id;
+  const stored = storedTraits(found.termId, studentId);
+  return {
+    student: { id: studentId, name: found.scoped.row.student.name, photo_url: seedStudentProfile(studentId)?.photo_url ?? null },
+    class_name: found.run.cls.name,
+    arm_name: found.armRun.armName,
+    term_id: found.termId,
+    kind,
+    items: found.run.traits[kind].map(({ key, label }) => {
+      const id = stored?.ratings[key] ?? null;
+      return { key, label, progress_grade_id: progressGradeById(id) ? id : null };
+    }),
+    rating_scale: progressGrades("general").map((level) => ({ id: level.id, value: String(level.value), label: level.name })),
+    editable: canRateTraits(found.armRun.armId),
+    updated_at: stored?.updated_at ?? null,
+  };
+}
+
+async function getStudentTraitEntry(studentId: string, query: URLSearchParams): Promise<WireResponse> {
+  const kind = query.get("kind");
+  const found = await lookupTraits(studentId, query.get("term_id") ?? "", kind);
+  if ("status" in found) return found;
+  return ok(traitEntry(found, kind as TraitMasterKind));
+}
+
+async function putStudentTraitEntry(studentId: string, payload: unknown): Promise<WireResponse> {
+  const body = record(payload);
+  const found = await lookupTraits(studentId, typeof body.term_id === "string" ? body.term_id : "", body.kind);
+  if ("status" in found) return found;
+  const kind = body.kind as TraitMasterKind;
+  if (!canRateTraits(found.armRun.armId)) return fail(403, "FORBIDDEN", "Only the student's class teacher (or an admin) can rate traits.");
+  const listed = new Set(found.run.traits[kind].map((item) => item.key));
+  const levels = new Set(progressGrades("general").map((level) => level.id));
+  const ratings: Record<string, string | null> = {};
+  for (const [key, value] of Object.entries(record(body.ratings))) {
+    if (!listed.has(key)) return fail(422, "VALIDATION_ERROR", `ratings.${key}: not on this class's ${kind} list`);
+    if (value !== null && !(typeof value === "string" && levels.has(value))) return fail(422, "VALIDATION_ERROR", `ratings.${key}: not a level of the General progress grades`);
+    ratings[key] = value as string | null;
+  }
+  if (Object.keys(ratings).length > 0) writeTraitRatings(found.termId, studentId, ratings);
+  return ok(traitEntry(found, kind));
+}
+
 /** Routes erp/report-progression/*; null = not ours. */
 export async function handleReportProgression(method: HttpMethod, path: string, query: URLSearchParams, payload: unknown): Promise<WireResponse | null> {
   if (!path.startsWith("erp/report-progression")) return null;
@@ -573,6 +645,9 @@ export async function handleReportProgression(method: HttpMethod, path: string, 
   if (classMatch && method === "GET") return getClassView(decodeURIComponent(classMatch[1]), query);
   const studentMatch = path.match(/^erp\/report-progression\/students\/([^/]+)$/);
   if (studentMatch && method === "GET") return getStudentEntry(decodeURIComponent(studentMatch[1]), query);
+  const traitsMatch = path.match(/^erp\/report-progression\/students\/([^/]+)\/traits$/);
+  if (traitsMatch && method === "GET") return getStudentTraitEntry(decodeURIComponent(traitsMatch[1]), query);
+  if (traitsMatch && method === "PUT") return putStudentTraitEntry(decodeURIComponent(traitsMatch[1]), payload);
   const fieldsMatch = path.match(/^erp\/report-progression\/students\/([^/]+)\/report-fields$/);
   if (fieldsMatch && method === "PUT") return putReportFields(decodeURIComponent(fieldsMatch[1]), payload);
   const actionMatch = path.match(/^erp\/report-progression\/(publish|unpublish|stamp)$/);

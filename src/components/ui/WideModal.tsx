@@ -17,6 +17,8 @@ export type WideModalProps = {
   footer: ReactNode;
   /** "xl" (max-w-4xl, default) | "2xl" (max-w-6xl) — widen a specific usage if its content ever feels cramped. */
   size?: "xl" | "2xl";
+  /** Optional "← Back" in the header bar (Figma's full-page modals); the title + subtitle then open the body instead. */
+  back?: { label: string; onClick: () => void };
 };
 
 const SIZE_CLASSES: Record<NonNullable<WideModalProps["size"]>, string> = {
@@ -37,7 +39,7 @@ const SIZE_CLASSES: Record<NonNullable<WideModalProps["size"]>, string> = {
  * margins). Header is sticky-top and footer sticky-bottom so both stay
  * reachable while the body scrolls.
  */
-export function WideModal({ isOpen, onClose, title, subtitle, children, footer, size = "xl" }: WideModalProps) {
+export function WideModal({ isOpen, onClose, title, subtitle, children, footer, size = "xl", back }: WideModalProps) {
   const t = useTranslations();
   const { shouldRender, isSettled, panelRef, titleId } = useDialogBehavior(isOpen, onClose);
 
@@ -66,12 +68,23 @@ export function WideModal({ isOpen, onClose, title, subtitle, children, footer, 
         }`}
       >
         <div className="sticky top-0 z-10 flex shrink-0 items-start justify-between gap-4 border-b border-border bg-surface px-5 py-4 sm:px-8 sm:py-5">
-          <div className="min-w-0">
-            <h2 id={titleId} className="text-lg font-semibold text-text-primary">
-              {title}
-            </h2>
-            {subtitle ? <p className="mt-1 text-sm text-text-secondary">{subtitle}</p> : null}
-          </div>
+          {back ? (
+            <button
+              type="button"
+              onClick={back.onClick}
+              className="flex h-9 items-center gap-2 rounded-md px-1 text-sm font-medium text-text-primary transition-colors hover:text-accent"
+            >
+              <span aria-hidden>←</span>
+              {back.label}
+            </button>
+          ) : (
+            <div className="min-w-0">
+              <h2 id={titleId} className="text-lg font-semibold text-text-primary">
+                {title}
+              </h2>
+              {subtitle ? <p className="mt-1 text-sm text-text-secondary">{subtitle}</p> : null}
+            </div>
+          )}
           <button
             type="button"
             onClick={onClose}
@@ -82,7 +95,17 @@ export function WideModal({ isOpen, onClose, title, subtitle, children, footer, 
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-6 sm:px-8">{children}</div>
+        <div className="flex-1 overflow-y-auto px-5 py-6 sm:px-8">
+          {back ? (
+            <div className="mb-5">
+              <h2 id={titleId} className="text-base font-semibold text-text-primary">
+                {title}
+              </h2>
+              {subtitle ? <p className="mt-0.5 text-xs text-text-secondary">{subtitle}</p> : null}
+            </div>
+          ) : null}
+          {children}
+        </div>
 
         <div className="sticky bottom-0 z-10 flex shrink-0 items-center justify-between gap-3 border-t border-border bg-surface px-5 py-4 sm:px-8">
           {footer}

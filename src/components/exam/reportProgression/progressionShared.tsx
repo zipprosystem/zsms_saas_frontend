@@ -98,3 +98,22 @@ export function StagePlaceholder({ backHref, backLabel, title, body }: { backHre
     </div>
   );
 }
+
+/** The student's photo, else their initials. sm = the rating modals' header. */
+export function StudentAvatar({ name, photoUrl, size = "md" }: { name: string; photoUrl: string | null; size?: "sm" | "md" }) {
+  const box = size === "sm" ? "h-8 w-8 text-xs" : "h-12 w-12 text-sm";
+  if (photoUrl) {
+    // eslint-disable-next-line @next/next/no-img-element -- a data URL / signed photo URL, not an optimizable static asset
+    return <img src={photoUrl} alt="" className={`${box} shrink-0 rounded-full object-cover`} />;
+  }
+  const initials = name
+    .split(" ")
+    .map((part) => part.charAt(0))
+    .join("")
+    .slice(0, 2);
+  return (
+    <span aria-hidden className={`flex ${box} shrink-0 items-center justify-center rounded-full bg-brand-tint font-semibold text-accent`}>
+      {initials}
+    </span>
+  );
+}

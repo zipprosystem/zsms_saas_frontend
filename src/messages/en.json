@@ -4061,6 +4061,47 @@
           "body": "Sending results to parents is coming in a later stage."
         }
       },
+      "traits": {
+        "back": "Back",
+        "title": {
+          "psychomotor": "Add Psychomotor Skill",
+          "affective": "Add Affective Domain"
+        },
+        "subtitle": "Score students on their skills",
+        "columns": {
+          "serial": "S/N",
+          "item": {
+            "psychomotor": "Students Skills",
+            "affective": "Students Skills"
+          }
+        },
+        "save": {
+          "psychomotor": "Save Psychomotor Skill",
+          "affective": "Save Affective Domain"
+        },
+        "saving": "Saving…",
+        "saved": {
+          "psychomotor": "Psychomotor skills saved",
+          "affective": "Affective domain saved"
+        },
+        "ratedCount": "{rated} of {total} rated",
+        "loading": "Loading…",
+        "readOnly": "Only the student's class teacher (or an admin) can rate these.",
+        "noScale": "No General Progress Grades are set up yet. Add them in Setup › Progress Grades to rate traits.",
+        "noItems": {
+          "psychomotor": "No psychomotor skills are listed for this class's school type. Add them in Setup › Psychomotor Skills.",
+          "affective": "No affective traits are listed for this class's school type. Add them in Setup › Affective Domain."
+        },
+        "hint": "Pick one grade per row. Pick it again to clear it.",
+        "aria": {
+          "rate": "Rate {item}: {level}"
+        },
+        "discard": {
+          "title": "Discard changes?",
+          "message": "Your ratings haven't been saved. Close and lose them?",
+          "confirm": "Discard"
+        }
+      },
       "entry": {
         "back": "Back to Class Progression",
         "classArm": "{class} {arm}",
@@ -4127,9 +4168,7 @@
         },
         "traits": {
           "psychomotor": "Psychomotor Skill",
-          "affective": "Affective Domain",
-          "comingSoon": "Rating these traits student by student is coming in the next stage.",
-          "close": "Close"
+          "affective": "Affective Domain"
         },
         "errors": {
           "invalidCount": "{count, plural, one {# entry needs} other {# entries need}} fixing before you can save."
