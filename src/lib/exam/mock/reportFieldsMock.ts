@@ -1,6 +1,6 @@
 import type { ReportVariant } from "@/lib/exam/report/reportPayload";
 import type { ProgressionPoint } from "@/lib/exam/reportProgression/reportProgressionApi";
-import type { Attendance, CommentRole, RemarkKey, Remarks } from "@/lib/exam/reportProgression/studentEntryApi";
+import type { Attendance, CommentGradeRole, CommentRole, RemarkKey, Remarks } from "@/lib/exam/reportProgression/studentEntryApi";
 import { REMARK_KEYS } from "@/lib/exam/reportProgression/studentEntryApi";
 import { resultTemplatesService } from "@/lib/setup/assessmentConfiguration/resultTemplatesApi";
 import { SEED_TERM_CLOSURES, SEED_TERM_DATES } from "@/lib/exam/mock/examMockSeeds";
@@ -130,6 +130,16 @@ export function canWriteField(armId: string, decl: FieldDecl): boolean {
   if (role === "admin") return true;
   if (decl.kind === "attendance" || decl.key === "class_teacher") return role === "class_teacher";
   return false;
+}
+
+/**
+ * British comment grades (§7.26 Grade table): the Form Tutor / Boarding
+ * House grade for a point lives in the student's term trait_assessment
+ * (examResultsMock's traits store) under `<role>:<point>` — one per
+ * comment per point, a British Progress Grade by id.
+ */
+export function commentGradeKey(role: CommentGradeRole, point: ProgressionPoint): string {
+  return `${role}:${point}`;
 }
 
 // ---------------------------------------------------------------------------

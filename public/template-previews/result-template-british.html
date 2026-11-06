@@ -353,10 +353,11 @@
     foot.querySelector(".cmt h4").textContent=full?zL("tutorComment","Tutor Comment")+(tutorName?": "+tutorName:""):zL("boardingComment","Boarding House Comment");
     foot.querySelector(".cmt p").textContent=text||"—";
   }
-  /* Boarding Grade (the house's per-point grade), on both variants: a column on Progress, a strip (points across) on Full. */
-  function setBoardingGrades(cols,vals,strip){
+  /* Grade table (§7.26) in front of the comment, before the signature: Progress = the Boarding House grade per point (a column),
+     Full = the Form Tutor grade per point (a strip, points across). title = the table heading. */
+  function setBoardingGrades(cols,vals,strip,title){
     var t=document.querySelector("#card .foot .bhg table");
-    document.getElementById("bhg-title").textContent=zL("boardingGrade","Boarding Grade");
+    document.getElementById("bhg-title").textContent=title||zL("boardingGrade","Boarding Grade");
     function v(i){return vals[i]==null?"—":zEsc(vals[i]);}
     t.classList.toggle("strip",strip);
     t.innerHTML=strip
@@ -463,8 +464,14 @@
 
     var b=Z.traits.boarding, rm=Z.remarks||{}, tutor=rm.form_tutor, house=rm.boarding_house;
     setFootComment(isFull,tutor&&tutor.name,isFull?tutor&&tutor.comment:(house&&house.comment)||(b&&b.comment));
-    // Same source on both variants: traits.boarding.rating, at the report point.
-    setBoardingGrades(cols,cols.map(function(_,i){return i===cur&&b?b.rating:null;}),isFull);
+    // Grade table: each comment's grade per point (traits.comment_grades) — Progress lists the A points' Boarding House grades,
+    // Full the B points' Form Tutor grades. Older payloads without it: the boarding rating at the report point.
+    var cg=Z.traits.comment_grades;
+    if(cg){
+      var kind=isFull?"full":"progress", vals=isFull?cg.form_tutor:cg.boarding_house, idx=[];
+      points.forEach(function(p,i){if(p.kind===kind)idx.push(i);});
+      setBoardingGrades(idx.map(function(i){return cols[i];}),idx.map(function(i){return vals[i]==null?null:vals[i];}),isFull,isFull?zL("tutorGrade","Tutor Grade"):zL("boardingGrade","Boarding Grade"));
+    }else setBoardingGrades(cols,cols.map(function(_,i){return i===cur&&b?b.rating:null;}),isFull);
     // Level key: the British Progress Grades (visible levels, best first) with their per-domain descriptors.
     var key=Z.traits.rating_key||[];
     document.querySelector(".descr tbody").innerHTML=key.length?key.map(function(r){

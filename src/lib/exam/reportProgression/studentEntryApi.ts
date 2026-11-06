@@ -3,6 +3,7 @@ import type { AssessmentMode } from "@/lib/setup/assessmentConfiguration/assessm
 import { examFromWire, examSend } from "@/lib/exam/examApi";
 import type { Exam } from "@/lib/exam/examTypes";
 import type { MissingItem, ProgressionPoint, PublishStatusFilter } from "@/lib/exam/reportProgression/reportProgressionApi";
+import type { TraitScaleLevel } from "@/lib/exam/reportProgression/studentTraitsApi";
 
 /**
  * REPORT PROGRESSION — Stage 2: student-wise entry (View Details, Figma
@@ -35,6 +36,11 @@ import type { MissingItem, ProgressionPoint, PublishStatusFilter } from "@/lib/e
  *           British Progress). A British principal_comment column exists
  *           but is never listed unless the template opts in (signature
  *           only by default).
+ *         graded (British only): the comment carries a GRADE — the Form
+ *           Tutor and Boarding House comments, one British Progress Grade
+ *           (the Engagement / Learning Behaviour scale, by id) per comment
+ *           per point, stored in the student's trait_assessment under
+ *           form_tutor / boarding_house for that point. General: never.
  *         { kind: "attendance", editable }  only where the template has
  *           attendance; the screen puts it in front of the class-teacher
  *           comment.
@@ -54,6 +60,11 @@ import type { MissingItem, ProgressionPoint, PublishStatusFilter } from "@/lib/e
  *       1:1 = 1 / 1:2 = 2, default 2); absent = total − present; both
  *       derived on read, so changing the mapping re-totals every report.
  *       null when the template has none here.
+ *     - comment_grades: { scale, values } for a graded comment on this
+ *       report — scale = the BRITISH Progress Grade levels (best first;
+ *       never hardcoded), values = { form_tutor?, boarding_house? } the
+ *       saved progress_grade_id (null = not graded) for THIS point. null
+ *       when no comment here is graded (General, subject-scoped caller).
  *     - traits_apply: General Exam point — the Psychomotor Skill /
  *       Affective Domain entry applies (Stage 3).
  *     - progression: this report's completeness (see
@@ -64,11 +75,23 @@ import type { MissingItem, ProgressionPoint, PublishStatusFilter } from "@/lib/e
  *     / TERM_NOT_FOUND / NOT_ENROLLED_FOR_TERM, 422 VALIDATION_ERROR.
  *
  *   PUT /api/v1/erp/report-progression/students/:student_id/report-fields
- *     body { term_id, point, remarks?: { <key>: text }, attendance_present?: n|null }
+ *     body { term_id, point, remarks?: { <key>: text }, attendance_present?: n|null,
+ *            comment_grades?: { form_tutor?: id|null, boarding_house?: id|null } }
  *     -> StudentEntry. Only the sent keys change. 403 FORBIDDEN when a
  *     sent field isn't editable by the caller; 422 when it isn't on the
- *     template for this point, a remark > 500 chars, or present isn't a
- *     whole number 0..total_sessions.
+ *     template for this point, a remark > 500 chars, present isn't a
+ *     whole number 0..total_sessions, or a comment grade isn't a graded
+ *     comment here / not a British Progress Grade level. A grade is
+ *     writable by whoever may write its comment.
+ *
+ * PHASE 5 (AI — NOT BUILT; the screen shows the hooks disabled):
+ *   - "Generate with AI" on each comment: drafts the comment for the
+ *     teacher to edit; the saved term_remark carries source = ai_draft
+ *     (manual otherwise). Proposed: POST …/students/:id/remarks/draft
+ *     body { term_id, point, key } -> { text }.
+ *   - "Analyze with AI" on the entry: an AI summary / analysis of the
+ *     student's results for the term × point. Proposed: POST
+ *     …/students/:id/analysis body { term_id, point } -> { summary }.
  */
 
 export const REMARK_KEYS = ["class_teacher", "head_teacher", "principal", "boarding_house"] as const;
@@ -79,7 +102,19 @@ export type CommentRole = "class_teacher" | "form_tutor" | "head_teacher" | "pri
 
 export type Remarks = Record<RemarkKey, string>;
 
-export type ReportField = { kind: "comment"; key: RemarkKey; role: CommentRole; editable: boolean } | { kind: "attendance"; editable: boolean };
+/** The comments that carry a British grade (Part A, §7.26 Grade table). */
+export const COMMENT_GRADE_ROLES = ["form_tutor", "boarding_house"] as const;
+export type CommentGradeRole = (typeof COMMENT_GRADE_ROLES)[number];
+
+export function isCommentGradeRole(role: string): role is CommentGradeRole {
+  return (COMMENT_GRADE_ROLES as readonly string[]).includes(role);
+}
+
+export type ReportField =
+  | { kind: "comment"; key: RemarkKey; role: CommentRole; editable: boolean; /** British: a grade selector goes with it. */ graded: boolean }
+  | { kind: "attendance"; editable: boolean };
+
+export type CommentGrades = { scale: TraitScaleLevel[]; values: Partial<Record<CommentGradeRole, string | null>> };
 
 export type Attendance = {
   present: number | null;
@@ -115,6 +150,7 @@ export type StudentEntry = {
   report_fields: ReportField[];
   remarks: Remarks | null;
   attendance: Attendance | null;
+  comment_grades: CommentGrades | null;
   traits_apply: boolean;
   progression: { percent: number; filled: number; required: number; sections: ProgressionSection[]; missing: MissingItem[] };
   navigation: { index: number; count: number; previous: StudentRef | null; next: StudentRef | null };
@@ -125,6 +161,7 @@ export type SaveReportFieldsInput = {
   point: ProgressionPoint;
   remarks?: Partial<Remarks>;
   attendance_present?: number | null;
+  comment_grades?: Partial<Record<CommentGradeRole, string | null>>;
 };
 
 export const studentEntryQueryKey = (studentId: string, termId: string, point: ProgressionPoint, status: PublishStatusFilter) =>
@@ -138,7 +175,12 @@ function entryFromWire(value: unknown): StudentEntry | null {
   const r = rec(value);
   if (!rec(r.student).id || !Array.isArray(r.report_fields)) return null;
   const entry = r as unknown as StudentEntry;
-  return { ...entry, exams: Array.isArray(r.exams) ? r.exams.map(examFromWire) : [] };
+  return {
+    ...entry,
+    exams: Array.isArray(r.exams) ? r.exams.map(examFromWire) : [],
+    report_fields: entry.report_fields.map((field) => (field.kind === "comment" ? { ...field, graded: field.graded === true } : field)),
+    comment_grades: r.comment_grades && typeof r.comment_grades === "object" ? entry.comment_grades : null,
+  };
 }
 
 export function getStudentEntry(studentId: string, termId: string, point: ProgressionPoint, status: PublishStatusFilter): Promise<CrudResult<StudentEntry>> {
