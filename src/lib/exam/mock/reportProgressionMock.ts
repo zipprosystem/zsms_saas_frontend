@@ -31,6 +31,16 @@ import { armOfStudent, compute, storedTraits, writeTraitRatings, type Computed, 
 import { classTraitLists, type TraitList } from "@/lib/exam/mock/traitMastersMock";
 import { TRAIT_MASTER_KINDS, type TraitMasterKind } from "@/lib/setup/assessmentConfiguration/traitMastersApi";
 import type { StudentTraitEntry } from "@/lib/exam/reportProgression/studentTraitsApi";
+import {
+  isSendChannel,
+  type ChannelDispatch,
+  type SendChannel,
+  type SendOutcome,
+  type SendRecipient,
+  type SendRecipients,
+  type SendResult,
+} from "@/lib/exam/reportProgression/sendToParentApi";
+import { seedParentContact } from "@/lib/exam/mock/parentContactsMock";
 import { examIndex } from "@/lib/exam/mock/examListMock";
 import { getMockActingAs, MOCK_ADMIN, mockActors } from "@/lib/exam/mock/mockActingAs";
 import { progressGradeById, progressGrades } from "@/lib/exam/mock/progressGradesMock";
@@ -57,6 +67,11 @@ import {
  * template's report-only fields — term_remark + attendance, see
  * reportFieldsMock.ts — and the stored traits); only the publish / stamp
  * state is stored here (its own localStorage side-store).
+ *
+ * Stage 4 (Send Result to Parent, sendToParentApi.ts): the same scoped
+ * rows + mock parent contacts (parentContactsMock.ts); an email send is
+ * RECORDED in a send-log side-store (Parent module pending), WhatsApp is
+ * a no-op.
  */
 
 const STORAGE_KEY = "zsms.mockExam.reportProgression.v1";
@@ -680,12 +695,120 @@ async function putStudentTraitEntry(studentId: string, payload: unknown): Promis
   return ok(traitEntry(found, kind));
 }
 
+// ---------------------------------------------------------------------------
+// Stage 4 — Send Result to Parent (sendToParentApi.ts)
+// ---------------------------------------------------------------------------
+
+/**
+ * Channel dispatch while the Parent module isn't built: email sends are
+ * RECORDED (the log below), WhatsApp is framework only. The real backend
+ * reports "live" for email once the Parent module's dispatch lands.
+ */
+const MOCK_CHANNELS: Record<SendChannel, ChannelDispatch> = { email: "recorded", whatsapp: "unavailable" };
+
+const SEND_LOG_KEY = "zsms.mockExam.reportProgression.sendLog.v1";
+
+type StoredSend = { at: string; by: string | null; email_to: string };
+
+let sendLogCache: Record<string, StoredSend> | null = null;
+
+function loadSendLog(): Record<string, StoredSend> {
+  if (!sendLogCache) sendLogCache = readStore<StoredSend>(SEND_LOG_KEY);
+  return sendLogCache;
+}
+
+function recipientOf(row: ProgressionStudent, termId: string, point: ProgressionPoint): SendRecipient {
+  const logged = loadSendLog()[publicationKey(termId, point, row.student_id)];
+  return {
+    student_id: row.student_id,
+    student_name: row.student_name,
+    admission_no: row.admission_no,
+    photo_url: row.photo_url,
+    class_arm_id: row.class_arm_id,
+    arm_name: row.arm_name,
+    published: row.published ? { at: row.published.at } : null,
+    can_manage: row.can_manage,
+    contact: seedParentContact(row.student_id, row.student_name),
+    last_sent: logged ? { at: logged.at, by: actor(logged.by), email_to: logged.email_to, email: "recorded" } : null,
+  };
+}
+
+async function getSendRecipients(classId: string, query: URLSearchParams): Promise<WireResponse> {
+  const point = query.get("point") ?? "ca";
+  if (!isProgressionPoint(point)) return fail(422, "VALIDATION_ERROR", "point must be ca or exam");
+  const resolved = resolveYearTerm(query);
+  if ("status" in resolved) return resolved;
+  const { yearId, termId } = resolved;
+  const result = await classRows(classId, termId, point);
+  if ("status" in result) return result;
+  const data: SendRecipients = {
+    class_id: result.run.cls.id,
+    class_name: result.run.cls.name,
+    term_id: termId,
+    term_name: seedTerms(yearId).find((term) => term.id === termId)?.name ?? "",
+    point,
+    channels: MOCK_CHANNELS,
+    items: result.rows.map((row) => recipientOf(row, termId, point)),
+  };
+  return ok(data);
+}
+
+async function postSend(payload: unknown): Promise<WireResponse> {
+  const body = record(payload);
+  const termId = typeof body.term_id === "string" ? body.term_id : "";
+  const point = typeof body.point === "string" ? body.point : "";
+  if (!isProgressionPoint(point)) return fail(422, "VALIDATION_ERROR", "point must be ca or exam");
+  if (!seedTerms(yearOfTerm(termId)).some((term) => term.id === termId)) return fail(422, "VALIDATION_ERROR", "term_id: term not found");
+  const ids = Array.isArray(body.student_ids) ? body.student_ids.filter((id): id is string => typeof id === "string") : [];
+  if (ids.length === 0) return fail(422, "VALIDATION_ERROR", "student_ids: pick at least one student");
+  const channels = Array.isArray(body.channels) ? Array.from(new Set(body.channels.filter(isSendChannel))) : [];
+  if (channels.length === 0) return fail(422, "VALIDATION_ERROR", "channels: pick email and / or whatsapp");
+
+  // Same scope + rows as the class view; every student must be on one of them.
+  const wanted = new Set(ids);
+  const armIds = new Set(ids.map((id) => armOfStudent(id)).filter(Boolean));
+  const rows: ProgressionStudent[] = [];
+  for (const cls of SEED_CLASSES.filter((item) => item.arms.some((arm) => armIds.has(arm.id)))) {
+    const result = await classRows(cls.id, termId, point);
+    if ("status" in result) return result;
+    rows.push(...result.rows.filter((row) => wanted.has(row.student_id)));
+  }
+  const unknown = ids.find((id) => !rows.some((row) => row.student_id === id));
+  if (unknown) return fail(422, "VALIDATION_ERROR", `student_ids: ${unknown} isn't on a report in your scope for this term`);
+  const subjectOnly = rows.find((row) => !row.can_manage);
+  if (subjectOnly) return fail(403, "FORBIDDEN", "Only the form tutor or a report manager can send this report.");
+  const unpublished = rows.find((row) => !row.published);
+  if (unpublished) return fail(422, "NOT_PUBLISHED", `${unpublished.student_name}'s report isn't published yet — publish it first.`);
+
+  const now = new Date().toISOString();
+  const by = currentActorId();
+  const log = { ...loadSendLog() };
+  const items: SendOutcome[] = rows.map((row) => {
+    const contact = seedParentContact(row.student_id, row.student_name);
+    let email: SendOutcome["email"] = null;
+    if (channels.includes("email")) {
+      email = contact.email ? "recorded" : "no_email";
+      // Parent module pending: record the intent instead of dispatching.
+      if (contact.email) log[publicationKey(termId, point, row.student_id)] = { at: now, by, email_to: contact.email };
+    }
+    const whatsapp: SendOutcome["whatsapp"] = channels.includes("whatsapp") ? (contact.whatsapp ? "unavailable" : "no_number") : null;
+    return { student_id: row.student_id, email, whatsapp };
+  });
+  sendLogCache = log;
+  writeStore(SEND_LOG_KEY, log);
+  const data: SendResult = { channels: MOCK_CHANNELS, items };
+  return ok(data);
+}
+
 /** Routes erp/report-progression/*; null = not ours. */
 export async function handleReportProgression(method: HttpMethod, path: string, query: URLSearchParams, payload: unknown): Promise<WireResponse | null> {
   if (!path.startsWith("erp/report-progression")) return null;
   if (path === "erp/report-progression/classes" && method === "GET") return getClasses(query);
   const classMatch = path.match(/^erp\/report-progression\/classes\/([^/]+)$/);
   if (classMatch && method === "GET") return getClassView(decodeURIComponent(classMatch[1]), query);
+  const sendListMatch = path.match(/^erp\/report-progression\/classes\/([^/]+)\/send$/);
+  if (sendListMatch && method === "GET") return getSendRecipients(decodeURIComponent(sendListMatch[1]), query);
+  if (path === "erp/report-progression/send" && method === "POST") return postSend(payload);
   const studentMatch = path.match(/^erp\/report-progression\/students\/([^/]+)$/);
   if (studentMatch && method === "GET") return getStudentEntry(decodeURIComponent(studentMatch[1]), query);
   const traitsMatch = path.match(/^erp\/report-progression\/students\/([^/]+)\/traits$/);
