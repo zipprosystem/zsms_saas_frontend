@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Inter } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
@@ -17,10 +16,15 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
   weight: "100 900",
 });
-const inter = Inter({
-  subsets: ["latin"],
+// Inter is self-hosted (like Geist) so the production build never fetches
+// Google Fonts: a cut-short Google response crashed next/font's loader and
+// failed the deploy. The file is Google Fonts' Inter v20 "latin" subset
+// (variable weight, SIL Open Font License 1.1) — the subset this used to
+// preload; other scripts fall back to the system sans stack.
+const inter = localFont({
+  src: "./fonts/InterLatinVF.woff2",
   variable: "--font-inter",
-  weight: ["400", "500", "600", "700"],
+  weight: "100 900",
 });
 
 export const metadata: Metadata = {
