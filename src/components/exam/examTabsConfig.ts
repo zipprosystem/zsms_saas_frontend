@@ -17,7 +17,7 @@ export function examTabHref(slug: string): string {
   return `/admin/academics/exam/${slug}`;
 }
 
-/** Report Progression: class cards; a class's students; (Stage 2) a student's entry; (Stage 4) Send Result to Parent. */
+/** Report Progression: class cards; a class's students; (Stage 2) a student's entry; Send Result to Parent. */
 export const REPORT_PROGRESSION_HREF = "/admin/academics/exam/report-progression";
 export function reportProgressionClassHref(classId: string): string {
   return `${REPORT_PROGRESSION_HREF}/${encodeURIComponent(classId)}`;

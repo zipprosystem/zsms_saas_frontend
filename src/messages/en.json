@@ -4056,11 +4056,72 @@
         "stamp": "{count, plural, one {# report stamped} other {# reports stamped}}",
         "failed": "That didn't go through. Please try again."
       },
-      "placeholder": {
-        "backToClass": "Back to Class Progression",
-        "send": {
-          "title": "Send Result to Parent",
-          "body": "Sending results to parents is coming in a later stage."
+      "send": {
+        "back": "Back to Class Progression",
+        "title": "Send Result to Parent",
+        "subtitle": "{class} · {term} · {point}",
+        "noAccess": "You don't have permission to send results to parents.",
+        "caption": "{class}: send results to parents",
+        "selectAll": "Select all sendable students",
+        "search": "Search student, parent or email",
+        "emailRecordedNotice": "Email delivery starts once the Parent module is live. Until then, sends are recorded (who, when, which reports, which address) but no email goes out.",
+        "nonePublished": "No report is published for this term and point yet. Publish reports from Class Progression first.",
+        "columns": {
+          "parent": "Parent / Guardian",
+          "email": "Parent Email",
+          "whatsapp": "Parent WhatsApp",
+          "report": "Report",
+          "lastSent": "Last Sent"
+        },
+        "relationship": { "father": "Father", "mother": "Mother", "guardian": "Guardian" },
+        "missing": { "email": "No email — can't be emailed", "whatsapp": "No WhatsApp number" },
+        "blocked": { "unpublished": "Publish first", "subjectOnly": "Subject access only — can't send" },
+        "lastSent": { "never": "Not sent", "queued": "Emailed", "recorded": "Recorded (email pending)" },
+        "channels": {
+          "title": "Send via",
+          "email": "Email",
+          "whatsapp": "WhatsApp",
+          "soon": "Coming soon",
+          "help": {
+            "email": {
+              "live": "Emails the report to each parent's address.",
+              "recorded": "Recorded now; delivered once the Parent module is live.",
+              "unavailable": "Not available yet."
+            },
+            "whatsapp": {
+              "live": "Sends the report to each parent's WhatsApp number.",
+              "recorded": "Recorded now; delivered later.",
+              "unavailable": "Nothing is sent by WhatsApp yet."
+            }
+          }
+        },
+        "summary": {
+          "selected": "{count, plural, =0 {No students selected} one {# student selected} other {# students selected}}",
+          "emailable": "{count, plural, one {# can be emailed} other {# can be emailed}}",
+          "noEmail": "{count, plural, one {# has no parent email} other {# have no parent email}}"
+        },
+        "hint": {
+          "noChannel": "Pick at least one channel.",
+          "whatsappOnly": "WhatsApp sending is coming soon — turn on Email to send.",
+          "noSelection": "Tick the published reports to send.",
+          "noneReachable": "None of the selected students has a parent email."
+        },
+        "sendButton": "{count, plural, =0 {Send} other {Send (#)}}",
+        "confirm": {
+          "title": "Send results to parents?",
+          "body": "{count, plural, one {# published report} other {# published reports}} selected.",
+          "send": "Send",
+          "emailLive": "{count, plural, one {# report will be emailed.} other {# reports will be emailed.}}",
+          "emailRecorded": "{count, plural, one {# send will be recorded} other {# sends will be recorded}} — delivered once the Parent module is live.",
+          "noEmail": "{count, plural, one {# skipped (no parent email).} other {# skipped (no parent email).}}",
+          "whatsappSoon": "Coming soon — nothing is sent by WhatsApp yet.",
+          "whatsappLive": "{count, plural, one {# report will be sent on WhatsApp.} other {# reports will be sent on WhatsApp.}}",
+          "noNumber": "{count, plural, one {# skipped (no WhatsApp number).} other {# skipped (no WhatsApp number).}}"
+        },
+        "toast": {
+          "emailed": "{count, plural, one {# report emailed.} other {# reports emailed.}}",
+          "recorded": "{count, plural, one {# email send recorded.} other {# email sends recorded.}}",
+          "skipped": "{count, plural, one {# skipped — no parent email.} other {# skipped — no parent email.}}"
         }
       },
       "traits": {

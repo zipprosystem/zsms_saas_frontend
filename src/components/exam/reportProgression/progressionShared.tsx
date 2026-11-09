@@ -1,7 +1,5 @@
 "use client";
 
-import type { ReactNode } from "react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { canSeeNavEntry, readUserPermissions, type NavPermission } from "@/lib/auth/navPermissions";
@@ -83,21 +81,6 @@ export function useMissingLabel(): (item: MissingItem) => string {
     if (item.kind === "grade") return t(`grade.${item.role}`);
     return t("attendance");
   };
-}
-
-/** Back link + a "coming in a later stage" body (Stage 4 Send-to-Parent). */
-export function StagePlaceholder({ backHref, backLabel, title, body }: { backHref: string; backLabel: string; title: string; body: ReactNode }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-5">
-      <Link href={backHref} className="inline-flex w-fit items-center gap-1 text-sm font-medium text-accent hover:underline">
-        <span aria-hidden>←</span> {backLabel}
-      </Link>
-      <div className="flex min-w-0 flex-col items-center rounded-xl border border-border bg-surface px-6 py-16 text-center shadow-sm">
-        <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
-        <p className="mt-2 max-w-md text-sm text-text-muted">{body}</p>
-      </div>
-    </div>
-  );
 }
 
 /** The student's photo, else their initials. sm = the rating modals' header. */
