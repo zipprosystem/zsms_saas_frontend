@@ -4064,19 +4064,34 @@
         "caption": "{class}: send results to parents",
         "selectAll": "Select all sendable students",
         "search": "Search student, parent or email",
-        "emailRecordedNotice": "Email delivery starts once the Parent module is live. Until then, sends are recorded (who, when, which reports, which address) but no email goes out.",
+        "recordedNotice": "{channels} delivery isn't switched on yet. Until then, sends are recorded (who, when, which reports, which address or number) but nothing goes out.",
         "nonePublished": "No report is published for this term and point yet. Publish reports from Class Progression first.",
         "columns": {
           "parent": "Parent / Guardian",
           "email": "Parent Email",
-          "whatsapp": "Parent WhatsApp",
           "report": "Report",
-          "lastSent": "Last Sent"
+          "lastSent": "Last Sent",
+          "phone": "Parent Phone (WhatsApp / SMS)"
         },
-        "relationship": { "father": "Father", "mother": "Mother", "guardian": "Guardian" },
-        "missing": { "email": "No email — can't be emailed", "whatsapp": "No WhatsApp number" },
-        "blocked": { "unpublished": "Publish first", "subjectOnly": "Subject access only — can't send" },
-        "lastSent": { "never": "Not sent", "queued": "Emailed", "recorded": "Recorded (email pending)" },
+        "relationship": {
+          "father": "Father",
+          "mother": "Mother",
+          "guardian": "Guardian"
+        },
+        "missing": {
+          "email": "No email — can't be emailed",
+          "phone": "No phone number",
+          "phoneFor": "No phone — no {channels}"
+        },
+        "blocked": {
+          "unpublished": "Publish first",
+          "subjectOnly": "Subject access only — can't send"
+        },
+        "lastSent": {
+          "never": "Not sent",
+          "queued": "{channel} sent",
+          "recorded": "{channel} recorded"
+        },
         "channels": {
           "title": "Send via",
           "email": "Email",
@@ -4084,44 +4099,60 @@
           "soon": "Coming soon",
           "help": {
             "email": {
-              "live": "Emails the report to each parent's address.",
-              "recorded": "Recorded now; delivered once the Parent module is live.",
+              "live": "Emails the report PDF to each parent's address.",
+              "recorded": "Recorded now; the PDF is emailed once the Parent module is live.",
               "unavailable": "Not available yet."
             },
             "whatsapp": {
-              "live": "Sends the report to each parent's WhatsApp number.",
-              "recorded": "Recorded now; delivered later.",
+              "live": "Sends the report PDF to each parent's WhatsApp number.",
+              "recorded": "Recorded now; the PDF is sent on WhatsApp later.",
               "unavailable": "Nothing is sent by WhatsApp yet."
+            },
+            "sms": {
+              "live": "Texts each parent a link to the report PDF (SMS can't carry a file).",
+              "recorded": "Recorded now; each parent is texted a link to the report PDF once SMS delivery is live.",
+              "unavailable": "Nothing is sent by SMS yet."
             }
-          }
+          },
+          "sms": "SMS"
         },
         "summary": {
           "selected": "{count, plural, =0 {No students selected} one {# student selected} other {# students selected}}",
-          "emailable": "{count, plural, one {# can be emailed} other {# can be emailed}}",
-          "noEmail": "{count, plural, one {# has no parent email} other {# have no parent email}}"
+          "reach": "{channel}: {count} of {total}"
         },
         "hint": {
           "noChannel": "Pick at least one channel.",
-          "whatsappOnly": "WhatsApp sending is coming soon — turn on Email to send.",
           "noSelection": "Tick the published reports to send.",
-          "noneReachable": "None of the selected students has a parent email."
+          "noneReachable": "None of the selected students can be reached by {channels}.",
+          "onlyUnavailable": "Sending by {channels} is coming soon — turn on another channel to send."
         },
         "sendButton": "{count, plural, =0 {Send} other {Send (#)}}",
         "confirm": {
           "title": "Send results to parents?",
           "body": "{count, plural, one {# published report} other {# published reports}} selected.",
           "send": "Send",
-          "emailLive": "{count, plural, one {# report will be emailed.} other {# reports will be emailed.}}",
-          "emailRecorded": "{count, plural, one {# send will be recorded} other {# sends will be recorded}} — delivered once the Parent module is live.",
           "noEmail": "{count, plural, one {# skipped (no parent email).} other {# skipped (no parent email).}}",
-          "whatsappSoon": "Coming soon — nothing is sent by WhatsApp yet.",
-          "whatsappLive": "{count, plural, one {# report will be sent on WhatsApp.} other {# reports will be sent on WhatsApp.}}",
-          "noNumber": "{count, plural, one {# skipped (no WhatsApp number).} other {# skipped (no WhatsApp number).}}"
+          "live": {
+            "file": "{count, plural, one {# report will be sent as a PDF file.} other {# reports will be sent as PDF files.}}",
+            "link": "{count, plural, one {# parent will be texted a link to the report PDF.} other {# parents will be texted a link to the report PDF.}}"
+          },
+          "recorded": {
+            "file": "{count, plural, one {# send will be recorded} other {# sends will be recorded}} — the PDF goes out once delivery is live.",
+            "link": "{count, plural, one {# text will be recorded} other {# texts will be recorded}} — the PDF link goes out once delivery is live."
+          },
+          "noPhone": "{count, plural, one {# skipped (no phone number).} other {# skipped (no phone number).}}",
+          "soon": "Coming soon — nothing is sent by {channel} yet.",
+          "carriesNote": "Email and WhatsApp send the report PDF file. SMS can't carry a file, so it sends a text with a link to the PDF."
         },
         "toast": {
-          "emailed": "{count, plural, one {# report emailed.} other {# reports emailed.}}",
-          "recorded": "{count, plural, one {# email send recorded.} other {# email sends recorded.}}",
-          "skipped": "{count, plural, one {# skipped — no parent email.} other {# skipped — no parent email.}}"
+          "recorded": "{channel}: {count, plural, one {# recorded} other {# recorded}}",
+          "sent": "{channel}: {count, plural, one {# sent} other {# sent}}",
+          "skippedEmail": "{count, plural, one {# skipped (no parent email)} other {# skipped (no parent email)}}",
+          "skippedPhone": "{count, plural, one {# skipped (no phone number)} other {# skipped (no phone number)}}"
+        },
+        "carries": {
+          "file": "PDF file",
+          "link": "PDF link"
         }
       },
       "traits": {

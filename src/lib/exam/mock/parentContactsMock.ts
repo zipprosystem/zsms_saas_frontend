@@ -9,8 +9,9 @@ import type { ParentContact, ParentRelationship } from "@/lib/exam/reportProgres
  * every number is in the reserved +234 800 000 range — nothing here can
  * reach a real person.
  *
- * Gaps are seeded on purpose so the "can't be emailed" / "no WhatsApp
- * number" states show: about 1 in 6 has no email, about 1 in 5 no number.
+ * Gaps are seeded on purpose so the "can't be emailed" / "no phone (no
+ * WhatsApp / SMS)" states show: about 1 in 6 has no email, about 1 in 5
+ * no number.
  */
 
 const RELATIONSHIPS: ParentRelationship[] = ["father", "mother", "guardian"];
@@ -27,6 +28,6 @@ export function seedParentContact(studentId: string, studentName: string): Paren
     name: `${TITLES[relationship]} ${surname}`,
     relationship,
     email: hasEmail ? `${surname.toLowerCase().replace(/[^a-z]/g, "")}.${tail}@example.com` : null,
-    whatsapp: hasNumber ? `+234 800 000 ${tail}` : null,
+    phone: hasNumber ? `+234 800 000 ${tail}` : null,
   };
 }

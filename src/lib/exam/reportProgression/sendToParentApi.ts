@@ -21,41 +21,52 @@ import type { ProgressionActor, ProgressionPoint } from "@/lib/exam/reportProgre
  *                   yet. EMAIL is "recorded" until the Parent module's
  *                   email dispatch lands; the backend then flips it to
  *                   "live" and the same POST starts delivering.
+ *                   SMS is "recorded" too: the school's SMS config
+ *                   exists (Settings › API Integrations), the dispatch
+ *                   doesn't yet.
  *   "unavailable" — framework only: selectable in the UI, marked "coming
  *                   soon", a no-op on send. WHATSAPP is "unavailable" this
- *                   delivery (its full requirement is specced separately).
+ *                   delivery (per-school WhatsApp API not built yet).
+ *
+ * WHAT EACH CHANNEL CARRIES. Email and WhatsApp send the report PDF FILE.
+ * SMS can't carry a file, so it sends a short TEXT with the report's PDF
+ * URL (the backend's hosted report link, DEC-008) — the backend composes
+ * the text; the frontend only states it.
  *
  * PARENT CONTACT. One contact per student — the backend picks the primary
  * one from the student's parent / guardian blocks (Students wizard step 3:
- * father / mother / guardian, each with phone + email). The WhatsApp
- * number defaults to that phone — FLAGGED: a separate WhatsApp number /
- * opt-in is for the WhatsApp spec. Mocked until the Parent module ships.
+ * father / mother / guardian, each with phone + email). `phone` is that
+ * parent phone and serves BOTH WhatsApp and SMS — no separate SMS or
+ * WhatsApp number is modelled (FLAGGED: a separate WhatsApp number /
+ * opt-in is for the WhatsApp spec). Mocked until the Parent module ships.
  *
  * PROPOSED REST contract (names are proposals — reconcile with Muntajir):
  *
  *   GET /api/v1/erp/report-progression/classes/:class_id/send?term_id=&point=ca|exam
  *     -> { class_id, class_name, term_id, term_name, point,
- *          channels: { email: Dispatch, whatsapp: Dispatch },
+ *          channels: { email: Dispatch, whatsapp: Dispatch, sms: Dispatch },
  *          items: [SendRecipient] }   (school order, as the class view)
  *     403 OUT_OF_SCOPE (no student of the class in scope).
  *
  *   POST /api/v1/erp/report-progression/send
- *     body { term_id, point, student_ids[], channels: ("email"|"whatsapp")[] }
- *     -> { channels, items: [{ student_id, email, whatsapp }] }
+ *     body { term_id, point, student_ids[], channels: ("email"|"whatsapp"|"sms")[] }
+ *     -> { channels, items: [{ student_id, email, whatsapp, sms }] }
  *     Per student and requested channel, the outcome:
  *       email:    "queued" (live) | "recorded" | "no_email"
- *       whatsapp: "unavailable" | "no_number"
+ *       whatsapp: "queued" (live) | "recorded" | "unavailable" | "no_number"
+ *       sms:      "queued" (live) | "recorded" | "unavailable" | "no_number"
  *       (null = channel not requested)
  *     Missing contacts are SKIPPED per channel, not errors. The send log
- *     (last_sent) is written for a student whenever an email outcome is
- *     "queued" or "recorded".
+ *     (last_sent) is written for a student whenever any channel's outcome
+ *     is "queued" or "recorded"; it holds that send's per-channel result
+ *     (address / number used).
  *     422 VALIDATION_ERROR (no students / no channel / unknown point),
  *     422 NOT_PUBLISHED (a report isn't published for the term + point),
  *     403 FORBIDDEN (missing exam.report_progression.send, or a
  *     subject-only row), 403 OUT_OF_SCOPE.
  */
 
-export const SEND_CHANNELS = ["email", "whatsapp"] as const;
+export const SEND_CHANNELS = ["email", "whatsapp", "sms"] as const;
 export type SendChannel = (typeof SEND_CHANNELS)[number];
 
 export type ChannelDispatch = "live" | "recorded" | "unavailable";
@@ -66,19 +77,21 @@ export type ParentContact = {
   name: string | null;
   relationship: ParentRelationship | null;
   email: string | null;
-  /** E.164-ish display string; null = no number on file. */
-  whatsapp: string | null;
+  /** Parent phone (E.164-ish display string) — used for WhatsApp AND SMS; null = no number on file. */
+  phone: string | null;
 };
 
 export type EmailOutcome = "queued" | "recorded" | "no_email";
-export type WhatsappOutcome = "unavailable" | "no_number";
+export type PhoneOutcome = "queued" | "recorded" | "unavailable" | "no_number";
+
+/** A channel that went out (or was recorded) on a send. */
+export type SentVia = { to: string; outcome: "queued" | "recorded" };
 
 export type SendLogEntry = {
   at: string;
   by: ProgressionActor | null;
-  /** The address the email went (or was recorded as going) to. */
-  email_to: string;
-  email: Exclude<EmailOutcome, "no_email">;
+  /** Per channel: where it went (or was recorded as going); absent = not sent on that channel. */
+  via: Partial<Record<SendChannel, SentVia>>;
 };
 
 export type SendRecipient = {
@@ -109,7 +122,7 @@ export type SendRecipients = {
 
 export type SendInput = { term_id: string; point: ProgressionPoint; student_ids: string[]; channels: SendChannel[] };
 
-export type SendOutcome = { student_id: string; email: EmailOutcome | null; whatsapp: WhatsappOutcome | null };
+export type SendOutcome = { student_id: string; email: EmailOutcome | null; whatsapp: PhoneOutcome | null; sms: PhoneOutcome | null };
 
 export type SendResult = { channels: Record<SendChannel, ChannelDispatch>; items: SendOutcome[] };
 
@@ -129,9 +142,19 @@ export function blockedReason(row: SendRecipient): "subjectOnly" | "unpublished"
   return null;
 }
 
-/** Whether this row can actually be reached on a channel. */
+/** Whether this row can actually be reached on a channel (WhatsApp and SMS share the parent phone). */
 export function reachable(row: SendRecipient, channel: SendChannel): boolean {
-  return channel === "email" ? !!row.contact.email : !!row.contact.whatsapp;
+  return channel === "email" ? !!row.contact.email : !!row.contact.phone;
+}
+
+/** Email and WhatsApp carry the PDF file; SMS carries a link to it. */
+export function channelCarries(channel: SendChannel): "file" | "link" {
+  return channel === "sms" ? "link" : "file";
+}
+
+/** A channel that does something on send ("live" or "recorded"). */
+export function isSendable(dispatch: ChannelDispatch): boolean {
+  return dispatch !== "unavailable";
 }
 
 // ---------------------------------------------------------------------------
