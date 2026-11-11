@@ -4072,19 +4072,34 @@
         "caption": "{class} : envoi des résultats aux parents",
         "selectAll": "Sélectionner tous les élèves envoyables",
         "search": "Rechercher un élève, un parent ou un e-mail",
-        "emailRecordedNotice": "L'envoi par e-mail démarrera lorsque le module Parents sera en service. D'ici là, les envois sont enregistrés (qui, quand, quels bulletins, quelle adresse) mais aucun e-mail n'est envoyé.",
+        "recordedNotice": "L'envoi par {channels} n'est pas encore activé. D'ici là, les envois sont enregistrés (qui, quand, quels bulletins, quelle adresse ou quel numéro) mais rien n'est envoyé.",
         "nonePublished": "Aucun bulletin n'est encore publié pour ce trimestre et cette étape. Publiez d'abord les bulletins depuis la progression de la classe.",
         "columns": {
           "parent": "Parent / Tuteur",
           "email": "E-mail du parent",
-          "whatsapp": "WhatsApp du parent",
           "report": "Bulletin",
-          "lastSent": "Dernier envoi"
+          "lastSent": "Dernier envoi",
+          "phone": "Téléphone du parent (WhatsApp / SMS)"
         },
-        "relationship": { "father": "Père", "mother": "Mère", "guardian": "Tuteur" },
-        "missing": { "email": "Pas d'e-mail — envoi impossible", "whatsapp": "Pas de numéro WhatsApp" },
-        "blocked": { "unpublished": "Publier d'abord", "subjectOnly": "Accès matière uniquement — envoi impossible" },
-        "lastSent": { "never": "Non envoyé", "queued": "Envoyé par e-mail", "recorded": "Enregistré (e-mail en attente)" },
+        "relationship": {
+          "father": "Père",
+          "mother": "Mère",
+          "guardian": "Tuteur"
+        },
+        "missing": {
+          "email": "Pas d'e-mail — envoi impossible",
+          "phone": "Pas de numéro de téléphone",
+          "phoneFor": "Pas de téléphone — pas de {channels}"
+        },
+        "blocked": {
+          "unpublished": "Publier d'abord",
+          "subjectOnly": "Accès matière uniquement — envoi impossible"
+        },
+        "lastSent": {
+          "never": "Non envoyé",
+          "queued": "{channel} envoyé",
+          "recorded": "{channel} enregistré"
+        },
         "channels": {
           "title": "Envoyer par",
           "email": "E-mail",
@@ -4092,44 +4107,60 @@
           "soon": "Bientôt disponible",
           "help": {
             "email": {
-              "live": "Envoie le bulletin à l'adresse de chaque parent.",
-              "recorded": "Enregistré maintenant ; envoyé dès que le module Parents sera en service.",
+              "live": "Envoie le PDF du bulletin à l'adresse de chaque parent.",
+              "recorded": "Enregistré maintenant ; le PDF est envoyé par e-mail dès que le module Parents sera en service.",
               "unavailable": "Pas encore disponible."
             },
             "whatsapp": {
-              "live": "Envoie le bulletin au numéro WhatsApp de chaque parent.",
-              "recorded": "Enregistré maintenant ; envoyé plus tard.",
+              "live": "Envoie le PDF du bulletin au numéro WhatsApp de chaque parent.",
+              "recorded": "Enregistré maintenant ; le PDF est envoyé sur WhatsApp plus tard.",
               "unavailable": "Rien n'est encore envoyé par WhatsApp."
+            },
+            "sms": {
+              "live": "Envoie à chaque parent un SMS avec le lien vers le PDF du bulletin (un SMS ne peut pas contenir de fichier).",
+              "recorded": "Enregistré maintenant ; chaque parent recevra par SMS le lien vers le PDF du bulletin dès que l'envoi par SMS sera en service.",
+              "unavailable": "Rien n'est encore envoyé par SMS."
             }
-          }
+          },
+          "sms": "SMS"
         },
         "summary": {
           "selected": "{count, plural, =0 {Aucun élève sélectionné} one {# élève sélectionné} other {# élèves sélectionnés}}",
-          "emailable": "{count, plural, one {# peut recevoir un e-mail} other {# peuvent recevoir un e-mail}}",
-          "noEmail": "{count, plural, one {# sans e-mail de parent} other {# sans e-mail de parent}}"
+          "reach": "{channel} : {count} sur {total}"
         },
         "hint": {
           "noChannel": "Choisissez au moins un canal.",
-          "whatsappOnly": "L'envoi par WhatsApp arrive bientôt — activez l'e-mail pour envoyer.",
           "noSelection": "Cochez les bulletins publiés à envoyer.",
-          "noneReachable": "Aucun des élèves sélectionnés n'a d'e-mail de parent."
+          "noneReachable": "Aucun des élèves sélectionnés n'est joignable par {channels}.",
+          "onlyUnavailable": "L'envoi par {channels} arrive bientôt — activez un autre canal pour envoyer."
         },
         "sendButton": "{count, plural, =0 {Envoyer} other {Envoyer (#)}}",
         "confirm": {
           "title": "Envoyer les résultats aux parents ?",
           "body": "{count, plural, one {# bulletin publié sélectionné.} other {# bulletins publiés sélectionnés.}}",
           "send": "Envoyer",
-          "emailLive": "{count, plural, one {# bulletin sera envoyé par e-mail.} other {# bulletins seront envoyés par e-mail.}}",
-          "emailRecorded": "{count, plural, one {# envoi sera enregistré} other {# envois seront enregistrés}} — envoyés dès que le module Parents sera en service.",
           "noEmail": "{count, plural, one {# ignoré (pas d'e-mail de parent).} other {# ignorés (pas d'e-mail de parent).}}",
-          "whatsappSoon": "Bientôt disponible — rien n'est encore envoyé par WhatsApp.",
-          "whatsappLive": "{count, plural, one {# bulletin sera envoyé sur WhatsApp.} other {# bulletins seront envoyés sur WhatsApp.}}",
-          "noNumber": "{count, plural, one {# ignoré (pas de numéro WhatsApp).} other {# ignorés (pas de numéro WhatsApp).}}"
+          "live": {
+            "file": "{count, plural, one {# bulletin sera envoyé en fichier PDF.} other {# bulletins seront envoyés en fichiers PDF.}}",
+            "link": "{count, plural, one {# parent recevra par SMS le lien vers le PDF du bulletin.} other {# parents recevront par SMS le lien vers le PDF du bulletin.}}"
+          },
+          "recorded": {
+            "file": "{count, plural, one {# envoi sera enregistré} other {# envois seront enregistrés}} — le PDF partira dès que l'envoi sera en service.",
+            "link": "{count, plural, one {# SMS sera enregistré} other {# SMS seront enregistrés}} — le lien PDF partira dès que l'envoi sera en service."
+          },
+          "noPhone": "{count, plural, one {# ignoré (pas de numéro de téléphone).} other {# ignorés (pas de numéro de téléphone).}}",
+          "soon": "Bientôt disponible — rien n'est encore envoyé par {channel}.",
+          "carriesNote": "L'e-mail et WhatsApp envoient le fichier PDF du bulletin. Un SMS ne pouvant pas contenir de fichier, il envoie un lien vers le PDF."
         },
         "toast": {
-          "emailed": "{count, plural, one {# bulletin envoyé par e-mail.} other {# bulletins envoyés par e-mail.}}",
-          "recorded": "{count, plural, one {# envoi par e-mail enregistré.} other {# envois par e-mail enregistrés.}}",
-          "skipped": "{count, plural, one {# ignoré — pas d'e-mail de parent.} other {# ignorés — pas d'e-mail de parent.}}"
+          "recorded": "{channel} : {count, plural, one {# enregistré} other {# enregistrés}}",
+          "sent": "{channel} : {count, plural, one {# envoyé} other {# envoyés}}",
+          "skippedEmail": "{count, plural, one {# ignoré (pas d'e-mail de parent)} other {# ignorés (pas d'e-mail de parent)}}",
+          "skippedPhone": "{count, plural, one {# ignoré (pas de numéro de téléphone)} other {# ignorés (pas de numéro de téléphone)}}"
+        },
+        "carries": {
+          "file": "Fichier PDF",
+          "link": "Lien PDF"
         }
       },
       "traits": {

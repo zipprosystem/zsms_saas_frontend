@@ -39,6 +39,7 @@ import {
   type SendRecipient,
   type SendRecipients,
   type SendResult,
+  type SentVia,
 } from "@/lib/exam/reportProgression/sendToParentApi";
 import { seedParentContact } from "@/lib/exam/mock/parentContactsMock";
 import { examIndex } from "@/lib/exam/mock/examListMock";
@@ -69,7 +70,7 @@ import {
  * state is stored here (its own localStorage side-store).
  *
  * Stage 4 (Send Result to Parent, sendToParentApi.ts): the same scoped
- * rows + mock parent contacts (parentContactsMock.ts); an email send is
+ * rows + mock parent contacts (parentContactsMock.ts); an email / SMS send is
  * RECORDED in a send-log side-store (Parent module pending), WhatsApp is
  * a no-op.
  */
@@ -700,15 +701,22 @@ async function putStudentTraitEntry(studentId: string, payload: unknown): Promis
 // ---------------------------------------------------------------------------
 
 /**
- * Channel dispatch while the Parent module isn't built: email sends are
- * RECORDED (the log below), WhatsApp is framework only. The real backend
- * reports "live" for email once the Parent module's dispatch lands.
+ * Channel dispatch while the Parent module isn't built: email and SMS
+ * sends are RECORDED (the log below; the SMS config exists in Settings,
+ * the dispatch doesn't), WhatsApp is framework only (per-school API not
+ * built). The real backend reports "live" per channel once it dispatches.
  */
-const MOCK_CHANNELS: Record<SendChannel, ChannelDispatch> = { email: "recorded", whatsapp: "unavailable" };
+const MOCK_CHANNELS: Record<SendChannel, ChannelDispatch> = { email: "recorded", whatsapp: "unavailable", sms: "recorded" };
 
 const SEND_LOG_KEY = "zsms.mockExam.reportProgression.sendLog.v1";
 
-type StoredSend = { at: string; by: string | null; email_to: string };
+/** `email_to` alone = an entry written before SMS existed (email only). */
+type StoredSend = { at: string; by: string | null; via?: Partial<Record<SendChannel, SentVia>>; email_to?: string };
+
+function storedVia(entry: StoredSend): Partial<Record<SendChannel, SentVia>> {
+  if (entry.via) return entry.via;
+  return entry.email_to ? { email: { to: entry.email_to, outcome: "recorded" } } : {};
+}
 
 let sendLogCache: Record<string, StoredSend> | null = null;
 
@@ -729,7 +737,7 @@ function recipientOf(row: ProgressionStudent, termId: string, point: Progression
     published: row.published ? { at: row.published.at } : null,
     can_manage: row.can_manage,
     contact: seedParentContact(row.student_id, row.student_name),
-    last_sent: logged ? { at: logged.at, by: actor(logged.by), email_to: logged.email_to, email: "recorded" } : null,
+    last_sent: logged ? { at: logged.at, by: actor(logged.by), via: storedVia(logged) } : null,
   };
 }
 
@@ -762,7 +770,7 @@ async function postSend(payload: unknown): Promise<WireResponse> {
   const ids = Array.isArray(body.student_ids) ? body.student_ids.filter((id): id is string => typeof id === "string") : [];
   if (ids.length === 0) return fail(422, "VALIDATION_ERROR", "student_ids: pick at least one student");
   const channels = Array.isArray(body.channels) ? Array.from(new Set(body.channels.filter(isSendChannel))) : [];
-  if (channels.length === 0) return fail(422, "VALIDATION_ERROR", "channels: pick email and / or whatsapp");
+  if (channels.length === 0) return fail(422, "VALIDATION_ERROR", "channels: pick at least one of email, whatsapp, sms");
 
   // Same scope + rows as the class view; every student must be on one of them.
   const wanted = new Set(ids);
@@ -785,14 +793,22 @@ async function postSend(payload: unknown): Promise<WireResponse> {
   const log = { ...loadSendLog() };
   const items: SendOutcome[] = rows.map((row) => {
     const contact = seedParentContact(row.student_id, row.student_name);
-    let email: SendOutcome["email"] = null;
-    if (channels.includes("email")) {
-      email = contact.email ? "recorded" : "no_email";
-      // Parent module pending: record the intent instead of dispatching.
-      if (contact.email) log[publicationKey(termId, point, row.student_id)] = { at: now, by, email_to: contact.email };
-    }
-    const whatsapp: SendOutcome["whatsapp"] = channels.includes("whatsapp") ? (contact.whatsapp ? "unavailable" : "no_number") : null;
-    return { student_id: row.student_id, email, whatsapp };
+    // Dispatch pending: a "recorded" channel records the intent (who / when / where) instead of sending.
+    const via: Partial<Record<SendChannel, SentVia>> = {};
+    const outcome = (channel: SendChannel, to: string | null) => {
+      if (!channels.includes(channel)) return null;
+      if (!to) return channel === "email" ? "no_email" : "no_number";
+      const dispatch = MOCK_CHANNELS[channel];
+      if (dispatch === "unavailable") return "unavailable";
+      // SMS carries the report's PDF link (backend-composed text), email / WhatsApp the file.
+      via[channel] = { to, outcome: dispatch === "live" ? "queued" : "recorded" };
+      return via[channel].outcome;
+    };
+    const email = outcome("email", contact.email) as SendOutcome["email"];
+    const whatsapp = outcome("whatsapp", contact.phone) as SendOutcome["whatsapp"];
+    const sms = outcome("sms", contact.phone) as SendOutcome["sms"];
+    if (Object.keys(via).length > 0) log[publicationKey(termId, point, row.student_id)] = { at: now, by, via };
+    return { student_id: row.student_id, email, whatsapp, sms };
   });
   sendLogCache = log;
   writeStore(SEND_LOG_KEY, log);

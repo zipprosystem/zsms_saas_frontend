@@ -13,13 +13,16 @@ import { reportProgressionClassHref } from "@/components/exam/examTabsConfig";
 import { reportProgressionQueryKeys, type ProgressionPoint } from "@/lib/exam/reportProgression/reportProgressionApi";
 import {
   blockedReason,
+  channelCarries,
   getSendRecipients,
+  isSendable,
   reachable,
   SEND_CHANNELS,
   sendResultsToParents,
   sendToParentQueryKeys,
   type ChannelDispatch,
   type SendChannel,
+  type SendOutcome,
   type SendRecipient,
 } from "@/lib/exam/reportProgression/sendToParentApi";
 import { SearchBox, StudentAvatar, useCanSee } from "@/components/exam/reportProgression/progressionShared";
@@ -30,13 +33,16 @@ const TD = "px-3 py-3 align-middle";
 /**
  * Report Progression › Send Result to Parent (Stage 4; no Figma frame —
  * built from the brief). The class's students for the term + point (the
- * class view's scope), each with the parent's email and WhatsApp number.
- * Only published reports on rows the caller manages can be ticked. The
- * Email / WhatsApp channels apply to the whole send; a row missing a
- * contact is skipped for that channel. What each channel actually does
- * comes from the backend (sendToParentApi.ts): email is "recorded" until
- * the Parent module lands; WhatsApp is framework only ("coming soon").
+ * class view's scope), each with the parent's email and phone (the phone
+ * serves WhatsApp and SMS). Only published reports on rows the caller
+ * manages can be ticked. The Email / WhatsApp / SMS channels apply to the
+ * whole send; a row missing a contact is skipped for that channel. Email
+ * and WhatsApp carry the PDF file, SMS a link to it. What each channel
+ * actually does comes from the backend (sendToParentApi.ts): email and SMS
+ * are "recorded" until dispatch lands; WhatsApp is framework only.
  */
+
+const DEFAULT_DISPATCH: Record<SendChannel, ChannelDispatch> = { email: "recorded", whatsapp: "unavailable", sms: "recorded" };
 export function SendToParentScreen({ classId, term, point }: { classId: string; term: string; point: ProgressionPoint }) {
   const t = useTranslations();
   const k = (key: string, values?: Record<string, string | number>) => t(`exam.reportProgression.send.${key}`, values);
@@ -62,7 +68,9 @@ export function SendToParentScreen({ classId, term, point }: { classId: string; 
   });
   const data = query.data?.ok ? query.data.data : null;
   const termId = data?.term_id ?? term;
-  const dispatch: Record<SendChannel, ChannelDispatch> = data?.channels ?? { email: "recorded", whatsapp: "unavailable" };
+  const dispatch: Record<SendChannel, ChannelDispatch> = { ...DEFAULT_DISPATCH, ...data?.channels };
+  const channelName = (channel: SendChannel) => k(`channels.${channel}`);
+  const channelList = (list: SendChannel[]) => format.list(list.map(channelName), { type: "conjunction" });
 
   const needle = search.trim().toLowerCase();
   const rows = useMemo(
@@ -72,7 +80,7 @@ export function SendToParentScreen({ classId, term, point }: { classId: string; 
         .filter(
           ({ row }) =>
             !needle ||
-            [row.student_name, row.admission_no, row.arm_name, row.contact.name ?? "", row.contact.email ?? ""].some((text) => text.toLowerCase().includes(needle)),
+            [row.student_name, row.admission_no, row.arm_name, row.contact.name ?? "", row.contact.email ?? "", row.contact.phone ?? ""].some((text) => text.toLowerCase().includes(needle)),
         ),
     [data, needle],
   );
@@ -84,10 +92,15 @@ export function SendToParentScreen({ classId, term, point }: { classId: string; 
         showToast(failureMessage(result, t) ?? p("toast.failed"), "error");
         return;
       }
-      const emailed = result.data.items.filter((item) => item.email === "queued" || item.email === "recorded").length;
-      const skipped = result.data.items.filter((item) => item.email === "no_email").length;
-      const key = result.data.channels.email === "live" ? "toast.emailed" : "toast.recorded";
-      showToast([k(key, { count: emailed }), skipped > 0 ? k("toast.skipped", { count: skipped }) : null].filter(Boolean).join(" "));
+      // One line per requested channel that does something: "Email: 8 recorded, 2 skipped (no parent email)."
+      const lines = SEND_CHANNELS.filter((channel) => channels.has(channel) && isSendable(result.data.channels[channel] ?? "unavailable")).map((channel) => {
+        const outcomes = result.data.items.map((item: SendOutcome) => item[channel]);
+        const done = outcomes.filter((outcome) => outcome === "queued" || outcome === "recorded").length;
+        const skipped = outcomes.filter((outcome) => outcome === "no_email" || outcome === "no_number").length;
+        const doneText = k(result.data.channels[channel] === "live" ? "toast.sent" : "toast.recorded", { channel: channelName(channel), count: done });
+        return `${doneText}${skipped > 0 ? `, ${k(channel === "email" ? "toast.skippedEmail" : "toast.skippedPhone", { count: skipped })}` : ""}.`;
+      });
+      showToast(lines.join(" "));
       setSelected(new Set());
       setConfirming(false);
       void queryClient.invalidateQueries({ queryKey: reportProgressionQueryKeys.all });
@@ -117,18 +130,19 @@ export function SendToParentScreen({ classId, term, point }: { classId: string; 
   const allTicked = selectable.length > 0 && selectable.every((row) => selected.has(row.student_id));
   const publishedCount = (data?.items ?? []).filter((row) => !blockedReason(row)).length;
 
-  const wantsEmail = channels.has("email");
-  const wantsWhatsapp = channels.has("whatsapp");
-  const emailable = wantsEmail ? ticked.filter((row) => reachable(row, "email")) : [];
-  const noEmail = wantsEmail ? ticked.length - emailable.length : 0;
-  const noNumber = wantsWhatsapp ? ticked.filter((row) => !reachable(row, "whatsapp")).length : 0;
+  // Derived per channel: which are on, which of those actually do something, how many ticked rows each reaches.
+  const active = SEND_CHANNELS.filter((channel) => channels.has(channel));
+  const sendable = active.filter((channel) => isSendable(dispatch[channel]));
+  const reach = (channel: SendChannel) => ticked.filter((row) => reachable(row, channel)).length;
+  const phoneChannelsOn = active.filter((channel) => channel !== "email");
+  const recordedChannels = SEND_CHANNELS.filter((channel) => dispatch[channel] === "recorded");
 
-  // WhatsApp is a no-op this delivery, so a send only does something by email.
+  // Send is blocked only when no channel that does something is on (or nothing it can reach is ticked).
   let sendHint: string | null = null;
-  if (channels.size === 0) sendHint = k("hint.noChannel");
-  else if (!wantsEmail) sendHint = k("hint.whatsappOnly");
+  if (active.length === 0) sendHint = k("hint.noChannel");
+  else if (sendable.length === 0) sendHint = k("hint.onlyUnavailable", { channels: channelList(active) });
   else if (ticked.length === 0) sendHint = k("hint.noSelection");
-  else if (emailable.length === 0) sendHint = k("hint.noneReachable");
+  else if (sendable.every((channel) => reach(channel) === 0)) sendHint = k("hint.noneReachable", { channels: channelList(sendable) });
   const canSubmit = !sendHint && !mutation.isPending;
 
   const toggleChannel = (channel: SendChannel, on: boolean) =>
@@ -172,7 +186,7 @@ export function SendToParentScreen({ classId, term, point }: { classId: string; 
               <th className={TH}>{p("columns.arm")}</th>
               <th className={TH}>{k("columns.parent")}</th>
               <th className={TH}>{k("columns.email")}</th>
-              <th className={TH}>{k("columns.whatsapp")}</th>
+              <th className={TH}>{k("columns.phone")}</th>
               <th className={TH}>{k("columns.report")}</th>
               <th className={TH}>{k("columns.lastSent")}</th>
             </tr>
@@ -218,10 +232,14 @@ export function SendToParentScreen({ classId, term, point }: { classId: string; 
                     </span>
                   </td>
                   <td className={TD}>
-                    <ContactCell value={row.contact.email} missing={k("missing.email")} dimmed={!wantsEmail} />
+                    <ContactCell value={row.contact.email} missing={k("missing.email")} dimmed={!channels.has("email")} />
                   </td>
                   <td className={TD}>
-                    <ContactCell value={row.contact.whatsapp} missing={k("missing.whatsapp")} dimmed={!wantsWhatsapp} />
+                    <ContactCell
+                      value={row.contact.phone}
+                      missing={phoneChannelsOn.length > 0 ? k("missing.phoneFor", { channels: channelList(phoneChannelsOn) }) : k("missing.phone")}
+                      dimmed={phoneChannelsOn.length === 0}
+                    />
                   </td>
                   <td className={TD}>
                     <ReportStatus row={row} />
@@ -231,7 +249,10 @@ export function SendToParentScreen({ classId, term, point }: { classId: string; 
                       <span className="flex flex-col whitespace-nowrap">
                         <span className="text-text-primary">{format.dateTime(new Date(row.last_sent.at), { dateStyle: "medium", timeStyle: "short" })}</span>
                         <span className="text-xs text-text-muted">
-                          {k(`lastSent.${row.last_sent.email}`)}
+                          {SEND_CHANNELS.flatMap((channel) => {
+                            const via = row.last_sent?.via[channel];
+                            return via ? [k(`lastSent.${via.outcome}`, { channel: channelName(channel) })] : [];
+                          }).join(" · ")}
                           {row.last_sent.by ? ` · ${row.last_sent.by.name ?? p("activity.byAdmin")}` : ""}
                         </span>
                       </span>
@@ -258,12 +279,12 @@ export function SendToParentScreen({ classId, term, point }: { classId: string; 
 
       <MockActingAsPicker value={actingAs} onChange={setActingAs} />
 
-      {dispatch.email === "recorded" ? <Notice tone="warning">{k("emailRecordedNotice")}</Notice> : null}
+      {recordedChannels.length > 0 ? <Notice tone="warning">{k("recordedNotice", { channels: channelList(recordedChannels) })}</Notice> : null}
       {data && data.items.length > 0 && publishedCount === 0 ? <Notice>{k("nonePublished")}</Notice> : null}
 
       <fieldset className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
         <legend className="px-1 text-sm font-semibold text-text-primary">{k("channels.title")}</legend>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {SEND_CHANNELS.map((channel) => (
             <ChannelOption key={channel} channel={channel} dispatch={dispatch[channel]} checked={channels.has(channel)} onChange={(on) => toggleChannel(channel, on)} />
           ))}
@@ -278,10 +299,9 @@ export function SendToParentScreen({ classId, term, point }: { classId: string; 
         <div className="sticky bottom-0 flex flex-col gap-3 border-t border-border bg-background py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-0.5 text-sm">
             <span className="text-text-primary">{k("summary.selected", { count: ticked.length })}</span>
-            {ticked.length > 0 && wantsEmail ? (
+            {ticked.length > 0 && sendable.length > 0 ? (
               <span className="text-xs text-text-secondary">
-                {k("summary.emailable", { count: emailable.length })}
-                {noEmail > 0 ? ` · ${k("summary.noEmail", { count: noEmail })}` : ""}
+                {sendable.map((channel) => k("summary.reach", { channel: channelName(channel), count: reach(channel), total: ticked.length })).join(" · ")}
               </span>
             ) : null}
             {sendHint ? <span className="text-xs text-text-muted">{sendHint}</span> : null}
@@ -307,23 +327,27 @@ export function SendToParentScreen({ classId, term, point }: { classId: string; 
         onConfirm={() => mutation.mutate(ticked.map((row) => row.student_id))}
       >
         <ul className="flex flex-col gap-2 rounded-md border border-border p-3 text-sm">
-          <li className="flex flex-col gap-0.5">
-            <span className="font-medium text-text-primary">{k("channels.email")}</span>
-            <span className="text-xs text-text-secondary">
-              {k(dispatch.email === "live" ? "confirm.emailLive" : "confirm.emailRecorded", { count: emailable.length })}
-              {noEmail > 0 ? ` ${k("confirm.noEmail", { count: noEmail })}` : ""}
-            </span>
-          </li>
-          {wantsWhatsapp ? (
-            <li className="flex flex-col gap-0.5">
-              <span className="font-medium text-text-primary">{k("channels.whatsapp")}</span>
-              <span className="text-xs text-text-secondary">
-                {dispatch.whatsapp === "unavailable" ? k("confirm.whatsappSoon") : k("confirm.whatsappLive", { count: ticked.length - noNumber })}
-                {dispatch.whatsapp !== "unavailable" && noNumber > 0 ? ` ${k("confirm.noNumber", { count: noNumber })}` : ""}
-              </span>
-            </li>
-          ) : null}
+          {active.map((channel) => {
+            const count = reach(channel);
+            const missing = ticked.length - count;
+            const state = dispatch[channel];
+            return (
+              <li key={channel} className="flex flex-col gap-0.5">
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium text-text-primary">{channelName(channel)}</span>
+                  <CarriesBadge channel={channel} />
+                </span>
+                <span className="text-xs text-text-secondary">
+                  {state === "unavailable"
+                    ? k("confirm.soon", { channel: channelName(channel) })
+                    : k(`confirm.${state}.${channelCarries(channel)}`, { count })}
+                  {state !== "unavailable" && missing > 0 ? ` ${k(channel === "email" ? "confirm.noEmail" : "confirm.noPhone", { count: missing })}` : ""}
+                </span>
+              </li>
+            );
+          })}
         </ul>
+        <p className="text-xs text-text-muted">{k("confirm.carriesNote")}</p>
       </ConfirmDialog>
     </div>
   );
@@ -341,6 +365,7 @@ function ChannelOption({ channel, dispatch, checked, onChange }: { channel: Send
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="flex flex-wrap items-center gap-2 text-sm font-medium text-text-primary">
           {t(channel)}
+          <CarriesBadge channel={channel} />
           {dispatch === "unavailable" ? (
             <span className="rounded-full bg-category-amber-tint px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-primary">{t("soon")}</span>
           ) : null}
@@ -348,6 +373,14 @@ function ChannelOption({ channel, dispatch, checked, onChange }: { channel: Send
         <span className="text-xs text-text-muted">{t(`help.${channel}.${dispatch}`)}</span>
       </span>
     </label>
+  );
+}
+
+/** What the channel sends: the PDF file (Email / WhatsApp) or a link to it (SMS). */
+function CarriesBadge({ channel }: { channel: SendChannel }) {
+  const t = useTranslations("exam.reportProgression.send.carries");
+  return (
+    <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-secondary">{t(channelCarries(channel))}</span>
   );
 }
 
