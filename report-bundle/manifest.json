@@ -1,0 +1,149 @@
+{
+  "name": "zsms-report-templates",
+  "version": "1.0.0",
+  "content_sha256": "4c011866823857b39e4efc356a6c9b7db9dfc6b0ed3e10501b5325c68e44c3b6",
+  "source": "zsms_saas_frontend — public/template-previews/ (rebuilt by scripts/report-bundle/build.mjs; never edit the bundle by hand)",
+  "injection": {
+    "report": "window.__ZSMS_REPORT__",
+    "page": "window.__ZSMS_PAGE__",
+    "labels": "window.__ZSMS_LABELS__",
+    "contract": "contract/report-payload.ts"
+  },
+  "templates": [
+    {
+      "template_key": "nigerian_terminal",
+      "name": "Nigerian Terminal Report",
+      "file": "templates/result-template-nigerian.html",
+      "sha256": "64a59747cac668304021067c9219392474ad1117f7cd38790f212c26b93f50b2",
+      "bytes": 294862,
+      "pages": {
+        "full": 1,
+        "progress": 1
+      },
+      "page_sizes": [
+        "A4 portrait"
+      ],
+      "fonts": [
+        "Libre Baskerville 400-700",
+        "IBM Plex Sans 400-600"
+      ]
+    },
+    {
+      "template_key": "british_progress",
+      "name": "British Progress Report",
+      "file": "templates/result-template-british.html",
+      "sha256": "a4b33e237bcf78e711e0f7f203bf14daa8fe157cb33bcb38015a4cc014c918f8",
+      "bytes": 292063,
+      "pages": {
+        "full": 4,
+        "progress": 2
+      },
+      "page_sizes": [
+        "A4 landscape",
+        "A4 portrait"
+      ],
+      "fonts": [
+        "Mulish 400-800",
+        "IBM Plex Sans 400-600"
+      ]
+    },
+    {
+      "template_key": "modern_generic",
+      "name": "Modern Generic Report",
+      "file": "templates/result-template-modern.html",
+      "sha256": "8782d45970d63dd413d474d149a29a66e5f7c6f9f8f2f8640ea2c0acf3264a27",
+      "bytes": 392046,
+      "pages": {
+        "full": 1,
+        "progress": 1
+      },
+      "page_sizes": [],
+      "fonts": [
+        "Fraunces 500-700",
+        "IBM Plex Sans 400-600"
+      ]
+    },
+    {
+      "template_key": "nigerian_primary",
+      "name": "Primary Terminal Report",
+      "file": "templates/result-template-primary.html",
+      "sha256": "092e055e17075637119928c24a0964cdf6192ce6570157c711cbde630bdf4945",
+      "bytes": 277688,
+      "pages": {
+        "full": 1,
+        "progress": 1
+      },
+      "page_sizes": [
+        "A4 portrait"
+      ],
+      "fonts": [
+        "IBM Plex Sans 400-700",
+        "Libre Franklin 600-800"
+      ]
+    },
+    {
+      "template_key": "lela_blossom",
+      "name": "LeLa Blossom Report",
+      "file": "templates/result-template-lela.html",
+      "sha256": "85d3d6f2817bda533c99b7be42b4c7304a231e217ca560f713f4dc0efa9da1a5",
+      "bytes": 295130,
+      "pages": {
+        "full": 2,
+        "progress": 2
+      },
+      "page_sizes": [
+        "A4 portrait"
+      ],
+      "fonts": [
+        "IBM Plex Sans 400-700",
+        "Playfair Display 700-800"
+      ]
+    },
+    {
+      "template_key": "white_pearl",
+      "name": "White Pearl Report",
+      "file": "templates/result-template-whitepearl.html",
+      "sha256": "23d20a3fced3794ed3c8b2a35f0f1c8ee0ac7ebaa4b404df38d50251897060a4",
+      "bytes": 303810,
+      "pages": {
+        "full": 1,
+        "progress": 1
+      },
+      "page_sizes": [
+        "A4 portrait"
+      ],
+      "fonts": [
+        "Archivo 600-800",
+        "IBM Plex Sans 400-700"
+      ]
+    }
+  ],
+  "files": {
+    "contract/report-payload.ts": "62acc11741b01d41e31c0bd94fba96860b52715c8b63536a8347ba2c7830d2b6",
+    "licenses/OFL-archivo.txt": "108b4e57c9c796d3d38d0428ca7ee39de47ad93187302718d9b2d8864b9b716b",
+    "licenses/OFL-fraunces.txt": "bdf4c22802eaf804f998195871c6b8938aac2ac14b2d78a8bd66a6f1eced833b",
+    "licenses/OFL-ibm-plex-sans.txt": "7e6b2818edbd8f6a01ae80641cc8f16a51080d08fb4e532be3a0b6f74adb07da",
+    "licenses/OFL-libre-baskerville.txt": "3624eddd4c8f8a908130a417ae7cd089c9da69899c4e0ca1a5217d0a6fae16fd",
+    "licenses/OFL-libre-franklin.txt": "2710268527181a27b8e938617551bae29e714e6525247be6679bf897a9942a60",
+    "licenses/OFL-mulish.txt": "097e9ac414d9251c8580c073a13f8899798c66db746de60662148789ca693f19",
+    "licenses/OFL-noto-sans-math.txt": "403a95275b469061b7d4371c328e0ada3bc7d63328abe2e88aad5cd243b2fe21",
+    "licenses/OFL-noto-sans.txt": "cee9892f9f0cc8fe882c9e9537ee6a89621d86ee7ceaf70b02e2b2b1c25c061a",
+    "licenses/OFL-noto-serif.txt": "cee9892f9f0cc8fe882c9e9537ee6a89621d86ee7ceaf70b02e2b2b1c25c061a",
+    "licenses/OFL-playfair-display.txt": "566be814f8e96e93dfa16101331557eb6b5467e9e03f627c0910fe93ca12300e",
+    "samples/british-full-stress.json": "3eea04dc82ae7e2204b67bdf52e6963454206b549fb180b7260a84ff70437bd0",
+    "samples/british-progress-stress.json": "94022339be9b271420e5c513d98a0f977e8ed1de8a47d50b4f36199133685abd",
+    "samples/general-full-normal.json": "1a403bb0a50f161368b4cbb6c268e4d07db052eca05990fe413989fc2725bf9e",
+    "samples/general-full-stress.json": "fea01cbaeb9abd58683a3d1ca7136321c9f37c15b7764066a72c6d042a60bd6d",
+    "samples/general-progress-normal.json": "894f2c855c941c0390ef191613741d63159ba7a8e51de940be160c12c7ee4104",
+    "samples/general-progress-stress.json": "a304e69fd32e88d8c90c7e73a44f1dbd06ac90493064f3a22d3d99cbe6d427f6",
+    "samples/lela-full-stress.json": "abb64b361b65519a4937d3d10bd196fa7412eb1c9f10e452602ba24fa6305395",
+    "samples/lela-progress-stress.json": "74cda4ca452a94ed014caae0c53378a141eda835fb3a367771eb10f0178815d0",
+    "templates/result-template-british.html": "a4b33e237bcf78e711e0f7f203bf14daa8fe157cb33bcb38015a4cc014c918f8",
+    "templates/result-template-lela.html": "85d3d6f2817bda533c99b7be42b4c7304a231e217ca560f713f4dc0efa9da1a5",
+    "templates/result-template-modern.html": "8782d45970d63dd413d474d149a29a66e5f7c6f9f8f2f8640ea2c0acf3264a27",
+    "templates/result-template-nigerian.html": "64a59747cac668304021067c9219392474ad1117f7cd38790f212c26b93f50b2",
+    "templates/result-template-primary.html": "092e055e17075637119928c24a0964cdf6192ce6570157c711cbde630bdf4945",
+    "templates/result-template-whitepearl.html": "23d20a3fced3794ed3c8b2a35f0f1c8ee0ac7ebaa4b404df38d50251897060a4"
+  },
+  "fonts_license": "SIL Open Font License 1.1 — see licenses/"
+}

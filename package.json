@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "generate:location-data": "node scripts/generate-location-data.mjs"
+    "generate:location-data": "node scripts/generate-location-data.mjs",
+    "report-bundle": "node scripts/report-bundle/build.mjs",
+    "report-bundle:check": "node scripts/report-bundle/build.mjs --check"
   },
   "dependencies": {
     "@tanstack/react-query": "5.103.2",
