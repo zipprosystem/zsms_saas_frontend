@@ -9,7 +9,8 @@
     "lint": "next lint",
     "generate:location-data": "node scripts/generate-location-data.mjs",
     "report-bundle": "node scripts/report-bundle/build.mjs",
-    "report-bundle:check": "node scripts/report-bundle/build.mjs --check"
+    "report-bundle:check": "node scripts/report-bundle/build.mjs --check",
+    "report-bundle:package": "node --experimental-websocket scripts/report-bundle/package.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "5.103.2",

@@ -16,7 +16,11 @@
  *      from src/lib/exam/report/reportPayload.ts), sample payloads (stress +
  *      normal-class, from scripts/report-bundle/samples/), the font licences
  *      and manifest.json (version, template_key → file, page counts, sha256
- *      per file). README.md there is hand-written and not generated.
+ *      per file). README.md there is hand-written and not generated;
+ *   4. adds parity/PRINT-CONTRACT.md (the worker's print settings). The
+ *      parity reference PDFs + index.json are not committed: package.mjs
+ *      renders them from a release tag into that release's tarball only, and
+ *      checks them against this manifest's template and sample hashes.
  *
  *   npm run report-bundle                  rebuild; fails if anything changed
  *                                          without a version bump
@@ -27,25 +31,13 @@
  */
 import { createHash } from "node:crypto";
 import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { dirname, join, relative } from "node:path";
+import { BUNDLE, HERE, ROOT, SOURCE, TEMPLATES } from "./config.mjs";
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const SOURCE = join(ROOT, "public", "template-previews");
-const FONTS = join(ROOT, "scripts", "report-bundle", "fonts");
-const BUNDLE = join(ROOT, "report-bundle");
-const SAMPLES = join(ROOT, "scripts", "report-bundle", "samples");
+const FONTS = join(HERE, "fonts");
+const SAMPLES = join(HERE, "samples");
+const PRINT_CONTRACT = join(HERE, "PRINT-CONTRACT.md");
 const PAYLOAD_SOURCE = join(ROOT, "src", "lib", "exam", "report", "reportPayload.ts");
-
-/** The bundled templates, by backend template_key (src/lib/setup/assessmentConfiguration/resultTemplatesApi.ts). */
-const TEMPLATES = [
-  { template_key: "nigerian_terminal", name: "Nigerian Terminal Report", file: "result-template-nigerian.html" },
-  { template_key: "british_progress", name: "British Progress Report", file: "result-template-british.html" },
-  { template_key: "modern_generic", name: "Modern Generic Report", file: "result-template-modern.html" },
-  { template_key: "nigerian_primary", name: "Primary Terminal Report", file: "result-template-primary.html" },
-  { template_key: "lela_blossom", name: "LeLa Blossom Report", file: "result-template-lela.html" },
-  { template_key: "white_pearl", name: "White Pearl Report", file: "result-template-whitepearl.html" },
-];
 
 const args = process.argv.slice(2);
 const CHECK = args.includes("--check");
@@ -211,6 +203,9 @@ out.set("contract/report-payload.ts", contract);
 for (const file of (await readdir(SAMPLES)).filter((name) => name.endsWith(".json")).sort()) {
   out.set(`samples/${file}`, await readFile(join(SAMPLES, file), "utf8"));
 }
+// The reference PDFs + index.json join parity/ only in the release tarball (package.mjs).
+out.set("parity/PRINT-CONTRACT.md", await readFile(PRINT_CONTRACT, "utf8"));
+
 for (const file of (await readdir(FONTS)).filter((name) => name.startsWith("OFL-")).sort()) {
   out.set(`licenses/${file}`, await readFile(join(FONTS, file), "utf8"));
 }
@@ -253,13 +248,19 @@ const manifestJson = JSON.stringify(manifest, null, 2) + "\n";
 if (CHECK) {
   const stale = [];
   for (const [key, content] of [...out, ["manifest.json", manifestJson]]) {
-    const onDisk = await readFile(join(BUNDLE, key), "utf8").catch(() => null);
-    if (onDisk !== content) stale.push(key);
+    const onDisk = await readFile(join(BUNDLE, key)).catch(() => null);
+    if (!onDisk || sha256(onDisk) !== sha256(content)) stale.push(key);
   }
+  // Nothing else may sit in the bundle (e.g. parity PDFs — those belong only in a release tarball).
+  const extra = (await readdir(BUNDLE, { recursive: true, withFileTypes: true }))
+    .filter((entry) => entry.isFile())
+    .map((entry) => relative(BUNDLE, join(entry.parentPath ?? entry.path, entry.name)))
+    .filter((key) => !out.has(key) && !["manifest.json", "README.md"].includes(key));
+  if (extra.length) fail(`report-bundle/ has files a build doesn't make: ${extra.join(", ")}`);
   if (stale.length) fail(`report-bundle/ differs from a fresh build: ${stale.join(", ")}`);
   console.log(`report-bundle: v${version} is up to date (${entries.length} templates).`);
 } else {
-  for (const dir of ["templates", "contract", "samples", "licenses"]) await rm(join(BUNDLE, dir), { recursive: true, force: true });
+  for (const dir of ["templates", "contract", "samples", "parity", "licenses"]) await rm(join(BUNDLE, dir), { recursive: true, force: true });
   for (const [key, content] of out) {
     await mkdir(dirname(join(BUNDLE, key)), { recursive: true });
     await writeFile(join(BUNDLE, key), content);

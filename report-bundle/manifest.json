@@ -1,7 +1,7 @@
 {
   "name": "zsms-report-templates",
-  "version": "1.0.0",
-  "content_sha256": "4c011866823857b39e4efc356a6c9b7db9dfc6b0ed3e10501b5325c68e44c3b6",
+  "version": "1.0.1",
+  "content_sha256": "99416a701847a0c20420adf27228670a5028237f5f5a669dfcc9a033c0f41b23",
   "source": "zsms_saas_frontend — public/template-previews/ (rebuilt by scripts/report-bundle/build.mjs; never edit the bundle by hand)",
   "injection": {
     "report": "window.__ZSMS_REPORT__",
@@ -32,8 +32,8 @@
       "template_key": "british_progress",
       "name": "British Progress Report",
       "file": "templates/result-template-british.html",
-      "sha256": "a4b33e237bcf78e711e0f7f203bf14daa8fe157cb33bcb38015a4cc014c918f8",
-      "bytes": 292063,
+      "sha256": "d4eb36782e203c6e2e3795b96d828c89249b7c1a81211ea445128b1570c705bb",
+      "bytes": 293237,
       "pages": {
         "full": 4,
         "progress": 2
@@ -130,7 +130,10 @@
     "licenses/OFL-noto-sans.txt": "cee9892f9f0cc8fe882c9e9537ee6a89621d86ee7ceaf70b02e2b2b1c25c061a",
     "licenses/OFL-noto-serif.txt": "cee9892f9f0cc8fe882c9e9537ee6a89621d86ee7ceaf70b02e2b2b1c25c061a",
     "licenses/OFL-playfair-display.txt": "566be814f8e96e93dfa16101331557eb6b5467e9e03f627c0910fe93ca12300e",
+    "parity/PRINT-CONTRACT.md": "0d8047b7072c682a8d44fb50f9ebc06cfdcda79a09fa65d6c848430952dfd8e7",
+    "samples/british-full-normal.json": "704c6f8a02aaf900fcca7548c11ee69999983614d896908682bbd7f7d3f2bbec",
     "samples/british-full-stress.json": "3eea04dc82ae7e2204b67bdf52e6963454206b549fb180b7260a84ff70437bd0",
+    "samples/british-progress-normal.json": "61772e0b733cad5a7041d43dbc88a17532142ad83bb5eac7121f190656b8cc9c",
     "samples/british-progress-stress.json": "94022339be9b271420e5c513d98a0f977e8ed1de8a47d50b4f36199133685abd",
     "samples/general-full-normal.json": "1a403bb0a50f161368b4cbb6c268e4d07db052eca05990fe413989fc2725bf9e",
     "samples/general-full-stress.json": "fea01cbaeb9abd58683a3d1ca7136321c9f37c15b7764066a72c6d042a60bd6d",
@@ -138,7 +141,7 @@
     "samples/general-progress-stress.json": "a304e69fd32e88d8c90c7e73a44f1dbd06ac90493064f3a22d3d99cbe6d427f6",
     "samples/lela-full-stress.json": "abb64b361b65519a4937d3d10bd196fa7412eb1c9f10e452602ba24fa6305395",
     "samples/lela-progress-stress.json": "74cda4ca452a94ed014caae0c53378a141eda835fb3a367771eb10f0178815d0",
-    "templates/result-template-british.html": "a4b33e237bcf78e711e0f7f203bf14daa8fe157cb33bcb38015a4cc014c918f8",
+    "templates/result-template-british.html": "d4eb36782e203c6e2e3795b96d828c89249b7c1a81211ea445128b1570c705bb",
     "templates/result-template-lela.html": "85d3d6f2817bda533c99b7be42b4c7304a231e217ca560f713f4dc0efa9da1a5",
     "templates/result-template-modern.html": "8782d45970d63dd413d474d149a29a66e5f7c6f9f8f2f8640ea2c0acf3264a27",
     "templates/result-template-nigerian.html": "64a59747cac668304021067c9219392474ad1117f7cd38790f212c26b93f50b2",

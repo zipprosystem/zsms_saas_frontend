@@ -1,0 +1,1276 @@
+{
+ "meta": {
+  "template_id": "7d2f4c1e-1a0b-4c3d-9e8f-000000000002",
+  "variant": "progress",
+  "academic_year": {
+   "id": "y-2025",
+   "name": "2025/2026"
+  },
+  "term": {
+   "id": "y-2025-t3",
+   "name": "Third Term",
+   "number": 3,
+   "start_date": "2026-04-27",
+   "end_date": "2026-07-24"
+  },
+  "points": [
+   {
+    "label": "1A",
+    "kind": "progress",
+    "max": null,
+    "show_grade_book": true
+   },
+   {
+    "label": "1B",
+    "kind": "full",
+    "max": null,
+    "show_grade_book": true
+   },
+   {
+    "label": "2A",
+    "kind": "progress",
+    "max": null,
+    "show_grade_book": true
+   },
+   {
+    "label": "2B",
+    "kind": "full",
+    "max": null,
+    "show_grade_book": true
+   },
+   {
+    "label": "3A",
+    "kind": "progress",
+    "max": null,
+    "show_grade_book": true
+   },
+   {
+    "label": "3B",
+    "kind": "full",
+    "max": null,
+    "show_grade_book": true
+   }
+  ],
+  "current_point_index": 4,
+  "show_va": true,
+  "pages": 2,
+  "generated_at": "2026-11-16T00:00:00.000Z",
+  "scope": "full",
+  "assessment_mode": "grade_based",
+  "attainment_display": "weight"
+ },
+ "school": {
+  "name": "ZSMS Demo School",
+  "logo_url": null,
+  "address": "1 Example Road, Lagos",
+  "phone": "+234 800 000 0000",
+  "email": "info@zsms-demo.example",
+  "website": "https://www.zsms-demo.example",
+  "motto": "Learning for life",
+  "mission_statement": "We provide an excellent education that inspires every learner to lead, to serve and to excel in a global world."
+ },
+ "result_title": "Third Term Report",
+ "report_date": "2026-07-24",
+ "signatures": {
+  "head_teacher": null,
+  "principal": {
+   "name": "Dr A. T. Cole",
+   "signature_url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20108%2060%22%3E%3Cpath%20d%3D%22M8%2036%20Q20%2016%2032%2034%20T56%2022%20T80%2036%20T100%2024%22%20fill%3D%22none%22%20stroke%3D%22midnightblue%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E"
+  },
+  "class_teacher": {
+   "name": "Mr. Tèmítọ́pẹ́ Ìdòwú",
+   "signature_url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20108%2060%22%3E%3Cpath%20d%3D%22M8%2040%20Q20%2020%2032%2034%20T56%2022%20T80%2036%20T100%2024%22%20fill%3D%22none%22%20stroke%3D%22midnightblue%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E"
+  }
+ },
+ "student": {
+  "full_name": "Adebayo Ogunleye",
+  "admission_no": "ZS/2480",
+  "class": "Year 11",
+  "arm": "A",
+  "gender": "male",
+  "dob": "2010-07-28",
+  "photo_url": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2080%20100%22%3E%3Crect%20width%3D%2280%22%20height%3D%22100%22%20fill%3D%22hsl(318%2C45%25%2C55%25)%22%2F%3E%3Ctext%20x%3D%2240%22%20y%3D%2260%22%20font-family%3D%22Arial%2Csans-serif%22%20font-size%3D%2230%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3EAO%3C%2Ftext%3E%3C%2Fsvg%3E",
+  "resumption_date": "2026-09-07"
+ },
+ "attendance": {
+  "present": 108,
+  "absent": 4,
+  "total_days": 112,
+  "time_school_opened": 112
+ },
+ "subjects": [
+  {
+   "name": "Mathematics",
+   "teacher_name": "Adaeze Okafor",
+   "components": [
+    {
+     "label": "Engagement",
+     "score": "1",
+     "max": 4,
+     "kind": "rating"
+    },
+    {
+     "label": "Learning Behaviour",
+     "score": "2",
+     "max": 4,
+     "kind": "rating"
+    }
+   ],
+   "ca": null,
+   "exam": null,
+   "total": null,
+   "grade": null,
+   "grade_weight": null,
+   "gpa": null,
+   "remark": null,
+   "position": 1,
+   "cag": "7",
+   "mtg": "8",
+   "va": -1,
+   "comment": "Good progress this term; keep revising key topics regularly.",
+   "redacted": false,
+   "history": [
+    {
+     "label": "1A",
+     "attainment": "7",
+     "ratings": [
+      "1",
+      "2"
+     ],
+     "grade_book": 83
+    },
+    {
+     "label": "1B",
+     "attainment": "7",
+     "ratings": [
+      "2",
+      "2"
+     ],
+     "grade_book": 83
+    },
+    {
+     "label": "2A",
+     "attainment": "7",
+     "ratings": [
+      "2",
+      "2"
+     ],
+     "grade_book": 77
+    },
+    {
+     "label": "2B",
+     "attainment": "7",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 82
+    },
+    {
+     "label": "3A",
+     "attainment": "7",
+     "ratings": [
+      "1",
+      "2"
+     ],
+     "grade_book": 84
+    },
+    {
+     "label": "3B",
+     "attainment": null,
+     "ratings": [
+      null,
+      null
+     ],
+     "grade_book": null
+    }
+   ],
+   "units": null,
+   "class_highest": null,
+   "class_lowest": null,
+   "class_average": null,
+   "cumulative_average": null,
+   "earlier_terms": []
+  },
+  {
+   "name": "English Language",
+   "teacher_name": "Tunde Bello",
+   "components": [
+    {
+     "label": "Engagement",
+     "score": "1",
+     "max": 4,
+     "kind": "rating"
+    },
+    {
+     "label": "Learning Behaviour",
+     "score": "1",
+     "max": 4,
+     "kind": "rating"
+    }
+   ],
+   "ca": null,
+   "exam": null,
+   "total": null,
+   "grade": null,
+   "grade_weight": null,
+   "gpa": null,
+   "remark": null,
+   "position": 2,
+   "cag": "8",
+   "mtg": "8",
+   "va": 0,
+   "comment": "Good progress this term; keep revising key topics regularly.",
+   "redacted": false,
+   "history": [
+    {
+     "label": "1A",
+     "attainment": "9",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 90
+    },
+    {
+     "label": "1B",
+     "attainment": "9",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 92
+    },
+    {
+     "label": "2A",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 91
+    },
+    {
+     "label": "2B",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 88
+    },
+    {
+     "label": "3A",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 93
+    },
+    {
+     "label": "3B",
+     "attainment": null,
+     "ratings": [
+      null,
+      null
+     ],
+     "grade_book": null
+    }
+   ],
+   "units": null,
+   "class_highest": null,
+   "class_lowest": null,
+   "class_average": null,
+   "cumulative_average": null,
+   "earlier_terms": []
+  },
+  {
+   "name": "English Literature",
+   "teacher_name": "Grace Eze",
+   "components": [
+    {
+     "label": "Engagement",
+     "score": "1",
+     "max": 4,
+     "kind": "rating"
+    },
+    {
+     "label": "Learning Behaviour",
+     "score": "1",
+     "max": 4,
+     "kind": "rating"
+    }
+   ],
+   "ca": null,
+   "exam": null,
+   "total": null,
+   "grade": null,
+   "grade_weight": null,
+   "gpa": null,
+   "remark": null,
+   "position": 3,
+   "cag": "8",
+   "mtg": "8",
+   "va": 0,
+   "comment": "Good progress this term; keep revising key topics regularly.",
+   "redacted": false,
+   "history": [
+    {
+     "label": "1A",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 87
+    },
+    {
+     "label": "1B",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 91
+    },
+    {
+     "label": "2A",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 88
+    },
+    {
+     "label": "2B",
+     "attainment": "7",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 89
+    },
+    {
+     "label": "3A",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 83
+    },
+    {
+     "label": "3B",
+     "attainment": null,
+     "ratings": [
+      null,
+      null
+     ],
+     "grade_book": null
+    }
+   ],
+   "units": null,
+   "class_highest": null,
+   "class_lowest": null,
+   "class_average": null,
+   "cumulative_average": null,
+   "earlier_terms": []
+  },
+  {
+   "name": "Biology",
+   "teacher_name": "Adaeze Okafor",
+   "components": [
+    {
+     "label": "Engagement",
+     "score": "1",
+     "max": 4,
+     "kind": "rating"
+    },
+    {
+     "label": "Learning Behaviour",
+     "score": "2",
+     "max": 4,
+     "kind": "rating"
+    }
+   ],
+   "ca": null,
+   "exam": null,
+   "total": null,
+   "grade": null,
+   "grade_weight": null,
+   "gpa": null,
+   "remark": null,
+   "position": 4,
+   "cag": "7",
+   "mtg": "8",
+   "va": -1,
+   "comment": "Good progress this term; keep revising key topics regularly.",
+   "redacted": false,
+   "history": [
+    {
+     "label": "1A",
+     "attainment": "7",
+     "ratings": [
+      "1",
+      "2"
+     ],
+     "grade_book": 83
+    },
+    {
+     "label": "1B",
+     "attainment": "7",
+     "ratings": [
+      "2",
+      "2"
+     ],
+     "grade_book": 83
+    },
+    {
+     "label": "2A",
+     "attainment": "7",
+     "ratings": [
+      "2",
+      "2"
+     ],
+     "grade_book": 77
+    },
+    {
+     "label": "2B",
+     "attainment": "7",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 82
+    },
+    {
+     "label": "3A",
+     "attainment": "7",
+     "ratings": [
+      "1",
+      "2"
+     ],
+     "grade_book": 84
+    },
+    {
+     "label": "3B",
+     "attainment": null,
+     "ratings": [
+      null,
+      null
+     ],
+     "grade_book": null
+    }
+   ],
+   "units": null,
+   "class_highest": null,
+   "class_lowest": null,
+   "class_average": null,
+   "cumulative_average": null,
+   "earlier_terms": []
+  },
+  {
+   "name": "Chemistry",
+   "teacher_name": "Tunde Bello",
+   "components": [
+    {
+     "label": "Engagement",
+     "score": "1",
+     "max": 4,
+     "kind": "rating"
+    },
+    {
+     "label": "Learning Behaviour",
+     "score": "1",
+     "max": 4,
+     "kind": "rating"
+    }
+   ],
+   "ca": null,
+   "exam": null,
+   "total": null,
+   "grade": null,
+   "grade_weight": null,
+   "gpa": null,
+   "remark": null,
+   "position": 5,
+   "cag": "8",
+   "mtg": "8",
+   "va": 0,
+   "comment": "Good progress this term; keep revising key topics regularly.",
+   "redacted": false,
+   "history": [
+    {
+     "label": "1A",
+     "attainment": "9",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 90
+    },
+    {
+     "label": "1B",
+     "attainment": "9",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 92
+    },
+    {
+     "label": "2A",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 91
+    },
+    {
+     "label": "2B",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 88
+    },
+    {
+     "label": "3A",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 93
+    },
+    {
+     "label": "3B",
+     "attainment": null,
+     "ratings": [
+      null,
+      null
+     ],
+     "grade_book": null
+    }
+   ],
+   "units": null,
+   "class_highest": null,
+   "class_lowest": null,
+   "class_average": null,
+   "cumulative_average": null,
+   "earlier_terms": []
+  },
+  {
+   "name": "Physics",
+   "teacher_name": "Grace Eze",
+   "components": [
+    {
+     "label": "Engagement",
+     "score": "1",
+     "max": 4,
+     "kind": "rating"
+    },
+    {
+     "label": "Learning Behaviour",
+     "score": "1",
+     "max": 4,
+     "kind": "rating"
+    }
+   ],
+   "ca": null,
+   "exam": null,
+   "total": null,
+   "grade": null,
+   "grade_weight": null,
+   "gpa": null,
+   "remark": null,
+   "position": 6,
+   "cag": "8",
+   "mtg": "8",
+   "va": 0,
+   "comment": "Good progress this term; keep revising key topics regularly.",
+   "redacted": false,
+   "history": [
+    {
+     "label": "1A",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 87
+    },
+    {
+     "label": "1B",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 91
+    },
+    {
+     "label": "2A",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 88
+    },
+    {
+     "label": "2B",
+     "attainment": "7",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 89
+    },
+    {
+     "label": "3A",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 83
+    },
+    {
+     "label": "3B",
+     "attainment": null,
+     "ratings": [
+      null,
+      null
+     ],
+     "grade_book": null
+    }
+   ],
+   "units": null,
+   "class_highest": null,
+   "class_lowest": null,
+   "class_average": null,
+   "cumulative_average": null,
+   "earlier_terms": []
+  },
+  {
+   "name": "Further Pure Mathematics",
+   "teacher_name": "Adaeze Okafor",
+   "components": [
+    {
+     "label": "Engagement",
+     "score": "1",
+     "max": 4,
+     "kind": "rating"
+    },
+    {
+     "label": "Learning Behaviour",
+     "score": "2",
+     "max": 4,
+     "kind": "rating"
+    }
+   ],
+   "ca": null,
+   "exam": null,
+   "total": null,
+   "grade": null,
+   "grade_weight": null,
+   "gpa": null,
+   "remark": null,
+   "position": 7,
+   "cag": "7",
+   "mtg": "8",
+   "va": -1,
+   "comment": "Good progress this term; keep revising key topics regularly.",
+   "redacted": false,
+   "history": [
+    {
+     "label": "1A",
+     "attainment": "7",
+     "ratings": [
+      "1",
+      "2"
+     ],
+     "grade_book": 83
+    },
+    {
+     "label": "1B",
+     "attainment": "7",
+     "ratings": [
+      "2",
+      "2"
+     ],
+     "grade_book": 83
+    },
+    {
+     "label": "2A",
+     "attainment": "7",
+     "ratings": [
+      "2",
+      "2"
+     ],
+     "grade_book": 77
+    },
+    {
+     "label": "2B",
+     "attainment": "7",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 82
+    },
+    {
+     "label": "3A",
+     "attainment": "7",
+     "ratings": [
+      "1",
+      "2"
+     ],
+     "grade_book": 84
+    },
+    {
+     "label": "3B",
+     "attainment": null,
+     "ratings": [
+      null,
+      null
+     ],
+     "grade_book": null
+    }
+   ],
+   "units": null,
+   "class_highest": null,
+   "class_lowest": null,
+   "class_average": null,
+   "cumulative_average": null,
+   "earlier_terms": []
+  },
+  {
+   "name": "Computer Science",
+   "teacher_name": "Tunde Bello",
+   "components": [
+    {
+     "label": "Engagement",
+     "score": "1",
+     "max": 4,
+     "kind": "rating"
+    },
+    {
+     "label": "Learning Behaviour",
+     "score": "1",
+     "max": 4,
+     "kind": "rating"
+    }
+   ],
+   "ca": null,
+   "exam": null,
+   "total": null,
+   "grade": null,
+   "grade_weight": null,
+   "gpa": null,
+   "remark": null,
+   "position": 8,
+   "cag": "8",
+   "mtg": "8",
+   "va": 0,
+   "comment": "Good progress this term; keep revising key topics regularly.",
+   "redacted": false,
+   "history": [
+    {
+     "label": "1A",
+     "attainment": "9",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 90
+    },
+    {
+     "label": "1B",
+     "attainment": "9",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 92
+    },
+    {
+     "label": "2A",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 91
+    },
+    {
+     "label": "2B",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 88
+    },
+    {
+     "label": "3A",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 93
+    },
+    {
+     "label": "3B",
+     "attainment": null,
+     "ratings": [
+      null,
+      null
+     ],
+     "grade_book": null
+    }
+   ],
+   "units": null,
+   "class_highest": null,
+   "class_lowest": null,
+   "class_average": null,
+   "cumulative_average": null,
+   "earlier_terms": []
+  },
+  {
+   "name": "Geography",
+   "teacher_name": "Grace Eze",
+   "components": [
+    {
+     "label": "Engagement",
+     "score": "1",
+     "max": 4,
+     "kind": "rating"
+    },
+    {
+     "label": "Learning Behaviour",
+     "score": "1",
+     "max": 4,
+     "kind": "rating"
+    }
+   ],
+   "ca": null,
+   "exam": null,
+   "total": null,
+   "grade": null,
+   "grade_weight": null,
+   "gpa": null,
+   "remark": null,
+   "position": 9,
+   "cag": "8",
+   "mtg": "8",
+   "va": 0,
+   "comment": "Good progress this term; keep revising key topics regularly.",
+   "redacted": false,
+   "history": [
+    {
+     "label": "1A",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 87
+    },
+    {
+     "label": "1B",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 91
+    },
+    {
+     "label": "2A",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 88
+    },
+    {
+     "label": "2B",
+     "attainment": "7",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 89
+    },
+    {
+     "label": "3A",
+     "attainment": "8",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 83
+    },
+    {
+     "label": "3B",
+     "attainment": null,
+     "ratings": [
+      null,
+      null
+     ],
+     "grade_book": null
+    }
+   ],
+   "units": null,
+   "class_highest": null,
+   "class_lowest": null,
+   "class_average": null,
+   "cumulative_average": null,
+   "earlier_terms": []
+  },
+  {
+   "name": "History",
+   "teacher_name": "Adaeze Okafor",
+   "components": [
+    {
+     "label": "Engagement",
+     "score": "1",
+     "max": 4,
+     "kind": "rating"
+    },
+    {
+     "label": "Learning Behaviour",
+     "score": "2",
+     "max": 4,
+     "kind": "rating"
+    }
+   ],
+   "ca": null,
+   "exam": null,
+   "total": null,
+   "grade": null,
+   "grade_weight": null,
+   "gpa": null,
+   "remark": null,
+   "position": 10,
+   "cag": "7",
+   "mtg": "8",
+   "va": -1,
+   "comment": "Good progress this term; keep revising key topics regularly.",
+   "redacted": false,
+   "history": [
+    {
+     "label": "1A",
+     "attainment": "7",
+     "ratings": [
+      "1",
+      "2"
+     ],
+     "grade_book": 83
+    },
+    {
+     "label": "1B",
+     "attainment": "7",
+     "ratings": [
+      "2",
+      "2"
+     ],
+     "grade_book": 83
+    },
+    {
+     "label": "2A",
+     "attainment": "7",
+     "ratings": [
+      "2",
+      "2"
+     ],
+     "grade_book": 77
+    },
+    {
+     "label": "2B",
+     "attainment": "7",
+     "ratings": [
+      "1",
+      "1"
+     ],
+     "grade_book": 82
+    },
+    {
+     "label": "3A",
+     "attainment": "7",
+     "ratings": [
+      "1",
+      "2"
+     ],
+     "grade_book": 84
+    },
+    {
+     "label": "3B",
+     "attainment": null,
+     "ratings": [
+      null,
+      null
+     ],
+     "grade_book": null
+    }
+   ],
+   "units": null,
+   "class_highest": null,
+   "class_lowest": null,
+   "class_average": null,
+   "cumulative_average": null,
+   "earlier_terms": []
+  }
+ ],
+ "aggregate": {
+  "grand_total": null,
+  "average": null,
+  "overall_grade": null,
+  "class_position": null,
+  "gpa": null,
+  "cumulative_average": null,
+  "out_of": 38,
+  "subjects_counted": 11,
+  "marks_obtainable": null,
+  "class_average": null,
+  "earlier_terms": [],
+  "va_average": -0.33
+ },
+ "traits": {
+  "psychomotor": [
+   {
+    "skill": "Games",
+    "rating": "1",
+    "descriptor": null
+   },
+   {
+    "skill": "Handling of tools",
+    "rating": "2",
+    "descriptor": null
+   },
+   {
+    "skill": "Handwriting",
+    "rating": "3",
+    "descriptor": null
+   },
+   {
+    "skill": "Sport",
+    "rating": "4",
+    "descriptor": null
+   },
+   {
+    "skill": "Verbal fluency",
+    "rating": "1",
+    "descriptor": null
+   }
+  ],
+  "affective": [
+   {
+    "skill": "Attentiveness",
+    "rating": "1",
+    "descriptor": null
+   },
+   {
+    "skill": "Attitude to school work",
+    "rating": "2",
+    "descriptor": null
+   },
+   {
+    "skill": "Relationship with others",
+    "rating": "3",
+    "descriptor": null
+   },
+   {
+    "skill": "Neatness",
+    "rating": "4",
+    "descriptor": null
+   },
+   {
+    "skill": "Punctuality",
+    "rating": "1",
+    "descriptor": null
+   }
+  ],
+  "engagement": {
+   "rating": "1",
+   "descriptor": null
+  },
+  "learning_behaviour": {
+   "rating": "2",
+   "descriptor": null
+  },
+  "boarding": {
+   "rating": "1",
+   "comment": "Settled and responsible."
+  },
+  "form_tutor_comment": null,
+  "comment_grades": {
+   "form_tutor": [
+    null,
+    "2",
+    null,
+    "4",
+    null,
+    null
+   ],
+   "boarding_house": [
+    "1",
+    null,
+    "3",
+    null,
+    "1",
+    null
+   ]
+  },
+  "rating_key": [
+   {
+    "rating": "1",
+    "descriptor": "Excellent",
+    "descriptors": {
+     "engagement": "Innovative, curious and self-regulating; seeks challenge and argues from evidence.",
+     "learning_behaviour": "Plans and refines independently; thinks abstractly; resilient and focused.",
+     "boarding": "A role model; community-minded and resilient; valuable contributor to house life."
+    }
+   },
+   {
+    "rating": "2",
+    "descriptor": "Good",
+    "descriptors": {
+     "engagement": "High-standard work; open-minded; uses ICT productively and meets targets.",
+     "learning_behaviour": "Collaborative; self-corrects; punctual and well equipped.",
+     "boarding": "Positive, punctual contributor; empathetic and community-minded."
+    }
+   },
+   {
+    "rating": "3",
+    "descriptor": "Requires improvement",
+    "descriptors": {
+     "engagement": "Substandard or incomplete work; limited curiosity.",
+     "learning_behaviour": "Lesson time not used well; loses focus and distracts peers.",
+     "boarding": "Untidy; punctuality and organisation need improvement."
+    }
+   },
+   {
+    "rating": "4",
+    "descriptor": "Cause for concern",
+    "descriptors": {
+     "engagement": "Work not completed; disengaged; does not respond to feedback.",
+     "learning_behaviour": "Misses objectives; closed mindset; disrupts lessons.",
+     "boarding": "Below house expectations; poor organisation; unhelpful."
+    }
+   }
+  ]
+ },
+ "remarks": {
+  "class_teacher": "Oluwadámilọ́lá has had a genuinely remarkable term. She approaches every lesson with curiosity and a quiet determination that sets a fine example for her classmates. Her written work in English and Français has matured noticeably, and her contributions to group projects show real leadership. To reach the very top grades she should now check her calculations more carefully under timed conditions and keep reading widely beyond the syllabus — well done, and keep it up!",
+  "head_teacher": "An excellent and well-rounded report. The school is proud of Oluwadámilọ́lá’s progress, her conduct and her service as a class prefect. Aim even higher next term: consistency in Mathematics and the sciences will open every door. Félicitations!",
+  "form_tutor": {
+   "name": "Tunde Bello",
+   "comment": "A positive and hard-working term. Keep it up."
+  },
+  "boarding_house": {
+   "name": "Rowan House",
+   "comment": "A tidy, considerate boarder."
+  }
+ },
+ "grade_key": [
+  {
+   "grade": "9",
+   "min": 90,
+   "max": 100,
+   "remark": "9",
+   "show_on_report": true,
+   "gpa": null,
+   "weight": 9
+  },
+  {
+   "grade": "8",
+   "min": 80,
+   "max": 89.99,
+   "remark": "8",
+   "show_on_report": true,
+   "gpa": null,
+   "weight": 8
+  },
+  {
+   "grade": "7",
+   "min": 70,
+   "max": 79.99,
+   "remark": "7",
+   "show_on_report": true,
+   "gpa": null,
+   "weight": 7
+  },
+  {
+   "grade": "6",
+   "min": 60,
+   "max": 69.99,
+   "remark": "6",
+   "show_on_report": true,
+   "gpa": null,
+   "weight": 6
+  },
+  {
+   "grade": "5",
+   "min": 50,
+   "max": 59.99,
+   "remark": "5",
+   "show_on_report": true,
+   "gpa": null,
+   "weight": 5
+  },
+  {
+   "grade": "4",
+   "min": 40,
+   "max": 49.99,
+   "remark": "4",
+   "show_on_report": true,
+   "gpa": null,
+   "weight": 4
+  },
+  {
+   "grade": "3",
+   "min": 30,
+   "max": 39.99,
+   "remark": "3",
+   "show_on_report": true,
+   "gpa": null,
+   "weight": 3
+  },
+  {
+   "grade": "2",
+   "min": 20,
+   "max": 29.99,
+   "remark": "2",
+   "show_on_report": true,
+   "gpa": null,
+   "weight": 2
+  },
+  {
+   "grade": "1",
+   "min": 10,
+   "max": 19.99,
+   "remark": "1",
+   "show_on_report": true,
+   "gpa": null,
+   "weight": 1
+  },
+  {
+   "grade": "U",
+   "min": 0,
+   "max": 9.99,
+   "remark": "U",
+   "show_on_report": true,
+   "gpa": null,
+   "weight": 0
+  }
+ ]
+}

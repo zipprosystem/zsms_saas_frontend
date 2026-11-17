@@ -17,6 +17,7 @@ is rebuilt from them by `scripts/report-bundle/build.mjs`.
 | `templates/*.html` | The six templates: `nigerian_terminal`, `british_progress`, `modern_generic`, `nigerian_primary`, `lela_blossom`, `white_pearl` |
 | `contract/report-payload.ts` | The payload type (`window.__ZSMS_REPORT__`), generated from the frontend's `reportPayload.ts` |
 | `samples/*.json` | Test payloads: stress (14 subjects, long accented text, extra CA column) and normal-class, General / LeLa / British, Full and Progress |
+| `parity/` | `PRINT-CONTRACT.md` (the exact print settings). **In a release tarball only:** the reference PDFs, one per sample × template it applies to, and `index.json` (page count, page sizes and the template, sample and PDF sha256 of each reference). A worker's output for the same inputs must match these. |
 | `licenses/` | SIL Open Font License for every embedded font |
 
 ## Rendering a report
@@ -35,7 +36,7 @@ is rebuilt from them by `scripts/report-bundle/build.mjs`.
    …template file contents…
    ```
 
-   When inlining the payload JSON, escape `<` as `<` and U+2028 / U+2029,
+   When inlining the payload JSON, escape `<` as `\u003c` and U+2028 / U+2029,
    so no value can close the script tag.
    - `data-theme="light"` is required. A report is a print artifact, so it renders as printed whatever the theme.
    - Without `__ZSMS_REPORT__` a template shows its built-in sample data (the catalog preview).
@@ -44,15 +45,18 @@ is rebuilt from them by `scripts/report-bundle/build.mjs`.
    templates need nothing else.
 4. **Wait for fonts**: `await page.evaluate(() => document.fonts.ready)`
    before printing.
-5. **Print**:
-   `page.pdf({ printBackground: true, preferCSSPageSize: true, format: "A4" })`.
+5. **Print** with the settings in `parity/PRINT-CONTRACT.md`:
+   `page.pdf({ printBackground: true, preferCSSPageSize: true, scale: 1, format: "A4", margin: { top: "0.4in", right: "0.4in", bottom: "0.4in", left: "0.4in" } })`.
    - `preferCSSPageSize` is required. The templates declare their `@page` size, and the British card mixes portrait pages (cover, subject comments) with landscape pages (results grid, descriptors) through a named page.
-   - `format: "A4"` is only the fallback for a template without `@page` (currently `modern_generic`; see Known limits).
+   - A4 and the 0.4in margins are only fallbacks for a template without `@page` (currently `modern_generic`); a template's own `@page` size and margins always win.
 
 **Page count.** The payload's `meta.pages` matches the template's
 `<meta name="zsms-report-pages">` (and `zsms-report-pages-progress` where
-Progress differs, e.g. British Full 4 / Progress 2). Long content (many subjects,
-long comments) flows onto further sheets.
+Progress differs, e.g. British Full 4 / Progress 2). That's the count for normal
+content. Long content (many subjects, long comments) flows onto further sheets, and
+the parity references in the release tarball show exactly how. British Full keeps the cover to one page
+and splits only between subject cards, and when the results page overflows, the
+descriptors share the overflow page.
 
 **File name.** The app names a download
 `studentname_arm_term_point_session` (`reportFileName` in `reportSrcDoc.ts`).
@@ -103,13 +107,30 @@ npm run report-bundle -- --bump patch   # rebuild + bump (patch | minor | major)
 npm run report-bundle:check             # verify only; fails on drift
 ```
 
-The build fails if a template references anything external, or if the bundle
-changed without a version bump. How the bundle reaches the backend is still to
+Then, after committing and tagging `report-bundle-v<version>`, make the release
+tarball from the tag:
+
+```sh
+REPORT_CHROME=/path/to/chrome-headless-shell npm run report-bundle:package -- report-bundle-v<version> --out <folder>
+```
+
+The parity PDFs aren't committed. The package step renders them from the
+tagged bundle into the tarball. It fails unless the tagged bundle equals a
+fresh build of the tagged source, every file matches `manifest.json`, and
+every reference was rendered from the manifest's template and sample hashes.
+So a tarball's `parity/index.json` always describes the PDFs it ships.
+`manifest.json` lists the committed files only, not the PDFs or `index.json`.
+
+The build fails if a template references anything external, if the bundle
+changed without a version bump, or (in `--check`) if `report-bundle/` holds a
+file the build doesn't make. How the bundle reaches the backend is still to
 be agreed with the backend team.
 
 ## Known limits
 
-- `modern_generic` has no `@page` rule and little print CSS: pass A4 (as above).
-  It prints over several sheets.
+- `modern_generic` has no `@page` rule and little print CSS, so it relies on the
+  contract's A4 and 0.4in fallbacks. It prints over several sheets.
+- `british_progress` Full caps the cover's mission statement at 16 lines (about
+  900 characters) so the cover stays one page.
 - `nigerian_terminal` Full fits one A4 page up to about 11 subjects (3 CA
   columns, 9-band grade key). More subjects continue on a second page.
