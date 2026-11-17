@@ -27,6 +27,17 @@ export const PARITY_FAMILIES = [
 ];
 
 /**
+ * The Chrome build the parity references are rendered with — the same build as
+ * the backend's PDF worker. Page breaks can shift between Chrome versions, so
+ * parity.mjs refuses any other build.
+ */
+export const CHROME = {
+  product: "chrome-headless-shell",
+  version: "156.0.8078.79",
+  install: "npx @puppeteer/browsers install chrome-headless-shell@156.0.8078.79",
+};
+
+/**
  * The print contract (PRINT-CONTRACT.md): the Page.printToPDF / Puppeteer
  * page.pdf settings a worker must use. Sizes in inches, as both APIs take them.
  * Page size and margins only apply to a template without its own @page rule —

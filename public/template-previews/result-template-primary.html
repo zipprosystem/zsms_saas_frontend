@@ -173,6 +173,31 @@
     body{background:#fff;padding:0;}
     .controls,.hint{display:none !important;}
     .sheet{width:auto;min-height:auto;margin:0;border:0;box-shadow:none;padding:7mm;}
+    /* One A4 page: tighter vertical spacing (print only). Fits 14 subjects with long comments and a
+       3-line name; with short comments, about 20. */
+    .sheet{padding:6mm 7mm;}
+    .head{padding:6px 10px;}
+    .rtitle{margin-top:5px;padding:3px 10px;}
+    .bio,.subjects{margin-top:5px;}
+    .bio .cell{padding:4px 10px;}
+    .subjects thead th{padding:5px 8px;}
+    .subjects tbody td{padding:2.5px 8px;}
+    .lower,.term,.scale,.comments,.signs{margin-top:6px;}
+    .box h3{padding:4px 9px;}
+    .kv{padding:3px 9px;}
+    .gd td,.gd th{padding:3px 7px;}
+    .term th,.term td{padding:3.5px 9px;}
+    .scale .lab,.scale .b{padding:4px 4px;}
+    .scale .lab{padding:4px 12px;}
+    .comments .cl,.comments .cv{padding:4px 10px;}
+    .sign{padding:5px 10px;}
+    .sign .sg{height:30px;}
+    .sign .sg img{height:28px;}
+    /* Longer still: a second page that keeps the sheet's margins; never split a row or box, and the
+       comments carry the signatures with them. */
+    .sheet{-webkit-box-decoration-break:clone;box-decoration-break:clone;}
+    .subjects tr,.box,.term,.scale,.comments,.signs{break-inside:avoid;}
+    .comments{break-after:avoid;}
   }
 </style>
 </head>
@@ -247,8 +272,8 @@
         <div class="kv"><span class="k">School Days</span><span class="v">112</span></div>
         <div class="kv"><span class="k">Days Attended</span><span class="v">110</span></div>
         <div class="kv"><span class="k">Days Absent</span><span class="v">2</span></div>
-        <div class="kv"><span class="k">School Opened</span><span class="v">2025-09-14</span></div>
-        <div class="kv"><span class="k">School Close</span><span class="v">2025-12-19</span></div>
+        <div class="kv"><span class="k">School Opened</span><span class="v">14/09/2025</span></div>
+        <div class="kv"><span class="k">School Close</span><span class="v">19/12/2025</span></div>
       </div>
       <div class="box">
         <h3>Grade Distribution</h3>
@@ -281,7 +306,7 @@
     <div class="comments">
       <div class="cr"><div class="cl">Teacher's Comment</div><div class="cv" id="cTeacher">Sample remark — a strong term overall.</div></div>
       <div class="cr"><div class="cl">Head Teacher's Comment</div><div class="cv" id="cHead">Sample remark — a good result.</div></div>
-      <div class="cr"><div class="cl">Next Resumption Date</div><div class="cv">2026-01-12</div></div>
+      <div class="cr"><div class="cl">Next Resumption Date</div><div class="cv">12/01/2026</div></div>
     </div>
 
     <div class="signs" id="signs">
@@ -305,7 +330,8 @@
   function zTxt(v){return v==null||v===""?"—":zEsc(v);}
   function zNum(v,dp){if(v==null||typeof v!=="number"||!isFinite(v))return "—";return dp==null?String(Math.round(v*100)/100):v.toFixed(dp);}
   function zOrd(n){if(n==null)return "—";var s=["th","st","nd","rd"],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}
-  function zDate(iso){if(!iso)return "—";var p=String(iso).split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:zEsc(iso);}
+  /* YYYY-MM-DD → DD/MM/YYYY (plain text — escape at the call site). */
+  function zDate(iso){if(!iso)return "—";var p=String(iso).split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:String(iso);}
   function zMax(v){return v==null?"":zNum(v%1>=0.9?Math.floor(v):v);}
   function zRange(b){return b.min==null?"":zNum(b.min)+"–"+zMax(b.max);}
   function zKey(){return (Z.grade_key||[]).filter(function(b){return b.show_on_report;});}
@@ -315,14 +341,17 @@
   function zComp(s,kind,i){var c=(s.components||[]).filter(function(x){return x.kind===kind;})[i];return c?c.score:null;}
   function zImg(url,fallback){return url?'<img src="'+zEsc(url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':fallback;}
   var L=window.__ZSMS_LABELS__||{};function zL(k,fb){return L[k]||fb;}
-  /* Signature blocks (spec Phase 1b): Class Teacher, Head Teacher, Principal — each only when
-     signed (signature_url set); report_date printed in each block. Nothing at all → the area hides. */
+  /* Signature blocks (spec Phase 1b): Class Teacher, Head Teacher, Principal — one per assigned signer.
+     With a signature image it's printed on the line; without one, the name sits under a blank line to
+     sign by hand (wet signature). Unassigned (null) → no block. report_date printed in each block;
+     nothing at all → the area hides. */
   function zSigns(el){
     var g=Z.signatures||{}, d=Z.report_date?zDate(Z.report_date):"";
     var dt=d?'<div class="dt">'+zEsc(zL("sigDate","Date"))+': <b>'+zEsc(d)+"</b></div>":"";
     var rows=[["class_teacher","sigClassTeacher","Class Teacher"],["head_teacher","sigHeadTeacher","Head Teacher"],["principal","sigPrincipal","Principal"]];
-    var h=rows.filter(function(r){var x=g[r[0]];return x&&x.signature_url;}).map(function(r){var x=g[r[0]];
-      return '<div class="sign"><div class="rl">'+zEsc(zL(r[1],r[2]))+'</div><div class="sg"><img src="'+zEsc(x.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+" — "+(x.name||""))+'"></div><div class="sn">'+zEsc(x.name)+"</div>"+dt+"</div>";});
+    var h=rows.filter(function(r){var x=g[r[0]];return x&&(x.signature_url||x.name);}).map(function(r){var x=g[r[0]];
+      var img=x.signature_url?'<img src="'+zEsc(x.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+" — "+(x.name||""))+'">':"";
+      return '<div class="sign"><div class="rl">'+zEsc(zL(r[1],r[2]))+'</div><div class="sg">'+img+'</div><div class="sn">'+zEsc(x.name)+"</div>"+dt+"</div>";});
     if(!h.length&&d) h=['<div class="sign">'+dt+"</div>"];
     el.innerHTML=h.join("");
     el.style.display=h.length?"":"none";
@@ -363,7 +392,7 @@
       body.innerHTML=Z.subjects.map(function(s){return "<tr"+zRow(s)+'><td class="sub">'+zEsc(String(s.name).toUpperCase())+'</td><td class="num">'+zNum(s.ca,2)+
         '</td><td class="num">'+zNum(s.total,2)+'</td><td class="grade">'+zTxt(s.grade)+'</td><td class="rem">'+zTxt(s.remark&&String(s.remark).toUpperCase())+"</td></tr>";}).join("");
     } else {
-      head.innerHTML='<tr><th class="sub">Subject</th><th>Test<br>('+zNum(caP&&caP.max)+")</th><th>Exam<br>("+zNum(exP&&exP.max)+")</th><th>Total<br>(100)</th><th>Grade</th><th>Remarks</th></tr>";
+      head.innerHTML='<tr><th class="sub">Subject</th><th>CA<br>('+zNum(caP&&caP.max)+")</th><th>Exam<br>("+zNum(exP&&exP.max)+")</th><th>Total<br>(100)</th><th>Grade</th><th>Remarks</th></tr>";
       body.innerHTML=Z.subjects.map(function(s){return "<tr"+zRow(s)+'><td class="sub">'+zEsc(String(s.name).toUpperCase())+'</td><td class="num">'+zNum(s.ca)+
         '</td><td class="num">'+zNum(s.exam,2)+'</td><td class="num">'+zNum(s.total,2)+'</td><td class="grade">'+zTxt(s.grade)+'</td><td class="rem">'+zTxt(s.remark&&String(s.remark).toUpperCase())+"</td></tr>";}).join("");
     }
@@ -373,7 +402,7 @@
     boxes[0].innerHTML="<h3>Term Performance Summary</h3>"+kv("No of Subjects",zNum(ag.subjects_counted))+kv("Marks Obtainable",zNum(ag.marks_obtainable))+
       kv("Marks Obtained",zNum(ag.grand_total))+kv("No In Class",zNum(ag.out_of))+kv("Overall Grade",zTxt(ag.overall_grade),"color:var(--accent)");
     boxes[1].innerHTML="<h3>Attendance Table</h3>"+kv("School Days",zNum(at.total_days))+kv("Days Attended",zNum(at.present))+kv("Days Absent",zNum(at.absent))+
-      kv("School Opened",zTxt(Z.meta.term.start_date))+kv("School Close",zTxt(Z.meta.term.end_date));
+      kv("School Opened",zEsc(zDate(Z.meta.term.start_date)))+kv("School Close",zEsc(zDate(Z.meta.term.end_date)));
     // A tally of the grades shown above (a count of rows, not a computed result).
     var tally={}, shown=0;
     Z.subjects.forEach(function(s){if(s.grade){tally[s.grade]=(tally[s.grade]||0)+1;shown++;}});
@@ -396,7 +425,7 @@
     document.querySelector(".scale").innerHTML='<div class="lab">Grade Scale</div>'+zKey().map(function(b){return '<div class="b">'+zEsc(b.grade)+"&nbsp;&nbsp;"+zRange(b).replace("–"," – ")+"</div>";}).join("");
     document.getElementById("cTeacher").textContent=Z.remarks.class_teacher||"—";
     document.getElementById("cHead").textContent=Z.remarks.head_teacher||"—";
-    document.querySelectorAll(".comments .cr .cv")[2].textContent=Z.student.resumption_date||"—";
+    document.querySelectorAll(".comments .cr .cv")[2].textContent=zDate(Z.student.resumption_date);
     zSigns(document.getElementById("signs"));
   }
 
@@ -447,7 +476,7 @@
       }).join("");
     } else {
       head.innerHTML =
-        '<tr><th class="sub">Subject</th><th>Test<br>(40)</th><th>Exam<br>(60)</th><th>Total<br>(100)</th><th>Grade</th><th>Remarks</th></tr>';
+        '<tr><th class="sub">Subject</th><th>CA<br>(40)</th><th>Exam<br>(60)</th><th>Total<br>(100)</th><th>Grade</th><th>Remarks</th></tr>';
       body.innerHTML = SUBJECTS.map(function(r){
         return '<tr><td class="sub">'+r[0]+'</td>'+
                '<td class="num">'+r[3]+'</td>'+

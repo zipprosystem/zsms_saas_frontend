@@ -14,14 +14,15 @@
  * PDF, and the sha256 of the template, sample and PDF each entry belongs to).
  *
  * Fails on any network request, script error or glyph drawn from a system
- * font (everything must come from the template's embedded fonts).
+ * font (everything must come from the template's embedded fonts), and on any
+ * Chrome build other than config.mjs CHROME (the worker's).
  */
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { PARITY_FAMILIES, PRINT } from "./config.mjs";
+import { CHROME, PARITY_FAMILIES, PRINT } from "./config.mjs";
 
 const sha256 = (data) => createHash("sha256").update(data).digest("hex");
 
@@ -122,6 +123,11 @@ export async function renderParity(bundleDir, chromeBinary) {
   const out = join(bundleDir, "parity");
   const samples = (await readdir(join(bundleDir, "samples"))).filter((name) => name.endsWith(".json")).sort();
   const { chrome, profile, port, version } = await startChrome(chromeBinary);
+  if (!version.endsWith(`/${CHROME.version}`)) {
+    chrome.kill("SIGKILL");
+    await rm(profile, { recursive: true, force: true });
+    throw new Error(`REPORT_CHROME is ${version}; the references are pinned to ${CHROME.product} ${CHROME.version} (${CHROME.install})`);
+  }
   const entries = [];
   const problems = [];
   try {
@@ -150,7 +156,7 @@ export async function renderParity(bundleDir, chromeBinary) {
     await rm(profile, { recursive: true, force: true });
   }
   if (problems.length) throw new Error(`not offline / self-contained:\n  ${problems.join("\n  ")}`);
-  const index = { bundle_version: manifest.version, chrome: version, print: PRINT, references: entries };
+  const index = { bundle_version: manifest.version, chrome: version, chrome_build: `${CHROME.product} ${CHROME.version} linux64`, print: PRINT, references: entries };
   await writeFile(join(out, "index.json"), JSON.stringify(index, null, 2) + "\n");
   return index;
 }

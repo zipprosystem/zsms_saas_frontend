@@ -1,7 +1,7 @@
 {
   "name": "zsms-report-templates",
-  "version": "1.0.1",
-  "content_sha256": "99416a701847a0c20420adf27228670a5028237f5f5a669dfcc9a033c0f41b23",
+  "version": "1.0.2",
+  "content_sha256": "179fb0aa6d4a7e4f43dc5e36d2a5a4c5c8eda773f6dedeb3ee8054fd9cd09012",
   "source": "zsms_saas_frontend — public/template-previews/ (rebuilt by scripts/report-bundle/build.mjs; never edit the bundle by hand)",
   "injection": {
     "report": "window.__ZSMS_REPORT__",
@@ -51,13 +51,15 @@
       "template_key": "modern_generic",
       "name": "Modern Generic Report",
       "file": "templates/result-template-modern.html",
-      "sha256": "8782d45970d63dd413d474d149a29a66e5f7c6f9f8f2f8640ea2c0acf3264a27",
-      "bytes": 392046,
+      "sha256": "e69c966e196338b15972df170a58ce00448e5eb335d108340c32263f7afd9171",
+      "bytes": 392254,
       "pages": {
         "full": 1,
         "progress": 1
       },
-      "page_sizes": [],
+      "page_sizes": [
+        "A4 portrait"
+      ],
       "fonts": [
         "Fraunces 500-700",
         "IBM Plex Sans 400-600"
@@ -67,8 +69,8 @@
       "template_key": "nigerian_primary",
       "name": "Primary Terminal Report",
       "file": "templates/result-template-primary.html",
-      "sha256": "092e055e17075637119928c24a0964cdf6192ce6570157c711cbde630bdf4945",
-      "bytes": 277688,
+      "sha256": "c3e5059604753afd50e2e9f2abce271990a4862c4d99d566de27d43e26a8f389",
+      "bytes": 279140,
       "pages": {
         "full": 1,
         "progress": 1
@@ -85,8 +87,8 @@
       "template_key": "lela_blossom",
       "name": "LeLa Blossom Report",
       "file": "templates/result-template-lela.html",
-      "sha256": "85d3d6f2817bda533c99b7be42b4c7304a231e217ca560f713f4dc0efa9da1a5",
-      "bytes": 295130,
+      "sha256": "f71e7b204439560656ed38cb2c66eb27c55c4ce3a59651736c6bc9151cba0d8c",
+      "bytes": 295455,
       "pages": {
         "full": 2,
         "progress": 2
@@ -119,7 +121,7 @@
     }
   ],
   "files": {
-    "contract/report-payload.ts": "62acc11741b01d41e31c0bd94fba96860b52715c8b63536a8347ba2c7830d2b6",
+    "contract/report-payload.ts": "3e04bcbc5bc60acda5fcdc2c0d09d414dcab793fc42ff57b02a5af86ed963abd",
     "licenses/OFL-archivo.txt": "108b4e57c9c796d3d38d0428ca7ee39de47ad93187302718d9b2d8864b9b716b",
     "licenses/OFL-fraunces.txt": "bdf4c22802eaf804f998195871c6b8938aac2ac14b2d78a8bd66a6f1eced833b",
     "licenses/OFL-ibm-plex-sans.txt": "7e6b2818edbd8f6a01ae80641cc8f16a51080d08fb4e532be3a0b6f74adb07da",
@@ -130,22 +132,23 @@
     "licenses/OFL-noto-sans.txt": "cee9892f9f0cc8fe882c9e9537ee6a89621d86ee7ceaf70b02e2b2b1c25c061a",
     "licenses/OFL-noto-serif.txt": "cee9892f9f0cc8fe882c9e9537ee6a89621d86ee7ceaf70b02e2b2b1c25c061a",
     "licenses/OFL-playfair-display.txt": "566be814f8e96e93dfa16101331557eb6b5467e9e03f627c0910fe93ca12300e",
-    "parity/PRINT-CONTRACT.md": "0d8047b7072c682a8d44fb50f9ebc06cfdcda79a09fa65d6c848430952dfd8e7",
+    "parity/PRINT-CONTRACT.md": "15eb0b735b32b99686b4b5b9b3138dffaabe151123649bbbb1cba30c5ace5b67",
+    "samples/british-full-heavy.json": "0999465d6953e6e52b2346d461e8fcf658ac8a49dc8d74f09aa0214f76a80407",
     "samples/british-full-normal.json": "704c6f8a02aaf900fcca7548c11ee69999983614d896908682bbd7f7d3f2bbec",
     "samples/british-full-stress.json": "3eea04dc82ae7e2204b67bdf52e6963454206b549fb180b7260a84ff70437bd0",
     "samples/british-progress-normal.json": "61772e0b733cad5a7041d43dbc88a17532142ad83bb5eac7121f190656b8cc9c",
     "samples/british-progress-stress.json": "94022339be9b271420e5c513d98a0f977e8ed1de8a47d50b4f36199133685abd",
-    "samples/general-full-normal.json": "1a403bb0a50f161368b4cbb6c268e4d07db052eca05990fe413989fc2725bf9e",
+    "samples/general-full-normal.json": "f3f7e064fc549b2197742fc0d0d9125b5be05c504fec057c91358feaa9f88bc9",
     "samples/general-full-stress.json": "fea01cbaeb9abd58683a3d1ca7136321c9f37c15b7764066a72c6d042a60bd6d",
     "samples/general-progress-normal.json": "894f2c855c941c0390ef191613741d63159ba7a8e51de940be160c12c7ee4104",
     "samples/general-progress-stress.json": "a304e69fd32e88d8c90c7e73a44f1dbd06ac90493064f3a22d3d99cbe6d427f6",
     "samples/lela-full-stress.json": "abb64b361b65519a4937d3d10bd196fa7412eb1c9f10e452602ba24fa6305395",
     "samples/lela-progress-stress.json": "74cda4ca452a94ed014caae0c53378a141eda835fb3a367771eb10f0178815d0",
     "templates/result-template-british.html": "d4eb36782e203c6e2e3795b96d828c89249b7c1a81211ea445128b1570c705bb",
-    "templates/result-template-lela.html": "85d3d6f2817bda533c99b7be42b4c7304a231e217ca560f713f4dc0efa9da1a5",
-    "templates/result-template-modern.html": "8782d45970d63dd413d474d149a29a66e5f7c6f9f8f2f8640ea2c0acf3264a27",
+    "templates/result-template-lela.html": "f71e7b204439560656ed38cb2c66eb27c55c4ce3a59651736c6bc9151cba0d8c",
+    "templates/result-template-modern.html": "e69c966e196338b15972df170a58ce00448e5eb335d108340c32263f7afd9171",
     "templates/result-template-nigerian.html": "64a59747cac668304021067c9219392474ad1117f7cd38790f212c26b93f50b2",
-    "templates/result-template-primary.html": "092e055e17075637119928c24a0964cdf6192ce6570157c711cbde630bdf4945",
+    "templates/result-template-primary.html": "c3e5059604753afd50e2e9f2abce271990a4862c4d99d566de27d43e26a8f389",
     "templates/result-template-whitepearl.html": "23d20a3fced3794ed3c8b2a35f0f1c8ee0ac7ebaa4b404df38d50251897060a4"
   },
   "fonts_license": "SIL Open Font License 1.1 — see licenses/"

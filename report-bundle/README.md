@@ -16,7 +16,7 @@ is rebuilt from them by `scripts/report-bundle/build.mjs`.
 | `manifest.json` | Bundle `version`, `content_sha256`, the template list (`template_key` → `file`, page counts, page sizes, fonts) and a sha256 for every file |
 | `templates/*.html` | The six templates: `nigerian_terminal`, `british_progress`, `modern_generic`, `nigerian_primary`, `lela_blossom`, `white_pearl` |
 | `contract/report-payload.ts` | The payload type (`window.__ZSMS_REPORT__`), generated from the frontend's `reportPayload.ts` |
-| `samples/*.json` | Test payloads: stress (14 subjects, long accented text, extra CA column) and normal-class, General / LeLa / British, Full and Progress |
+| `samples/*.json` | Test payloads: stress (14 subjects, long accented text, extra CA column) and normal-class, General / LeLa / British, Full and Progress; British Full heavy (18 subjects, long subject comments, a long mission statement). `general-full-normal` has a head teacher with no signature image. |
 | `parity/` | `PRINT-CONTRACT.md` (the exact print settings). **In a release tarball only:** the reference PDFs, one per sample × template it applies to, and `index.json` (page count, page sizes and the template, sample and PDF sha256 of each reference). A worker's output for the same inputs must match these. |
 | `licenses/` | SIL Open Font License for every embedded font |
 
@@ -48,7 +48,8 @@ is rebuilt from them by `scripts/report-bundle/build.mjs`.
 5. **Print** with the settings in `parity/PRINT-CONTRACT.md`:
    `page.pdf({ printBackground: true, preferCSSPageSize: true, scale: 1, format: "A4", margin: { top: "0.4in", right: "0.4in", bottom: "0.4in", left: "0.4in" } })`.
    - `preferCSSPageSize` is required. The templates declare their `@page` size, and the British card mixes portrait pages (cover, subject comments) with landscape pages (results grid, descriptors) through a named page.
-   - A4 and the 0.4in margins are only fallbacks for a template without `@page` (currently `modern_generic`); a template's own `@page` size and margins always win.
+   - A4 and the 0.4in margins are only fallbacks: every template declares its own `@page` size and margins, which always win.
+   - Render with **chrome-headless-shell 156.0.8078.79**, the build the references were made with (see `parity/PRINT-CONTRACT.md`).
 
 **Page count.** The payload's `meta.pages` matches the template's
 `<meta name="zsms-report-pages">` (and `zsms-report-pages-progress` where
@@ -111,6 +112,8 @@ Then, after committing and tagging `report-bundle-v<version>`, make the release
 tarball from the tag:
 
 ```sh
+# REPORT_CHROME must be chrome-headless-shell 156.0.8078.79:
+#   npx @puppeteer/browsers install chrome-headless-shell@156.0.8078.79
 REPORT_CHROME=/path/to/chrome-headless-shell npm run report-bundle:package -- report-bundle-v<version> --out <folder>
 ```
 
@@ -128,8 +131,11 @@ be agreed with the backend team.
 
 ## Known limits
 
-- `modern_generic` has no `@page` rule and little print CSS, so it relies on the
-  contract's A4 and 0.4in fallbacks. It prints over several sheets.
+- `modern_generic` has little print CSS beyond its A4 `@page` and the unsplittable
+  grade key. It prints over two or three sheets, and a long Class Teacher remark
+  can continue onto the next sheet.
+- `nigerian_primary` prints an assigned signer with no signature image as their
+  name under a blank line (wet signature); the other templates leave them out.
 - `british_progress` Full caps the cover's mission statement at 16 lines (about
   900 characters) so the cover stays one page.
 - `nigerian_terminal` Full fits one A4 page up to about 11 subjects (3 CA
