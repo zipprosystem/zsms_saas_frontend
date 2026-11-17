@@ -183,6 +183,23 @@
     .tablebox,.descr{overflow:visible}
     table.grid{min-width:0;font-size:8.5px}
     #card,.foot,.descr table,.ncard{break-inside:avoid}
+    /* Pagination (Full = cover, subject comments, results, descriptors):
+       - body's default 8px margin pushed the 271mm cover past the 273mm portrait page, so its
+         last line (the mission) spilled onto a near-empty page. The cover is exactly one page:
+         no body margin, and its content is held inside it (the mission is capped at 16 lines).
+       - subject comments flow over as many portrait pages as they need; a card never splits
+         and the heading stays with the first card.
+       - the results page fills its whole sheet (min-height = the 196mm landscape page, less
+         slack), so the descriptors start the next page. When a long subject list pushes the
+         comment strip off the results page, the descriptors follow it on that same overflow
+         page instead of taking a near-empty page of their own. */
+    body{margin:0}
+    .cover-page{overflow:hidden;break-inside:avoid}
+    .c-mission{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:16;overflow:hidden}
+    .sechead{break-after:avoid}
+    .ncard p{orphans:3;widows:3}
+    #card{min-height:195.5mm}
+    #descr-page{break-before:auto;break-inside:avoid}
   }
 </style>
 
