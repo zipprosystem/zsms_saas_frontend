@@ -104,9 +104,12 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *                  one selected / no class teacher. Templates show a
  *                  signature only when signature_url is set (auto-hide,
  *                  as §7.27): no name line, no blank space otherwise.
- *                  Exception — nigerian_primary: an assigned signer
- *                  without signature_url prints their name under a
- *                  blank line, to sign by hand (wet signature).
+ *                  Exception — nigerian_primary and nigerian_terminal:
+ *                  an assigned signer without signature_url prints
+ *                  their name under a blank line, to sign by hand (wet
+ *                  signature). A General School Type assigns ONE of head
+ *                  teacher / principal; nigerian_terminal titles its lead
+ *                  remark (remarks.head_teacher) and signs it by that role.
  *       student: { full_name, admission_no, class, arm, gender, dob,
  *                  photo_url, resumption_date },
  *                  from the student record: gender "male"|"female",
@@ -169,6 +172,12 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *                    gpa, cumulative_average,
  *                    out_of,                 students ranked (position "of")
  *                    subjects_counted, marks_obtainable, class_average,
+ *                    subjects_passed,        (addition) General: how many
+ *                                            shown subjects are graded in a
+ *                                            pass band (Setup › Grades
+ *                                            is_pass); null = British,
+ *                                            own_subjects scope, or a scale
+ *                                            without is_pass
  *                    earlier_terms: [{ number, name, grand_total,
  *                                      average, subjects_counted }],
  *                    va_average },           (addition) British: mean of
@@ -366,6 +375,8 @@ export type ReportPayload = {
     cumulative_average: number | null;
     out_of: number | null;
     subjects_counted: number | null;
+    /** General: shown subjects graded in a pass band (Setup › Grades is_pass); null = British / own-subjects scope / scale without is_pass. */
+    subjects_passed: number | null;
     marks_obtainable: number | null;
     class_average: number | null;
     earlier_terms: Array<{ number: number; name: string; grand_total: number | null; average: number | null; subjects_counted: number | null }>;

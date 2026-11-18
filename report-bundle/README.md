@@ -16,7 +16,7 @@ is rebuilt from them by `scripts/report-bundle/build.mjs`.
 | `manifest.json` | Bundle `version`, `content_sha256`, the template list (`template_key` → `file`, page counts, page sizes, fonts) and a sha256 for every file |
 | `templates/*.html` | The six templates: `nigerian_terminal`, `british_progress`, `modern_generic`, `nigerian_primary`, `lela_blossom`, `white_pearl` |
 | `contract/report-payload.ts` | The payload type (`window.__ZSMS_REPORT__`), generated from the frontend's `reportPayload.ts` |
-| `samples/*.json` | Test payloads: stress (14 subjects, long accented text, extra CA column) and normal-class, General / LeLa / British, Full and Progress; British Full heavy (18 subjects, long subject comments, a long mission statement). `general-full-normal` has a head teacher with no signature image. |
+| `samples/*.json` | Test payloads: stress (14 subjects, long accented text, extra CA column) and normal-class, General / LeLa / British, Full and Progress; British Full heavy (18 subjects, long subject comments, a long mission statement). `general-full-normal` has a head teacher with no signature image; `general-full-head-teacher` / `general-full-principal` are the same report with one lead signer each (a General School Type assigns a head teacher OR a principal). Each General sample carries `aggregate.subjects_passed`. |
 | `parity/` | `PRINT-CONTRACT.md` (the exact print settings). **In a release tarball only:** the reference PDFs, one per sample × template it applies to, and `index.json` (page count, page sizes and the template, sample and PDF sha256 of each reference). A worker's output for the same inputs must match these. |
 | `licenses/` | SIL Open Font License for every embedded font |
 
@@ -134,8 +134,9 @@ be agreed with the backend team.
 - `modern_generic` has little print CSS beyond its A4 `@page` and the unsplittable
   grade key. It prints over two or three sheets, and a long Class Teacher remark
   can continue onto the next sheet.
-- `nigerian_primary` prints an assigned signer with no signature image as their
-  name under a blank line (wet signature); the other templates leave them out.
+- `nigerian_primary` and `nigerian_terminal` print an assigned signer with no
+  signature image as their name under a blank line (wet signature); the other
+  templates leave them out.
 - `british_progress` Full caps the cover's mission statement at 16 lines (about
   900 characters) so the cover stays one page.
 - `nigerian_terminal` Full fits one A4 page up to about 11 subjects (3 CA

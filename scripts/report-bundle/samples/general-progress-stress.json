@@ -936,6 +936,7 @@
   "cumulative_average": null,
   "out_of": 38,
   "subjects_counted": 14,
+  "subjects_passed": 0,
   "marks_obtainable": 500,
   "class_average": 54.37,
   "earlier_terms": [
