@@ -105,7 +105,7 @@
   .result-title{margin:0;padding:7px 14px;text-align:center;font:700 15px/1.25 var(--serif);letter-spacing:.02em;color:var(--accent);background:var(--tint);border-bottom:2px solid var(--line-strong)}
   :root[data-theme="dark"] .result-title{color:var(--ink)}
   @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .result-title{color:var(--ink)}}
-  /* Sign-off row: one block per signature (image over a rule, name, role), then the date. A block without a signature is not rendered. */
+  /* Sign-off row: one block per assigned signer (signature image over a rule — or a blank rule to sign by hand —, name, role), then the date. */
   .sign{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:flex-end;margin-top:8px;font-size:12px;color:var(--muted)}
   .sig{flex:0 1 220px;min-width:140px;display:flex;flex-wrap:wrap;align-items:baseline;column-gap:6px}
   .sig .img{flex:0 0 100%;height:36px;display:flex;align-items:flex-end;border-bottom:1px solid var(--line-strong);padding-bottom:1px}
@@ -136,37 +136,43 @@
     .toolbar{display:none!important}
     html:not(.zsms-live) #half{display:none!important}   /* preview: print the end-of-term card by default */
     .card{max-width:none;width:100%;border:0;box-shadow:none}
-    .masthead{padding:8px 14px}
-    .school h1{font-size:24px}
+    .masthead{padding:5px 12px}
+    .school h1{font-size:21px}
     .school .rtitle{margin-top:4px}
     .crest{width:50px;height:50px}
     .passport{width:56px;height:66px}
-    table{font-size:10.5px}
+    table{font-size:10.5px;line-height:1.15}
     th,td{padding:2px 7px}
     /* Marks table fits the printable width: no screen min-width / scroll box (overflow clipped the Remark
        column); columns shrink to their content and long subject names, CA labels and remarks wrap. */
     .tablebox{overflow:visible}
     table.marks{min-width:0}
-    .marks th,.marks td{padding:2px 4px}
+    .marks th,.marks td{padding:1px 4px}
     .marks thead th{font-size:9.5px;line-height:1.2}
     .marks td.subj,.marks th{overflow-wrap:break-word}
     .marks .rmk{width:27%;min-width:24mm;overflow-wrap:anywhere}
-    .bio .row{padding:2px 12px;font-size:11.5px}
-    .trait{padding:1px 12px;font-size:11.5px}
+    .bio .row{padding:1px 12px;font-size:11.5px}
+    .trait{padding:0 12px;font-size:11.5px}
     .pip{width:15px;height:15px}
     .totals .cell{padding:3px 12px}
     .totals .cell .v{font-size:14px}
     .domain h3,.legend h3{padding:4px 12px 2px}
     .remarks h3{padding:0 0 1px}
     .legend table{font-size:10.5px}
-    .legend td,.legend th{padding:1px 12px}
+    .legend td,.legend th{padding:0 12px}
     .result-title{padding:4px 12px;font-size:13.5px}
     .remark{padding:4px 12px 5px}
     .remark p{margin-top:1px;font-size:12px}
     .sign{margin-top:4px}
-    .sig .img{height:28px}
+    .sig .img{height:24px}
     .signoff{padding:2px 12px 7px}
     .card,.domains,.legends,.totals,.remarks,.bio{break-inside:avoid}
+    /* The five totals share one row, as on screen (at print width the 150px basis wrapped Overall Grade onto a
+       second row, pushing a 12-subject card 11px past one page); tighter tracking keeps each label on one line. */
+    .totals .cell{flex-basis:0}
+    .totals .cell .k{letter-spacing:.03em}
+    /* Density: font sizes as above; tighter line height, row padding, masthead and signature height let a Full
+       card of 17 subjects (short remarks) fit one A4 page (977px of 1054px). */
   }
 </style>
 
@@ -201,7 +207,7 @@
         <div class="row"><span class="k">Class / Arm</span><span class="v">Basic 7 &mdash; Gold</span></div>
         <div class="row"><span class="k">Term</span><span class="v">First Term</span></div>
         <div class="row"><span class="k">Session</span><span class="v">2025 / 2026</span></div>
-        <div class="row"><span class="k">Next Term Begins</span><span class="v">12 Jan 2026</span></div>
+        <div class="row"><span class="k">Next Term Begins</span><span class="v">12/01/2026</span></div>
       </div>
       <div class="col">
         <div class="row"><span class="k">No. in Class</span><span class="v">24</span></div>
@@ -299,7 +305,7 @@
       <div class="remark">
         <h3>Principal's Remark</h3>
         <p>&ldquo;An excellent result. We are proud of your effort &mdash; aim even higher next term.&rdquo;</p>
-        <div class="sign"><div class="sig"><span class="img"><span class="scribble">A. Nwosu</span></span><span class="nm">Dr. Amaka Nwosu</span><span class="rl">Principal</span></div><div class="sig"><span class="img"><span class="scribble">C. Eze</span></span><span class="nm">Mr. Chinedu Eze</span><span class="rl">Head Teacher</span></div><div class="sig-date"><span class="v">05/12/2025</span><span class="rl">Date</span></div></div>
+        <div class="sign"><div class="sig"><span class="img"><span class="scribble">A. Nwosu</span></span><span class="nm">Dr. Amaka Nwosu</span><span class="rl">Principal</span></div><div class="sig-date"><span class="v">05/12/2025</span><span class="rl">Date</span></div></div>
       </div>
     </div>
   </article>
@@ -330,7 +336,6 @@
       <div class="col">
         <div class="row"><span class="k">No. in Class</span><span class="v">24</span></div>
         <div class="row"><span class="k">Times Present</span><span class="v">55 / 56</span></div>
-        <div class="row"><span class="k">Next Term's Fee Due</span><span class="v">20 Nov 2025</span></div>
         <div class="row"><span class="k">Admission No.</span><span class="v">GFA/2025/041</span></div>
       </div>
     </div>
@@ -392,7 +397,7 @@
         <p>&ldquo;A promising start to the term. Adaeze is engaged and well-prepared for lessons.&rdquo;</p>
         <div class="sign"><div class="sig"><span class="img"><span class="scribble">F. Bello</span></span><span class="nm">Mrs. Folake Bello</span><span class="rl">Class Teacher</span></div><div class="sig-date"><span class="v">17/10/2025</span><span class="rl">Date</span></div></div>
       </div>
-      <div class="signoff"><div class="sign"><div class="sig"><span class="img"><span class="scribble">A. Nwosu</span></span><span class="nm">Dr. Amaka Nwosu</span><span class="rl">Principal</span></div><div class="sig"><span class="img"><span class="scribble">C. Eze</span></span><span class="nm">Mr. Chinedu Eze</span><span class="rl">Head Teacher</span></div><div class="sig-date"><span class="v">17/10/2025</span><span class="rl">Date</span></div></div></div>
+      <div class="signoff"><div class="sign"><div class="sig"><span class="img"><span class="scribble">A. Nwosu</span></span><span class="nm">Dr. Amaka Nwosu</span><span class="rl">Principal</span></div><div class="sig-date"><span class="v">17/10/2025</span><span class="rl">Date</span></div></div></div>
     </div>
   </article>
 </div>
@@ -421,9 +426,11 @@
   function zComp(s,kind,i){var c=(s.components||[]).filter(function(x){return x.kind===kind;})[i];return c?c.score:null;}
   function zImg(url,fallback){return url?'<img src="'+zEsc(url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':fallback;}
   var L=window.__ZSMS_LABELS__||{};function zL(k,fb){return L[k]||fb;}
-  /* One signature block, or "" when the signatory or their signature image is missing (auto-hide). */
-  function zSig(sg,roleKey,roleFb){if(!sg||!sg.signature_url)return "";
-    return '<div class="sig"><span class="img"><img src="'+zEsc(sg.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+" — "+(sg.name||""))+'"></span>'+
+  /* One signature block per assigned signer; "" when no one is assigned. Without a signature image the rule is
+     left blank for a wet signature, with the name under it. */
+  function zSig(sg,roleKey,roleFb){if(!sg||!(sg.signature_url||sg.name))return "";
+    var img=sg.signature_url?'<img src="'+zEsc(sg.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+" — "+(sg.name||""))+'">':"";
+    return '<div class="sig"><span class="img">'+img+'</span>'+
       (sg.name?'<span class="nm">'+zEsc(sg.name)+"</span>":"")+'<span class="rl">'+zEsc(zL(roleKey,roleFb))+"</span></div>";}
   /* A sign-off row from signature blocks + the report date; "" when no block shows (the date never prints alone). */
   function zSignRow(blocks){var b=blocks.join("");if(!b)return "";
@@ -460,7 +467,7 @@
       left.push(bioRow("Next Term Begins",zDate(st.resumption_date)));
       right.push(bioRow("Times School Opened",zNum(at.time_school_opened)),bioRow("Times Present",zNum(at.present)),bioRow("Times Absent",zNum(at.absent)));
     } else {
-      right.push(bioRow("Times Present",at.present==null?"—":zNum(at.present)+" / "+zNum(at.total_days)),bioRow("Next Term's Fee Due","—"));
+      right.push(bioRow("Times Present",at.present==null?"—":zNum(at.present)+" / "+zNum(at.total_days)));
     }
     right.push(bioRow("Admission No.",zTxt(st.admission_no)));
     card.querySelector(".bio").innerHTML='<div class="col">'+left.join("")+'</div><div class="col">'+right.join("")+'</div>';
@@ -483,8 +490,10 @@
 
     function cell(k,v,cls){return '<div class="cell"><span class="k">'+k+'</span><span class="v'+(cls?" "+cls:"")+'">'+v+"</span></div>";}
     var avg=ag.average==null?"—":zNum(ag.average,2)+"%";
+    /* Subjects passed "of" subjects counted (as the catalog's "9 / 9"); "—" when the payload has no count. */
+    var passed=ag.subjects_passed==null?"—":zNum(ag.subjects_passed)+(ag.subjects_counted==null?"":" / "+zNum(ag.subjects_counted));
     card.querySelector(".totals").innerHTML=isFull
-      ? cell("Marks Obtainable",zNum(ag.marks_obtainable))+cell("Marks Obtained",zNum(ag.grand_total))+cell("Average",avg)+cell("Subjects Passed","—")+cell("Overall Grade",zTxt(ag.overall_grade),"ok")
+      ? cell("Marks Obtainable",zNum(ag.marks_obtainable))+cell("Marks Obtained",zNum(ag.grand_total))+cell("Average",avg)+cell("Subjects Passed",passed)+cell("Overall Grade",zTxt(ag.overall_grade),"ok")
       : cell("C.A. Obtainable",zNum(ag.marks_obtainable))+cell("C.A. Obtained",zNum(ag.grand_total))+cell("Average",avg)+cell("Subjects Assessed",zNum(ag.subjects_counted))+cell("Overall Grade",zTxt(ag.overall_grade),"ok");
 
     function traits(list){return list.map(function(t){return '<div class="trait"><span>'+zEsc(t.skill)+'</span><span class="scale" data-rate="'+(t.rating==null?"":zEsc(t.rating))+'"></span></div>';}).join("");}
@@ -504,14 +513,21 @@
       legends[1].innerHTML="<h3>Grading Scale</h3>"+grading;
     }
 
-    /* Sign-off: class teacher under their remark; principal + head teacher under the Principal's remark (Full),
-       or as a sign-off strip after the class teacher's remark (Progress). Missing signatures drop out. */
+    /* Sign-off: class teacher under their remark; the School Type's ONE lead signer — head teacher or principal —
+       under the lead remark (Full), or as a sign-off strip after the class teacher's remark (Progress). The lead
+       remark's title and signature follow whichever role the payload carries; its text is remarks.head_teacher
+       (the payload's one lead remark). Both carried (should not happen) → principal; neither → "Principal's
+       Remark", unsigned. Missing signatures drop out. */
     var sg=Z.signatures||{};
+    function assigned(x){return !!(x&&(x.signature_url||x.name));}
+    var lead=assigned(sg.principal)||!assigned(sg.head_teacher)
+      ? {sig:sg.principal,key:"sigPrincipal",role:"Principal"}
+      : {sig:sg.head_teacher,key:"sigHeadTeacher",role:"Head Teacher"};
     var ctRow=zSignRow([zSig(sg.class_teacher,"sigClassTeacher","Class Teacher")]);
-    var leadRow=zSignRow([zSig(sg.principal,"sigPrincipal","Principal"),zSig(sg.head_teacher,"sigHeadTeacher","Head Teacher")]);
+    var leadRow=zSignRow([zSig(lead.sig,lead.key,lead.role)]);
     function remark(title,text,sign){return '<div class="remark"><h3>'+title+"</h3><p>"+(text?"&ldquo;"+zEsc(text)+"&rdquo;":"—")+"</p>"+sign+"</div>";}
     card.querySelector(".remarks").innerHTML=remark("Class Teacher&#39;s Remark",Z.remarks.class_teacher,ctRow)+
-      (isFull?remark("Principal&#39;s Remark",Z.remarks.head_teacher,leadRow):(leadRow?'<div class="signoff">'+leadRow+"</div>":""));
+      (isFull?remark(lead.role+"&#39;s Remark",Z.remarks.head_teacher,leadRow):(leadRow?'<div class="signoff">'+leadRow+"</div>":""));
   })();
 
   (function(){

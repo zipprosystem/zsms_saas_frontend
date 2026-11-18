@@ -122,6 +122,8 @@
   }
   .zsms-redacted td{opacity:.38}
   @media print{html.zsms-live,html.zsms-live body{background:#fff}.zsms-live .wrap{padding:0}.zsms-live .card{border:0;box-shadow:none;max-width:none}}
+/* Print: A4 (the contract's 0.4in margins), and the grade key never splits across pages. */
+@media print{@page{size:A4 portrait;margin:0.4in}.legend{break-inside:avoid;padding-top:10px;padding-bottom:10px}}
 </style>
 
 <div class="wrap">

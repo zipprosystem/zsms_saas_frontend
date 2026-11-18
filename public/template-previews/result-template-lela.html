@@ -131,7 +131,11 @@
   @media (max-width:800px){.sheet{width:100%;min-height:0;padding:12px;}.wmk b{font-size:58px;}}
   @media print{@page{size:A4 portrait;margin:0;}body{background:#fff;padding:0;}.controls,.hint{display:none!important;}
     .sheet{width:auto;min-height:auto;margin:0;border:0;box-shadow:none;padding:7mm;}
-    .sheet + .sheet{margin-top:0;break-before:page;}}
+    .sheet + .sheet{margin-top:0;break-before:page;}
+    /* Remarks + signatures stay together; a sheet that runs over continues on the next page instead of being clipped. */
+    .sheet{overflow:visible;}
+    .wmk{overflow:hidden;} /* the watermark stays clipped to the sheet (else Chrome shrinks the page to fit it) */
+    .remarks,.remarks .rrow,.sigline{break-inside:avoid;}}
 </style>
 </head>
 <body>

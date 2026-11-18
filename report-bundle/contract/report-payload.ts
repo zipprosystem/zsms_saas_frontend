@@ -111,6 +111,9 @@ export type ProgressDomain = "engagement" | "learning_behaviour" | "boarding";
  *                  one selected / no class teacher. Templates show a
  *                  signature only when signature_url is set (auto-hide,
  *                  as §7.27): no name line, no blank space otherwise.
+ *                  Exception — nigerian_primary: an assigned signer
+ *                  without signature_url prints their name under a
+ *                  blank line, to sign by hand (wet signature).
  *       student: { full_name, admission_no, class, arm, gender, dob,
  *                  photo_url, resumption_date },
  *                  from the student record: gender "male"|"female",

@@ -29,6 +29,13 @@ window.__ZSMS_PAGE__   = null;    // all pages
 
 ## 3. Print
 
+**Chrome build: chrome-headless-shell 156.0.8078.79 (linux64).** The
+references were rendered with this exact build, the same as the worker's.
+Page breaks can move between Chrome versions, so render with this build
+when comparing. Install it with
+`npx @puppeteer/browsers install chrome-headless-shell@156.0.8078.79`.
+`npm run report-bundle:package` refuses any other build.
+
 Chrome DevTools `Page.printToPDF`, or Puppeteer `page.pdf` with the same values:
 
 | Setting | Value | Why |
@@ -38,7 +45,7 @@ Chrome DevTools `Page.printToPDF`, or Puppeteer `page.pdf` with the same values:
 | `scale` | `1` | Never shrink to fit; the templates are laid out for 100%. |
 | `landscape` | `false` | Orientation comes from `@page`, not this flag. |
 | `displayHeaderFooter` | `false` | No browser header or footer. |
-| Paper | A4: `paperWidth 8.2677`, `paperHeight 11.6929` (inches) | Fallback for a template without `@page` (currently `modern_generic`). Puppeteer: `format: "A4"`. |
+| Paper | A4: `paperWidth 8.2677`, `paperHeight 11.6929` (inches) | Fallback only: every template now declares its own `@page`. Puppeteer: `format: "A4"`. |
 | Margins | `0.4in` on all four sides | Fallback only: a template's `@page` margin always overrides it. Set it explicitly, because Puppeteer defaults to 0 and DevTools to 0.4in. |
 
 ### Page size, margins and orientation per template
@@ -49,7 +56,7 @@ Chrome DevTools `Page.printToPDF`, or Puppeteer `page.pdf` with the same values:
 | `nigerian_primary` | 1 | A4 portrait | 0 (the sheet draws its own) |
 | `white_pearl` | 1 | A4 portrait | 0 (the sheet draws its own) |
 | `lela_blossom` | 2 | A4 portrait | 0 (the sheet draws its own) |
-| `modern_generic` | 1 | none declared → contract fallback: A4 portrait | contract fallback: 0.4in |
+| `modern_generic` | 2 (its `zsms-report-pages` meta still says 1) | A4 portrait | 0.4in |
 | `british_progress` Full | 4 | cover + subject comments A4 portrait; results + descriptors A4 landscape | portrait 12mm, landscape 7mm |
 | `british_progress` Progress | 2 | A4 landscape | 7mm |
 
@@ -70,6 +77,14 @@ content (many subjects, long comments) adds sheets:
   splits. The results page fills its sheet, and the descriptors start the
   next one. When the subject list pushes the comment strip off the results
   page, the descriptors share that overflow page.
+- **Modern Generic.** The grade key never splits; it stays whole on the
+  last page.
+- **LeLa Blossom Full.** The remarks and all signatures stay together. If
+  they don't fit under the results on sheet 1, they move as one block to the
+  next page. The subject teachers' comments are always the last sheet.
+- **Primary.** One page up to 14 subjects with long comments (about 21
+  with short ones). Past that, the comments and signatures move to page 2
+  together.
 
 ## 4. Comparing against the references
 

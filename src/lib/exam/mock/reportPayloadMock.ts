@@ -1,7 +1,7 @@
 import type { WireResponse } from "@/lib/setup/assessmentConfiguration/templateCatalog";
 import { buildMarkColumns, examMarkColumns, shownTotal } from "@/lib/exam/markColumns";
 import type { Exam } from "@/lib/exam/examTypes";
-import type { SubjectResult } from "@/lib/exam/results/resultsTypes";
+import type { ScoreGradeScale, SubjectResult } from "@/lib/exam/results/resultsTypes";
 import type {
   ClassPdfJob,
   ReportComponent,
@@ -250,6 +250,17 @@ function vaAverage(subjects: ReportSubject[]): number | null {
 }
 
 /**
+ * General: how many of the shown subjects are graded in a pass band (Setup ›
+ * Grades is_pass). null when the scale is missing or any band lacks is_pass
+ * (older seeds) — the template then prints "—".
+ */
+function subjectsPassed(subjects: ReportSubject[], scale: ScoreGradeScale | null): number | null {
+  if (!scale || scale.bands.some((band) => typeof band.is_pass !== "boolean")) return null;
+  const pass = new Set(scale.bands.filter((band) => band.is_pass).map((band) => band.grade));
+  return subjects.filter((subject) => !subject.redacted && subject.grade != null && pass.has(subject.grade)).length;
+}
+
+/**
  * A British rating domain entry (a British Progress Grade, by id) as the
  * report prints it: the level's value, or null when not rated or the
  * level is hidden in reports (hide_in_report — it still counts; the report
@@ -492,6 +503,7 @@ function buildPayload(
       cumulative_average: own || computed.stage === "progress" ? null : aggregate.cumulative_average,
       out_of: general ? computed.rankedCount : null,
       subjects_counted: own ? null : aggregate.subjects_counted,
+      subjects_passed: own || !general ? null : subjectsPassed(subjects, computed.scale),
       marks_obtainable: own || !general ? null : aggregate.subjects_counted * 100,
       class_average: classAverage(computed),
       earlier_terms:

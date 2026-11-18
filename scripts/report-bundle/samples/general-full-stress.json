@@ -58,7 +58,7 @@
   },
   "class_teacher": {
    "name": "Mr. Tèmítọ́pẹ́ Ìdòwú",
-   "signature_url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20108%2060%22%3E%3Cpath%20d%3D%22M8%2040%20Q20%2020%2032%2034%20T56%2022%20T80%2036%20T100%2024%22%20fill%3D%22none%22%20stroke%3D%22midnightblue%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E"
+   "signature_url": null
   }
  },
  "student": {
@@ -1026,6 +1026,7 @@
   "cumulative_average": 31.87,
   "out_of": 38,
   "subjects_counted": 14,
+  "subjects_passed": 0,
   "marks_obtainable": 500,
   "class_average": 49.58,
   "earlier_terms": [

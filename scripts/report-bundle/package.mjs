@@ -21,6 +21,9 @@
  *   REPORT_CHROME=/path/to/chrome-headless-shell \
  *     npm run report-bundle:package -- [tag] [--out dir]
  *
+ * REPORT_CHROME must be chrome-headless-shell 156.0.8078.79 (config.mjs
+ * CHROME — the worker's build); any other build is refused.
+ *
  * tag defaults to report-bundle-v<version in the working manifest>; --out
  * defaults to the system temp folder.
  */
