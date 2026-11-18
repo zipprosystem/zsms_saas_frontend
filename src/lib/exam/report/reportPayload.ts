@@ -110,11 +110,16 @@ import type { ProgressDomain } from "@/lib/setup/assessmentConfiguration/progres
  *                  signature). A General School Type assigns ONE of head
  *                  teacher / principal; nigerian_terminal titles its lead
  *                  remark (remarks.head_teacher) and signs it by that role.
- *       student: { full_name, admission_no, class, arm, gender, dob,
- *                  photo_url, resumption_date },
+ *       student: { full_name, admission_no, class, arm, class_display,
+ *                  gender, dob, photo_url, resumption_date },
  *                  from the student record: gender "male"|"female",
  *                  dob = date_of_birth (YYYY-MM-DD), photo_url = the
  *                  served URL of photo_file_id (null = no photo).
+ *                  class_display = the class label to print: "<class>
+ *                  <arm>" ("Year 11 A"), or the class once when the arm
+ *                  has the same name ("Year 7", never "Year 7 Year 7";
+ *                  trimmed, case-insensitive) or no name. The standard
+ *                  label for every template; the backend provides it.
  *       attendance: { present, absent, total_days, time_school_opened },
  *                  Report Progression's per-term attendance: present =
  *                  the recorded present-count (sessions), total_days =
@@ -359,6 +364,8 @@ export type ReportPayload = {
     admission_no: string;
     class: string;
     arm: string;
+    /** "<class> <arm>", or the class alone when the arm has the same name (or none). */
+    class_display: string;
     gender: "male" | "female" | null;
     dob: string | null;
     photo_url: string | null;
