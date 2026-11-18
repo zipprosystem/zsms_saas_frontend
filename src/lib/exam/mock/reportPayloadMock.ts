@@ -75,6 +75,14 @@ function present(value: string | null | undefined): string | null {
   return trimmed ? trimmed : null;
 }
 
+/** The class label to print: "Year 11 A", or the class once when the arm has the same name ("Year 7") or none. */
+function classDisplay(className: string, armName: string): string {
+  const klass = className.trim();
+  const arm = armName.trim();
+  if (!arm || arm.toLowerCase() === klass.toLowerCase()) return klass;
+  return klass ? `${klass} ${arm}` : arm;
+}
+
 /**
  * The school block for a class. Each field resolves the class's School
  * Type override (Setup › School Types) → the Settings value (Settings ›
@@ -486,6 +494,7 @@ function buildPayload(
       admission_no: row.student.admission_no,
       class: computed.className,
       arm: computed.armName,
+      class_display: classDisplay(computed.className, computed.armName),
       gender: profile?.gender ?? null,
       dob: profile?.dob ?? null,
       photo_url: profile?.photo_url ?? null,
