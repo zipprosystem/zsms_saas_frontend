@@ -57,7 +57,7 @@
   .card[hidden]{display:none!important}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-  /* (1) cover: centred school / term / dates / logo / student / arm; mission statement in the footer */
+  /* (1) cover: centred school / term / dates / logo / student / class label; mission statement in the footer */
   .cover-page{display:flex;flex-direction:column;align-items:center;text-align:center;aspect-ratio:210/297;padding:40px 24px 28px}
   .cover-page .c-main{margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0;max-width:100%}
   .cover-page p{margin:0}
@@ -135,12 +135,13 @@
   .foot .bhg table.strip th:first-child,.foot .bhg table.strip td:first-child{border-left:0}
   .foot .bhg table.strip th{background:var(--head);font:700 9.5px/1.2 var(--disp)}
   .foot .bhg table.strip td{font-weight:700}
-  /* the Principal's signature (only when assigned and it has an image), the report date below. British reports carry no other signatures — the form tutor and boarding house sign off with their comments. */
+  /* the Principal's signature (when assigned: their image over the rule, or a blank space above it to sign by hand), the report date below. British reports carry no other signatures — the form tutor and boarding house sign off with their comments. */
   .foot .prin{padding:10px 14px;display:flex;flex-direction:column;gap:6px;min-width:0;max-width:480px}
   .foot .prin[hidden]{display:none}
   .foot .prin .sigs{display:flex;gap:14px;margin-top:auto}
   .foot .prin .sig{display:flex;flex-direction:column;align-items:flex-start;width:130px;min-width:0}
   .foot .prin .sig img{height:36px;width:100%;object-fit:contain;object-position:left bottom;display:block}
+  .foot .prin .sig .blank{height:36px;width:100%;display:block}
   .foot .prin .sig .nm{border-top:1px solid var(--line-strong);width:100%;padding-top:3px;font-size:11px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
   .foot .prin .sig .rl{font:800 9px/1.2 var(--disp);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
   .foot .prin .date{font-size:11px;color:var(--muted)}
@@ -220,7 +221,7 @@
       <p class="c-dates" id="c-dates">19/04/2026 – 09/07/2026</p>
       <div class="c-logo" id="c-logo">CREST</div>
       <p class="c-name" id="c-name">Daniel Afolabi</p>
-      <p class="c-arm" id="c-arm">10A</p>
+      <p class="c-arm" id="c-arm">Year 10 A</p>
     </div>
     <p class="c-mission" id="c-mission">Westbridge provides an outstanding education that inspires leadership and focuses on each child's ability to excel in a global world.</p>
   </section>
@@ -236,7 +237,7 @@
       <div class="school">
         <h1>Westbridge International College</h1>
         <div class="rtitle" id="rtitle">Third Term Mid-Term Report</div>
-        <div class="term" id="term">Progress Report — Term 3A (Interim) · 28 May 2026</div>
+        <div class="term" id="term">Progress Report — Term 3A (Interim) · 28/05/2026</div>
         <div class="cem">CEM MidYIS score: <strong>138</strong></div>
       </div>
       <div class="passport" aria-label="Student photo placeholder"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5Z"/></svg></div>
@@ -244,7 +245,7 @@
 
     <div class="bio">
       <div class="cellb"><span class="k">Student's Name</span><span class="v accent">Daniel Afolabi</span></div>
-      <div class="cellb"><span class="k">Class</span><span class="v">10A</span></div>
+      <div class="cellb"><span class="k">Class</span><span class="v">Year 10 A</span></div>
       <div class="cellb"><span class="k">Tutor</span><span class="v">Mr Joshua Ojo</span></div>
       <div class="cellb"><span class="k">Boarding House</span><span class="v">Rowan House</span></div>
       <div class="cellb"><span class="k">Pupil ID Number</span><span class="v">WIC-26-0210</span></div>
@@ -256,7 +257,7 @@
 
     <div class="foot">
       <div class="cmt">
-        <h4>Boarding House Comment</h4>
+        <h4>Rowan House Comment</h4>
         <p>Daniel has continued to participate actively in the boarding house this half term, with a pleasant, responsible attitude and positive interactions with peers and staff. He responds well to correction and has made steady progress in personal responsibility and social conduct. We encourage him to take greater initiative and to keep showing leadership among his peers.</p>
       </div>
       <div class="bhg">
@@ -301,6 +302,12 @@
   if (Z) document.documentElement.classList.add("zsms-live");
   function zEsc(v){return v==null?"":String(v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
   function zTxt(v){return v==null||v===""?"—":zEsc(v);}
+  /* Class label: student.class_display ("Year 11 A"; the class once when the arm shares its name). Older payloads: the same rule here. */
+  function zClass(st){
+    if(st.class_display)return st.class_display;
+    var c=String(st["class"]||"").trim(), a=String(st.arm||"").trim();
+    return !a||a.toLowerCase()===c.toLowerCase()?c:(c?c+" "+a:a);
+  }
   function zNum(v,dp){if(v==null||typeof v!=="number"||!isFinite(v))return "—";return dp==null?String(Math.round(v*100)/100):v.toFixed(dp);}
   function zOrd(n){if(n==null)return "—";var s=["th","st","nd","rd"],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}
   function zDate(iso){if(!iso)return "—";var p=String(iso).split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:zEsc(iso);}
@@ -375,11 +382,11 @@
       return '<div class="ncard"><div class="top"><span class="subjn">'+zEsc(c.name)+'</span><span class="teach">'+zTxt(c.teacher)+'</span><span class="badges">'+badges+"</span></div>"+(full?"<p>"+zTxt(c.comment)+"</p>":"")+"</div>";
     }).join("");
   }
-  /* Page 3 comment block by variant: Full = Form Tutor ("Tutor Comment: <name>"), Progress = Boarding House (+ its grade list). */
-  function setFootComment(full,tutorName,text){
+  /* Page 3 comment block by variant: Full = Form Tutor ("Tutor Comment: <name>"), Progress = Boarding House ("<house> Comment", + its grade list). */
+  function setFootComment(full,tutorName,text,houseName){
     var foot=document.querySelector("#card .foot");
     foot.classList.toggle("tutor",full);
-    foot.querySelector(".cmt h4").textContent=full?zL("tutorComment","Tutor Comment")+(tutorName?": "+tutorName:""):zL("boardingComment","Boarding House Comment");
+    foot.querySelector(".cmt h4").textContent=full?zL("tutorComment","Tutor Comment")+(tutorName?": "+tutorName:""):houseName?houseName+" "+zL("comment","Comment"):zL("boardingComment","Boarding House Comment");
     foot.querySelector(".cmt p").textContent=text||"—";
   }
   /* Grade table (§7.26) in front of the comment, before the signature: Progress = the Boarding House grade per point (a column),
@@ -418,15 +425,17 @@
   function setResultTitle(title){
     ["c-title","rtitle"].forEach(function(id){var e=document.getElementById(id);if(!e)return;e.textContent=title||"";e.hidden=!title;});
   }
-  /* British: the PRINCIPAL's signature only — when assigned AND it has a signature image; the date only when set.
-     Nothing to show → the signature column is removed and the footer's other columns take its width. */
+  /* British: the PRINCIPAL's signature only — when assigned. Without a signature image the space above the rule is left
+     blank for a wet signature, with the name under it. The date only when set. Nothing to show → the signature column
+     is removed and the footer's other columns take its width. */
   function setSignatures(sigs,isoDate){
     sigs=sigs||{};
     var roles=[["principal","sigPrincipal","Principal"]];
     var html=roles.map(function(r){
-      var s=sigs[r[0]];if(!s||!s.signature_url)return "";
+      var s=sigs[r[0]];if(!s||!(s.signature_url||s.name))return "";
       var nm=s.name||"";
-      return '<div class="sig"><img src="'+zEsc(s.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+(nm?" — "+nm:""))+'"><span class="nm">'+zEsc(nm)+'</span><span class="rl">'+zEsc(zL(r[1],r[2]))+"</span></div>";
+      var img=s.signature_url?'<img src="'+zEsc(s.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+(nm?" — "+nm:""))+'">':'<span class="blank"></span>';
+      return '<div class="sig">'+img+'<span class="nm">'+zEsc(nm)+'</span><span class="rl">'+zEsc(zL(r[1],r[2]))+"</span></div>";
     }).join("");
     var box=document.getElementById("sigs"), d=document.getElementById("pdate"), prin=document.getElementById("prin");
     box.innerHTML=html;box.hidden=!html;
@@ -444,7 +453,7 @@
     var t=Z.meta.term, dates=t.start_date?zDate(t.start_date)+" – "+zDate(t.end_date):"";
 
     setVariantPages(isFull,true);
-    if(isFull)setCover({school:Z.school.name,point:curLabel,dates:dates,logo:Z.school.logo_url,noLogo:true,name:st.full_name,arm:st.arm,mission:Z.school.mission_statement});
+    if(isFull)setCover({school:Z.school.name,point:curLabel,dates:dates,logo:Z.school.logo_url,noLogo:true,name:st.full_name,arm:zClass(st),mission:Z.school.mission_statement});
 
     card.querySelector(".crest").innerHTML=zImg(Z.school.logo_url,"CREST");
     card.querySelector(".school h1").textContent=Z.school.name;
@@ -453,8 +462,9 @@
     card.querySelector(".school .cem").style.display="none";
     card.querySelector(".passport").innerHTML=zImg(st.photo_url,card.querySelector(".passport").innerHTML);
 
+    var rm0=Z.remarks||{};
     function cb(k,v,accent){return '<div class="cellb"><span class="k">'+k+'</span><span class="v'+(accent?" accent":"")+'">'+v+"</span></div>";}
-    card.querySelector(".bio").innerHTML=cb("Student's Name",zTxt(st.full_name),1)+cb("Class",zTxt(st["class"])+" "+zTxt(st.arm))+cb("Tutor","—")+cb("Boarding House","—")/* Form Tutor + boarding: Report Progression's student-wise entry (not built) */+cb("Pupil ID Number",zTxt(st.admission_no));
+    card.querySelector(".bio").innerHTML=cb("Student's Name",zTxt(st.full_name),1)+cb("Class",zTxt(zClass(st)))+cb("Tutor",zTxt(rm0.form_tutor&&rm0.form_tutor.name))+cb("Boarding House",zTxt(rm0.boarding_house&&rm0.boarding_house.name))+cb("Pupil ID Number",zTxt(st.admission_no));
 
     // A level's colour comes from its place in the level key (first = best → lv1 … lv4; further levels muted) — values may be letters.
     var rank={};(Z.traits.rating_key||[]).forEach(function(r,i){rank[String(r.rating).toLowerCase()]=i+1;});
@@ -492,7 +502,7 @@
     }),isFull);
 
     var b=Z.traits.boarding, rm=Z.remarks||{}, tutor=rm.form_tutor, house=rm.boarding_house;
-    setFootComment(isFull,tutor&&tutor.name,isFull?tutor&&tutor.comment:(house&&house.comment)||(b&&b.comment));
+    setFootComment(isFull,tutor&&tutor.name,isFull?tutor&&tutor.comment:(house&&house.comment)||(b&&b.comment),house&&house.name);
     // Grade table: each comment's grade per point (traits.comment_grades) — Progress lists the A points' Boarding House grades,
     // Full the B points' Form Tutor grades. Older payloads without it: the boarding rating at the report point.
     var cg=Z.traits.comment_grades;
@@ -534,12 +544,12 @@
         return {name:s[0],teacher:s[6],comment:SAMPLE_COMMENTS[s[0]],badges:[["Target",s[1]],["GB",s[3][cur]],["Attainment",s[2][cur]],["Engagement",s[4][cur]],["Behaviour",s[5][cur]]]};
       }),full);
       setVariantPages(full,false);
-      setCover({school:"Westbridge International College",point:COLS[cur],dates:"19/04/2026 – 09/07/2026",name:"Daniel Afolabi",arm:"10A",
+      setCover({school:"Westbridge International College",point:COLS[cur],dates:"19/04/2026 – 09/07/2026",name:"Daniel Afolabi",arm:"Year 10 A",
         mission:"Westbridge provides an outstanding education that inspires leadership and focuses on each child's ability to excel in a global world."});
-      setFootComment(full,"Mr Joshua Ojo",full?"Daniel has had a productive term: organised, courteous and a steady presence in form time. He should now carry the same focus into independent revision so that his strongest subjects stay at grade 9.":SAMPLE_BOARDING);
+      setFootComment(full,"Mr Joshua Ojo",full?"Daniel has had a productive term: organised, courteous and a steady presence in form time. He should now carry the same focus into independent revision so that his strongest subjects stay at grade 9.":SAMPLE_BOARDING,"Rowan House");
       setBoardingGrades(COLS,upTo([2,2,1,null,1,1],cur),full);
       bF.setAttribute("aria-pressed",String(full)); bI.setAttribute("aria-pressed",String(!full));
-      term.textContent = full ? "Progress Report — Term 3B (Full) · 19 Apr – 09 Jul 2026" : "Progress Report — Term 3A (Interim) · 28 May 2026";
+      term.textContent = full ? "Progress Report — Term 3B (Full) · 19/04/2026 – 09/07/2026" : "Progress Report — Term 3A (Interim) · 28/05/2026";
       setResultTitle(full ? "Third Term Final Examination" : "Third Term Mid-Term Report");
       setSignatures(SAMPLE_SIGS, full ? "2026-07-09" : "2026-05-28");
     }
