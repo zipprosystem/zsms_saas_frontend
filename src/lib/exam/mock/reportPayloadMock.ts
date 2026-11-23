@@ -37,6 +37,7 @@ import { getSchoolSettings } from "@/lib/settings/settingsApi";
 import { pointGradeBook } from "@/lib/exam/mock/gradeBookMock";
 import type { ProgressGrade } from "@/lib/setup/assessmentConfiguration/progressGradesApi";
 import { armOfStudent, classAverage, compute, storedTraits, viewerFor, type Computed, type ComputedRow } from "@/lib/exam/mock/examResultsMock";
+import { isReportStamped } from "@/lib/exam/mock/reportProgressionMock";
 
 /**
  * MOCK report payload (reportPayload.ts has the contract) — built on read
@@ -489,6 +490,8 @@ function buildPayload(
     result_title: present(reportPoint?.result_title),
     report_date: present(reportPoint?.report_date),
     signatures: signed,
+    // Report Progression's stamp for this report point (computed on read from its side-store).
+    stamped: isReportStamped(termId, computed.stage === "progress" ? "ca" : "exam", row.student.id),
     student: {
       full_name: row.student.name,
       admission_no: row.student.admission_no,

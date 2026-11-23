@@ -1,0 +1,1026 @@
+{
+ "meta": {
+  "template_id": "7d2f4c1e-1a0b-4c3d-9e8f-000000000001",
+  "variant": "full",
+  "academic_year": {
+   "id": "y-2025",
+   "name": "2025/2026"
+  },
+  "term": {
+   "id": "y-2025-t3",
+   "name": "Third Term",
+   "number": 3,
+   "start_date": "2026-04-27",
+   "end_date": "2026-07-24"
+  },
+  "points": [
+   {
+    "label": "Continuous Assessment",
+    "kind": "ca",
+    "max": 30,
+    "show_grade_book": true
+   },
+   {
+    "label": "Exam",
+    "kind": "exam",
+    "max": 70,
+    "show_grade_book": true
+   }
+  ],
+  "current_point_index": null,
+  "show_va": false,
+  "pages": 1,
+  "generated_at": "2026-11-16T00:00:00.000Z",
+  "scope": "full",
+  "assessment_mode": "component_based",
+  "attainment_display": "weight"
+ },
+ "school": {
+  "name": "ZSMS Demo School",
+  "logo_url": null,
+  "address": "1 Example Road, Lagos",
+  "phone": "+234 800 000 0000",
+  "email": "info@zsms-demo.example",
+  "website": "https://www.zsms-demo.example",
+  "motto": "Learning for life",
+  "mission_statement": "We provide an excellent education that inspires every learner to lead, to serve and to excel in a global world."
+ },
+ "result_title": "Third Term Examination",
+ "report_date": "2026-07-24",
+ "signatures": {
+  "head_teacher": {
+   "name": "Mrs. Bisi Adeyemi",
+   "signature_url": null
+  },
+  "principal": null,
+  "class_teacher": {
+   "name": "Tunde Bello",
+   "signature_url": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20108%2060%22%3E%3Cpath%20d%3D%22M8%2040%20Q20%2020%2032%2034%20T56%2022%20T80%2036%20T100%2024%22%20fill%3D%22none%22%20stroke%3D%22midnightblue%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E"
+  }
+ },
+ "stamped": false,
+ "student": {
+  "full_name": "Kelechi Bello",
+  "admission_no": "ZS/2440",
+  "class": "SS 1",
+  "arm": "Science",
+  "class_display": "SS 1 Science",
+  "gender": "male",
+  "dob": "2011-05-01",
+  "photo_url": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2080%20100%22%3E%3Crect%20width%3D%2280%22%20height%3D%22100%22%20fill%3D%22hsl(220%2C45%25%2C55%25)%22%2F%3E%3Ctext%20x%3D%2240%22%20y%3D%2260%22%20font-family%3D%22Arial%2Csans-serif%22%20font-size%3D%2230%22%20font-weight%3D%22700%22%20fill%3D%22%23fff%22%20text-anchor%3D%22middle%22%3EKB%3C%2Ftext%3E%3C%2Fsvg%3E",
+  "resumption_date": "2026-09-07"
+ },
+ "attendance": {
+  "present": 108,
+  "absent": 4,
+  "total_days": 112,
+  "time_school_opened": 112
+ },
+ "subjects": [
+  {
+   "name": "Mathematics",
+   "teacher_name": "Tunde Bello",
+   "components": [
+    {
+     "label": "CA 1",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 2",
+     "score": 4,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 3",
+     "score": 4,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "Exam",
+     "score": 25,
+     "max": 70,
+     "kind": "exam"
+    }
+   ],
+   "ca": 11,
+   "exam": 25,
+   "total": 36,
+   "grade": "F9",
+   "grade_weight": 9,
+   "gpa": 0,
+   "remark": "Fail",
+   "position": 1,
+   "cag": null,
+   "mtg": null,
+   "va": null,
+   "comment": "Excellent grasp of algebraic reasoning; must show every step of working in examinations to secure full method marks.",
+   "redacted": false,
+   "units": 3,
+   "class_highest": 81,
+   "class_lowest": 19,
+   "class_average": 49.6,
+   "cumulative_average": 35.67,
+   "earlier_terms": [
+    {
+     "number": 1,
+     "name": "First Term",
+     "total": 39
+    },
+    {
+     "number": 2,
+     "name": "Second Term",
+     "total": 32
+    }
+   ],
+   "history": []
+  },
+  {
+   "name": "English Language",
+   "teacher_name": "Tunde Bello",
+   "components": [
+    {
+     "label": "CA 1",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 2",
+     "score": 2,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 3",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "Exam",
+     "score": 20,
+     "max": 70,
+     "kind": "exam"
+    }
+   ],
+   "ca": 8,
+   "exam": 20,
+   "total": 35,
+   "grade": "F9",
+   "grade_weight": 9,
+   "gpa": 0,
+   "remark": "Fail",
+   "position": 2,
+   "cag": null,
+   "mtg": null,
+   "va": null,
+   "comment": "Writes fluently and with flair — her narrative essay on “Ọjà Ọba” was outstanding. Keep refining punctuation in long sentences.",
+   "redacted": false,
+   "units": 3,
+   "class_highest": 94,
+   "class_lowest": 21,
+   "class_average": 52.4,
+   "cumulative_average": 29.33,
+   "earlier_terms": [
+    {
+     "number": 1,
+     "name": "First Term",
+     "total": 32
+    },
+    {
+     "number": 2,
+     "name": "Second Term",
+     "total": 28
+    }
+   ],
+   "history": []
+  },
+  {
+   "name": "Français (French Language)",
+   "teacher_name": "Tunde Bello",
+   "components": [
+    {
+     "label": "CA 1",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 2",
+     "score": 4,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 3",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "Exam",
+     "score": 25,
+     "max": 70,
+     "kind": "exam"
+    }
+   ],
+   "ca": 10,
+   "exam": 25,
+   "total": 49,
+   "grade": "F9",
+   "grade_weight": 9,
+   "gpa": 0,
+   "remark": "Fail",
+   "position": 3,
+   "cag": null,
+   "mtg": null,
+   "va": null,
+   "comment": "Très bonne participation orale ; elle doit réviser les accords du participe passé et lire davantage.",
+   "redacted": false,
+   "units": 2,
+   "class_highest": 85,
+   "class_lowest": 16,
+   "class_average": 46.6,
+   "cumulative_average": 34.33,
+   "earlier_terms": [
+    {
+     "number": 1,
+     "name": "First Term",
+     "total": 29
+    },
+    {
+     "number": 2,
+     "name": "Second Term",
+     "total": 39
+    }
+   ],
+   "history": []
+  },
+  {
+   "name": "Yorùbá Language",
+   "teacher_name": "Tunde Bello",
+   "components": [
+    {
+     "label": "CA 1",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 2",
+     "score": 2,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 3",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "Exam",
+     "score": 15,
+     "max": 70,
+     "kind": "exam"
+    }
+   ],
+   "ca": 8,
+   "exam": 15,
+   "total": 44,
+   "grade": "F9",
+   "grade_weight": 9,
+   "gpa": 0,
+   "remark": "Fail",
+   "position": 4,
+   "cag": null,
+   "mtg": null,
+   "va": null,
+   "comment": "Ó ń ṣe dáadáa gan-an; ìwé kíkà rẹ̀ ti dára sí i. Kí ó tẹ̀síwájú.",
+   "redacted": false,
+   "units": 2,
+   "class_highest": 100,
+   "class_lowest": 21,
+   "class_average": 49.8,
+   "cumulative_average": 26.33,
+   "earlier_terms": [
+    {
+     "number": 1,
+     "name": "First Term",
+     "total": 26
+    },
+    {
+     "number": 2,
+     "name": "Second Term",
+     "total": 30
+    }
+   ],
+   "history": []
+  },
+  {
+   "name": "Basic Science and Technology",
+   "teacher_name": "Tunde Bello",
+   "components": [
+    {
+     "label": "CA 1",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 2",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 3",
+     "score": 4,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "Exam",
+     "score": 27,
+     "max": 70,
+     "kind": "exam"
+    }
+   ],
+   "ca": 10,
+   "exam": 27,
+   "total": 42,
+   "grade": "F9",
+   "grade_weight": 9,
+   "gpa": 0,
+   "remark": "Fail",
+   "position": 5,
+   "cag": null,
+   "mtg": null,
+   "va": null,
+   "comment": "Careful practical work and accurate observations. Needs to link conclusions back to the hypothesis.",
+   "redacted": false,
+   "units": null,
+   "class_highest": 71,
+   "class_lowest": 19,
+   "class_average": 37.6,
+   "cumulative_average": 33.67,
+   "earlier_terms": [
+    {
+     "number": 1,
+     "name": "First Term",
+     "total": 31
+    },
+    {
+     "number": 2,
+     "name": "Second Term",
+     "total": 33
+    }
+   ],
+   "history": []
+  },
+  {
+   "name": "Christian Religious Studies",
+   "teacher_name": "Tunde Bello",
+   "components": [
+    {
+     "label": "CA 1",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 2",
+     "score": 4,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 3",
+     "score": 4,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "Exam",
+     "score": 25,
+     "max": 70,
+     "kind": "exam"
+    }
+   ],
+   "ca": 11,
+   "exam": 25,
+   "total": 48,
+   "grade": "F9",
+   "grade_weight": 9,
+   "gpa": 0,
+   "remark": "Fail",
+   "position": 6,
+   "cag": null,
+   "mtg": null,
+   "va": null,
+   "comment": "Excellent grasp of algebraic reasoning; must show every step of working in examinations to secure full method marks.",
+   "redacted": false,
+   "units": 3,
+   "class_highest": 81,
+   "class_lowest": 19,
+   "class_average": 49.6,
+   "cumulative_average": 35.67,
+   "earlier_terms": [
+    {
+     "number": 1,
+     "name": "First Term",
+     "total": 39
+    },
+    {
+     "number": 2,
+     "name": "Second Term",
+     "total": 32
+    }
+   ],
+   "history": []
+  },
+  {
+   "name": "Agricultural Science",
+   "teacher_name": "Tunde Bello",
+   "components": [
+    {
+     "label": "CA 1",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 2",
+     "score": 2,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 3",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "Exam",
+     "score": 20,
+     "max": 70,
+     "kind": "exam"
+    }
+   ],
+   "ca": 8,
+   "exam": 20,
+   "total": 47,
+   "grade": "F9",
+   "grade_weight": 9,
+   "gpa": 0,
+   "remark": "Fail",
+   "position": 7,
+   "cag": null,
+   "mtg": null,
+   "va": null,
+   "comment": "Writes fluently and with flair — her narrative essay on “Ọjà Ọba” was outstanding. Keep refining punctuation in long sentences.",
+   "redacted": false,
+   "units": 3,
+   "class_highest": 94,
+   "class_lowest": 21,
+   "class_average": 52.4,
+   "cumulative_average": 29.33,
+   "earlier_terms": [
+    {
+     "number": 1,
+     "name": "First Term",
+     "total": 32
+    },
+    {
+     "number": 2,
+     "name": "Second Term",
+     "total": 28
+    }
+   ],
+   "history": []
+  },
+  {
+   "name": "Social Studies",
+   "teacher_name": "Tunde Bello",
+   "components": [
+    {
+     "label": "CA 1",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 2",
+     "score": 4,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 3",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "Exam",
+     "score": 25,
+     "max": 70,
+     "kind": "exam"
+    }
+   ],
+   "ca": 10,
+   "exam": 25,
+   "total": 38,
+   "grade": "F9",
+   "grade_weight": 9,
+   "gpa": 0,
+   "remark": "Fail",
+   "position": 8,
+   "cag": null,
+   "mtg": null,
+   "va": null,
+   "comment": "Très bonne participation orale ; elle doit réviser les accords du participe passé et lire davantage.",
+   "redacted": false,
+   "units": 2,
+   "class_highest": 85,
+   "class_lowest": 16,
+   "class_average": 46.6,
+   "cumulative_average": 34.33,
+   "earlier_terms": [
+    {
+     "number": 1,
+     "name": "First Term",
+     "total": 29
+    },
+    {
+     "number": 2,
+     "name": "Second Term",
+     "total": 39
+    }
+   ],
+   "history": []
+  },
+  {
+   "name": "Civic Education",
+   "teacher_name": "Tunde Bello",
+   "components": [
+    {
+     "label": "CA 1",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 2",
+     "score": 2,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 3",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "Exam",
+     "score": 15,
+     "max": 70,
+     "kind": "exam"
+    }
+   ],
+   "ca": 8,
+   "exam": 15,
+   "total": 33,
+   "grade": "F9",
+   "grade_weight": 9,
+   "gpa": 0,
+   "remark": "Fail",
+   "position": 9,
+   "cag": null,
+   "mtg": null,
+   "va": null,
+   "comment": "Ó ń ṣe dáadáa gan-an; ìwé kíkà rẹ̀ ti dára sí i. Kí ó tẹ̀síwájú.",
+   "redacted": false,
+   "units": 2,
+   "class_highest": 100,
+   "class_lowest": 21,
+   "class_average": 49.8,
+   "cumulative_average": 26.33,
+   "earlier_terms": [
+    {
+     "number": 1,
+     "name": "First Term",
+     "total": 26
+    },
+    {
+     "number": 2,
+     "name": "Second Term",
+     "total": 30
+    }
+   ],
+   "history": []
+  },
+  {
+   "name": "Business Studies",
+   "teacher_name": "Tunde Bello",
+   "components": [
+    {
+     "label": "CA 1",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 2",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 3",
+     "score": 4,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "Exam",
+     "score": 27,
+     "max": 70,
+     "kind": "exam"
+    }
+   ],
+   "ca": 10,
+   "exam": 27,
+   "total": 54,
+   "grade": "F9",
+   "grade_weight": 9,
+   "gpa": 0,
+   "remark": "Fail",
+   "position": 10,
+   "cag": null,
+   "mtg": null,
+   "va": null,
+   "comment": "Careful practical work and accurate observations. Needs to link conclusions back to the hypothesis.",
+   "redacted": false,
+   "units": null,
+   "class_highest": 71,
+   "class_lowest": 19,
+   "class_average": 37.6,
+   "cumulative_average": 33.67,
+   "earlier_terms": [
+    {
+     "number": 1,
+     "name": "First Term",
+     "total": 31
+    },
+    {
+     "number": 2,
+     "name": "Second Term",
+     "total": 33
+    }
+   ],
+   "history": []
+  },
+  {
+   "name": "Computer Studies / ICT",
+   "teacher_name": "Tunde Bello",
+   "components": [
+    {
+     "label": "CA 1",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 2",
+     "score": 4,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 3",
+     "score": 4,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "Exam",
+     "score": 25,
+     "max": 70,
+     "kind": "exam"
+    }
+   ],
+   "ca": 11,
+   "exam": 25,
+   "total": 37,
+   "grade": "F9",
+   "grade_weight": 9,
+   "gpa": 0,
+   "remark": "Fail",
+   "position": 11,
+   "cag": null,
+   "mtg": null,
+   "va": null,
+   "comment": "Excellent grasp of algebraic reasoning; must show every step of working in examinations to secure full method marks.",
+   "redacted": false,
+   "units": 3,
+   "class_highest": 81,
+   "class_lowest": 19,
+   "class_average": 49.6,
+   "cumulative_average": 35.67,
+   "earlier_terms": [
+    {
+     "number": 1,
+     "name": "First Term",
+     "total": 39
+    },
+    {
+     "number": 2,
+     "name": "Second Term",
+     "total": 32
+    }
+   ],
+   "history": []
+  },
+  {
+   "name": "Cultural and Creative Arts",
+   "teacher_name": "Tunde Bello",
+   "components": [
+    {
+     "label": "CA 1",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 2",
+     "score": 2,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "CA 3",
+     "score": 3,
+     "max": 10,
+     "kind": "ca"
+    },
+    {
+     "label": "Exam",
+     "score": 20,
+     "max": 70,
+     "kind": "exam"
+    }
+   ],
+   "ca": 8,
+   "exam": 20,
+   "total": 36,
+   "grade": "F9",
+   "grade_weight": 9,
+   "gpa": 0,
+   "remark": "Fail",
+   "position": 12,
+   "cag": null,
+   "mtg": null,
+   "va": null,
+   "comment": "Writes fluently and with flair — her narrative essay on “Ọjà Ọba” was outstanding. Keep refining punctuation in long sentences.",
+   "redacted": false,
+   "units": 3,
+   "class_highest": 94,
+   "class_lowest": 21,
+   "class_average": 52.4,
+   "cumulative_average": 29.33,
+   "earlier_terms": [
+    {
+     "number": 1,
+     "name": "First Term",
+     "total": 32
+    },
+    {
+     "number": 2,
+     "name": "Second Term",
+     "total": 28
+    }
+   ],
+   "history": []
+  }
+ ],
+ "aggregate": {
+  "grand_total": 159,
+  "average": 31.8,
+  "overall_grade": "F9",
+  "class_position": 9,
+  "gpa": 0,
+  "cumulative_average": 31.87,
+  "out_of": 38,
+  "subjects_counted": 12,
+  "subjects_passed": 0,
+  "marks_obtainable": 500,
+  "class_average": 49.58,
+  "earlier_terms": [
+   {
+    "number": 1,
+    "name": "First Term",
+    "grand_total": 157,
+    "average": 31.4,
+    "subjects_counted": 5
+   },
+   {
+    "number": 2,
+    "name": "Second Term",
+    "grand_total": 162,
+    "average": 32.4,
+    "subjects_counted": 5
+   }
+  ],
+  "va_average": null
+ },
+ "traits": {
+  "psychomotor": [
+   {
+    "skill": "Games",
+    "rating": "A",
+    "descriptor": null
+   },
+   {
+    "skill": "Handling of tools",
+    "rating": "B",
+    "descriptor": null
+   },
+   {
+    "skill": "Handwriting",
+    "rating": "C",
+    "descriptor": null
+   },
+   {
+    "skill": "Sport",
+    "rating": "D",
+    "descriptor": null
+   },
+   {
+    "skill": "Verbal fluency",
+    "rating": "E",
+    "descriptor": null
+   }
+  ],
+  "affective": [
+   {
+    "skill": "Attentiveness",
+    "rating": "A",
+    "descriptor": null
+   },
+   {
+    "skill": "Attitude to school work",
+    "rating": "B",
+    "descriptor": null
+   },
+   {
+    "skill": "Relationship with others",
+    "rating": "C",
+    "descriptor": null
+   },
+   {
+    "skill": "Neatness",
+    "rating": "D",
+    "descriptor": null
+   },
+   {
+    "skill": "Punctuality",
+    "rating": "E",
+    "descriptor": null
+   }
+  ],
+  "engagement": null,
+  "learning_behaviour": null,
+  "boarding": null,
+  "form_tutor_comment": null,
+  "comment_grades": null,
+  "rating_key": [
+   {
+    "rating": "A",
+    "descriptor": "Excellent",
+    "descriptors": {}
+   },
+   {
+    "rating": "B",
+    "descriptor": "Very good",
+    "descriptors": {}
+   },
+   {
+    "rating": "C",
+    "descriptor": "Good",
+    "descriptors": {}
+   },
+   {
+    "rating": "D",
+    "descriptor": "Fair",
+    "descriptors": {}
+   },
+   {
+    "rating": "E",
+    "descriptor": "Poor",
+    "descriptors": {}
+   }
+  ]
+ },
+ "remarks": {
+  "class_teacher": "A focused and courteous student who sets a fine example. She should keep up her strong reading habit.",
+  "head_teacher": "An excellent result — aim even higher next term.",
+  "form_tutor": {
+   "name": "Mr. Tèmítọ́pẹ́ Ìdòwú",
+   "comment": "A positive, hard-working term."
+  },
+  "boarding_house": {
+   "name": "Mọ́remí House",
+   "comment": "A tidy, considerate boarder."
+  }
+ },
+ "grade_key": [
+  {
+   "grade": "A1",
+   "min": 75,
+   "max": 100,
+   "remark": "Excellent",
+   "show_on_report": true,
+   "gpa": 5,
+   "weight": null
+  },
+  {
+   "grade": "B2",
+   "min": 70,
+   "max": 74.99,
+   "remark": "Very good",
+   "show_on_report": true,
+   "gpa": 4.5,
+   "weight": null
+  },
+  {
+   "grade": "B3",
+   "min": 65,
+   "max": 69.99,
+   "remark": "Good",
+   "show_on_report": true,
+   "gpa": 4,
+   "weight": null
+  },
+  {
+   "grade": "C4",
+   "min": 60,
+   "max": 64.99,
+   "remark": "Credit",
+   "show_on_report": true,
+   "gpa": 3.5,
+   "weight": null
+  },
+  {
+   "grade": "C5",
+   "min": 55,
+   "max": 59.99,
+   "remark": "Credit",
+   "show_on_report": true,
+   "gpa": 3,
+   "weight": null
+  },
+  {
+   "grade": "C6",
+   "min": 50,
+   "max": 54.99,
+   "remark": "Credit",
+   "show_on_report": true,
+   "gpa": 2.5,
+   "weight": null
+  },
+  {
+   "grade": "D7",
+   "min": 45,
+   "max": 49.99,
+   "remark": "Pass",
+   "show_on_report": true,
+   "gpa": 2,
+   "weight": null
+  },
+  {
+   "grade": "E8",
+   "min": 40,
+   "max": 44.99,
+   "remark": "Pass",
+   "show_on_report": true,
+   "gpa": 1,
+   "weight": null
+  },
+  {
+   "grade": "F9",
+   "min": 0,
+   "max": 39.99,
+   "remark": "Fail",
+   "show_on_report": true,
+   "gpa": 0,
+   "weight": null
+  }
+ ]
+}

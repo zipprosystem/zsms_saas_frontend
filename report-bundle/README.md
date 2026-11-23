@@ -139,5 +139,6 @@ be agreed with the backend team.
   templates leave them out.
 - `british_progress` Full caps the cover's mission statement at 16 lines (about
   900 characters) so the cover stays one page.
-- `nigerian_terminal` Full fits one A4 page up to about 11 subjects (3 CA
-  columns, 9-band grade key). More subjects continue on a second page.
+- `nigerian_terminal` Full fits one A4 page up to about 17 subjects with
+  ordinary remarks. Very dense payloads (3 CA columns plus long remarks or
+  comments) may run to a second page.

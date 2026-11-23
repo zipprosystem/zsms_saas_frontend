@@ -121,16 +121,18 @@
   .rtitle:empty{display:none;}
 
   /* Signatures: one slot per signatory with an image, then the report date. Empty slots are removed; nothing → the block hides. */
-  .sigs{margin-top:8px;display:flex;align-items:flex-end;border:1px solid var(--line);border-radius:4px;overflow:hidden;}
+  .sigs{margin-top:8px;display:flex;align-items:flex-end;border:1px solid var(--line);border-radius:4px;}
   .sigs:empty{display:none;}
   .sigs .sl{flex:1;min-width:0;text-align:center;padding:6px 10px 6px;}
   .sigs .sl + .sl{border-left:1px solid var(--rule);}
-  .sigs .im{height:40px;text-align:center;border-bottom:1px solid var(--line);padding-bottom:2px;white-space:nowrap;}
+  .sigs .im{position:relative;height:40px;text-align:center;border-bottom:1px solid var(--line);padding-bottom:2px;white-space:nowrap;}
+  /* Stamp seal over the head signer's signature (payload.stamped): absolutely placed, so the layout doesn't move. */
+  .sigs .im .zseal{position:absolute;display:block;left:50%;top:50%;width:72px;height:72px;transform:translate(-50%,-50%) rotate(-12deg);color:#2a4d9b;opacity:.55;pointer-events:none;z-index:1;}
   .sigs .im img{display:inline-block;vertical-align:bottom;height:36px;width:auto;max-width:100%;object-fit:contain;object-position:center bottom;}
   .sigs .im svg{display:inline-block;vertical-align:bottom;height:32px;width:auto;}
   .sigs .nm{margin-top:3px;font-size:9px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .sigs .rl{font-size:8px;font-weight:600;color:var(--blue-dk);text-transform:uppercase;letter-spacing:.03em;}
-  .sigs .sl.dt{flex:0 0 auto;min-width:110px;align-self:stretch;display:flex;flex-direction:column;justify-content:flex-end;background:var(--soft);}
+  .sigs .sl.dt{flex:0 0 auto;min-width:110px;align-self:stretch;display:flex;flex-direction:column;justify-content:flex-end;background:var(--soft);border-radius:0 3px 3px 0;}
   .sigs .sl.dt .dv{font-size:10.5px;font-weight:700;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:4px;}
 
   @media (max-width:800px){.sheet{width:100%;min-height:0;padding:12px;}.wmk b{font-size:48px;}}
@@ -234,6 +236,30 @@
   var Z = window.__ZSMS_REPORT__ || null;
   if (Z) document.documentElement.classList.add("zsms-live");
   var L=window.__ZSMS_LABELS__||{};function zL(k,fb){return L[k]||fb;}
+  /* Class label: student.class_display ("Year 11 A"; the class once when the arm shares its name). Older payloads: the same rule here. */
+  function zClass(st){
+    if(st.class_display)return st.class_display;
+    var c=String(st["class"]||"").trim(), a=String(st.arm||"").trim();
+    return !a||a.toLowerCase()===c.toLowerCase()?c:(c?c+" "+a:a);
+  }
+  /* Stamp seal (payload.stamped): one generic placeholder seal (no school name or branding) over the head signer's
+     signature: the Principal when assigned, else the Head Teacher. stamped false or absent → no seal. */
+  function zHeadSigner(g){function on(x){return !!(x&&(x.signature_url||x.name));}return on(g.principal)?"principal":on(g.head_teacher)?"head_teacher":null;}
+  function zSeal(){
+    /* Stamp seal: school.name (the header's resolved name) curved around the band, shrunk to fit; split over a top and a bottom arc when long. */
+    if(!Z||Z.stamped!==true)return"";
+    var n=String(Z.school&&Z.school.name||"").replace(/\s+/g," ").trim().toUpperCase(),k=zSeal.k=(zSeal.k||0)+1,L=88,MAX=10,MIN=5.5;
+    function e(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+    function w(s){return s.length*.7-(s.split(" ").length-1)*.4;}
+    function p(r,a){a*=Math.PI/180;return(50+r*Math.cos(a)).toFixed(2)+" "+(50+r*Math.sin(a)).toFixed(2);}
+    var lines=[n];
+    if(n&&w(n)*9>L&&n.indexOf(" ")>0){var ws=n.split(" "),best=null;for(var i=1;i<ws.length;i++){var a=ws.slice(0,i).join(" "),b=ws.slice(i).join(" "),m=Math.max(w(a),w(b));if(!best||m<best[0])best=[m,a,b];}lines=[best[1],best[2]];}
+    var fs=MAX;lines.forEach(function(s){fs=Math.min(fs,L/w(s));});fs=Math.max(fs,MIN);
+    var arcs=[["M"+p(34.5,195)+"A34.5 34.5 0 0 1 "+p(34.5,345)],["M"+p(41,165)+"A41 41 0 0 0 "+p(41,15)]],t="";
+    lines.forEach(function(s,i){if(!s)return;var id="zsl"+k+"_"+i,len=Math.min(w(s)*fs,L).toFixed(1);t+='<path id="'+id+'" d="'+arcs[i][0]+'" fill="none"/><text font-size="'+fs.toFixed(2)+'" font-weight="700" fill="currentColor" textLength="'+len+'" lengthAdjust="spacingAndGlyphs"><textPath href="#'+id+'" startOffset="50%" text-anchor="middle">'+e(s)+'</textPath></text>';});
+    if(lines.length<2)t+='<g fill="currentColor"><circle cx="37.2" cy="85.2" r="1.6"/><circle cx="50" cy="87.5" r="1.6"/><circle cx="62.8" cy="85.2" r="1.6"/></g>';
+    return '<svg class="zseal" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor"><circle cx="50" cy="50" r="47" stroke-width="3.5"/><circle cx="50" cy="50" r="43.75" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0 5.727"/><circle cx="50" cy="50" r="28" stroke-width="1.4"/></g><g fill="currentColor"><circle cx="12.5" cy="50" r="1.8"/><circle cx="87.5" cy="50" r="1.8"/></g><polygon fill="currentColor" points="50,35 53.5,45.1 64.3,45.4 55.7,51.9 58.8,62.1 50,56 41.2,62.1 44.3,51.9 35.7,45.4 46.5,45.1"/>'+t+'</svg>';
+  }
   function zEsc(v){return v==null?"":String(v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
   function zTxt(v){return v==null||v===""?"—":zEsc(v);}
   function zNum(v,dp){if(v==null||typeof v!=="number"||!isFinite(v))return "—";return dp==null?String(Math.round(v*100)/100):v.toFixed(dp);}
@@ -255,11 +281,12 @@
 
   /* Result title under the header; null/empty → the element empties and hides (no reserved space). */
   function zTitle(el){var t=Z.result_title;el.textContent=t||"";el.style.display=t?"":"none";}
-  /* Signature strip: a slot only for a signatory with a signature image; the date only when set; nothing → hidden. */
-  function zSigs(el){var g=Z.signatures||{};
+  /* Signature strip: a slot only for a signatory with a signature image; the date only when set; nothing → hidden.
+     Stamped → the seal over the head signer's signature. */
+  function zSigs(el){var g=Z.signatures||{}, head=zHeadSigner(g);
     var slots=[["class_teacher","sigClassTeacher","Class Teacher"],["head_teacher","sigHeadTeacher","Head Teacher"],["principal","sigPrincipal","Principal"]];
     var h=slots.map(function(x){var p=g[x[0]];if(!p||!p.signature_url)return "";
-      return '<div class="sl"><div class="im"><img src="'+zEsc(p.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+" — "+(p.name||""))+'"></div><div class="nm">'+zEsc(p.name)+'</div><div class="rl">'+zEsc(zL(x[1],x[2]))+"</div></div>";}).join("");
+      return '<div class="sl"><div class="im"><img src="'+zEsc(p.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+" — "+(p.name||""))+'">'+(x[0]===head?zSeal():"")+'</div><div class="nm">'+zEsc(p.name)+'</div><div class="rl">'+zEsc(zL(x[1],x[2]))+"</div></div>";}).join("");
     if(Z.report_date)h+='<div class="sl dt"><div class="dv">'+zDate(Z.report_date)+'</div><div class="rl">'+zEsc(zL("sigDate","Date"))+"</div></div>";
     el.innerHTML=h;el.style.display=h?"":"none";}
 
@@ -285,7 +312,7 @@
     function c(k,v,id){return '<div class="c"><span class="k">'+k+'</span><span class="v"'+(id?' id="'+id+'"':"")+">"+v+"</span></div>";}
     document.querySelector(".biogrid").innerHTML=
       '<div class="r">'+c("Student's Name:",zTxt(st.full_name))+c("Reg. No:",zTxt(st.admission_no))+"</div>"+
-      '<div class="r">'+c("School Session:",zTxt(Z.meta.academic_year.name))+c("Class:",zTxt(st["class"])+" "+zTxt(st.arm))+"</div>"+
+      '<div class="r">'+c("School Session:",zTxt(Z.meta.academic_year.name))+c("Class:",zTxt(zClass(st)))+"</div>"+
       '<div class="r">'+c("Class Average:",ag.class_average==null?"—":zNum(ag.class_average,2)+"%")+c("No. in Class:",zNum(ag.out_of))+"</div>"+
       '<div class="r">'+c("Term:",zTxt(Z.meta.term.name)+(isFull?"":" — CA"))+(isFull?c("Next Term Begins On:",zDate(st.resumption_date)):c("&nbsp;","&nbsp;"))+"</div>";
 

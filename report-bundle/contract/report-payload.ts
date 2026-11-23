@@ -111,14 +111,29 @@ export type ProgressDomain = "engagement" | "learning_behaviour" | "boarding";
  *                  one selected / no class teacher. Templates show a
  *                  signature only when signature_url is set (auto-hide,
  *                  as §7.27): no name line, no blank space otherwise.
- *                  Exception — nigerian_primary: an assigned signer
- *                  without signature_url prints their name under a
- *                  blank line, to sign by hand (wet signature).
- *       student: { full_name, admission_no, class, arm, gender, dob,
- *                  photo_url, resumption_date },
+ *                  Exception — nigerian_primary and nigerian_terminal:
+ *                  an assigned signer without signature_url prints
+ *                  their name under a blank line, to sign by hand (wet
+ *                  signature). A General School Type assigns ONE of head
+ *                  teacher / principal; nigerian_terminal titles its lead
+ *                  remark (remarks.head_teacher) and signs it by that role.
+ *       stamped,   (addition) boolean, default false: Report Progression
+ *                  has stamped this student's report for this point. True
+ *                  → every template prints one stamp seal carrying
+ *                  school.name (the header's resolved name; no separate
+ *                  field) over the head signer's signature: the Principal when assigned, else
+ *                  the Head Teacher (British: the Principal). No head
+ *                  signature shown → no seal.
+ *       student: { full_name, admission_no, class, arm, class_display,
+ *                  gender, dob, photo_url, resumption_date },
  *                  from the student record: gender "male"|"female",
  *                  dob = date_of_birth (YYYY-MM-DD), photo_url = the
  *                  served URL of photo_file_id (null = no photo).
+ *                  class_display = the class label to print: "<class>
+ *                  <arm>" ("Year 11 A"), or the class once when the arm
+ *                  has the same name ("Year 7", never "Year 7 Year 7";
+ *                  trimmed, case-insensitive) or no name. The standard
+ *                  label for every template; the backend provides it.
  *       attendance: { present, absent, total_days, time_school_opened },
  *                  Report Progression's per-term attendance: present =
  *                  the recorded present-count (sessions), total_days =
@@ -176,6 +191,12 @@ export type ProgressDomain = "engagement" | "learning_behaviour" | "boarding";
  *                    gpa, cumulative_average,
  *                    out_of,                 students ranked (position "of")
  *                    subjects_counted, marks_obtainable, class_average,
+ *                    subjects_passed,        (addition) General: how many
+ *                                            shown subjects are graded in a
+ *                                            pass band (Setup › Grades
+ *                                            is_pass); null = British,
+ *                                            own_subjects scope, or a scale
+ *                                            without is_pass
  *                    earlier_terms: [{ number, name, grand_total,
  *                                      average, subjects_counted }],
  *                    va_average },           (addition) British: mean of
@@ -352,11 +373,15 @@ export type ReportPayload = {
     principal: ReportSignature | null;
     class_teacher: ReportSignature | null;
   };
+  /** (addition) Report Progression has stamped this report: the templates print a stamp seal bearing school.name over the head signer's signature. Default false. */
+  stamped: boolean;
   student: {
     full_name: string;
     admission_no: string;
     class: string;
     arm: string;
+    /** "<class> <arm>", or the class alone when the arm has the same name (or none). */
+    class_display: string;
     gender: "male" | "female" | null;
     dob: string | null;
     photo_url: string | null;
@@ -373,6 +398,8 @@ export type ReportPayload = {
     cumulative_average: number | null;
     out_of: number | null;
     subjects_counted: number | null;
+    /** General: shown subjects graded in a pass band (Setup › Grades is_pass); null = British / own-subjects scope / scale without is_pass. */
+    subjects_passed: number | null;
     marks_obtainable: number | null;
     class_average: number | null;
     earlier_terms: Array<{ number: number; name: string; grand_total: number | null; average: number | null; subjects_counted: number | null }>;
