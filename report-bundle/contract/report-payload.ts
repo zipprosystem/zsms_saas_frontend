@@ -117,6 +117,13 @@ export type ProgressDomain = "engagement" | "learning_behaviour" | "boarding";
  *                  signature). A General School Type assigns ONE of head
  *                  teacher / principal; nigerian_terminal titles its lead
  *                  remark (remarks.head_teacher) and signs it by that role.
+ *       stamped,   (addition) boolean, default false: Report Progression
+ *                  has stamped this student's report for this point. True
+ *                  → every template prints one stamp seal carrying
+ *                  school.name (the header's resolved name; no separate
+ *                  field) over the head signer's signature: the Principal when assigned, else
+ *                  the Head Teacher (British: the Principal). No head
+ *                  signature shown → no seal.
  *       student: { full_name, admission_no, class, arm, class_display,
  *                  gender, dob, photo_url, resumption_date },
  *                  from the student record: gender "male"|"female",
@@ -366,6 +373,8 @@ export type ReportPayload = {
     principal: ReportSignature | null;
     class_teacher: ReportSignature | null;
   };
+  /** (addition) Report Progression has stamped this report: the templates print a stamp seal bearing school.name over the head signer's signature. Default false. */
+  stamped: boolean;
   student: {
     full_name: string;
     admission_no: string;

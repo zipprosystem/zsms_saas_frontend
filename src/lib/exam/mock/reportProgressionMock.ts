@@ -100,6 +100,11 @@ function publicationKey(termId: string, point: ProgressionPoint, studentId: stri
   return `${termId}|${point}|${studentId}`;
 }
 
+/** Whether Report Progression has stamped this student's report for the point (the report payload's `stamped`, read on demand). */
+export function isReportStamped(termId: string, point: ProgressionPoint, studentId: string): boolean {
+  return !!loadPublications()[publicationKey(termId, point, studentId)]?.stamped;
+}
+
 function ok(data: unknown): WireResponse {
   return { status: 200, body: { success: true, data } };
 }

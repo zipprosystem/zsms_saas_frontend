@@ -139,9 +139,11 @@
   .foot .prin{padding:10px 14px;display:flex;flex-direction:column;gap:6px;min-width:0;max-width:480px}
   .foot .prin[hidden]{display:none}
   .foot .prin .sigs{display:flex;gap:14px;margin-top:auto}
-  .foot .prin .sig{display:flex;flex-direction:column;align-items:flex-start;width:130px;min-width:0}
+  .foot .prin .sig{position:relative;display:flex;flex-direction:column;align-items:flex-start;width:130px;min-width:0}
   .foot .prin .sig img{height:36px;width:100%;object-fit:contain;object-position:left bottom;display:block}
   .foot .prin .sig .blank{height:36px;width:100%;display:block}
+  /* Stamp seal over the Principal's signature (payload.stamped): absolutely placed, so the layout doesn't move. */
+  .zseal{position:absolute;left:52px;top:18px;width:84px;height:84px;transform:translate(-50%,-50%) rotate(-12deg);color:#2a4d9b;opacity:.55;pointer-events:none;z-index:1}
   .foot .prin .sig .nm{border-top:1px solid var(--line-strong);width:100%;padding-top:3px;font-size:11px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
   .foot .prin .sig .rl{font:800 9px/1.2 var(--disp);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
   .foot .prin .date{font-size:11px;color:var(--muted)}
@@ -308,6 +310,23 @@
     var c=String(st["class"]||"").trim(), a=String(st.arm||"").trim();
     return !a||a.toLowerCase()===c.toLowerCase()?c:(c?c+" "+a:a);
   }
+  /* Stamp seal (payload.stamped): one generic placeholder seal (no school name or branding) over the Principal's
+     signature (British's only — head — signer). stamped false or absent → no seal. */
+  function zSeal(){
+    /* Stamp seal: school.name (the header's resolved name) curved around the band, shrunk to fit; split over a top and a bottom arc when long. */
+    if(!Z||Z.stamped!==true)return"";
+    var n=String(Z.school&&Z.school.name||"").replace(/\s+/g," ").trim().toUpperCase(),k=zSeal.k=(zSeal.k||0)+1,L=88,MAX=10,MIN=5.5;
+    function e(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+    function w(s){return s.length*.7-(s.split(" ").length-1)*.4;}
+    function p(r,a){a*=Math.PI/180;return(50+r*Math.cos(a)).toFixed(2)+" "+(50+r*Math.sin(a)).toFixed(2);}
+    var lines=[n];
+    if(n&&w(n)*9>L&&n.indexOf(" ")>0){var ws=n.split(" "),best=null;for(var i=1;i<ws.length;i++){var a=ws.slice(0,i).join(" "),b=ws.slice(i).join(" "),m=Math.max(w(a),w(b));if(!best||m<best[0])best=[m,a,b];}lines=[best[1],best[2]];}
+    var fs=MAX;lines.forEach(function(s){fs=Math.min(fs,L/w(s));});fs=Math.max(fs,MIN);
+    var arcs=[["M"+p(34.5,195)+"A34.5 34.5 0 0 1 "+p(34.5,345)],["M"+p(41,165)+"A41 41 0 0 0 "+p(41,15)]],t="";
+    lines.forEach(function(s,i){if(!s)return;var id="zsl"+k+"_"+i,len=Math.min(w(s)*fs,L).toFixed(1);t+='<path id="'+id+'" d="'+arcs[i][0]+'" fill="none"/><text font-size="'+fs.toFixed(2)+'" font-weight="700" fill="currentColor" textLength="'+len+'" lengthAdjust="spacingAndGlyphs"><textPath href="#'+id+'" startOffset="50%" text-anchor="middle">'+e(s)+'</textPath></text>';});
+    if(lines.length<2)t+='<g fill="currentColor"><circle cx="37.2" cy="85.2" r="1.6"/><circle cx="50" cy="87.5" r="1.6"/><circle cx="62.8" cy="85.2" r="1.6"/></g>';
+    return '<svg class="zseal" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor"><circle cx="50" cy="50" r="47" stroke-width="3.5"/><circle cx="50" cy="50" r="43.75" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0 5.727"/><circle cx="50" cy="50" r="28" stroke-width="1.4"/></g><g fill="currentColor"><circle cx="12.5" cy="50" r="1.8"/><circle cx="87.5" cy="50" r="1.8"/></g><polygon fill="currentColor" points="50,35 53.5,45.1 64.3,45.4 55.7,51.9 58.8,62.1 50,56 41.2,62.1 44.3,51.9 35.7,45.4 46.5,45.1"/>'+t+'</svg>';
+  }
   function zNum(v,dp){if(v==null||typeof v!=="number"||!isFinite(v))return "—";return dp==null?String(Math.round(v*100)/100):v.toFixed(dp);}
   function zOrd(n){if(n==null)return "—";var s=["th","st","nd","rd"],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}
   function zDate(iso){if(!iso)return "—";var p=String(iso).split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:zEsc(iso);}
@@ -435,7 +454,7 @@
       var s=sigs[r[0]];if(!s||!(s.signature_url||s.name))return "";
       var nm=s.name||"";
       var img=s.signature_url?'<img src="'+zEsc(s.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+(nm?" — "+nm:""))+'">':'<span class="blank"></span>';
-      return '<div class="sig">'+img+'<span class="nm">'+zEsc(nm)+'</span><span class="rl">'+zEsc(zL(r[1],r[2]))+"</span></div>";
+      return '<div class="sig">'+img+zSeal()+'<span class="nm">'+zEsc(nm)+'</span><span class="rl">'+zEsc(zL(r[1],r[2]))+"</span></div>";
     }).join("");
     var box=document.getElementById("sigs"), d=document.getElementById("pdate"), prin=document.getElementById("prin");
     box.innerHTML=html;box.hidden=!html;

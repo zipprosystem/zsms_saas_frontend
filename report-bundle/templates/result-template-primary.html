@@ -158,7 +158,9 @@
   .signs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px;}
   .sign{border:1px solid var(--accent-line);border-radius:6px;padding:7px 10px;font-size:9.5px;color:var(--ink-soft);}
   .sign .rl{font-weight:600;}
-  .sign .sg{height:36px;display:flex;align-items:flex-end;border-bottom:1px dashed var(--rule);margin:3px 0 4px;padding-bottom:2px;}
+  .sign .sg{position:relative;height:36px;display:flex;align-items:flex-end;border-bottom:1px dashed var(--rule);margin:3px 0 4px;padding-bottom:2px;}
+  /* Stamp seal over the head signer's signature (payload.stamped): absolutely placed, so the layout doesn't move. */
+  .zseal{position:absolute;left:52px;top:50%;width:84px;height:84px;transform:translate(-50%,-50%) rotate(-12deg);color:#2a4d9b;opacity:.55;pointer-events:none;z-index:1;}
   .sign .sg img{height:34px;max-width:100%;object-fit:contain;object-position:left bottom;}
   .sign .sg i{font-family:"Libre Franklin";color:var(--accent-dark);font-size:15px;font-weight:600;}
   .sign .sn{font-weight:700;color:var(--ink);}
@@ -341,17 +343,41 @@
   function zComp(s,kind,i){var c=(s.components||[]).filter(function(x){return x.kind===kind;})[i];return c?c.score:null;}
   function zImg(url,fallback){return url?'<img src="'+zEsc(url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':fallback;}
   var L=window.__ZSMS_LABELS__||{};function zL(k,fb){return L[k]||fb;}
+  /* Class label: student.class_display ("Year 11 A"; the class once when the arm shares its name). Older payloads: the same rule here. */
+  function zClass(st){
+    if(st.class_display)return st.class_display;
+    var c=String(st["class"]||"").trim(), a=String(st.arm||"").trim();
+    return !a||a.toLowerCase()===c.toLowerCase()?c:(c?c+" "+a:a);
+  }
+  /* Stamp seal (payload.stamped): one generic placeholder seal (no school name or branding) over the head signer's
+     signature: the Principal when assigned, else the Head Teacher. stamped false or absent → no seal. */
+  function zHeadSigner(g){function on(x){return !!(x&&(x.signature_url||x.name));}return on(g.principal)?"principal":on(g.head_teacher)?"head_teacher":null;}
+  function zSeal(){
+    /* Stamp seal: school.name (the header's resolved name) curved around the band, shrunk to fit; split over a top and a bottom arc when long. */
+    if(!Z||Z.stamped!==true)return"";
+    var n=String(Z.school&&Z.school.name||"").replace(/\s+/g," ").trim().toUpperCase(),k=zSeal.k=(zSeal.k||0)+1,L=88,MAX=10,MIN=5.5;
+    function e(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+    function w(s){return s.length*.7-(s.split(" ").length-1)*.4;}
+    function p(r,a){a*=Math.PI/180;return(50+r*Math.cos(a)).toFixed(2)+" "+(50+r*Math.sin(a)).toFixed(2);}
+    var lines=[n];
+    if(n&&w(n)*9>L&&n.indexOf(" ")>0){var ws=n.split(" "),best=null;for(var i=1;i<ws.length;i++){var a=ws.slice(0,i).join(" "),b=ws.slice(i).join(" "),m=Math.max(w(a),w(b));if(!best||m<best[0])best=[m,a,b];}lines=[best[1],best[2]];}
+    var fs=MAX;lines.forEach(function(s){fs=Math.min(fs,L/w(s));});fs=Math.max(fs,MIN);
+    var arcs=[["M"+p(34.5,195)+"A34.5 34.5 0 0 1 "+p(34.5,345)],["M"+p(41,165)+"A41 41 0 0 0 "+p(41,15)]],t="";
+    lines.forEach(function(s,i){if(!s)return;var id="zsl"+k+"_"+i,len=Math.min(w(s)*fs,L).toFixed(1);t+='<path id="'+id+'" d="'+arcs[i][0]+'" fill="none"/><text font-size="'+fs.toFixed(2)+'" font-weight="700" fill="currentColor" textLength="'+len+'" lengthAdjust="spacingAndGlyphs"><textPath href="#'+id+'" startOffset="50%" text-anchor="middle">'+e(s)+'</textPath></text>';});
+    if(lines.length<2)t+='<g fill="currentColor"><circle cx="37.2" cy="85.2" r="1.6"/><circle cx="50" cy="87.5" r="1.6"/><circle cx="62.8" cy="85.2" r="1.6"/></g>';
+    return '<svg class="zseal" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor"><circle cx="50" cy="50" r="47" stroke-width="3.5"/><circle cx="50" cy="50" r="43.75" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0 5.727"/><circle cx="50" cy="50" r="28" stroke-width="1.4"/></g><g fill="currentColor"><circle cx="12.5" cy="50" r="1.8"/><circle cx="87.5" cy="50" r="1.8"/></g><polygon fill="currentColor" points="50,35 53.5,45.1 64.3,45.4 55.7,51.9 58.8,62.1 50,56 41.2,62.1 44.3,51.9 35.7,45.4 46.5,45.1"/>'+t+'</svg>';
+  }
   /* Signature blocks (spec Phase 1b): Class Teacher, Head Teacher, Principal — one per assigned signer.
      With a signature image it's printed on the line; without one, the name sits under a blank line to
      sign by hand (wet signature). Unassigned (null) → no block. report_date printed in each block;
-     nothing at all → the area hides. */
+     nothing at all → the area hides. Stamped → the seal over the head signer's line. */
   function zSigns(el){
-    var g=Z.signatures||{}, d=Z.report_date?zDate(Z.report_date):"";
+    var g=Z.signatures||{}, d=Z.report_date?zDate(Z.report_date):"", head=zHeadSigner(g);
     var dt=d?'<div class="dt">'+zEsc(zL("sigDate","Date"))+': <b>'+zEsc(d)+"</b></div>":"";
     var rows=[["class_teacher","sigClassTeacher","Class Teacher"],["head_teacher","sigHeadTeacher","Head Teacher"],["principal","sigPrincipal","Principal"]];
     var h=rows.filter(function(r){var x=g[r[0]];return x&&(x.signature_url||x.name);}).map(function(r){var x=g[r[0]];
       var img=x.signature_url?'<img src="'+zEsc(x.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+" — "+(x.name||""))+'">':"";
-      return '<div class="sign"><div class="rl">'+zEsc(zL(r[1],r[2]))+'</div><div class="sg">'+img+'</div><div class="sn">'+zEsc(x.name)+"</div>"+dt+"</div>";});
+      return '<div class="sign"><div class="rl">'+zEsc(zL(r[1],r[2]))+'</div><div class="sg">'+img+(r[0]===head?zSeal():"")+'</div><div class="sn">'+zEsc(x.name)+"</div>"+dt+"</div>";});
     if(!h.length&&d) h=['<div class="sign">'+dt+"</div>"];
     el.innerHTML=h.join("");
     el.style.display=h.length?"":"none";
@@ -382,7 +408,7 @@
 
     function cell(k,v,accent){return '<div class="cell"><span class="k">'+k+'</span><span class="v'+(accent?" accent":"")+'">'+v+"</span></div>";}
     document.querySelector(".bio").innerHTML=
-      '<div class="row">'+cell("Name:",zTxt(String(st.full_name||"").toUpperCase()),1)+cell("Class:",zTxt((st["class"]+" "+st.arm).toUpperCase()))+cell("Term Average:",zNum(ag.average,2),1)+"</div>"+
+      '<div class="row">'+cell("Name:",zTxt(String(st.full_name||"").toUpperCase()),1)+cell("Class:",zTxt(zClass(st).toUpperCase()))+cell("Term Average:",zNum(ag.average,2),1)+"</div>"+
       '<div class="row">'+cell("Admission No:",zTxt(st.admission_no))+cell("Session:",zTxt(Z.meta.academic_year.name))+cell("Term:",zTxt(termUpper))+"</div>";
 
     var caP=zPoint("ca"), exP=zPoint("exam");

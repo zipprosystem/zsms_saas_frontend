@@ -1,7 +1,7 @@
 {
   "name": "zsms-report-templates",
-  "version": "1.1.0",
-  "content_sha256": "37cad44ccad46203bdefda66945b940f496d691b8808bc3bc15b6335d20628ae",
+  "version": "1.2.0",
+  "content_sha256": "c09d1d33b2fdf1db9bf2647392881537839340526ebdea173b41a0e36b20f0a1",
   "source": "zsms_saas_frontend — public/template-previews/ (rebuilt by scripts/report-bundle/build.mjs; never edit the bundle by hand)",
   "injection": {
     "report": "window.__ZSMS_REPORT__",
@@ -14,8 +14,8 @@
       "template_key": "nigerian_terminal",
       "name": "Nigerian Terminal Report",
       "file": "templates/result-template-nigerian.html",
-      "sha256": "c639d636c3343a59a6709496ad2e012494b9989340722cc2c784f72e5ef3a7fb",
-      "bytes": 295792,
+      "sha256": "3274f0c0aad082ac3beb8a2047591cfdbf4c2bf0ccbc28127e9909117ff2842a",
+      "bytes": 299075,
       "pages": {
         "full": 1,
         "progress": 1
@@ -32,8 +32,8 @@
       "template_key": "british_progress",
       "name": "British Progress Report",
       "file": "templates/result-template-british.html",
-      "sha256": "b5d92d36af03b9d3bad0301b52aa617c6f9b784d5bf7f6ca3106d5e7d0b4b910",
-      "bytes": 294011,
+      "sha256": "86f67aab563969af56f6595163c5c830abb5f027a9b76cdf462ce3de232f4a5c",
+      "bytes": 296714,
       "pages": {
         "full": 4,
         "progress": 2
@@ -51,8 +51,8 @@
       "template_key": "modern_generic",
       "name": "Modern Generic Report",
       "file": "templates/result-template-modern.html",
-      "sha256": "e69c966e196338b15972df170a58ce00448e5eb335d108340c32263f7afd9171",
-      "bytes": 392254,
+      "sha256": "8b5de598eb2c090e8626bfc806a204b29b623dbc098e0caad006f2bd66a3e1fa",
+      "bytes": 395619,
       "pages": {
         "full": 1,
         "progress": 1
@@ -69,8 +69,8 @@
       "template_key": "nigerian_primary",
       "name": "Primary Terminal Report",
       "file": "templates/result-template-primary.html",
-      "sha256": "c3e5059604753afd50e2e9f2abce271990a4862c4d99d566de27d43e26a8f389",
-      "bytes": 279140,
+      "sha256": "3f071e6e14b8ec065e44fde818b06c433bcfd369c99d37b97cfd13ac798dbd70",
+      "bytes": 282446,
       "pages": {
         "full": 1,
         "progress": 1
@@ -87,8 +87,8 @@
       "template_key": "lela_blossom",
       "name": "LeLa Blossom Report",
       "file": "templates/result-template-lela.html",
-      "sha256": "f71e7b204439560656ed38cb2c66eb27c55c4ce3a59651736c6bc9151cba0d8c",
-      "bytes": 295455,
+      "sha256": "637d0e05f23f105c7e7f2fae9691cbec4710035c9853e03c1e43a6f2f95d1af6",
+      "bytes": 298817,
       "pages": {
         "full": 2,
         "progress": 2
@@ -105,8 +105,8 @@
       "template_key": "white_pearl",
       "name": "White Pearl Report",
       "file": "templates/result-template-whitepearl.html",
-      "sha256": "23d20a3fced3794ed3c8b2a35f0f1c8ee0ac7ebaa4b404df38d50251897060a4",
-      "bytes": 303810,
+      "sha256": "9480833a4401c5954fb502689acc0694690a5464026e1c940233615c0f0c6647",
+      "bytes": 307158,
       "pages": {
         "full": 1,
         "progress": 1
@@ -121,7 +121,7 @@
     }
   ],
   "files": {
-    "contract/report-payload.ts": "4d4f6d11bed89160cbf677ae7146fee16ead1a7f8e865ee5304c4cb0f728b628",
+    "contract/report-payload.ts": "ab6b6afb309b8e93aef23089a637ca000fe5047b200a9b6343531e18d8ef2842",
     "licenses/OFL-archivo.txt": "108b4e57c9c796d3d38d0428ca7ee39de47ad93187302718d9b2d8864b9b716b",
     "licenses/OFL-fraunces.txt": "bdf4c22802eaf804f998195871c6b8938aac2ac14b2d78a8bd66a6f1eced833b",
     "licenses/OFL-ibm-plex-sans.txt": "7e6b2818edbd8f6a01ae80641cc8f16a51080d08fb4e532be3a0b6f74adb07da",
@@ -133,26 +133,29 @@
     "licenses/OFL-noto-serif.txt": "cee9892f9f0cc8fe882c9e9537ee6a89621d86ee7ceaf70b02e2b2b1c25c061a",
     "licenses/OFL-playfair-display.txt": "566be814f8e96e93dfa16101331557eb6b5467e9e03f627c0910fe93ca12300e",
     "parity/PRINT-CONTRACT.md": "15eb0b735b32b99686b4b5b9b3138dffaabe151123649bbbb1cba30c5ace5b67",
-    "samples/british-full-heavy.json": "4a3472b019a60a991b2e3206e282061bccffa7f60032dfe051b0e28c2cd27daf",
-    "samples/british-full-normal.json": "2c964fa64568af73e5ca943f07235d0790b96477fd50d66859ff03de8fa30431",
-    "samples/british-full-stress.json": "4bace9a490ac8571b55f5d05129505ee80b6b8ca4339ecf6079d3212950aa44b",
-    "samples/british-progress-normal.json": "ab4b8b9b32daa8299bf03187aeb23b6e2bef5f4092ca98d107bb7e91eb3619ba",
-    "samples/british-progress-stress.json": "a885fb1bd456ae6d9b0900d06fd64b3f199d8508bcacc90454b01e82bde9f34f",
-    "samples/british-progress-wet-sign.json": "ef1e6239f992c7816501f0126ce5ebb61e1c803e89e1325c8e9895a7beb7093c",
-    "samples/general-full-head-teacher.json": "24847ad7d4fdc3c1aa1f63f4394b8b64de56e9ccdcd1e4644d8cff2384916301",
-    "samples/general-full-normal.json": "f7e0cca2258443243c6f90473053b98a8cdc8302ca733053c6347a2250813271",
-    "samples/general-full-principal.json": "2b134eee73c1c08cfba3bd1983a23ca78b510468b800b1bdacc110ced9602640",
-    "samples/general-full-stress.json": "067fb25632a4548fb201ab74660a875f9b788a685c8dc0d422e0cf743f138871",
-    "samples/general-progress-normal.json": "ee93974607482c714e8d88125d3d84e1c369f050e154711a695783ed20ffa467",
-    "samples/general-progress-stress.json": "e39d089b7592dc4db624ae0b2d84a3c5ce3ee8f3ef7948d7d207bb0196b04d8d",
-    "samples/lela-full-stress.json": "abb64b361b65519a4937d3d10bd196fa7412eb1c9f10e452602ba24fa6305395",
-    "samples/lela-progress-stress.json": "74cda4ca452a94ed014caae0c53378a141eda835fb3a367771eb10f0178815d0",
-    "templates/result-template-british.html": "b5d92d36af03b9d3bad0301b52aa617c6f9b784d5bf7f6ca3106d5e7d0b4b910",
-    "templates/result-template-lela.html": "f71e7b204439560656ed38cb2c66eb27c55c4ce3a59651736c6bc9151cba0d8c",
-    "templates/result-template-modern.html": "e69c966e196338b15972df170a58ce00448e5eb335d108340c32263f7afd9171",
-    "templates/result-template-nigerian.html": "c639d636c3343a59a6709496ad2e012494b9989340722cc2c784f72e5ef3a7fb",
-    "templates/result-template-primary.html": "c3e5059604753afd50e2e9f2abce271990a4862c4d99d566de27d43e26a8f389",
-    "templates/result-template-whitepearl.html": "23d20a3fced3794ed3c8b2a35f0f1c8ee0ac7ebaa4b404df38d50251897060a4"
+    "samples/british-full-heavy.json": "af87c072b612dde6debd848f201094630b951ceef8dee969035d45fd2ad35c6b",
+    "samples/british-full-normal.json": "9b6346be7963cfe3ecc138c488cf0b06308efc0c7b2a1465b06f24658f7d7935",
+    "samples/british-full-stress.json": "2122eeceab1ebf5ce02cb5bd194aa5346966810479be98e1a8ca8876aedba4f5",
+    "samples/british-progress-normal.json": "38c41d43dcd36c42027e1db93eea151af2090b3a33bc0c2476f15eccec92d6de",
+    "samples/british-progress-stamped.json": "2ea023f986b8c77fd02b731d69e07d69755652118d3f62309cf49c904d2d0fec",
+    "samples/british-progress-stress.json": "08a0390b79000714204e26c52fba5f2b2aff18b5d9b6ff52ca98d99a8a11192e",
+    "samples/british-progress-wet-sign.json": "5312a70b419b01ee4af33c38744a3652ede9714f3a042373acd667d66d621a80",
+    "samples/general-full-head-teacher-stamped.json": "c5c260c0a0f221ccaa24bd6bf7e30fd7ac66d53a500cb8bc8f66572cd7329d36",
+    "samples/general-full-head-teacher.json": "6d9cd1e13056ceba9c017aa48fb3e5cff21f3dbec56a8b1230d145ab01f72ffe",
+    "samples/general-full-normal.json": "b2678ba88400655a77f249205e6b46e2981bac8fefc0cecb6078bd6475dd9c3f",
+    "samples/general-full-principal.json": "a87ae06829e8c763329182eed330e5569ad0f11a3d6a5978d4cfabcbb8088e0c",
+    "samples/general-full-stress.json": "1d0f13bcb6e66423f25eab5a35e5e10d345deddc133ec0d5c809bc5118700dd5",
+    "samples/general-progress-normal.json": "1f1e43f8cf8fd34fe8a211649acf34daadded062096e5d7145c36714614ee515",
+    "samples/general-progress-stress.json": "7cca75d601cc0f419758ff7073aff96815bb19697ec79a4707197e6fcfcc4bf8",
+    "samples/lela-full-stamped.json": "32c86e218539e82587c4507d1235a33879b016604168a2c51a1ecd352f369870",
+    "samples/lela-full-stress.json": "132cd8d008333a60848d7f3058ee5b1de0f025a032d06ea7bdb8b08edd70a77c",
+    "samples/lela-progress-stress.json": "5066fb030587b85b27c91d3eecae50985d6fad5528e707de8e4f04cd1514a267",
+    "templates/result-template-british.html": "86f67aab563969af56f6595163c5c830abb5f027a9b76cdf462ce3de232f4a5c",
+    "templates/result-template-lela.html": "637d0e05f23f105c7e7f2fae9691cbec4710035c9853e03c1e43a6f2f95d1af6",
+    "templates/result-template-modern.html": "8b5de598eb2c090e8626bfc806a204b29b623dbc098e0caad006f2bd66a3e1fa",
+    "templates/result-template-nigerian.html": "3274f0c0aad082ac3beb8a2047591cfdbf4c2bf0ccbc28127e9909117ff2842a",
+    "templates/result-template-primary.html": "3f071e6e14b8ec065e44fde818b06c433bcfd369c99d37b97cfd13ac798dbd70",
+    "templates/result-template-whitepearl.html": "9480833a4401c5954fb502689acc0694690a5464026e1c940233615c0f0c6647"
   },
   "fonts_license": "SIL Open Font License 1.1 — see licenses/"
 }

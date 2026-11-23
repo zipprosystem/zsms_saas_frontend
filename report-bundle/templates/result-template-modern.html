@@ -100,7 +100,9 @@
   .rtitle{margin:0 24px 14px;padding:7px 14px;border-radius:10px;background:var(--tint);border:1px solid var(--line);color:var(--accent);font:600 16px/1.25 var(--disp);letter-spacing:-.005em;text-align:center;text-wrap:balance}
   :root[data-theme="dark"] .rtitle{color:var(--ink)} @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .rtitle{color:var(--ink)}}
   /* Signatures: image + name + role. A slot renders only when its signature has an image; no slot and no date → no strip. */
-  .sig{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+  .sig{position:relative;display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+  /* Stamp seal over the head signer's signature (payload.stamped): absolutely placed, so the layout doesn't move. */
+  .zseal{position:absolute;left:52px;top:20px;width:84px;height:84px;transform:translate(-50%,-50%) rotate(-12deg);color:#2a4d9b;opacity:.55;pointer-events:none;z-index:1}
   .sig .sig-img{display:block;height:40px;width:150px;max-width:100%;object-fit:contain;object-position:left bottom;color:var(--ink)}
   .sig .nm{margin-top:2px;padding-top:3px;border-top:1px solid var(--line-strong);min-width:130px;font-family:var(--disp);font-style:italic;font-weight:600;font-size:13px;color:var(--ink)}
   .sig .role{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
@@ -305,9 +307,34 @@
   function zComp(s,kind,i){var c=(s.components||[]).filter(function(x){return x.kind===kind;})[i];return c?c.score:null;}
   function zImg(url,fallback){return url?'<img src="'+zEsc(url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':fallback;}
   var L=window.__ZSMS_LABELS__||{};function zL(k,fb){return L[k]||fb;}
+  /* Class label: student.class_display ("Year 11 A"; the class once when the arm shares its name). Older payloads: the same rule here. */
+  function zClass(st){
+    if(st.class_display)return st.class_display;
+    var c=String(st["class"]||"").trim(), a=String(st.arm||"").trim();
+    return !a||a.toLowerCase()===c.toLowerCase()?c:(c?c+" "+a:a);
+  }
+  /* Stamp seal (payload.stamped): one generic placeholder seal (no school name or branding) over the head signer's
+     signature: the Principal when assigned, else the Head Teacher. stamped false or absent → no seal. */
+  function zHeadSigner(g){function on(x){return !!(x&&(x.signature_url||x.name));}return on(g.principal)?"principal":on(g.head_teacher)?"head_teacher":null;}
+  function zSeal(){
+    /* Stamp seal: school.name (the header's resolved name) curved around the band, shrunk to fit; split over a top and a bottom arc when long. */
+    if(!Z||Z.stamped!==true)return"";
+    var n=String(Z.school&&Z.school.name||"").replace(/\s+/g," ").trim().toUpperCase(),k=zSeal.k=(zSeal.k||0)+1,L=88,MAX=10,MIN=5.5;
+    function e(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+    function w(s){return s.length*.7-(s.split(" ").length-1)*.4;}
+    function p(r,a){a*=Math.PI/180;return(50+r*Math.cos(a)).toFixed(2)+" "+(50+r*Math.sin(a)).toFixed(2);}
+    var lines=[n];
+    if(n&&w(n)*9>L&&n.indexOf(" ")>0){var ws=n.split(" "),best=null;for(var i=1;i<ws.length;i++){var a=ws.slice(0,i).join(" "),b=ws.slice(i).join(" "),m=Math.max(w(a),w(b));if(!best||m<best[0])best=[m,a,b];}lines=[best[1],best[2]];}
+    var fs=MAX;lines.forEach(function(s){fs=Math.min(fs,L/w(s));});fs=Math.max(fs,MIN);
+    var arcs=[["M"+p(34.5,195)+"A34.5 34.5 0 0 1 "+p(34.5,345)],["M"+p(41,165)+"A41 41 0 0 0 "+p(41,15)]],t="";
+    lines.forEach(function(s,i){if(!s)return;var id="zsl"+k+"_"+i,len=Math.min(w(s)*fs,L).toFixed(1);t+='<path id="'+id+'" d="'+arcs[i][0]+'" fill="none"/><text font-size="'+fs.toFixed(2)+'" font-weight="700" fill="currentColor" textLength="'+len+'" lengthAdjust="spacingAndGlyphs"><textPath href="#'+id+'" startOffset="50%" text-anchor="middle">'+e(s)+'</textPath></text>';});
+    if(lines.length<2)t+='<g fill="currentColor"><circle cx="37.2" cy="85.2" r="1.6"/><circle cx="50" cy="87.5" r="1.6"/><circle cx="62.8" cy="85.2" r="1.6"/></g>';
+    return '<svg class="zseal" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor"><circle cx="50" cy="50" r="47" stroke-width="3.5"/><circle cx="50" cy="50" r="43.75" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0 5.727"/><circle cx="50" cy="50" r="28" stroke-width="1.4"/></g><g fill="currentColor"><circle cx="12.5" cy="50" r="1.8"/><circle cx="87.5" cy="50" r="1.8"/></g><polygon fill="currentColor" points="50,35 53.5,45.1 64.3,45.4 55.7,51.9 58.8,62.1 50,56 41.2,62.1 44.3,51.9 35.7,45.4 46.5,45.1"/>'+t+'</svg>';
+  }
   /* Signature slot (spec Phase 1b): only when the signature exists AND has an image — else "" (no name line, no space). */
-  function zSig(sg,role){if(!sg||!sg.signature_url)return "";var nm=sg.name||"";
-    return '<div class="sig"><img class="sig-img" src="'+zEsc(sg.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+" — "+nm)+'"><span class="nm">'+zEsc(nm)+'</span><span class="role">'+zEsc(role)+"</span></div>";}
+  /* seal → the stamp seal over the signature (head signer). */
+  function zSig(sg,role,seal){if(!sg||!sg.signature_url)return "";var nm=sg.name||"";
+    return '<div class="sig"><img class="sig-img" src="'+zEsc(sg.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+" — "+nm)+'">'+(seal?zSeal():"")+'<span class="nm">'+zEsc(nm)+'</span><span class="role">'+zEsc(role)+"</span></div>";}
   function zRow(s){return s.redacted?' class="zsms-redacted"':"";}
   /* Header motto slot: School Type motto, else Settings motto (resolved in the payload). None → the slot hides. */
   function zMotto(el){var m=Z.school.motto;el.textContent=m||"";el.style.display=m?"":"none";}
@@ -335,7 +362,7 @@
     if(Z.result_title) rt.textContent=Z.result_title; else rt.parentNode.removeChild(rt);
 
     function kv(k,v){return '<div><span class="k">'+k+'</span><span class="v">'+v+"</span></div>";}
-    card.querySelector(".ident").innerHTML=kv("Student",zTxt(st.full_name))+kv("Class",zTxt(st["class"])+" — "+zTxt(st.arm))+
+    card.querySelector(".ident").innerHTML=kv("Student",zTxt(st.full_name))+kv("Class",zTxt(zClass(st)))+
       kv("Admission No.",zTxt(st.admission_no))+(isFull?kv("Next Term",zDate(st.resumption_date)):kv("Assessed","—"));
 
     function stat(k,v,hero){return '<div class="stat'+(hero?" hero":"")+'"><span class="k">'+k+'</span><span class="v">'+v+"</span></div>";}
@@ -371,7 +398,8 @@
     if(isFull) remarks.innerHTML=remark("Class Teacher",Z.remarks.class_teacher,ctSig)+remark("Head of School",Z.remarks.head_teacher);
     else remarks.querySelector(".remark").outerHTML=remark("Class Teacher",Z.remarks.class_teacher,ctSig);
     // Strip under the remarks: Head Teacher + Principal + Date; each drops out alone, all absent → strip removed.
-    var strip=zSig(sg.head_teacher,zL("sigHeadTeacher","Head Teacher"))+zSig(sg.principal,zL("sigPrincipal","Principal"))+
+    var head=zHeadSigner(sg);
+    var strip=zSig(sg.head_teacher,zL("sigHeadTeacher","Head Teacher"),head==="head_teacher")+zSig(sg.principal,zL("sigPrincipal","Principal"),head==="principal")+
       (Z.report_date?'<div class="sig sig-date"><span class="nm">'+zDate(Z.report_date)+'</span><span class="role">'+zEsc(zL("sigDate","Date"))+"</span></div>":"");
     var sigs=card.querySelector(".sigs");
     if(strip) sigs.innerHTML=strip; else sigs.parentNode.removeChild(sigs);

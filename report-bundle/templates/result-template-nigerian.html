@@ -108,8 +108,10 @@
   /* Sign-off row: one block per assigned signer (signature image over a rule — or a blank rule to sign by hand —, name, role), then the date. */
   .sign{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:flex-end;margin-top:8px;font-size:12px;color:var(--muted)}
   .sig{flex:0 1 220px;min-width:140px;display:flex;flex-wrap:wrap;align-items:baseline;column-gap:6px}
-  .sig .img{flex:0 0 100%;height:36px;display:flex;align-items:flex-end;border-bottom:1px solid var(--line-strong);padding-bottom:1px}
+  .sig .img{position:relative;flex:0 0 100%;height:36px;display:flex;align-items:flex-end;border-bottom:1px solid var(--line-strong);padding-bottom:1px}
   .sig .img img{height:100%;width:130px;max-width:100%;object-fit:contain;object-position:left bottom}
+  /* Stamp seal over the head signer's signature (payload.stamped): absolutely placed, so the layout doesn't move. */
+  .zseal{position:absolute;left:52px;top:50%;width:76px;height:76px;transform:translate(-50%,-50%) rotate(-12deg);color:#2a4d9b;opacity:.55;pointer-events:none;z-index:1}
   .sig .scribble{font-family:var(--serif);font-style:italic;color:var(--ink);font-size:16px;transform:rotate(-3deg);transform-origin:left bottom}
   .sig .nm{margin-top:3px;color:var(--ink);font-weight:600;font-size:12px;line-height:1.2}
   .sig .rl,.sig-date .rl{font-size:10px;line-height:1.2;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
@@ -426,11 +428,35 @@
   function zComp(s,kind,i){var c=(s.components||[]).filter(function(x){return x.kind===kind;})[i];return c?c.score:null;}
   function zImg(url,fallback){return url?'<img src="'+zEsc(url)+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':fallback;}
   var L=window.__ZSMS_LABELS__||{};function zL(k,fb){return L[k]||fb;}
+  /* Class label: student.class_display ("Year 11 A"; the class once when the arm shares its name). Older payloads: the same rule here. */
+  function zClass(st){
+    if(st.class_display)return st.class_display;
+    var c=String(st["class"]||"").trim(), a=String(st.arm||"").trim();
+    return !a||a.toLowerCase()===c.toLowerCase()?c:(c?c+" "+a:a);
+  }
+  /* Stamp seal (payload.stamped): one generic placeholder seal (no school name or branding) over the head signer's
+     signature: the Principal when assigned, else the Head Teacher. stamped false or absent → no seal. */
+  function zHeadSigner(g){function on(x){return !!(x&&(x.signature_url||x.name));}return on(g.principal)?"principal":on(g.head_teacher)?"head_teacher":null;}
+  function zSeal(){
+    /* Stamp seal: school.name (the header's resolved name) curved around the band, shrunk to fit; split over a top and a bottom arc when long. */
+    if(!Z||Z.stamped!==true)return"";
+    var n=String(Z.school&&Z.school.name||"").replace(/\s+/g," ").trim().toUpperCase(),k=zSeal.k=(zSeal.k||0)+1,L=88,MAX=10,MIN=5.5;
+    function e(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+    function w(s){return s.length*.7-(s.split(" ").length-1)*.4;}
+    function p(r,a){a*=Math.PI/180;return(50+r*Math.cos(a)).toFixed(2)+" "+(50+r*Math.sin(a)).toFixed(2);}
+    var lines=[n];
+    if(n&&w(n)*9>L&&n.indexOf(" ")>0){var ws=n.split(" "),best=null;for(var i=1;i<ws.length;i++){var a=ws.slice(0,i).join(" "),b=ws.slice(i).join(" "),m=Math.max(w(a),w(b));if(!best||m<best[0])best=[m,a,b];}lines=[best[1],best[2]];}
+    var fs=MAX;lines.forEach(function(s){fs=Math.min(fs,L/w(s));});fs=Math.max(fs,MIN);
+    var arcs=[["M"+p(34.5,195)+"A34.5 34.5 0 0 1 "+p(34.5,345)],["M"+p(41,165)+"A41 41 0 0 0 "+p(41,15)]],t="";
+    lines.forEach(function(s,i){if(!s)return;var id="zsl"+k+"_"+i,len=Math.min(w(s)*fs,L).toFixed(1);t+='<path id="'+id+'" d="'+arcs[i][0]+'" fill="none"/><text font-size="'+fs.toFixed(2)+'" font-weight="700" fill="currentColor" textLength="'+len+'" lengthAdjust="spacingAndGlyphs"><textPath href="#'+id+'" startOffset="50%" text-anchor="middle">'+e(s)+'</textPath></text>';});
+    if(lines.length<2)t+='<g fill="currentColor"><circle cx="37.2" cy="85.2" r="1.6"/><circle cx="50" cy="87.5" r="1.6"/><circle cx="62.8" cy="85.2" r="1.6"/></g>';
+    return '<svg class="zseal" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor"><circle cx="50" cy="50" r="47" stroke-width="3.5"/><circle cx="50" cy="50" r="43.75" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0 5.727"/><circle cx="50" cy="50" r="28" stroke-width="1.4"/></g><g fill="currentColor"><circle cx="12.5" cy="50" r="1.8"/><circle cx="87.5" cy="50" r="1.8"/></g><polygon fill="currentColor" points="50,35 53.5,45.1 64.3,45.4 55.7,51.9 58.8,62.1 50,56 41.2,62.1 44.3,51.9 35.7,45.4 46.5,45.1"/>'+t+'</svg>';
+  }
   /* One signature block per assigned signer; "" when no one is assigned. Without a signature image the rule is
-     left blank for a wet signature, with the name under it. */
-  function zSig(sg,roleKey,roleFb){if(!sg||!(sg.signature_url||sg.name))return "";
+     left blank for a wet signature, with the name under it. seal → the stamp seal over the signature (head signer). */
+  function zSig(sg,roleKey,roleFb,seal){if(!sg||!(sg.signature_url||sg.name))return "";
     var img=sg.signature_url?'<img src="'+zEsc(sg.signature_url)+'" alt="'+zEsc(zL("sigImageAlt","Signature")+" — "+(sg.name||""))+'">':"";
-    return '<div class="sig"><span class="img">'+img+'</span>'+
+    return '<div class="sig"><span class="img">'+img+(seal?zSeal():"")+'</span>'+
       (sg.name?'<span class="nm">'+zEsc(sg.name)+"</span>":"")+'<span class="rl">'+zEsc(zL(roleKey,roleFb))+"</span></div>";}
   /* A sign-off row from signature blocks + the report date; "" when no block shows (the date never prints alone). */
   function zSignRow(blocks){var b=blocks.join("");if(!b)return "";
@@ -460,7 +486,7 @@
     if(Z.result_title)rt.textContent=Z.result_title;else rt.parentNode.removeChild(rt);
 
     function bioRow(k,v){return '<div class="row"><span class="k">'+k+'</span><span class="v">'+v+'</span></div>';}
-    var left=[bioRow("Name",zTxt(st.full_name)),bioRow("Class / Arm",zTxt(st["class"])+" &mdash; "+zTxt(st.arm)),
+    var left=[bioRow("Name",zTxt(st.full_name)),bioRow("Class / Arm",zTxt(zClass(st))),
       bioRow("Term",zTxt(Z.meta.term.name)+(isFull?"":" &mdash; C.A.")),bioRow("Session",zTxt(Z.meta.academic_year.name))];
     var right=[bioRow("No. in Class",zNum(ag.out_of))];
     if(isFull){
@@ -524,7 +550,7 @@
       ? {sig:sg.principal,key:"sigPrincipal",role:"Principal"}
       : {sig:sg.head_teacher,key:"sigHeadTeacher",role:"Head Teacher"};
     var ctRow=zSignRow([zSig(sg.class_teacher,"sigClassTeacher","Class Teacher")]);
-    var leadRow=zSignRow([zSig(lead.sig,lead.key,lead.role)]);
+    var leadRow=zSignRow([zSig(lead.sig,lead.key,lead.role,true)]);
     function remark(title,text,sign){return '<div class="remark"><h3>'+title+"</h3><p>"+(text?"&ldquo;"+zEsc(text)+"&rdquo;":"—")+"</p>"+sign+"</div>";}
     card.querySelector(".remarks").innerHTML=remark("Class Teacher&#39;s Remark",Z.remarks.class_teacher,ctRow)+
       (isFull?remark(lead.role+"&#39;s Remark",Z.remarks.head_teacher,leadRow):(leadRow?'<div class="signoff">'+leadRow+"</div>":""));
