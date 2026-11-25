@@ -145,6 +145,7 @@
     "academicsExam": "Examen",
     "clinic": "Clinique",
     "adminPanel": "Panneau d'administration",
+    "adminPanelParents": "Parents",
     "students": "Élèves",
     "messages": "Messages",
     "websiteCms": "Site Web et CMS",
@@ -4294,6 +4295,184 @@
           "saved": "Bulletin enregistré"
         }
       }
+    }
+  },
+  "parents": {
+    "header": {
+      "title": "Parents",
+      "subtitle": "Parents et tuteurs, les élèves qui leur sont liés et le contact principal de chaque élève."
+    },
+    "titleWithCount": "Parents ({count})",
+    "titleForChild": "Parents de {name} ({count})",
+    "searchPlaceholder": "Rechercher par nom, e-mail, téléphone ou identifiant",
+    "addNew": "Ajouter un parent",
+    "export": "Exporter",
+    "loading": "Chargement…",
+    "loadError": "Impossible de charger les parents. Réessayez.",
+    "noAccess": "Vous n'avez pas accès aux Parents.",
+    "empty": "Aucun parent pour l'instant. Les parents sont ajoutés automatiquement à l'inscription des élèves, ou vous pouvez en ajouter un.",
+    "emptyFiltered": "Aucun parent ne correspond à votre recherche ou à vos filtres.",
+    "emptyForChild": "Aucun parent trouvé pour cet élève.",
+    "columns": {
+      "sn": "N°",
+      "name": "Nom",
+      "contact": "Contact",
+      "children": "Enfants",
+      "primary": "Contact principal",
+      "status": "Statut",
+      "actions": "Actions",
+      "totalKids": "Nombre d'enfants",
+      "mailable": "Joignable par e-mail"
+    },
+    "filters": {
+      "relationship": "Lien",
+      "allRelationships": "Tous les liens",
+      "status": "Statut",
+      "allStatuses": "Tous les statuts",
+      "child": "Filtrer par élève",
+      "childPlaceholder": "Saisissez le nom d'un élève…",
+      "clearChild": "Effacer",
+      "childNote": "Parents trouvés à partir du profil de cet élève. Un parent lié uniquement depuis cette page peut ne pas apparaître."
+    },
+    "pageSize": {
+      "label": "Lignes par page",
+      "option": "{count} par page"
+    },
+    "relationship": {
+      "parent": "Parent",
+      "guardian": "Tuteur"
+    },
+    "status": {
+      "active": "Actif",
+      "inactive": "Inactif"
+    },
+    "studentStatus": {
+      "active": "Actif",
+      "graduated": "Diplômé",
+      "withdrawn": "Retiré",
+      "suspended": "Suspendu",
+      "expelled": "Exclu",
+      "inactive": "Inactif",
+      "draft": "Brouillon"
+    },
+    "source": {
+      "student_registration": "Ajouté lors de l'inscription d'un élève",
+      "manual": "Ajouté manuellement"
+    },
+    "emailActive": {
+      "active": "Joignable",
+      "inactive": "Non joignable",
+      "activeHint": "Une adresse réelle — ce parent peut recevoir des e-mails, comme les bulletins.",
+      "inactiveHint": "Une adresse factice — rien n'y est envoyé."
+    },
+    "primary": {
+      "label": "Principal",
+      "hint": "Le contact principal indiqué sur le profil de cet élève",
+      "none": "Non principal",
+      "forAll": "Tous les enfants",
+      "forSome": "{count} sur {total}",
+      "derivedNote": "Le contact principal provient du profil de chaque élève — modifiez-le à l'étape Parent/Tuteur de l'élève."
+    },
+    "children": {
+      "none": "Aucun enfant lié",
+      "noneLinked": "Aucun élève lié pour l'instant.",
+      "count": "{count, plural, one {# enfant} other {# enfants}}",
+      "more": "+{count} de plus",
+      "unavailable": "Élève indisponible",
+      "unavailableHint": "Impossible de charger les informations de cet élève.",
+      "primaryFor": "{name} — contact principal"
+    },
+    "detail": {
+      "title": "Parent",
+      "subtitle": "Informations du parent et élèves liés",
+      "loadError": "Impossible de charger ce parent.",
+      "sections": {
+        "contact": "Contact et connexion",
+        "children": "Élèves liés ({count})",
+        "presentAddress": "Adresse actuelle",
+        "otherAddress": "Autre adresse"
+      }
+    },
+    "fields": {
+      "relationship": "Lien",
+      "fullName": "Nom complet",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "occupation": "Profession",
+      "dateOfBirth": "Date de naissance",
+      "weddingAnniversary": "Anniversaire de mariage",
+      "status": "Statut",
+      "username": "Identifiant",
+      "address": {
+        "address": "Adresse",
+        "city": "Ville",
+        "state": "État / Région",
+        "country": "Pays",
+        "postal_code": "Code postal",
+        "call_line": "Ligne d'appel",
+        "contact_name_1": "Nom du contact 1",
+        "contact_name_2": "Nom du contact 2",
+        "contact_name_3": "Nom du contact 3"
+      }
+    },
+    "link": {
+      "label": "Lier un élève",
+      "placeholder": "Rechercher un élève par nom ou matricule…",
+      "typeToSearch": "Saisissez pour rechercher des élèves",
+      "noMatches": "Aucun élève correspondant",
+      "searchFailed": "Impossible de rechercher les élèves"
+    },
+    "actions": {
+      "view": "Voir",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "link": "Lier",
+      "unlink": "Délier",
+      "menuLabel": "Actions pour {name}"
+    },
+    "form": {
+      "addTitle": "Ajouter un parent",
+      "editTitle": "Modifier le parent",
+      "subtitle": "Informations, enfants, adresse et connexion",
+      "create": "Ajouter le parent",
+      "saveChanges": "Enregistrer",
+      "sections": {
+        "details": "Informations du parent",
+        "children": "Enfants",
+        "presentAddress": "Adresse actuelle",
+        "otherAddress": "Autre adresse",
+        "login": "Informations de connexion"
+      },
+      "childrenHint": "Retirer un enfant ici le délie de ce parent à l'enregistrement.",
+      "loginHint": "L'identifiant sert à la connexion de ce parent. L'activation de la connexion et l'envoi des identifiants viendront plus tard.",
+      "usernamePlaceholder": "Par défaut, l'adresse e-mail",
+      "emailHintMailable": "Adresse apparemment réelle — ce parent pourra recevoir des e-mails.",
+      "emailHintNotMailable": "Adresse apparemment factice — ce parent ne recevra pas d'e-mails.",
+      "emailHintEmpty": "Facultatif. Les parents ayant un vrai e-mail peuvent recevoir les bulletins.",
+      "findExisting": "Trouver le parent qui a déjà cet e-mail",
+      "removeChild": "Retirer {name}",
+      "errors": {
+        "fullNameRequired": "Le nom complet est obligatoire.",
+        "usernameRequired": "L'identifiant est obligatoire.",
+        "usernameSpaces": "L'identifiant ne peut pas contenir d'espaces.",
+        "invalid": "Cette valeur n'est pas valide."
+      }
+    },
+    "confirmUnlink": {
+      "title": "Délier l'élève ?",
+      "message": "Délier {child} de {parent} ? La fiche de l'élève n'est pas modifiée.",
+      "messagePrimary": "{parent} est le contact principal de {child}. Le délier laisse {child} sans contact principal jusqu'à ce qu'un autre soit choisi sur son profil. Continuer ?"
+    },
+    "confirmDelete": {
+      "title": "Supprimer le parent ?",
+      "message": "Supprimer {name} ? {count, plural, =0 {} one {Son élève lié (#) n'est pas supprimé.} other {Ses # élèves liés ne sont pas supprimés.}}"
+    },
+    "toast": {
+      "created": "Parent ajouté.",
+      "updated": "Parent mis à jour.",
+      "deleted": "Parent supprimé.",
+      "linked": "Élève lié.",
+      "unlinked": "Élève délié."
     }
   }
 }

@@ -1,5 +1,6 @@
-import { ModuleStub } from "@/components/layout/ModuleStub";
+import { redirect } from "next/navigation";
 
+/** Admin Panel has no landing page of its own yet — Parents is its first (and only) built entry. */
 export default function Page() {
-  return <ModuleStub titleKey="nav.adminPanel" />;
+  redirect("/admin/admin-panel/parents");
 }
