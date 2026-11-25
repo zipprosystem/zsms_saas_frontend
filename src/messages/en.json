@@ -145,6 +145,7 @@
     "academicsExam": "Exam",
     "clinic": "Clinic",
     "adminPanel": "Admin Panel",
+    "adminPanelParents": "Parents",
     "students": "Students",
     "messages": "Messages",
     "websiteCms": "Website & CMS",
@@ -4286,6 +4287,184 @@
           "saved": "Report saved"
         }
       }
+    }
+  },
+  "parents": {
+    "header": {
+      "title": "Parents",
+      "subtitle": "Parents and guardians, the students linked to them, and who each student's primary contact is."
+    },
+    "titleWithCount": "Parents ({count})",
+    "titleForChild": "Parents of {name} ({count})",
+    "searchPlaceholder": "Search parents by name, email, phone or username",
+    "addNew": "Add Parent",
+    "export": "Export",
+    "loading": "Loading…",
+    "loadError": "Couldn't load parents. Try again.",
+    "noAccess": "You don't have access to Parents.",
+    "empty": "No parents yet. Parents are added automatically when students are registered, or you can add one.",
+    "emptyFiltered": "No parents match your search or filters.",
+    "emptyForChild": "No parents found for this student.",
+    "columns": {
+      "sn": "S/N",
+      "name": "Name",
+      "contact": "Contact",
+      "children": "Children",
+      "primary": "Primary contact",
+      "status": "Status",
+      "actions": "Actions",
+      "totalKids": "Total kids",
+      "mailable": "Mailable"
+    },
+    "filters": {
+      "relationship": "Relationship",
+      "allRelationships": "All relationships",
+      "status": "Status",
+      "allStatuses": "All statuses",
+      "child": "Filter by student",
+      "childPlaceholder": "Type a student's name…",
+      "clearChild": "Clear",
+      "childNote": "Showing parents matched from this student's profile. A parent linked only from this page may not appear."
+    },
+    "pageSize": {
+      "label": "Rows per page",
+      "option": "{count} per page"
+    },
+    "relationship": {
+      "parent": "Parent",
+      "guardian": "Guardian"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "studentStatus": {
+      "active": "Active",
+      "graduated": "Graduated",
+      "withdrawn": "Withdrawn",
+      "suspended": "Suspended",
+      "expelled": "Expelled",
+      "inactive": "Inactive",
+      "draft": "Draft"
+    },
+    "source": {
+      "student_registration": "Added from student registration",
+      "manual": "Added manually"
+    },
+    "emailActive": {
+      "active": "Mailable",
+      "inactive": "Not mailable",
+      "activeHint": "A real address — this parent can receive emails such as report cards.",
+      "inactiveHint": "A placeholder address — nothing is emailed to it."
+    },
+    "primary": {
+      "label": "Primary",
+      "hint": "The primary contact named on this student's profile",
+      "none": "Not primary",
+      "forAll": "All children",
+      "forSome": "{count} of {total}",
+      "derivedNote": "Primary contact comes from each student's profile — change it on the student's Parent/Guardian step."
+    },
+    "children": {
+      "none": "No children linked",
+      "noneLinked": "No students linked yet.",
+      "count": "{count, plural, one {# child} other {# children}}",
+      "more": "+{count} more",
+      "unavailable": "Student unavailable",
+      "unavailableHint": "Couldn't load this student's details.",
+      "primaryFor": "{name} — primary contact"
+    },
+    "detail": {
+      "title": "Parent",
+      "subtitle": "Parent details and linked students",
+      "loadError": "Couldn't load this parent.",
+      "sections": {
+        "contact": "Contact & login",
+        "children": "Linked students ({count})",
+        "presentAddress": "Present address",
+        "otherAddress": "Other address"
+      }
+    },
+    "fields": {
+      "relationship": "Relationship",
+      "fullName": "Full name",
+      "email": "Email",
+      "phone": "Phone",
+      "occupation": "Occupation",
+      "dateOfBirth": "Date of birth",
+      "weddingAnniversary": "Wedding anniversary",
+      "status": "Status",
+      "username": "Username",
+      "address": {
+        "address": "Address",
+        "city": "City",
+        "state": "State",
+        "country": "Country",
+        "postal_code": "Postal code",
+        "call_line": "Call line",
+        "contact_name_1": "Contact name 1",
+        "contact_name_2": "Contact name 2",
+        "contact_name_3": "Contact name 3"
+      }
+    },
+    "link": {
+      "label": "Link a student",
+      "placeholder": "Search students by name or ID…",
+      "typeToSearch": "Type to search students",
+      "noMatches": "No matching students",
+      "searchFailed": "Couldn't search students"
+    },
+    "actions": {
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "link": "Link",
+      "unlink": "Unlink",
+      "menuLabel": "Actions for {name}"
+    },
+    "form": {
+      "addTitle": "Add Parent",
+      "editTitle": "Edit Parent",
+      "subtitle": "Parent details, children, address and login",
+      "create": "Add Parent",
+      "saveChanges": "Save changes",
+      "sections": {
+        "details": "Parent details",
+        "children": "Children",
+        "presentAddress": "Present address",
+        "otherAddress": "Other address",
+        "login": "Login details"
+      },
+      "childrenHint": "Removing a child here unlinks them from this parent when you save.",
+      "loginHint": "The username is this parent's login. Login activation and sending login details come later.",
+      "usernamePlaceholder": "Defaults to the email",
+      "emailHintMailable": "Looks like a real address — this parent will be mailable.",
+      "emailHintNotMailable": "Looks like a placeholder — this parent won't receive emails.",
+      "emailHintEmpty": "Optional. Parents with a real email can receive report cards.",
+      "findExisting": "Find the parent who already has this email",
+      "removeChild": "Remove {name}",
+      "errors": {
+        "fullNameRequired": "Full name is required.",
+        "usernameRequired": "Username is required.",
+        "usernameSpaces": "Username can't contain spaces.",
+        "invalid": "This value isn't valid."
+      }
+    },
+    "confirmUnlink": {
+      "title": "Unlink student?",
+      "message": "Unlink {child} from {parent}? The student's record isn't changed.",
+      "messagePrimary": "{parent} is {child}'s primary contact. Unlinking leaves {child} without a primary contact until one is set on the student's profile. Continue?"
+    },
+    "confirmDelete": {
+      "title": "Delete parent?",
+      "message": "Delete {name}? {count, plural, =0 {} one {Their # linked student isn't deleted.} other {Their # linked students aren't deleted.}}"
+    },
+    "toast": {
+      "created": "Parent added.",
+      "updated": "Parent updated.",
+      "deleted": "Parent deleted.",
+      "linked": "Student linked.",
+      "unlinked": "Student unlinked."
     }
   }
 }

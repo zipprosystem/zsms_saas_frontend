@@ -42,6 +42,9 @@ export const NAV_PERMISSIONS = {
   examReportProgressionPublish: { key: "exam.report_progression.publish", fallback: "exam.view" },
   examReportProgressionStamp: { key: "exam.report_progression.stamp", fallback: "exam.view" },
   examReportProgressionSend: { key: "exam.report_progression.send", fallback: "exam.view" },
+  // Admin Panel › Parents (group-credential sub-menu keys): the page, then every write (add / edit / delete / link / unlink).
+  adminPanelParents: { key: "admin_panel.parents.view", fallback: "admin_panel.view" },
+  adminPanelParentsManage: { key: "admin_panel.parents.manage", fallback: "admin_panel.view" },
 } satisfies Record<string, NavPermission>;
 
 /** The user's permission keys, or null when the payload carries none. */

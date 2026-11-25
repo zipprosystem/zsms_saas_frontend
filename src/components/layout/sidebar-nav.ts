@@ -83,7 +83,17 @@ export const sidebarNavItems: SidebarNavItem[] = [
     ],
   },
   { key: "clinic", labelKey: "nav.clinic", href: "/admin/clinic", icon: HospitalIcon },
-  { key: "adminPanel", labelKey: "nav.adminPanel", href: "/admin/admin-panel", icon: BoxIcon },
+  {
+    key: "adminPanel",
+    labelKey: "nav.adminPanel",
+    href: "/admin/admin-panel",
+    icon: BoxIcon,
+    hasSubmenu: true,
+    // Spec: Admin Panel › Users › Parents. Other Admin Panel entries are added as they're built.
+    children: [
+      { key: "adminPanelParents", labelKey: "nav.adminPanelParents", href: "/admin/admin-panel/parents", permission: NAV_PERMISSIONS.adminPanelParents },
+    ],
+  },
   { key: "students", labelKey: "nav.students", href: "/admin/students", icon: PeopleIcon },
   { key: "messages", labelKey: "nav.messages", href: "/admin/messages", icon: Messages2Icon },
   { key: "websiteCms", labelKey: "nav.websiteCms", href: "/admin/website-cms", icon: DevicesIcon, hasSubmenu: true },
