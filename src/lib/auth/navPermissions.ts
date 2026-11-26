@@ -45,6 +45,14 @@ export const NAV_PERMISSIONS = {
   // Admin Panel › Parents (group-credential sub-menu keys): the page, then every write (add / edit / delete / link / unlink).
   adminPanelParents: { key: "admin_panel.parents.view", fallback: "admin_panel.view" },
   adminPanelParentsManage: { key: "admin_panel.parents.manage", fallback: "admin_panel.view" },
+  // Overview › Quick Actions — one per action. The page itself is open to any
+  // logged-in user; only the shortcuts are gated (fallbacks = the target module's view key).
+  quickAddStudent: { key: "students.create", fallback: "students.view" },
+  quickCreateExam: { key: "exam.list.create", fallback: "exam.view" },
+  quickGenerateReport: { key: "exam.report_progression.view", fallback: "exam.view" },
+  quickMarkAttendance: { key: "attendance.mark", fallback: "attendance.view" },
+  quickSendNotice: { key: "communications.send", fallback: "communications.view" },
+  quickAddCourse: { key: "academic_structure.subjects.manage", fallback: "academic_structure.view" },
 } satisfies Record<string, NavPermission>;
 
 /** The user's permission keys, or null when the payload carries none. */

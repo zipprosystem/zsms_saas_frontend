@@ -1,5 +1,7 @@
 {
   "common": {
+    "switchOn": "ON",
+    "switchOff": "OFF",
     "signIn": "Sign In",
     "signInToYourAccount": "Sign in to your account",
     "username": "Username",
@@ -31,9 +33,6 @@
     "edit": "Edit",
     "delete": "Delete",
     "confirm": "Confirm"
-  },
-  "overview": {
-    "dashboardComingSoon": "Your dashboard is coming soon."
   },
   "login": {
     "submitting": "Signing in…",
@@ -4465,6 +4464,110 @@
       "deleted": "Parent deleted.",
       "linked": "Student linked.",
       "unlinked": "Student unlinked."
+    }
+  },
+  "dashboard": {
+    "sampleData": "Sample data",
+    "sampleDataHint": "Placeholder numbers until this widget is connected to your school's live data.",
+    "loadFailed": "Couldn't load this right now.",
+    "retry": "Try again",
+    "hero": {
+      "greeting": "Hello, {name}",
+      "greetingNoName": "Hello!",
+      "welcome": "Welcome to {school} — feel free to explore.",
+      "welcomeNoSchool": "Welcome — feel free to explore."
+    },
+    "firstRun": {
+      "title": "Welcome aboard! Your school is a fresh start.",
+      "body": "Finish your school setup first, then add your students and staff — this page fills in as you go.",
+      "cta": "Continue setup"
+    },
+    "kpi": {
+      "title": "School at a glance",
+      "unavailable": "Not available right now",
+      "noAccess": "No access",
+      "comingSoon": "Coming soon",
+      "retry": "Retry loading counts",
+      "labels": {
+        "students": "Students",
+        "staff": "Staff",
+        "departments": "Departments",
+        "waitingList": "Waiting List",
+        "parents": "Parents",
+        "houses": "House Color"
+      },
+      "empty": {
+        "students": "Add your first student",
+        "staff": "Add your first staff member",
+        "departments": "Set up departments",
+        "waitingList": "No one waiting",
+        "parents": "Added with each student",
+        "houses": "Set up houses"
+      }
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "actions": {
+        "addStudent": "Add New Student",
+        "createExam": "Create Exam",
+        "generateReport": "Generate Report",
+        "markAttendance": "Mark Attendance",
+        "sendNotice": "Send Notice",
+        "addCourse": "Add Course"
+      }
+    },
+    "attendance": {
+      "title": "Today's Attendance",
+      "audienceLabel": "Show attendance for",
+      "audience": {
+        "students": "Student",
+        "staff": "Staff"
+      },
+      "presentLabel": "Present",
+      "legend": {
+        "present": "Present",
+        "absent": "Absent",
+        "late": "Late"
+      },
+      "notMarked": {
+        "title": "Attendance hasn't been taken yet today",
+        "body": {
+          "students": "Once class registers are marked, today's present, absent and late numbers show here.",
+          "staff": "Once staff attendance is marked, today's present, absent and late numbers show here."
+        },
+        "cta": "Mark attendance"
+      }
+    },
+    "enrollment": {
+      "title": "Student Enrollment Trend",
+      "subtitle": "Last 6 months growth analysis",
+      "chartLabel": "New enrolments per month, last 6 months",
+      "changeHint": "Change over the last 6 months",
+      "empty": {
+        "title": "No enrolments yet",
+        "body": "Your enrolment trend appears here as you add students.",
+        "cta": "Add your first student"
+      }
+    },
+    "activity": {
+      "title": "Recent Activity",
+      "viewAll": "View All",
+      "viewAllSoon": "The full activity log is coming soon.",
+      "systemActor": "System",
+      "fallbackTitle": "Activity",
+      "empty": {
+        "title": "Nothing here yet",
+        "body": "Admissions, attendance, results and notices will appear here as your team uses ZSMS."
+      },
+      "types": {
+        "student_admitted": "New student admission: {name}",
+        "grades_submitted": "Grades submitted for {subject} ({class})",
+        "attendance_marked": "Attendance marked for {class}",
+        "parent_meeting_scheduled": "Parent meeting scheduled",
+        "fee_reminder_sent": "Fee payment reminder sent",
+        "assignment_extended": "Assignment deadline extended: {subject}",
+        "notice_sent": "Notice sent"
+      }
     }
   }
 }

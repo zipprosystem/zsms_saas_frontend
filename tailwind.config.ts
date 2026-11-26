@@ -38,6 +38,7 @@ const config: Config = {
         "category-amber": "var(--category-amber)",
         "category-amber-tint": "var(--category-amber-tint)",
         "subtle-track": "var(--subtle-track)",
+        "switch-track": "var(--switch-track)",
 
         "status-done": "var(--status-done)",
         "status-done-text": "var(--status-done-text)",

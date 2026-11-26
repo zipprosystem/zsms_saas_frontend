@@ -1,5 +1,7 @@
 {
   "common": {
+    "switchOn": "OUI",
+    "switchOff": "NON",
     "signIn": "Se connecter",
     "signInToYourAccount": "Connectez-vous à votre compte",
     "username": "Nom d'utilisateur",
@@ -31,9 +33,6 @@
     "edit": "Modifier",
     "delete": "Supprimer",
     "confirm": "Confirmer"
-  },
-  "overview": {
-    "dashboardComingSoon": "Votre tableau de bord arrive bientôt."
   },
   "login": {
     "submitting": "Connexion en cours…",
@@ -4473,6 +4472,110 @@
       "deleted": "Parent supprimé.",
       "linked": "Élève lié.",
       "unlinked": "Élève délié."
+    }
+  },
+  "dashboard": {
+    "sampleData": "Données d'exemple",
+    "sampleDataHint": "Chiffres provisoires jusqu'à ce que ce widget soit relié aux données réelles de votre école.",
+    "loadFailed": "Impossible de charger ces données pour le moment.",
+    "retry": "Réessayer",
+    "hero": {
+      "greeting": "Bonjour, {name}",
+      "greetingNoName": "Bonjour !",
+      "welcome": "Bienvenue à {school} — n'hésitez pas à explorer.",
+      "welcomeNoSchool": "Bienvenue — n'hésitez pas à explorer."
+    },
+    "firstRun": {
+      "title": "Bienvenue ! Votre école démarre tout juste.",
+      "body": "Terminez d'abord la configuration de l'école, puis ajoutez vos élèves et votre personnel — cette page se remplit au fur et à mesure.",
+      "cta": "Poursuivre la configuration"
+    },
+    "kpi": {
+      "title": "L'école en un coup d'œil",
+      "unavailable": "Indisponible pour le moment",
+      "noAccess": "Accès refusé",
+      "comingSoon": "Bientôt disponible",
+      "retry": "Recharger les chiffres",
+      "labels": {
+        "students": "Élèves",
+        "staff": "Personnel",
+        "departments": "Départements",
+        "waitingList": "Liste d'attente",
+        "parents": "Parents",
+        "houses": "Maisons"
+      },
+      "empty": {
+        "students": "Ajoutez votre premier élève",
+        "staff": "Ajoutez votre premier membre du personnel",
+        "departments": "Configurer les départements",
+        "waitingList": "Personne en attente",
+        "parents": "Ajoutés avec chaque élève",
+        "houses": "Configurer les maisons"
+      }
+    },
+    "quickActions": {
+      "title": "Actions rapides",
+      "actions": {
+        "addStudent": "Ajouter un élève",
+        "createExam": "Créer un examen",
+        "generateReport": "Générer un bulletin",
+        "markAttendance": "Faire l'appel",
+        "sendNotice": "Envoyer un avis",
+        "addCourse": "Ajouter un cours"
+      }
+    },
+    "attendance": {
+      "title": "Présences du jour",
+      "audienceLabel": "Afficher les présences pour",
+      "audience": {
+        "students": "Élèves",
+        "staff": "Personnel"
+      },
+      "presentLabel": "Présents",
+      "legend": {
+        "present": "Présents",
+        "absent": "Absents",
+        "late": "En retard"
+      },
+      "notMarked": {
+        "title": "L'appel n'a pas encore été fait aujourd'hui",
+        "body": {
+          "students": "Une fois l'appel fait dans les classes, les présents, absents et retards du jour s'affichent ici.",
+          "staff": "Une fois les présences du personnel saisies, les présents, absents et retards du jour s'affichent ici."
+        },
+        "cta": "Faire l'appel"
+      }
+    },
+    "enrollment": {
+      "title": "Évolution des inscriptions",
+      "subtitle": "Analyse de croissance sur 6 mois",
+      "chartLabel": "Nouvelles inscriptions par mois, 6 derniers mois",
+      "changeHint": "Évolution sur les 6 derniers mois",
+      "empty": {
+        "title": "Aucune inscription pour l'instant",
+        "body": "L'évolution des inscriptions s'affiche ici à mesure que vous ajoutez des élèves.",
+        "cta": "Ajoutez votre premier élève"
+      }
+    },
+    "activity": {
+      "title": "Activité récente",
+      "viewAll": "Tout voir",
+      "viewAllSoon": "Le journal d'activité complet arrive bientôt.",
+      "systemActor": "Système",
+      "fallbackTitle": "Activité",
+      "empty": {
+        "title": "Rien pour l'instant",
+        "body": "Les admissions, présences, résultats et avis apparaîtront ici à mesure que votre équipe utilise ZSMS."
+      },
+      "types": {
+        "student_admitted": "Nouvelle admission : {name}",
+        "grades_submitted": "Notes saisies en {subject} ({class})",
+        "attendance_marked": "Appel fait pour {class}",
+        "parent_meeting_scheduled": "Réunion parents programmée",
+        "fee_reminder_sent": "Rappel de paiement des frais envoyé",
+        "assignment_extended": "Échéance de devoir prolongée : {subject}",
+        "notice_sent": "Avis envoyé"
+      }
     }
   }
 }
